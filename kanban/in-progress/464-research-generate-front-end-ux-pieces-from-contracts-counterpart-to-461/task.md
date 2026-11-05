@@ -123,6 +123,14 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
   19 files override `HandleError`; 16 `DefaultApiHandler`s take a `Query`. `HandleError` is abstract
   on `ApiHandler` and called from the private `HandleApiResponseAsync`, which is why D needs the
   `OnProblem` virtual. No product code changed.
+- Review oracle round 2 (2026-11-05): tw-implementation-review, effort 2, roster general (claude,
+  model claude-opus-5-5, headless ganda task work, turn cap 120). It reviewed the fix delta only.
+  M1–M4 are verified fixed. The restatement still matches the task, so there is no misread. One new
+  finding is open (M5, a suggestion), so a fix pass is requested. Disposition is pending.
+- 2026-11-05 implement-fix-3 (implementer-claude): fixed M5 from `review/round-2/merged.md` in
+  Option D of `proposal.md`. Read `api-handler.cs`, `default-api-handler.cs`, and
+  `http-api-service.cs`. `HttpClient` exceptions are not caught in `HttpApiService`, so they reach
+  the rethrow at `api-handler.cs:87-92`. No product code changed.
 
 ## Results
 
@@ -145,9 +153,11 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
   already differs), A4 mock coverage (today a missing factory falls through to the real API with
   only a Debug log).
 - **Option D:** `ContractResult<T>` slots replace the 9 hand-written success flags and ids, and the
-  sticky `LastCreatedRoleId` comparison in `RoleForm.razor`. `Failed` is set through one new empty
-  virtual `OnProblem` on `ApiHandler`, so the 19 hand-written `HandleError` overrides stay as they
-  are.
+  sticky `LastCreatedRoleId` comparison in `RoleForm.razor`. The base `ApiHandler` gets two empty
+  virtuals. `OnStarted` sets `Running` and runs only after a non-null `GetRequest`. `OnProblem` sets
+  `Failed` and runs for a problem body and in the catch before the rethrow. So the 19 hand-written
+  `HandleError` overrides stay as they are, and no exit path leaves the slot at `Running` except
+  two named, accepted coding-bug paths.
 - **Option B hook rule:** the required `On…Loaded` seed hook is declared on every generated fetch
   (up to 16 empty bodies SPA-wide). The opt-in alternative leaves 4f to a test.
 - **Forms and validation:** nothing to generate. The form already binds the contract's
@@ -166,8 +176,25 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
   - M3: the count is 5 of 41, with the grep and why its sixth hit does not count.
   - M4: the Description and Checklist point at `proposal.md`, the split item is now "Steve answers
     section 7", and the 461 path is `kanban/in-progress/`.
-- Disposition is pending until round 2.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 2 (2026-11-05) ran at effort 2 with a general reviewer, on the fix delta
+  `85dfe0f4e..29d388aff`. It re-verified M1–M4 as fixed and re-ran their greps. It raised one
+  finding:
+  - M5 (suggestion, open): in Option D, a transport exception, a validator throw, or an A-only
+    `GetRequest` returning null skips `OnProblem`. The slot then stays at `Running`.
+- Counts after round 2: bug 0. Suggestion 1 open (M5), 2 fixed. Nit 2 fixed.
+- Fix pass 2 (2026-11-05) addressed M5 in Option D of `proposal.md`:
+  - A table lists every path out of `ApiHandler.Handle` and the hook that closes it: null skip,
+    success, problem body, transport exception, validation exception, and a throw in `GetRequest`.
+  - Remedy picked: `Running` moves to a new `OnStarted(TRequest)` virtual, which runs after the
+    null skip. The existing catch calls `OnProblem` with a synthetic problem before `throw;`, so
+    validation failures still throw. The rejected remedies are named with reasons.
+  - Accepted gaps are named: `DefaultApiHandler.HandleFileResponse` throwing, and a hand-written
+    `HandleSuccess` throwing before its write.
+  - The scope line and the A-only check now match. The check also flags `Running` set in
+    `GetRequest`. The B example sets `Running` in an `OnStarted` override.
+- Disposition is pending until review round 3.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/round-2/general.md`, `review/round-2/merged.md`.
 
 ### How to validate
 
@@ -185,6 +212,8 @@ path:
   files; 5 contain `DefaultApiHandler<` (the chat-state one does not).
 - `git grep -l "override.*HandleError" -- source/container-apps/web/projects/web-spa/features | wc -l`
   prints 19.
+- `sed -n 56,98p source/container-apps/web/projects/web-spa/features/base/api-handler.cs` shows
+  the null skip at `:71` and the rethrow at `:87-92`, the paths in the Option D table.
 
 Expect: every claim in sections 2 and 4 matches the code. Every option in section 5 is a code
 document, with input, generated code, and hand-written hooks. Required hooks carry an access
@@ -193,7 +222,7 @@ modifier. Section 7 asks the question and does not pick.
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
-
+- Round 2: Blocked — open M5
 ## Notes
 
 - Related: 461 (back-end counterpart). Draft produced read-only from origin/HEAD `f003919db`.

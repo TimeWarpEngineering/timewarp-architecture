@@ -269,11 +269,15 @@ Generated:
 
       protected override Task<SetRolePermissions.Command?> GetRequest(Action action, CancellationToken cancellationToken)
       {
-        RoleState.SetRolePermissionsResult = ContractResult<SetRolePermissions.Response>.Running;  // D replaces the flag reset
         SetRolePermissions.Command command = BuildRequest(action);
         command.UserId = Guid.NewGuid();
         return Task.FromResult<SetRolePermissions.Command?>(command);
       }
+
+      // D replaces the hand-written flag reset. ApiHandler calls OnStarted only after GetRequest
+      // returns a request (see Option D), so a skipped action never leaves the slot at Running.
+      protected override void OnStarted(SetRolePermissions.Command request) =>
+        RoleState.SetRolePermissionsResult = ContractResult<SetRolePermissions.Response>.Running;
 ```
 
 FetchRoles under B. The request is `new GetRoles.Query()` plus the stamp, and the snapshot write is
@@ -384,14 +388,51 @@ if (RoleState.CreateRoleResult is { Succeeded: true, Response: { } created })
 
 `Failed` cannot be generated into `HandleError`. 19 handlers override `HandleError` by hand
 (section 6 keeps them hand-written), and a generator cannot add a statement to a method someone
-else declared. So D needs one base-class change in the template SPA's own
-`SPA/features/base/api-handler.cs`. Today the private `HandleApiResponseAsync` matches the
-`OneOf` straight to `HandleError`. D adds an empty virtual that runs first:
+else declared. `Running` has the same problem in the other direction. If `GetRequest` sets it, a
+`GetRequest` that then returns `null` (the sanctioned skip) leaves it set. So D needs a base-class
+change in the template SPA's own `SPA/features/base/api-handler.cs`. Today
+`ApiHandler.Handle` calls `GetRequest` and sends the request. The private
+`HandleApiResponseAsync` then matches the `OneOf` straight to `HandleError`. Exceptions other than
+cancellation are logged and rethrown at `api-handler.cs:87-92`.
+
+A slot can leave `Running` only through a hook the base class calls. Each path out of `Handle` is
+listed here, with the hook that closes it:
+
+| Path out of `Handle` (`api-handler.cs`) | Slot if `GetRequest` sets `Running` and only the problem arm calls `OnProblem` | Closed by |
+|---|---|---|
+| `GetRequest` returns `null` (`:71`) | stuck at `Running` if `GetRequest` set it | `Running` moves to `OnStarted`, which runs only for a non-null request |
+| success body (`:96` → `HandleSuccess`) | `Succeeded` | `HandleSuccess` (unchanged) |
+| problem body, including the synthetic 499 for cancellation (`:77-86`) | `Failed` | `OnProblem` before `HandleError` |
+| transport failure: `HttpRequestException` from `ApiService.GetResponse`, rethrown at `:87-92` | stuck at `Running` | `OnProblem` with a synthetic problem, called in the catch before the rethrow |
+| `ValidationException` from `ValidateRequestAsync` (`:123`), rethrown at `:87-92` | stuck at `Running` | the same catch |
+| `GetRequest` itself throws (a hand-written build) | stuck at `Running` if the write came before the throw | the same catch. `OnStarted` has not run, and the slot goes to `Failed` |
+
+D therefore adds two empty virtuals and one call in the existing catch:
 
 ```csharp
-// ApiHandler<TAction, TRequest, TResponse> (proposed). Runs after the lock is released, before
-// HandleError, for every problem, including the synthetic 499 for cancellation.
+// ApiHandler<TAction, TRequest, TResponse> (proposed).
+
+// Runs inside the lock after GetRequest returns a non-null request, before validation and the send.
+protected virtual void OnStarted(TRequest request) { }
+
+// Runs for every failure after OnStarted could have run: a problem body (before HandleError,
+// after the lock is released), and any exception the catch below rethrows.
 protected virtual void OnProblem(SharedProblemDetails problem) { }
+
+// In Handle:
+      TRequest? request = await GetRequest(action, cancellationToken);
+      if (request is null) return;// Skip the action
+      OnStarted(request);
+      await ValidateRequestAsync(request);
+      …
+    catch (Exception ex)
+    {
+      Logger.LogError(ex, "Unexpected error occurred while handling {ActionType}", typeof(TAction).Name);
+      // The slot leaves Running. HandleError is still not called, and the exception still
+      // propagates, so the "validation failures throw" rule in the Design region is unchanged.
+      OnProblem(new SharedProblemDetails { Title = "Unexpected error", Detail = ex.Message });
+      throw;
+    }
 
 private async Task HandleApiResponseAsync(OneOf<TResponse, FileResponse, SharedProblemDetails> apiResponse, CancellationToken cancellationToken)
 {
@@ -403,19 +444,44 @@ private async Task HandleApiResponseAsync(OneOf<TResponse, FileResponse, SharedP
 }
 ```
 
+The catch runs after the `using` has released the per-state lock, so `OnProblem` never runs under
+the lock from that path either.
+
+Other remedies were weighed and not taken:
+
+- **Map unexpected exceptions to a synthetic problem through `HandleError`, as 499 is mapped.**
+  This would stop validation failures from throwing. The Design region of `api-handler.cs` says
+  they throw because they are client-side coding bugs, and every handler's `HandleError` would
+  start toasting them.
+- **Set `Running` in the base without a hook.** The base does not know which state member is the
+  slot. It would need reflection or a generated registry, and the hook is smaller.
+
+Two gaps remain, and D accepts them:
+
+- `DefaultApiHandler.HandleFileResponse` throws `NotImplementedException` outside the `try`. A JSON
+  endpoint that returns a file leaves the slot at `Running`. The handler is in the wrong base
+  class, which is a coding bug, and the exception surfaces.
+- A hand-written `HandleSuccess` (A only) that throws before its `Succeeded` write leaves the slot
+  at `Running`. The exception surfaces in the same way. Generated `HandleSuccess` bodies (B, C)
+  write the slot as the first statement.
+
 Who sets the slot:
 
-- **With B or C:** generated code sets `Running` in `GetRequest` and `Succeeded` in
-  `HandleSuccess`, and it overrides `OnProblem` to set `Failed`. A hand-written `HandleError`
-  (toast text, a field reset) is not touched.
+- **With B or C:** generated code overrides `OnStarted` to set `Running` and `OnProblem` to set
+  `Failed`. It sets `Succeeded` as the first statement of `HandleSuccess`. A hand-written
+  `GetRequest` build hook or `HandleError` (toast text, a field reset) is not touched.
 - **With A only:** the slot is hand-written in all three places. The check flags a
   `DefaultApiHandler` whose state has a `ContractResult<TResponse>` slot for its response type when
-  any of these is missing: an assignment in `GetRequest` (`Running`), in `HandleSuccess`
-  (`Succeeded`), or in `OnProblem` (`Failed`). Without the `OnProblem` leg, a failed call would
-  leave the slot at `Running` for good.
+  any of these is missing: an assignment of `Running` in an `OnStarted` override, of `Succeeded` in
+  `HandleSuccess`, or of `Failed` in an `OnProblem` override. It also flags an assignment of
+  `Running` in `GetRequest`, because the skip path would leave it set. Without the `OnProblem` leg,
+  every failure path in the table would leave the slot at `Running` for good.
 
-Scope: one empty virtual on `ApiHandler`, plus 3 members in Roles and 9 SPA-wide. Every page that
-reads one of them changes. The 19 hand-written `HandleError` overrides stay as they are.
+Scope: on `ApiHandler`, two empty virtuals (`OnStarted`, `OnProblem`), one `OnStarted` call after
+the null-skip, and one `OnProblem` call in each of the problem arm and the existing catch. No
+handler changes behavior from the base change alone. Then 3 slot members in Roles and 9 SPA-wide.
+Every page that reads one of them changes. The 19 hand-written `HandleError` overrides stay as
+they are.
 
 ### Forms and validation: nothing to generate
 
