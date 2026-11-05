@@ -111,6 +111,7 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
     because it would act on other tasks' claims, which may be held on another machine.
   - `source-file-line-cap`: 3 EF migration designer and snapshot files, plus one kanban research
     runfile. The check is at warning severity since 469-001, and TWA0038 enforces the cap.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a6b13f79-d197-4902-975d-32873d675714, max-turns 500, Done — 2026-11-05T15:43:51Z
 
 ## Results
 
