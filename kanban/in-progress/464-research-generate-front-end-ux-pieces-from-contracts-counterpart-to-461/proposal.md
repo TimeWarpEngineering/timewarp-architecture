@@ -78,9 +78,29 @@ page would get no `@page` route and no `GetPageUrl`.
 
 So a generator can only fill in **bodies of types a person declared**: a hand-written partial
 `Handler` with its base type, or a hand-written partial page. Emitting whole action sets or pages
-needs one of two things. Either the generator re-emits what the three other generators emit (it
-copies TimeWarp.State's and TimeWarp.Mediator's discovery rules), or the generation moves into
-TimeWarp.State, which is another repository.
+needs the generation to move into TimeWarp.State, which is another repository (see the
+correction below).
+
+**Correction (Steve and cockpit, 2026-11-05).** Point 2 is wrong. TimeWarp.Mediator's generator
+reads referenced assemblies that carry `[assembly: MediatorAssembly]`
+(`timewarp-mediator/source/timewarp-mediator-generators/referenced-assembly-candidates.cs`), so a
+`Handler` in a project web-spa references does register. The same cross-project pattern already
+runs five generators in this repo: an upstream compilation stamps a marker
+(`TypedIdsEmbedded`, `ApiEndpointsEmbedded`), and the downstream compilation walks marked
+references by metadata. Points 1 and 3 stand: TimeWarp.State's method generator, its catalog
+generator, and our roster and page generators use syntax providers on the host compilation only.
+
+Steve recalled "dual pass source gen" (Discord, 2026-01-15). The GitHub history shows that week
+was Nuru generator work. Two days earlier, Nuru commit `8027071a` records the same wall:
+"Source generators run in isolation and can't see each other's output … Solution: put fixed
+types in core library." Nuru's "two-phase" pattern is a syntactic filter followed by a semantic
+extract inside one generator, not one generator feeding another. No two-pass build target exists
+in any TimeWarp repository.
+
+So option C is not impossible; it needs a metadata walk in TimeWarp.State's generators, following
+Mediator's pattern, so generated action sets in a referenced project get their dispatch method
+and catalog entry. That is a timewarp-state task. The roster and page generators here would take
+the same change.
 
 ### 4b. `[Destructive]` exists and no contract uses it
 
