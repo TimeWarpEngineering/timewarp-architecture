@@ -58,6 +58,14 @@ Acceptance:
   Filed and published follow-ups 477 (remove Riok.Mapperly), 478 (agent-scope order in
   `Role.AgentScopes`), and 479 (shared Roles and attachment projections, named arguments).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session de478108-b52c-4c6d-8833-d7d615999709, max-turns 500, Done — 2026-11-05T07:24:44Z
+- 2026-11-05 review round 1 (ganda task work review node): reviewer claude (claude-opus-5-5),
+  effort 2, roster general, turn cap 120. 3 open findings (M1, M2 suggestion; M3 nit). Fix pass
+  requested. `dev lint-skills` re-run: 9/9 passed.
+- 2026-11-05 fix pass for review round 1 (ganda task work implement-fix-2): fixed M1 (camelCase
+  named arguments in the skill example), M2 (principal and clock only when the mutation records
+  them), M3 (redaction test citations in `proposal.md` and Results). Dispositions in
+  `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3c83c81f-47a7-4053-918d-6235e18fda9b, max-turns 120, artifacts general.md, merged.md — 2026-11-05T07:28:04Z
 
 ## Decision
 
@@ -83,7 +91,8 @@ Fold-in on this task (no implementation tasks split; none needed):
 - **Skill:** `skills/tw-aggregate-pattern/SKILL.md` gains "Projection and mutation calls stay
   hand-written": one projection per aggregate and response shape in one static method, named
   arguments, name agreement is not the value (the filer-thread redaction case), ordering belongs to
-  the root, mutation calls pass the principal and the clock.
+  the root, and the handler supplies who and when (the principal and the clock) only when the
+  mutation records them; the root does not read ambient context.
 - **Follow-ups (to-do, published):** 477 remove the unused `Riok.Mapperly` reference; 478 order agent
   scopes in `Role.AgentScopes` so GetRole, GetRoles, and SetRoleAgentScopes stop reordering; 479
   share one GetRole/GetRoles projection and one attachment projection, with named arguments.
@@ -101,7 +110,7 @@ Fold-in on this task (no implementation tasks split; none needed):
   - `GetFeedback.Response.Activity` agrees by name with `FeedbackItem.Activity`, but the correct
     value is the redacted filer thread. Any projection made by name leaks internal notes unless the
     member opts out. Leaving the opt-out off compiles. Tests catch it today
-    (`feedback-admin-tests.cs:263` and `:420`).
+    (`feedback-admin-tests.cs:263` and `:324`; `feedback-triage-tests.cs:177`).
   - Two command responses do not match their root by name: `SetRolePermissions.Response.PermissionIds`
     and `SetRoleAgentScopes.Response.Scopes`.
   - `Riok.Mapperly` 4.3.1 is referenced by `web-application` and nothing uses it.
@@ -113,6 +122,12 @@ Fold-in on this task (no implementation tasks split; none needed):
   task: `kanban-landed` (live claims on other tasks) and `source-file-line-cap` (EF migration
   Designer and snapshot files, plus one kanban research runfile). Neither one is in this task's diff.
 
+- **Review:** round 1 (effort 2, general): bug 0, suggestion 2 fixed, nit 1 fixed. M1: the skill's
+  named-argument example uses the camelCase constructor parameters (`roleId:`, `name:`). M2: the
+  principal-and-clock bullet is conditional (Role mutations take neither). M3: the redaction
+  citations are `feedback-admin-tests.cs:263`, `:324`, and `feedback-triage-tests.cs:177` (`:420`
+  was a mock-factory test). Files: `review/review-framework.md` and `review/round-1/merged.md`.
+
 ### How to validate
 
 - **Smoke:** open `kanban/in-progress/476-*/proposal.md`. Check it against
@@ -123,8 +138,13 @@ Fold-in on this task (no implementation tasks split; none needed):
   - The Mapperly grep shows only `Directory.Packages.props` and `web-application.csproj`, with no `[Mapper]`.
   - Section 8 asks one question, and `## Decision` in task.md records the answer (option A).
   - `skills/tw-aggregate-pattern/SKILL.md` has the "Projection and mutation calls stay hand-written"
-    section, and `dev lint-skills` passes.
+    section, its named-argument example is `new Response(roleId: …, name: …)` (matching
+    `get-role-contracts.cs`), and `dev lint-skills` passes.
   - `ganda kanban show 477`, `478`, and `479` print to-do tasks whose specs name the files above.
+
+## Review
+
+- Round 1: open M1, M2, M3 → all fixed in the fix pass (2026-11-05)
 
 ## Notes
 

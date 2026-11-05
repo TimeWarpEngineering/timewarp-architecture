@@ -78,7 +78,8 @@ real in today's code:
 One case shows why name agreement is not enough. **`GetFeedback.Response.Activity` matches
 `FeedbackItem.Activity` by name, and TWA0041 accepts it.** The correct value is the filer thread,
 filtered and redacted. A projection made by name would send internal notes and admin identities to
-the filer. Today the tests catch that (`feedback-admin-tests.cs:263` and `:420` assert redaction),
+the filer. Today the tests catch that (`feedback-admin-tests.cs:263` and `:324` assert redaction on the handler's filer view, and
+`feedback-triage-tests.cs:177` asserts the root marks internal notes hidden),
 but only because those tests exist. Any generator that projects by name by default has this
 failure mode. The member has to opt out explicitly, and leaving the opt-out off compiles.
 

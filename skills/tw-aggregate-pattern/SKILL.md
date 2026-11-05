@@ -108,7 +108,7 @@ mapper library and no projection or handler generator.
 - **One projection per aggregate and response shape.** Put it in one static method in the
   slice's application layer (for example `FeedbackContractMap`). A second handler that returns the
   same shape calls that method, so the shape is never written twice.
-- **Named arguments.** Write `new Response(RoleId: role.Id.Value, Name: role.Name, …)`. Two members
+- **Named arguments.** Write `new Response(roleId: role.Id.Value, name: role.Name, …)`. Two members
   of the same type cannot be swapped silently, and a dropped optional parameter is visible in the
   diff.
 - **Agreement by name is not the value.** A member can match its root member by name and still
@@ -117,8 +117,9 @@ mapper library and no projection or handler generator.
   asserts what each audience must not see.
 - **Ordering and normalization belong to the root.** When every read of a collection wants the
   same order, the root's property returns it in that order. A handler does not reorder it.
-- **Mutation calls pass the principal and the clock.** A handler calls the named mutation with the
-  command's values, the acting principal, and the time, behind any `Can…` check. A rule that
+- **The handler supplies who and when.** A handler calls the named mutation with the command's
+  values, behind any `Can…` check. When the mutation records who acted or when, the handler also
+  passes the acting principal and the clock; the root does not read ambient context. A rule that
   answers with a status code (protected core, 409) runs in the handler before the call.
 
 ## Exemplar
