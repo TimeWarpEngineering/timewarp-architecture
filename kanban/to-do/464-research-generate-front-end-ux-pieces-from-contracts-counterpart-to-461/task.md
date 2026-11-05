@@ -16,6 +16,29 @@ Using the Roles slice, decide which SPA pieces can be source-generated from the 
 
 Kitchen draft: `contracts-frontend-example.md` (real code quoted verbatim with paths; proposed code marked).
 
+## Outcome of 461 (read first; Steve 2026-11-05)
+
+461 is resolved. There is **no** entity generator: domain is modeled first by hand, and
+`TWA0039–TWA0043` (task 474, `contract-agreement-analyzer.cs`) prove that an aggregate satisfies
+its operation group's contracts. Glue generation in the application layer was spiked (476,
+`kanban/done/476-*/proposal.md`) and Steve chose "analyzer alone" because only 3 mutation calls
+were mechanical and by-name mapping had a real leak case. The ballot record is
+`kanban/in-progress/461-*/rfc/rfc.md`.
+
+What that means for this task:
+
+- Do not assume a back-end generator exists to coordinate with. The SPA side stands alone.
+- Options must be **code documents** in the kitchen (input the developer writes, what is
+  generated, what stays hand-written), not prose. Steve compares code, not descriptions.
+- Hooks that must be written are **extended partial methods with an access modifier** (missing
+  body is CS8795). `partial void` is silent and only fits optional hooks.
+- Consider an **analyzer-first** answer here too: for each candidate piece, say whether a build
+  check that proves agreement (contract ↔ action set, DTO, mock, validator) is enough before a
+  generator is justified. Count the mechanical pieces in Roles the way 476 did.
+- Roles is now a real aggregate (473) and Profile/Roles contracts were renamed to match
+  (`DisplayName`, `Permissions`); read current master, not the `f003919db` draft.
+- Proposal only. Stop at the options and Steve's question; do not split implementation tasks.
+
 ## Boundary
 
 - Visuals and layout stay hand-written (Razor markup, CSS, copy). The generator emits no markup.
