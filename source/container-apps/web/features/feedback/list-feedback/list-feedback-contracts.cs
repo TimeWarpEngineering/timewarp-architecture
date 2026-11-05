@@ -53,6 +53,7 @@ public static partial class ListFeedback
   /// <summary>Lists feedback items for an administrator or an agent with feedback:read.</summary>
   /// <remarks>A reviewer lists Status = New. Moving an item's status off New is the processed marker: the next list with Status = New does not return that item.</remarks>
   [ApiRoute("api/admin/feedback", HttpVerb.Get)]
+  [Operation("feedback.list", Description = "List feedback items for triage, filtered and sorted.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackStatus? Status { get; set; }
@@ -116,6 +117,8 @@ public static partial class ListFeedback
     public FeedbackSeverity Severity { get; }
     public string Title { get; }
     public DateTimeOffset FiledAt { get; }
+    /// <summary>The owner's profile display name (task 336). The handler reads it from the profile slice.</summary>
+    [Computed]
     public string? OwnerDisplayName { get; }
 
     public Item(

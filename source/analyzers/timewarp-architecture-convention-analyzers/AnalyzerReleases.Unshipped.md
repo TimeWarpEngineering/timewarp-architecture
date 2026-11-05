@@ -40,6 +40,6 @@ TWA0037 | Design | Warning | DirectFluentMessageBarAnalyzer: raw FluentMessageBa
 TWA0038 | Maintainability | Warning | FileLengthAnalyzer: source file is longer than the line limit (500 by default; dotnet_diagnostic.TWA0038.max_lines overrides)
 TWA0039 | Design | Error | ContractAgreementAnalyzer: aggregate root lacks a member of its operation group's I*Details interface, or the type disagrees
 TWA0040 | Design | Error | ContractAgreementAnalyzer: Set<Name> command with one list has no Set<Name>(collection) mutation on the aggregate root
-TWA0041 | Design | Error | ContractAgreementAnalyzer: query response member does not project from an aggregate root member (exact name, compatible type) and is not [Computed]
+TWA0041 | Design | Error | ContractAgreementAnalyzer: query response member does not project from an aggregate root member (exact name, compatible type) and is not [Computed]; child classes and a projection wrapped in a response's one non-computed member are walked too; a response may widen a root T to T?
 TWA0042 | Design | Warning | ContractAgreementAnalyzer: command in a rooted operation group matches no agreement check and has no [NotAggregate] reason
 TWA0043 | Design | Warning | ContractAgreementAnalyzer: operation group has operations in the slice namespace of more than one aggregate root

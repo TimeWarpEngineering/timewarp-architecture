@@ -24,6 +24,10 @@ public sealed class FeedbackActivityEntry : ICloneable
 
   public int Sequence { get; }
   public FeedbackActivityKind Kind { get; }
+  /// <summary>
+  /// The entry's author, projected from the root's Guid. The handler sets it to null on the filer's
+  /// copy (see Design), so the wire type widens it to Guid?, which TWA0041 accepts on a read.
+  /// </summary>
   public Guid? AuthorPrincipalId { get; }
   public string? Body { get; }
   public FeedbackStatus? FromStatus { get; }

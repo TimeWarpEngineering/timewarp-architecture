@@ -22,6 +22,8 @@ public static partial class ReplyToFeedback
   public const int MaxBodyLength = 4000;
 
   [ApiRoute("api/admin/feedback/{FeedbackItemId:guid}/replies", HttpVerb.Post)]
+  [Operation("feedback.reply", Description = "Add an administrator's reply that the filer sees.", Group = "feedback")]
+  [NotAggregate("Appends a thread entry through FeedbackItem.AddAdminReply; Body is the entry's body, not FeedbackItem.Body.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string Body { get; set; } = null!;

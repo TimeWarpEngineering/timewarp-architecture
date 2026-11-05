@@ -19,6 +19,7 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class GetFeedbackForAdmin
 {
   [ApiRoute("api/admin/feedback/{FeedbackItemId:guid}", HttpVerb.Get)]
+  [Operation("feedback.get-for-admin", Description = "Get one feedback item with its full thread for triage.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>
