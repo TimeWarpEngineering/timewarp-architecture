@@ -40,6 +40,9 @@ Acceptance:
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-05)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 26df18c6-b179-46fc-93eb-bcc49325293c, max-turns 500, Done — 2026-11-05T13:56:06Z
+- Review oracle: reviewer-claude (claude, model claude-opus-5-5). Effort 1, roster `general`,
+  turn cap 80. Disposition clean, 2026-11-05.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 095d9742-f7b9-415e-a64f-7fde9e4f26e3, max-turns 80, artifacts general.md, merged.md — 2026-11-05T13:59:17Z
 
 ## Results
 
@@ -74,6 +77,22 @@ Expect: build has 0 warnings. `ScalarPage_Should_Load_The_Document` and
 `ScalarPage_Should_NotEmbedALoopbackServer` pass. `/scalar/v1` returns 200 with the Scalar page
 pointing at `openapi/v1.json`. `grep Scalar.AspNetCore Directory.Packages.props` shows
 `Version="2.19.0"`.
+
+### Review disposition
+
+- 1 round, effort 1, roster `general`.
+- Final counts: 0 bugs, 0 suggestions, 0 nits (0 open, 0 fixed, 0 wontfix).
+- Disposition: **clean**.
+- What the reviewer checked: both 9.0.0-beta.7 nuspecs (the comment is accurate) and the empty
+  dependency groups in the Scalar 2.19.0 nuspec. The reviewer re-ran `dev build` (0 warnings) and
+  web-server-integration-tests (436 passed, 1 skipped, 0 failed).
+- The Goal restatement matches the task. No misread.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
