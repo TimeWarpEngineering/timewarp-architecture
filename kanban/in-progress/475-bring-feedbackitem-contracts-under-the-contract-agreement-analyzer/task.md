@@ -61,6 +61,9 @@ Acceptance:
   findings M1, M2, and M3.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d360989f-d0af-4deb-9d1b-a58e768a274e, max-turns 200, artifacts general.md, merged.md — 2026-11-05T05:01:45Z
 - Fix pass 1 (implement-fix-2 oracle, Claude Opus 5.5), 2026-11-05: M1–M3 fixed.
+- Review oracle, round 2: general reviewer (Claude Opus 5.5, model claude-opus-5-5), effort 2, turn
+  cap 120, under ganda task work, 2026-11-05. It reviewed the fix delta 0b8af0e1e..76f95a527 and
+  found no new issues. Disposition: clean.
 
 ## Results
 
@@ -194,10 +197,21 @@ Acceptance:
   - `ganda repo audit`: only the warnings that were already there.
   - Enum-by-name agreement against `FeedbackContractMap` and the string enum converter: confirmed.
   - No feedback Jaribu or Playwright file changed.
-- **Disposition:** fix pass 1 fixed M1, M2, and M3 (see `merged.md`). Round 2 is next.
+- **Fix pass 1:** M1, M2, and M3 fixed (commit 76f95a527).
+- **Round 2** (general, effort 2, turn cap 120), with the delta 0b8af0e1e..76f95a527 as the scope:
+  - It re-verified M1–M3 as fixed and found no new issues.
+  - The reviewer re-ran the analyzer tests (305/305), the `web-application` build (0 warnings,
+    0 errors), and `dev lint-skills` (passed).
+  - Not a finding: read widening does not reach collection elements, so `List<string?>` against
+    `List<string>` would still be drift. The product has no such shape.
+- **Final counts:** bug 0 open / 1 fixed / 0 wontfix, suggestion 0 / 1 / 0, nit 0 / 1 / 0.
+- **Disposition:** clean. All three raised findings are fixed, and there are no wontfix items or
+  escalations.
 - **Paths:**
   - `review/review-framework.md`
-  - `review/round-1/general.md`
+  - `review/round-1/general.md`, `review/round-1/merged.md`
+  - `review/round-2/general.md`, `review/round-2/merged.md` (last ledger)
+  - `review/disposition.md`
   - `review/round-1/merged.md`
 
 ## Learnings
@@ -210,7 +224,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2, M3
 - Fix pass 1: M1, M2, M3 fixed; awaiting round 2
-
+- Round 2: Done
 ## Notes
 
 Follows 474. The third shape, Order, belongs to backlog task 118 (real-domain showcase).
