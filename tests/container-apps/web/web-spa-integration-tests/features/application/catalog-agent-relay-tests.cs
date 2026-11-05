@@ -41,7 +41,7 @@ public partial class CatalogAgent_Should
 
     using JsonDocument profile = JsonDocument.Parse(PageAgentContext.Describe(scope.Store, "/Profile"));
     JsonElement profileRecord = profile.RootElement.GetProperty("profile");
-    foreach (string field in new[] { "alias", "email", "language", "region", "theme", "notifications" })
+    foreach (string field in new[] { "displayName", "email", "language", "region", "theme", "notifications" })
     {
       profileRecord.TryGetProperty(field, out _).ShouldBeTrue(field);
     }

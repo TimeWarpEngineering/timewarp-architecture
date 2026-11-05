@@ -23,6 +23,7 @@ public static partial class GetUserXaiApiKeyStatus
 {
   /// <summary>No parameters. The caller is the authenticated user.</summary>
   [ApiRoute("api/Users/Current/xai-api-key", HttpVerb.Get)]
+  [NotAggregate("Grouped under profile for hosts; the status reads the protected secret row (UserXaiApiKey), not Profile state.")]
   [Operation("user-xai-api-key.get", Description = "Read whether the current user's xAI API key is configured.", Group = "profile")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 

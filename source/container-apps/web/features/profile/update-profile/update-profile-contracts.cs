@@ -8,7 +8,7 @@
 // client-supplied id. [EndpointAuthorize] profile.write — this is never a gate on passkey/agent-key
 // register, session, or token (locked 104 decision 1). AuthenticationSchemes: identity-session +
 // mock-identity-session (human chrome; agents do not edit this product profile).
-// Email is optional. Alias remains required (chrome always has a display name; create-if-missing
+// Email is optional. DisplayName remains required (chrome always has a display name; create-if-missing
 // defaults to Member). Response echoes IProfileDetails so the SPA copies server-accepted fields.
 #endregion
 
@@ -23,9 +23,10 @@ namespace TimeWarp.Architecture.Features.Profiles;
 public static partial class UpdateProfile
 {
   [ApiRoute("api/Users/Current/Profile", HttpVerb.Put)]
+  [Operation("profile.update", Description = "Replace the current user's profile settings.", Group = "profile")]
   public sealed partial class Command : IApiRequest, IProfileDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
-    public string Alias { get; set; } = null!;
+    public string DisplayName { get; set; } = null!;
     public string? Email { get; set; }
     public string Language { get; set; } = null!;
     public string Region { get; set; } = null!;
@@ -43,7 +44,7 @@ public static partial class UpdateProfile
 
   public sealed class Response : IProfileDetails
   {
-    public string Alias { get; set; }
+    public string DisplayName { get; set; }
     public string? Email { get; set; }
     public string Language { get; set; }
     public string Region { get; set; }
@@ -51,14 +52,14 @@ public static partial class UpdateProfile
     public bool Notifications { get; set; }
 
     public Response(
-      string alias,
+      string displayName,
       string? email,
       string language,
       string region,
       string theme,
       bool notifications)
     {
-      Alias = Guard.Against.NullOrEmpty(alias);
+      DisplayName = Guard.Against.NullOrEmpty(displayName);
       Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
       Language = Guard.Against.NullOrEmpty(language);
       Region = Guard.Against.NullOrEmpty(region);
@@ -70,7 +71,7 @@ public static partial class UpdateProfile
   public static MockResponseFactory<Response> GetMockResponseFactory()
   {
     return _ => new Response(
-      alias: "alias",
+      displayName: "alias",
       email: null,
       language: "en-US",
       region: "US",

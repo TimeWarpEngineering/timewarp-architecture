@@ -38,3 +38,8 @@ TWA0035 | Design | Info | OperationAttributeAnalyzer: hosted contract request ha
 TWA0036 | Design | Warning | IsoDateRenderingAnalyzer: date or time rendered as text in a non-ISO 8601 shape
 TWA0037 | Design | Warning | DirectFluentMessageBarAnalyzer: raw FluentMessageBar outside the shared components/MessageBar.razor and the shell MessageBars host
 TWA0038 | Maintainability | Warning | FileLengthAnalyzer: source file is longer than the line limit (500 by default; dotnet_diagnostic.TWA0038.max_lines overrides)
+TWA0039 | Design | Error | ContractAgreementAnalyzer: aggregate root lacks a member of its operation group's I*Details interface, or the type disagrees
+TWA0040 | Design | Error | ContractAgreementAnalyzer: Set<Name> command with one list has no Set<Name>(collection) mutation on the aggregate root
+TWA0041 | Design | Error | ContractAgreementAnalyzer: query response member does not project from an aggregate root member (exact name, compatible type) and is not [Computed]
+TWA0042 | Design | Warning | ContractAgreementAnalyzer: command in a rooted operation group matches no agreement check and has no [NotAggregate] reason
+TWA0043 | Design | Warning | ContractAgreementAnalyzer: operation group has operations in the slice namespace of more than one aggregate root

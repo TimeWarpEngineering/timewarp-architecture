@@ -315,14 +315,13 @@ When Blazor will bind and edit the payload:
 This is the core value over default .NET DTO patterns: **one shape, shared rules, no
 parallel view model**.
 
-**The Blazor side is validation-library-dependent.** Binding `EditForm` to the *interface* and
-running the shared validator requires a library that accepts an **explicit validator instance** —
-**Blazilla**: `<FluentValidator Validator="@(new RoleDetailsValidator())" />`. Libraries that
-resolve validators by the model's *runtime type* (Morris.Blazor.FluentValidation) can never find
-an `AbstractValidator<I*Details>` for a `Command` model; Blazored.FluentValidation worked but is
-deprecated. Living reference: `RoleForm.razor` (`web-spa/features/admin/roles/components/`).
+When an aggregate root lives in the slice (`<slice>.Domain`), its group's contracts agree with it
+by exact member name: details and query-response members exist on the root, a `Set<Name>` list
+command has a root `Set<Name>` mutation, a handler-derived response value is `[Computed]`, and any
+other operation carries `[NotAggregate("reason")]` (TWA0039–TWA0043, `tw-aggregate-pattern`).
 
-See [mutability.md](references/mutability.md).
+The Blazor side binds `EditForm` to the interface with an explicit validator instance (Blazilla);
+see [mutability.md](references/mutability.md) for that and for accessor intent.
 
 ### 4. Apply nullability — type declares intent
 

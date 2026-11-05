@@ -7,7 +7,7 @@
 // rule set via SetValidator so the Profile page form matches the PUT body. Avatar is display-only
 // (GetProfile) and is not on this interface. Length literals duplicate Profile.MaxDisplayNameLength
 // / MaxEmailLength — contracts must not reference the domain assembly. Email is optional
-// (progressive; never a register/session gate). Alias stays required so chrome always has a name
+// (progressive; never a register/session gate). DisplayName stays required so chrome always has a name
 // (GetProfile create-if-missing defaults to "Member").
 // Language and Region are BCL ISO catalogs, not handwritten lists: Languages/Regions hold Entry
 // rows (specific cultures + distinct ISO 3166-1 alpha-2); LanguageCodes/RegionCodes cache the
@@ -29,7 +29,7 @@ using System.Globalization;
 
 public interface IProfileDetails
 {
-  public string Alias { get; set; }
+  public string DisplayName { get; set; }
   public string? Email { get; set; }
   public string Language { get; set; }
   public string Region { get; set; }
@@ -151,12 +151,12 @@ public static class ProfileCatalog
 
 public sealed class ProfileDetailsValidator : AbstractValidator<IProfileDetails>
 {
-  public const int MaxAliasLength = 100;
+  public const int MaxDisplayNameLength = 100;
   public const int MaxEmailLength = 254;
 
   public ProfileDetailsValidator()
   {
-    RuleFor(details => details.Alias).NotEmpty().MaximumLength(MaxAliasLength);
+    RuleFor(details => details.DisplayName).NotEmpty().MaximumLength(MaxDisplayNameLength);
     RuleFor(details => details.Email)
       .MaximumLength(MaxEmailLength)
       .EmailAddress()

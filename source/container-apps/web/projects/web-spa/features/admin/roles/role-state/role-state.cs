@@ -8,7 +8,7 @@
 // LastCreatedRoleId remains for create-round-trip demos after RoleForm submit (navigates to
 // RoleDetailPage when set).
 // DraftPermissionIds (task 182-004 / 206): multi-select edits on RoleDetailPage before Save →
-// SetRolePermissions; seeded from GetRoles.RoleDto.PermissionIds on fetch (same pattern as
+// SetRolePermissions; seeded from GetRoles.RoleDto.Permissions on fetch (same pattern as
 // PrincipalState drafts). The list page is summary-only and does not mutate drafts.
 // LastSetRolePermissionsSucceeded is the page-side Fetch gate (failed 409 must not re-seed).
 // DraftAgentScopes (task 466) is the separate agent-scope list on the same page.

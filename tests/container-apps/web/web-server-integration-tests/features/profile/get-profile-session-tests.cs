@@ -77,9 +77,9 @@ public class Returns_
     GetProfile.Response profileResponse = await GetProfileWithCookie(setCookieValues!);
 
     // Task 150 regression: before the fix, an authorized session still resolved to the anonymous
-    // contract mock (Alias "alias") because ICurrentUserService's "UserId" claim is never issued.
-    profileResponse.Alias.ShouldBe("Member", "Task 150: authorized session must get the store-backed create-if-missing profile, not the anonymous mock.");
-    profileResponse.Alias.ShouldNotBe("alias", "Task 150: authorized session must not fall through to the anonymous contract mock.");
+    // contract mock (DisplayName "alias") because ICurrentUserService's "UserId" claim is never issued.
+    profileResponse.DisplayName.ShouldBe("Member", "Task 150: authorized session must get the store-backed create-if-missing profile, not the anonymous mock.");
+    profileResponse.DisplayName.ShouldNotBe("alias", "Task 150: authorized session must not fall through to the anonymous contract mock.");
     profileResponse.Avatar.ShouldStartWith("data:image/svg+xml;base64,");
   }
 
@@ -97,7 +97,7 @@ public class Returns_
       JsonSerializer.Deserialize<GetProfile.Response>(json, ContractSerializationDefaults.Options);
 
     profileResponse.ShouldNotBeNull();
-    profileResponse.Alias.ShouldBe("alias");
+    profileResponse.DisplayName.ShouldBe("alias");
   }
 
   private static async Task<PrincipalId> RegisterPasskey(IntegrationSoftwareAuthenticator authenticator)

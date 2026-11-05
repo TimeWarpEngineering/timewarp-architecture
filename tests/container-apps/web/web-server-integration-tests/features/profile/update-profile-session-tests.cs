@@ -74,7 +74,7 @@ public class Returns_
     UpdateProfile.Response? putBody =
       JsonSerializer.Deserialize<UpdateProfile.Response>(putJson, ContractSerializationDefaults.Options);
     putBody.ShouldNotBeNull();
-    putBody.Alias.ShouldBe(command.Alias);
+    putBody.DisplayName.ShouldBe(command.DisplayName);
     putBody.Email.ShouldBe(command.Email);
     putBody.Language.ShouldBe(command.Language);
     putBody.Region.ShouldBe(command.Region);
@@ -86,13 +86,13 @@ public class Returns_
     GetProfile.Response profileResponse =
       JsonSerializer.Deserialize<GetProfile.Response>(getJson, ContractSerializationDefaults.Options)
       ?? throw new InvalidOperationException("GetProfile response deserialized to null.");
-    profileResponse.Alias.ShouldBe(command.Alias);
+    profileResponse.DisplayName.ShouldBe(command.DisplayName);
     profileResponse.Email.ShouldBe(command.Email);
     profileResponse.Language.ShouldBe(command.Language);
     profileResponse.Region.ShouldBe(command.Region);
     profileResponse.Theme.ShouldBe(command.Theme);
     profileResponse.Notifications.ShouldBe(command.Notifications);
-    profileResponse.Alias.ShouldNotBe("alias", "Authorized PUT must persist store-backed fields, not the anonymous GET mock.");
+    profileResponse.DisplayName.ShouldNotBe("alias", "Authorized PUT must persist store-backed fields, not the anonymous GET mock.");
   }
 
   public static async Task Unauthorized_Given_No_Session()
@@ -107,7 +107,7 @@ public class Returns_
 
   private static UpdateProfile.Command ValidCommand() => new()
   {
-    Alias = "Ada Lovelace",
+    DisplayName = "Ada Lovelace",
     Email = "ada@example.com",
     Language = "en-US",
     Region = "US",

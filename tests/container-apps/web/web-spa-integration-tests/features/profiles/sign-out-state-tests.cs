@@ -76,7 +76,7 @@ public class SignOut_Should_
 
   private static void Seed(IStore store)
   {
-    SetProperty(store.GetState<ProfileState>(), nameof(ProfileState.Alias), "signed-in-alias");
+    SetProperty(store.GetState<ProfileState>(), nameof(ProfileState.DisplayName), "signed-in-alias");
     SetProperty(store.GetState<AuthorizationState>(), "RolesList", new List<Guid> { Guid.NewGuid() });
     SetProperty(store.GetState<CredentialsState>(), nameof(CredentialsState.CeremonyFailed), true);
     SetProperty(
@@ -87,7 +87,7 @@ public class SignOut_Should_
         new ListAgentHumanLinks.LinkSummary(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Pending")
       ]);
 
-    store.GetState<ProfileState>().Alias.ShouldBe("signed-in-alias");
+    store.GetState<ProfileState>().DisplayName.ShouldBe("signed-in-alias");
     store.GetState<AuthorizationState>().Roles.ShouldNotBeNull();
     store.GetState<CredentialsState>().CeremonyFailed.ShouldBeTrue();
     store.GetState<AgentLinksState>().Items.ShouldNotBeEmpty();
@@ -100,7 +100,7 @@ public class SignOut_Should_
 
   private static void AssertCleared(IStore store)
   {
-    store.GetState<ProfileState>().Alias.ShouldBeNull();
+    store.GetState<ProfileState>().DisplayName.ShouldBeNull();
     store.GetState<AuthorizationState>().Roles.ShouldBeNull();
     store.GetState<CredentialsState>().CeremonyFailed.ShouldBeFalse();
     store.GetState<AgentLinksState>().Items.ShouldBeEmpty();

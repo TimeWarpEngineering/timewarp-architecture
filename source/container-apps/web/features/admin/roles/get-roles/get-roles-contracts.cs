@@ -8,7 +8,7 @@
 // partial Query; GetRouteWithQueryString then merges the two generated parameter sets into
 // one query string. RoleDto is a flat read model separate from IRoleDetails because list
 // rows are display-only, and Response derives from ListResponse to carry TotalCount for
-// paging. PermissionIds on RoleDto (task 182-004 / 206) feed list summary chips and
+// paging. Permissions on RoleDto (task 182-004 / 206) feed list summary chips and
 // RoleDetailPage drafts — fine for the small product role catalog (RoleIds.All + demo creates).
 // AgentScopes on RoleDto (task 466) is the separate agent-scope list the same page edits.
 // GetMockResponseFactory serves the SPA's MockWebApiService offline.
@@ -87,7 +87,7 @@ public static partial class GetRoles
     public string Description { get; }
 
     /// <summary>Stored permission ids for this role (empty when none granted).</summary>
-    public List<string> PermissionIds { get; }
+    public List<string> Permissions { get; }
 
     /// <summary>Stored agent scopes for this role (empty when the role approves none).</summary>
     public List<string> AgentScopes { get; }
@@ -97,14 +97,14 @@ public static partial class GetRoles
       Guid roleId,
       string name,
       string description,
-      List<string>? permissionIds = null,
+      List<string>? permissions = null,
       List<string>? agentScopes = null
     )
     {
       RoleId = Guard.Against.NullOrEmpty(roleId);
       Name = Guard.Against.NullOrEmpty(name);
       Description = Guard.Against.NullOrEmpty(description);
-      PermissionIds = permissionIds ?? [];
+      Permissions = permissions ?? [];
       AgentScopes = agentScopes ?? [];
     }
   }

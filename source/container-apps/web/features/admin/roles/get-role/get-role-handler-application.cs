@@ -7,7 +7,7 @@
 // expected-failure path stays a value, not an exception, so the endpoint maps it to a status
 // code and the SPA renders it without try/catch. Task 473: one IRoleStore read loads the Role
 // with both child sets; the entity-to-response mapping is hand-written here on purpose (task 476
-// evaluates generating it). PermissionIds keep the stored order; AgentScopes are ordered like
+// evaluates generating it). Permissions keep the stored order; AgentScopes are ordered like
 // AgentScopes.All (task 466).
 #endregion
 

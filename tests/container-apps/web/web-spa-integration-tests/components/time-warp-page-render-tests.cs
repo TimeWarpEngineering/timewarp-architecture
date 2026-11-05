@@ -381,7 +381,7 @@ public partial class TimeWarpPage_Should_
     first.ShouldNotContain("Countess");
 
     ProfileState profile = provider.GetRequiredService<IStore>().GetState<ProfileState>();
-    SetProperty(profile, nameof(ProfileState.Alias), "Countess");
+    SetProperty(profile, nameof(ProfileState.DisplayName), "Countess");
     SetProperty(profile, nameof(ProfileState.Email), "ada@example.test");
     await renderer.Dispatcher.InvokeAsync(() =>
       provider.GetRequiredService<Subscriptions>().ReRenderSubscribers<ProfileState>());

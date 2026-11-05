@@ -69,3 +69,12 @@ One validator, many endpoints, one bindable shape.
 
 Get-only interfaces (e.g. `IPolicyDto`) shared across list endpoints: **no `set`**, not
 for `EditForm`, not `I*Details`.
+
+## Binding the interface in Blazor
+
+The Blazor side is validation-library-dependent. Binding `EditForm` to the *interface* and
+running the shared validator requires a library that accepts an **explicit validator instance** —
+**Blazilla**: `<FluentValidator Validator="@(new RoleDetailsValidator())" />`. Libraries that
+resolve validators by the model's *runtime type* (Morris.Blazor.FluentValidation) can never find
+an `AbstractValidator<I*Details>` for a `Command` model; Blazored.FluentValidation is
+deprecated. Living reference: `RoleForm.razor` (`web-spa/features/admin/roles/components/`).

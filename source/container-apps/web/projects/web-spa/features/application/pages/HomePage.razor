@@ -53,8 +53,8 @@
       <Authorized>
         <Card Title="Signed in">
           <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalAlignment="VerticalAlignment.Center" Wrap="true">
-            <FluentAvatar Image=@ProfileState.Avatar Name=@ProfileState.Alias Size="AvatarSize.Size32" />
-            <FluentText>@ProfileState.Alias</FluentText>
+            <FluentAvatar Image=@ProfileState.Avatar Name=@ProfileState.DisplayName Size="AvatarSize.Size32" />
+            <FluentText>@ProfileState.DisplayName</FluentText>
             <FluentSpacer />
             <NavLink href=@SettingsPage.GetPageUrl()>Settings</NavLink>
             <AuthorizeView Policy=@PermissionIds.AdminAccess Context="adminAuth">
