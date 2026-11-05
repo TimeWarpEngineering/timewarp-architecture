@@ -48,7 +48,7 @@ public sealed partial class SetRolePermissions
       role.SetPermissions(requested);
       await RoleStore.UpdateAsync(role, cancellationToken).ConfigureAwait(false);
 
-      return new Response([.. role.Permissions.Select(permission => permission.PermissionId)]);
+      return new Response(permissionIds: [.. role.Permissions.Select(permission => permission.PermissionId)]);
     }
   }
 }

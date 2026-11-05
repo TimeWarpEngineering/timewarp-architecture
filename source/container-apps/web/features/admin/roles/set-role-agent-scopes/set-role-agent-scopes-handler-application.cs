@@ -44,7 +44,7 @@ public sealed partial class SetRoleAgentScopes
       role.SetAgentScopes(command.Scopes ?? []);
       await RoleStore.UpdateAsync(role, cancellationToken).ConfigureAwait(false);
 
-      return new Response([.. role.AgentScopes.Select(scope => scope.Scope)]);
+      return new Response(scopes: [.. role.AgentScopes.Select(scope => scope.Scope)]);
     }
   }
 }
