@@ -39,6 +39,27 @@ What that means for this task:
   (`DisplayName`, `Permissions`); read current master, not the `f003919db` draft.
 - Proposal only. Stop at the options and Steve's question; do not split implementation tasks.
 
+## Goal (implementer restatement)
+
+Write a proposal that Steve can decide from. It covers which SPA pieces for the Roles slice could be
+built from the contracts, using the current master code. No product code changes.
+
+Acceptance criteria:
+
+- A kitchen `proposal.md` built on current master, not the `f003919db` draft. It contains:
+  - an inventory of the Roles SPA action sets that counts the mechanical pieces the way 476 did
+  - each option as a code document: what the developer writes, what is generated, what stays
+    hand-written
+- Each candidate piece (action sets, fetchers and snapshots, screen states, `[Destructive]`
+  confirm, mocks, forms and validation, CRUD scaffolding) has an analyzer-first answer: is a build
+  check that proves agreement enough before a generator is justified?
+- Every hand-written piece in a generator option has a required hook or a failing check. Required
+  hooks are extended partial methods with an access modifier (CS8795). Optional hooks are
+  `partial void`.
+- Facts that limit the options are stated with paths.
+- The proposal ends with Steve's question. No option is picked and no implementation tasks are
+  split.
+
 ## Boundary
 
 - Visuals and layout stay hand-written (Razor markup, CSS, copy). The generator emits no markup.
@@ -82,6 +103,58 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
 ## Session
 
 - Created: 2955984 (2026-11-02)
+- 2026-11-05 implementer (ganda task work): read current master Roles SPA, contracts, generators,
+  and the 476 proposal. Wrote `proposal.md` with options A–D as code. Marked
+  `contracts-frontend-example.md` as superseded. No product code changed.
+- `ganda repo audit` exits 0 with two warnings that were already there before this task:
+  - `kanban-landed`: 9 live claims on other tasks have no worktree here. I did not run `--fix`,
+    because it would act on other tasks' claims, which may be held on another machine.
+  - `source-file-line-cap`: 3 EF migration designer and snapshot files, plus one kanban research
+    runfile. The check is at warning severity since 469-001, and TWA0038 enforces the cap.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a6b13f79-d197-4902-975d-32873d675714, max-turns 500, Done — 2026-11-05T15:43:51Z
+
+## Results
+
+`proposal.md` in this kitchen is the deliverable. Findings:
+
+- **Mechanical pieces in Roles:** 4 server-bound handlers. 2 of them have mechanical request builds
+  (Create, Fetch). 4 success writes are mechanical (1 snapshot, 3 flags). 3 required hand-written
+  pieces read or seed local drafts. That is about 12 lines of mechanical body. SPA-wide, only 6 of
+  41 `DefaultApiHandler`s pass the contract request through.
+- **Feasibility limit:** Roslyn generators cannot see each other's output. A generated action set
+  gets no dispatch method from TimeWarp.State, no handler registration from TimeWarp.Mediator, and
+  no roster entry. A generated `[Page]` partial gets no route. Only bodies inside hand-written
+  partial types (Option B) work. The old draft's whole-set generator is Option C.
+- **Hazard case:** if draft seeding in FetchRoles were an optional hook and nobody wrote it, Save
+  would post an empty permission list and strip every non-Administrator role. No test covers that
+  path. Any generator must make that hook required (CS8795).
+- **Analyzer-first candidates (Option A):** A1 SPA contract coverage (it flags GetRole, UpdateRole,
+  and DeleteRole), A2 `[Destructive]` ⇔ `ConfirmAsync` (0 contracts use `[Destructive]`, 2 handlers
+  confirm), A3 `[CatalogAction]` ⇔ contract policy and description (CreateRole's description
+  already differs), A4 mock coverage (today a missing factory falls through to the real API with
+  only a Debug log).
+- **Option D:** `ContractResult<T>` slots replace the 9 hand-written success flags and ids, and the
+  sticky `LastCreatedRoleId` comparison in `RoleForm.razor`.
+- **Forms and validation:** nothing to generate. The form already binds the contract's
+  `IRoleDetails` and uses the contract's validator.
+- **Steve's question** is in section 7. No option is picked and no implementation tasks are split.
+
+### How to validate
+
+Smoke: open `kanban/in-progress/464-*/proposal.md`. Check each section 4 fact against the cited
+path:
+
+- `git grep -n "\[Destructive" -- source` finds no uses.
+- `git grep -l "DefaultApiHandler<" -- source/container-apps/web/projects/web-spa | wc -l` prints 42
+  (41 handlers plus `default-api-handler.cs`).
+- `git grep -n "UpdateRole\|DeleteRole" -- source/container-apps/web/projects/web-spa` finds
+  nothing outside comments.
+- `sed -n 55,70p source/container-apps/web/projects/web-spa/services/mocks/mock-web-api-service.cs`
+  shows the Debug fallback.
+
+Expect: every claim in sections 2 and 4 matches the code. Every option in section 5 is a code
+document, with input, generated code, and hand-written hooks. Required hooks carry an access
+modifier. Section 7 asks the question and does not pick.
 
 ## Notes
 
