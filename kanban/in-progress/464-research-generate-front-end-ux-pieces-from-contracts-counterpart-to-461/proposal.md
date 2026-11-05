@@ -40,8 +40,11 @@ builds. The mechanical code in Roles is about 12 lines of method body.
 SPA-wide counts, so the Roles numbers can be read in context (from `git grep` in `SPA/features`):
 
 - There are 41 `DefaultApiHandler` subclasses.
-- 6 of them pass `action.Command` through to the request. The other 35 build the request from
-  action fields or state.
+- 5 of them build the request from `action.Command`. Four return it as is (`UpdateProfile`,
+  `UpdateAssistantName`, `UpdateSiteSettings`, `UpdateXaiByokMode`), and CreateRole copies its
+  fields. The other 36 build the request from action fields or state. Reproduce with
+  `git grep -l "action.Command" -- SPA/features`: it lists 6 files, and the sixth (chat-state's
+  `ServerToClientMessageAction`) is not a `DefaultApiHandler`.
 - 19 override `HandleError`, so their error behavior is not the default toast.
 - 2 override `ConfirmAsync` (`ClearXaiApiKey`, `ClearUserXaiApiKey`).
 - There are 9 hand-written `Last…Succeeded` or `Last…Id` members.
@@ -281,6 +284,18 @@ generated. The seed hook is **required** because of 4f:
       private partial void OnRolesLoaded(GetRoles.Response response);
 ```
 
+When the generator emits that required declaration needs a rule. There are two, and B as written
+assumes the first:
+
+- **Required on every generated fetch** (every `[ContractHandler]` whose request is an `IQuery<…>`).
+  The generator cannot tell from symbols whether a snapshot feeds local state, so it always asks.
+  Cost: a fetch that seeds nothing still needs a one-line empty body. SPA-wide that is up to 16
+  handlers (the `DefaultApiHandler`s whose request is a `Query`). In Roles only FetchRoles is a
+  fetch, and it needs the body anyway.
+- **Opt-in** (for example `[ContractHandler(SeedsLocalState = true)]`). No empty bodies, but
+  forgetting the flag compiles. That brings back 4f's data loss, so under this rule 4f is
+  prevented only by the test in the section 7 notes.
+
 The snapshot slot needs a name. Either the generator owns `RolesList` (named after the `ListResponse<T>`
 item type), or the developer names it (`[ContractHandler(Snapshot = nameof(RolesList))]`).
 
@@ -290,8 +305,10 @@ B costs:
 - a generator plus tests in `timewarp-architecture-analyzers`, which ships to every generated app
 - `partial` on 4 action sets
 - one attribute per handler
-- rules for when `GetRequest` can be derived. SPA-wide, that is only 6 of 41 handlers (the
-  pass-through shape) plus the no-argument fetches.
+- one empty `On…Loaded` body per fetch that seeds nothing (up to 16 SPA-wide), under the
+  required-on-every-fetch rule above
+- rules for when `GetRequest` can be derived. SPA-wide, that is only 5 of 41 handlers (the
+  Action carries the contract Command) plus the no-argument fetches.
 
 ### Option C: generate whole action sets from `[ContractState(...)]` (the old draft)
 
@@ -365,15 +382,40 @@ if (RoleState.CreateRoleResult is { Succeeded: true, Response: { } created })
 }
 ```
 
+`Failed` cannot be generated into `HandleError`. 19 handlers override `HandleError` by hand
+(section 6 keeps them hand-written), and a generator cannot add a statement to a method someone
+else declared. So D needs one base-class change in the template SPA's own
+`SPA/features/base/api-handler.cs`. Today the private `HandleApiResponseAsync` matches the
+`OneOf` straight to `HandleError`. D adds an empty virtual that runs first:
+
+```csharp
+// ApiHandler<TAction, TRequest, TResponse> (proposed). Runs after the lock is released, before
+// HandleError, for every problem, including the synthetic 499 for cancellation.
+protected virtual void OnProblem(SharedProblemDetails problem) { }
+
+private async Task HandleApiResponseAsync(OneOf<TResponse, FileResponse, SharedProblemDetails> apiResponse, CancellationToken cancellationToken)
+{
+  await apiResponse.Match(
+    response => HandleSuccess(response, cancellationToken),
+    fileResponse => HandleFileResponse(fileResponse, cancellationToken),
+    problemDetails => { OnProblem(problemDetails); return HandleError(problemDetails, cancellationToken); }
+  );
+}
+```
+
 Who sets the slot:
 
-- **With B or C:** generated code sets `Running` in `GetRequest`, `Succeeded` in `HandleSuccess`,
-  and `Failed` in `HandleError`.
-- **With A only:** the slot is hand-written. A check could flag a `DefaultApiHandler` whose state
-  has a `ContractResult<TResponse>` slot for its response type when `HandleSuccess` never assigns
-  it.
+- **With B or C:** generated code sets `Running` in `GetRequest` and `Succeeded` in
+  `HandleSuccess`, and it overrides `OnProblem` to set `Failed`. A hand-written `HandleError`
+  (toast text, a field reset) is not touched.
+- **With A only:** the slot is hand-written in all three places. The check flags a
+  `DefaultApiHandler` whose state has a `ContractResult<TResponse>` slot for its response type when
+  any of these is missing: an assignment in `GetRequest` (`Running`), in `HandleSuccess`
+  (`Succeeded`), or in `OnProblem` (`Failed`). Without the `OnProblem` leg, a failed call would
+  leave the slot at `Running` for good.
 
-Scope: 3 members in Roles and 9 SPA-wide. Every page that reads one of them changes.
+Scope: one empty virtual on `ApiHandler`, plus 3 members in Roles and 9 SPA-wide. Every page that
+reads one of them changes. The 19 hand-written `HandleError` overrides stay as they are.
 
 ### Forms and validation: nothing to generate
 
