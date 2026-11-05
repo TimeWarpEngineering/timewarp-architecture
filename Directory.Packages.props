@@ -143,15 +143,15 @@
          that dependency is not a direct pin. -->
     <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.4" />
-    <!-- FastEndpoints 9.0.0-beta.7 (task 480) is the latest 9.x prerelease. Its net11.0 group
-         depends on Microsoft.AspNetCore.OpenApi >= 11.0.0-rc.3.26522.148, the same as this repo's
-         ASP.NET Core train. That package allows Microsoft.OpenApi [3.10.2, 4.0.0). The
-         foundation-server Microsoft.OpenApi reference lifts that 3.10.2 floor to the 3.11.0 pin. -->
+    <!-- FastEndpoints.OpenApi 9.0.0-beta.7 (net11.0) depends on Microsoft.AspNetCore.OpenApi
+         >= 11.0.0-rc.3.26522.148, the same as this repo's ASP.NET Core train. That package allows
+         Microsoft.OpenApi [3.10.2, 4.0.0). The foundation-server Microsoft.OpenApi reference lifts
+         that 3.10.2 floor to the 3.11.0 pin. -->
     <PackageVersion Include="FastEndpoints" Version="9.0.0-beta.7" />
     <PackageVersion Include="FastEndpoints.OpenApi" Version="9.0.0-beta.7" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.OpenApi" Version="3.11.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.18.7" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.19.0" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="11.0.0-rc.3.26522.148" />
