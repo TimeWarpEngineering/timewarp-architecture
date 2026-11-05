@@ -240,3 +240,8 @@ modifier. Section 7 asks the question and does not pick.
 ## Notes
 
 - Related: 461 (back-end counterpart). Draft produced read-only from origin/HEAD `f003919db`.
+
+## Decision
+
+Parked 2026-11-06 pending timewarp-state task 140 (re-evaluate State source generation against
+Nuru and Mediator). See `question.md` for the question as asked and why it is parked.
