@@ -53,11 +53,11 @@
     CanOpenProfile = allowed.Succeeded;
   }
 
-  private static string ShellUserName(string? identityName, string? alias)
+  private static string ShellUserName(string? identityName, string? displayName)
   {
-    if (!string.IsNullOrWhiteSpace(alias))
+    if (!string.IsNullOrWhiteSpace(displayName))
     {
-      return alias;
+      return displayName;
     }
 
     if (!string.IsNullOrWhiteSpace(identityName))

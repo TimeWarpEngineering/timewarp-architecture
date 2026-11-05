@@ -1,5 +1,5 @@
 #region Purpose
-// Contract for fetching the signed-in user's display profile (alias, prefs, avatar), with a mock for backend-less demos.
+// Contract for fetching the signed-in user's display profile (display name, prefs, avatar), with a mock for backend-less demos.
 #endregion
 
 #region Design

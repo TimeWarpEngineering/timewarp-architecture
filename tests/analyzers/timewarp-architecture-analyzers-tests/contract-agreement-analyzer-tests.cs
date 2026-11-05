@@ -6,8 +6,8 @@
 #region Design
 // Every test builds the three-project layout from ContractAgreementTestFixture (contracts and
 // domain as metadata to the application project), so diagnostics carry no location. Drift cases
-// edit a copy of the Roles or Profile shape with string.Replace; the replaced text is asserted by
-// the Replace call itself (ShouldContain) so a fixture edit cannot silently turn a test vacuous.
+// edit a copy of the Roles or Profile shape through Edit, which asserts the replaced text is present
+// (ShouldContain) so a fixture edit cannot silently turn a test vacuous.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -57,7 +57,7 @@ public class Should_Check_Contract_Agreement
   {
     // The pre-474 Profile drift: the contract said Alias, the domain says DisplayName.
     string contracts = Edit(ProfileContracts, "string DisplayName { get; set; }\n    string? Email", "string Alias { get; set; }\n    string? Email");
-    contracts = contracts.Replace("public string DisplayName { get; set; }", "public string Alias { get; set; }", StringComparison.Ordinal);
+    contracts = Edit(contracts, "public string DisplayName { get; set; }", "public string Alias { get; set; }");
 
     await Test
     (
@@ -271,8 +271,11 @@ public class Should_Check_Contract_Agreement
   public static async Task Given_Group_With_No_Root_In_Its_Slice_IsClean()
   {
     // Contracts drift freely when no root lives in the slice namespace: nothing is linked.
-    string domain = RoleDomain.Replace("namespace App.Features.Admin.Roles.Domain", "namespace App.Features.Elsewhere.Domain", StringComparison.Ordinal);
+    // The same two drifts flag TWA0041 and TWA0042 when the root is in the slice (tests above).
+    string contracts = Edit(RoleContracts, "public List<string> Permissions { get; set; } = [];", "public List<string> PermissionIds { get; set; } = [];");
+    contracts = Edit(contracts, "[NotAggregate(\"Removes the role; only the route id travels.\")]", "");
+    string domain = Edit(RoleDomain, "namespace App.Features.Admin.Roles.Domain", "namespace App.Features.Elsewhere.Domain");
 
-    await Test(RoleContracts, domain).RunAsync();
+    await Test(contracts, domain).RunAsync();
   }
 }
