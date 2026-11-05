@@ -51,6 +51,8 @@ Acceptance:
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-05)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session fabddce4-74d4-442b-801d-8dbe2219dad1, max-turns 500, Done — 2026-11-05T11:18:32Z
+- Review oracle: general reviewer (claude, model claude-opus-5-5), effort 1, max-turns 80, 1 round, disposition accepted-exceptions — 2026-11-05
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f689ed23-71f2-461a-ac05-3cad9b2a866a, max-turns 80, artifacts general.md, merged.md — 2026-11-05T11:21:39Z
 
 ## Results
 
@@ -88,6 +90,19 @@ Gates (all run 2026-11-05 in this worktree):
   a done-task research file; that check is warning-only by policy (TWA0038 enforces). Nothing for
   `--fix` to change.
 
+### Review disposition
+
+- Rounds: 1. Roster: general. Effort: 1.
+- Final counts: bug 0, suggestion 0, nit 1 wontfix. Open: 0.
+- Disposition: **accepted-exceptions**. M1 (nit): the FastEndpoints pin comment credits the
+  `Microsoft.AspNetCore.OpenApi` dependency to FastEndpoints instead of FastEndpoints.OpenApi. That
+  wording predates this change and the version facts are correct. Wontfix; fold it into the next
+  FastEndpoints bump.
+- The reviewer verified the beta.7 nuspec dependency floor, found no `Idempotency(` or agent API
+  usage, and re-ran `./bin/dev build` (0 warnings, 0 errors).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ### How to validate
 
 Smoke: `./bin/dev build && ./bin/dev test && ./bin/dev template-smoke`
@@ -96,6 +111,10 @@ Expect: the build reports 0 Warning(s) and 0 Error(s), the test summary reports 
 passed", and template-smoke prints "Template smoke SUCCEEDED". `grep -nE
 'FastEndpoints|Blazilla|Markdig|simple-icons' Directory.Packages.props` shows 9.0.0-beta.7, 2.4.3,
 1.6.0, and 16.36.0.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
