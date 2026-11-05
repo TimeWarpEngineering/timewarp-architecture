@@ -143,14 +143,12 @@
          that dependency is not a direct pin. -->
     <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.4" />
-    <!-- FastEndpoints 9.0.0-beta.6 (task 257) is the latest 9.x prerelease. Its net11.0 group
-         depends on Microsoft.AspNetCore.OpenApi >= 11.0.0-rc.2.26504.105. The direct
-         Microsoft.AspNetCore.OpenApi reference on foundation-server lifts that floor to this
-         repo's ASP.NET Core train (11.0.0-rc.3.26522.148). That package allows Microsoft.OpenApi
-         [3.10.2, 4.0.0). The foundation-server Microsoft.OpenApi reference lifts that 3.10.2
-         floor to the 3.11.0 pin. -->
-    <PackageVersion Include="FastEndpoints" Version="9.0.0-beta.6" />
-    <PackageVersion Include="FastEndpoints.OpenApi" Version="9.0.0-beta.6" />
+    <!-- FastEndpoints 9.0.0-beta.7 (task 480) is the latest 9.x prerelease. Its net11.0 group
+         depends on Microsoft.AspNetCore.OpenApi >= 11.0.0-rc.3.26522.148, the same as this repo's
+         ASP.NET Core train. That package allows Microsoft.OpenApi [3.10.2, 4.0.0). The
+         foundation-server Microsoft.OpenApi reference lifts that 3.10.2 floor to the 3.11.0 pin. -->
+    <PackageVersion Include="FastEndpoints" Version="9.0.0-beta.7" />
+    <PackageVersion Include="FastEndpoints.OpenApi" Version="9.0.0-beta.7" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.OpenApi" Version="3.11.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.18.7" />
@@ -179,10 +177,10 @@
          is gone (MSB4057 if those v6 target names stay in PrepareForBuildDependsOn). -->
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="7.0.1" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
-    <PackageVersion Include="Blazilla" Version="2.4.2" />
+    <PackageVersion Include="Blazilla" Version="2.4.3" />
     <!-- Task 353: CommonMark parser for SafeMarkdown. Raw HTML is off and the SPA renders the AST
          itself, so no HTML string from Markdig reaches the DOM. -->
-    <PackageVersion Include="Markdig" Version="1.5.1" />
+    <PackageVersion Include="Markdig" Version="1.6.0" />
     <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.16" />
     <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.16" />
     <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.16" />
@@ -195,7 +193,7 @@
     <!-- Task 335-002: browser (WASM) exporter. web-spa references it in Debug only. -->
     <PackageVersion Include="TimeWarp.State.DevTools.Wasm" Version="12.0.0-beta.16" />
     <PackageVersion Include="timewarp-heroicons" Version="2.2.0" />
-    <PackageVersion Include="timewarp-simple-icons" Version="16.35.0" />
+    <PackageVersion Include="timewarp-simple-icons" Version="16.36.0" />
   </ItemGroup>
 
   <ItemGroup Label="Aspire Packages">
