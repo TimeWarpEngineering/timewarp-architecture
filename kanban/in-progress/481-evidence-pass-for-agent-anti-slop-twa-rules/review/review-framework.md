@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 235
-- Effort: 2
+- Lines changed: 166
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -18,6 +18,8 @@
   with citations, no analyzer code (`## Goal (implementer restatement)` in task.md)
 - **Reviewer roster:** general (effort 2)
 - **Session IDs:** review oracle, ganda task work headless (claude-opus-5-5)
+- **Round 2 scope:** the fix delta `82a46d8fd..6c3fa0457` (`task.md` only). Effort 1, roster
+  general, turn cap 80 (from the by-diff budget above).
 
 ## Ground rules
 

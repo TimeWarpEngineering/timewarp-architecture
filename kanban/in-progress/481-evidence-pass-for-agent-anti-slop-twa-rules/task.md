@@ -63,11 +63,15 @@ Acceptance criteria:
   renumbered every row reference in the rule-pack paragraph, the follow-on proposals, and How to
   validate. M2: row 12 headline is now `~11`, matching its repo split. I re-summed every other
   row's split against its headline; all agree. Kanban-only change, so no build or test ran.
+- 2026-11-06 review oracle round 2 (claude-opus-5-5, headless, effort 1, roster general,
+  turn cap 80). Reviewed the fix delta `82a46d8fd..6c3fa0457`. M1 and M2 were verified fixed,
+  and no new findings were raised. Disposition: clean. Trail: `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
-
+- Round 2: Done
 ## Notes
 
 - Source: X web-rewrite agents eval option A (REWORK). https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-05-x-web-rewrite-agents.md (PR https://github.com/TimeWarpEngineering/timewarp-intel/pull/103). Busara: mine real agent PRs / Learnings first; ship one TWA rule at a time. Confirmed by Steven 2026-11-05.
@@ -217,3 +221,14 @@ Expect:
 - The `git log` count is in the hundreds (992 on 2026-11-06), which shows the window holds a
   real corpus.
 - The final `diff --stat` prints nothing: this task changed no product `source/` or `tests/`.
+
+### Review
+
+- **Rounds:** 2. Round 1 was effort 2, and round 2 was effort 1 on the fix delta. The roster
+  was general in both rounds.
+- **Final counts:** bug 1 fixed, suggestion 0, nit 1 fixed. 0 open, 0 wontfix.
+  - M1: the table was not in hit-count order.
+  - M2: row 12's count disagreed with its split.
+- **Disposition:** clean.
+- **Trail:** `review/review-framework.md`, `review/round-1/merged.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
