@@ -18,6 +18,8 @@
 // The count and the insert are two calls, so concurrent uploads from one person can pass
 // the cap by a few files; the cap bounds abuse, not an exact quota.
 // The blob is written first; if the row insert throws, the blob is deleted.
+// The response members come from FeedbackContractMap.Project, the attachment projection
+// GetFeedback and FeedbackAdminView share (task 479); the handler wraps it with named arguments.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -25,7 +27,6 @@ namespace TimeWarp.Architecture.Features.Feedback.Application;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using static TimeWarp.Architecture.Features.Feedback.UploadFeedbackAttachment;
-using DownloadFeedbackAttachmentContract = TimeWarp.Architecture.Features.Feedback.DownloadFeedbackAttachment;
 
 public sealed class UploadFeedbackAttachment
 {
@@ -134,12 +135,13 @@ public sealed class UploadFeedbackAttachment
         throw;
       }
 
+      FeedbackContractMap.AttachmentProjection projection = FeedbackContractMap.Project(attachment);
       return new Response(
-        attachment.Id.Value,
-        attachment.FileName,
-        attachment.ContentType,
-        attachment.Size,
-        DownloadFeedbackAttachmentContract.DownloadPath(attachment.Id.Value));
+        attachmentId: projection.AttachmentId,
+        fileName: projection.FileName,
+        contentType: projection.ContentType,
+        size: projection.Size,
+        downloadPath: projection.DownloadPath);
     }
   }
 }

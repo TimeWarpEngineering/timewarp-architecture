@@ -6,9 +6,8 @@
 // Missing id returns a 404-shaped SharedProblemDetails through the OneOf failure channel — the
 // expected-failure path stays a value, not an exception, so the endpoint maps it to a status
 // code and the SPA renders it without try/catch. Task 473: one IRoleStore read loads the Role
-// with both child sets; the entity-to-response mapping is hand-written here on purpose (task 476
-// evaluates generating it). Permissions keep the stored order; Role.AgentScopes already reads back
-// in catalog order (task 478), so the handler projects it as is.
+// with both child sets. The members come from RoleContractMap.Project, the projection GetRoles
+// shares (task 479); the handler wraps it with named arguments.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
@@ -37,12 +36,13 @@ public sealed partial class GetRole
         return RoleNotFound(query.RoleId);
       }
 
+      RoleContractMap.RoleProjection projection = RoleContractMap.Project(role);
       return new Response(
-        role.Id.Value,
-        role.Name,
-        role.Description,
-        [.. role.Permissions.Select(permission => permission.PermissionId)],
-        [.. role.AgentScopes.Select(scope => scope.Scope)]);
+        roleId: projection.RoleId,
+        name: projection.Name,
+        description: projection.Description,
+        permissions: projection.Permissions,
+        agentScopes: projection.AgentScopes);
     }
 
     internal static SharedProblemDetails RoleNotFound(Guid roleId) => new()

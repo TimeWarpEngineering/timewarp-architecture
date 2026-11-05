@@ -77,7 +77,7 @@ public sealed class SetFeedbackSeverity
       }
 
       return new Response(
-        await FeedbackContractMap
+        item: await FeedbackContractMap
           .AdminViewAsync(item, AttachmentStore, ProfileEmailLookup, OwnerNames, cancellationToken)
           .ConfigureAwait(false));
     }

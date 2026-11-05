@@ -7,9 +7,9 @@
 // small: four product roles plus admin-created ones), so there is no per-row grant query.
 // Ordering by name keeps the list stable for UI and tests. Search (task 345) keeps roles whose
 // name contains the trimmed term, ignoring case. TotalCount equals the number of matching rows —
-// the handler does not implement the contract's OpenData paging parameters. The entity-to-DTO
-// mapping is hand-written here on purpose (task 476 evaluates generating it); Role.AgentScopes
-// already reads back in catalog order (task 478), so the handler projects it as is.
+// the handler does not implement the contract's OpenData paging parameters. The members
+// come from RoleContractMap.Project, the projection GetRole shares (task 479); the handler wraps
+// it with named arguments.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
@@ -40,15 +40,16 @@ public sealed partial class GetRoles
         .. roles
           .Where(role => search is null || role.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
           .OrderBy(role => role.Name)
-          .Select(role => new RoleDto(
-            role.Id.Value,
-            role.Name,
-            role.Description,
-            [.. role.Permissions.Select(permission => permission.PermissionId)],
-            [.. role.AgentScopes.Select(scope => scope.Scope)]))
+          .Select(RoleContractMap.Project)
+          .Select(projection => new RoleDto(
+            roleId: projection.RoleId,
+            name: projection.Name,
+            description: projection.Description,
+            permissions: projection.Permissions,
+            agentScopes: projection.AgentScopes))
       ];
 
-      return new Response(items.Count, [.. items]);
+      return new Response(totalCount: items.Count, items: [.. items]);
     }
   }
 }

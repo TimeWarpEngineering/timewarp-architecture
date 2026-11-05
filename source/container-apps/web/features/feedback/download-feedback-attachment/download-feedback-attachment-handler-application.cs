@@ -87,7 +87,7 @@ public sealed class DownloadFeedbackAttachment
         return FeedbackProblems.AttachmentGone();
       }
 
-      return new Response(content, attachment.ContentType, attachment.FileName);
+      return new Response(content: content, contentType: attachment.ContentType, fileName: attachment.FileName);
     }
 
     private async Task<bool> HasCrossOwnerReadAsync(PrincipalId principalId, CancellationToken cancellationToken)
