@@ -72,15 +72,20 @@ root's `Id`. Compatible types: the same type and nullability; a value wrapper an
 (`RoleId` ↔ `Guid` through `Value`, `PermissionGrant` ↔ `string` through its one property); two
 collections with compatible elements; two enums with the same member names (the wire enum that
 mirrors a domain enum, because contracts must not reference domain; values are not compared); and
-`T?` against `T?` of compatible `T`. `Guid?` against `Guid` is still drift.
+`T?` against `T?` of compatible `T`. On the write side (details members, `Set` elements), `Guid?`
+against `Guid` is still drift. A query response may widen the root's `T` to `T?`: the handler may
+null a projected value for one audience (`FeedbackActivityEntry.AuthorPrincipalId` on the filer's
+copy), and the member is still checked, not `[Computed]`. `T` against a root `T?` is drift on
+both sides.
 
 Query responses are walked past the top level. A member and its root member that are both classes
 (or both collections of classes) are compared member by member. For example,
 `FeedbackActivityEntry` projects from the owned `FeedbackActivity` child, and the message names the
-child. On a non-list response, a member with no root member of its name whose type is a contract
-class is the wrapped projection. `GetFeedbackForAdmin.Response.Item` (`FeedbackAdminView`) and
-`ListMyFeedback.Response.Items` are checked against the root one level down, the way a
-`ListResponse<T>` is checked through `T`.
+child. A non-list response wraps its projection when its only non-`[Computed]` member has no root
+member of its name and is a contract class (or a list of one). `GetFeedbackForAdmin.Response.Item`
+(`FeedbackAdminView`) and `ListMyFeedback.Response.Items` are checked against the root one level
+down, the way a `ListResponse<T>` is checked through `T`. A response that projects any other member
+has no wrapper, so an unmatched class member there is reported as missing.
 
 | Id | Severity | Requires |
 |----|----------|----------|

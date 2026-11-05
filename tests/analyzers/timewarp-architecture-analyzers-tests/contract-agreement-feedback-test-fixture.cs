@@ -7,7 +7,9 @@
 // Task 475, the second shape after Roles and Profile. It is a reduced copy of the template's
 // feedback slice. It keeps every rule that slice needs and drops the members that add nothing.
 // The domain enums use other numeric values than the wire enums, which proves values are not
-// compared, only names. Runs through ContractAgreementTestFixture.Test like the other shapes.
+// compared, only names. FeedbackActivityEntry.AuthorPrincipalId is Guid? against the root's Guid,
+// which is read widening (redaction), not [Computed]. Runs through ContractAgreementTestFixture.Test
+// like the other shapes.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Tests;
@@ -35,7 +37,6 @@ internal static class ContractAgreementFeedbackShape
       {
         public int Sequence { get; set; }
         public FeedbackActivityKind Kind { get; set; }
-        [Computed]
         public Guid? AuthorPrincipalId { get; set; }
         public string? Body { get; set; }
         public FeedbackStatus? ToStatus { get; set; }

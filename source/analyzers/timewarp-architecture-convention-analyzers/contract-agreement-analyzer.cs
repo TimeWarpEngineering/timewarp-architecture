@@ -37,7 +37,8 @@
 //     is checked through T. Members inherited from another assembly (BaseResponse, ListResponse)
 //     are skipped. [Computed] on the response, the item class, or the member skips it. Child
 //     classes and a wrapped projection are walked too (ContractAgreementProjection, task 475); the
-//     message then names the child or wrapped class and the type it projects from.
+//     message then names the child or wrapped class and the type it projects from. A response may
+//     widen a root T to T? (redaction); TWA0039 and TWA0040 may not.
 //   TWA0042 (warning): a command that implements no details interface and is not a Set-list
 //     command. Opt out with [NotAggregate("reason")] on the request.
 // Drift is an error, not a silent mapping: the only name rule is the "<Root>Id" key (see Types).

@@ -83,14 +83,15 @@ public class Should_Check_Contract_Agreement
 
   public static async Task Given_Details_Member_Nullability_Disagrees_Flags_TWA0039()
   {
+    // The write side is strict; GetProfile.Response.Email (string? against the root's string) is
+    // read widening and passes TWA0041 (task 475).
     string domain = Edit(ProfileDomain, "public string? Email { get; private set; }", "public string Email { get; private set; } = \"\";");
 
     await Test
     (
       ProfileContracts,
       domain,
-      Flag(ContractAgreementAnalyzer.DetailsMemberId, "Profile", "IProfileDetails", "Email", ProfileGroup, Mismatch("Profile", "Email", "string", "string?")),
-      Flag(ContractAgreementAnalyzer.ProjectionId, "App.Features.Profiles.GetProfile.Response", "Email", "Profile", ProfileGroup, Mismatch("Profile", "Email", "string", "string?"))
+      Flag(ContractAgreementAnalyzer.DetailsMemberId, "Profile", "IProfileDetails", "Email", ProfileGroup, Mismatch("Profile", "Email", "string", "string?"))
     ).RunAsync();
   }
 

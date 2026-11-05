@@ -56,6 +56,11 @@ Acceptance:
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-05)
 - Implemented: ganda task work implement oracle (Claude Opus 5.5), 2026-11-05.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3aa86ac9-d70e-4fbd-b279-cae8c52cb00e, max-turns 500, Done — 2026-11-05T04:56:59Z
+- Review oracle, round 1: general reviewer (Claude Opus 5.5, model claude-opus-5-5), effort 3, turn
+  cap 200, under ganda task work, 2026-11-05. The result is Blocked: a fix pass is needed for open
+  findings M1, M2, and M3.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d360989f-d0af-4deb-9d1b-a58e768a274e, max-turns 200, artifacts general.md, merged.md — 2026-11-05T05:01:45Z
+- Fix pass 1 (implement-fix-2 oracle, Claude Opus 5.5), 2026-11-05: M1–M3 fixed.
 
 ## Results
 
@@ -72,14 +77,16 @@ Acceptance:
   with Design regions):
   1. *Mirrored enums:* two enums agree when their member names are the same set. Values are not
      compared. Contracts must not reference domain, so a wire `FeedbackStatus` mirrors the domain's
-     enum, and the names are what travel. `T?` against `T?` compares `T`. `Guid?` against `Guid` is
-     still drift. When the names differ, the message lists which side has which names, and it uses
+     enum, and the names are what travel. `T?` against `T?` compares `T`. On the write side
+     (TWA0039, TWA0040), `Guid?` against `Guid` is still drift. On the read side (TWA0041), a
+     response may widen a root `T` to `T?` (fix pass 1, M1). When the names differ, the message lists which side has which names, and it uses
      full type names because the short names print alike.
   2. *Child projection:* a response member and its root member that are both classes, or both
      collections of classes, are walked member by member. `FeedbackActivityEntry` projects from the
      owned `FeedbackActivity`, and the message names the child.
-  3. *Wrapped projection:* on a non-list response, a member with no root member of its name whose
-     type is a class in the contracts assembly is the projection. It is checked against the root one
+  3. *Wrapped projection:* a non-list response whose only non-`[Computed]` member has no root
+     member of its name and is a class in the contracts assembly wraps the projection. A response
+     that projects any other member has no wrapper (fix pass 1, M2). It is checked against the root one
      level down: `GetFeedbackForAdmin.Response.Item` (`FeedbackAdminView`) and
      `ListMyFeedback.Response.Items`. This is not a name mapping. A drifted member still fails,
      because the wrapped class's members are then checked against the root.
@@ -94,9 +101,9 @@ Acceptance:
   - `Attachments` on GetFeedback and FeedbackAdminView: the attachment store.
   - `FilerHasEmail`, `OwnerDisplayName` on the admin view and the list item, and
     `EmailCopyAvailable`: read from the profile slice.
-  - `FeedbackActivityEntry.AuthorPrincipalId`: the contract is `Guid?` against the domain's `Guid`
-    because the handler redacts it to null on the filer's copy. That was a deliberate contract
-    decision, not drift, so neither side changed.
+  - `FeedbackActivityEntry.AuthorPrincipalId` is no longer `[Computed]` (fix pass 1, M1). It is
+    `Guid?` against the domain's `Guid` because the handler redacts it to null on the filer's copy.
+    That is read widening, which TWA0041 now accepts, so the member is checked.
 - **`[NotAggregate]`, each reason in the attribute:**
   - Upload, remove, and download attachment: `FeedbackAttachment` is its own entity, and the
     attachment store is not `FeedbackItem` state.
@@ -107,7 +114,25 @@ Acceptance:
   - The `NotAggregateAttribute` Design and `tw-aggregate-pattern` now name this third case: a
     named mutation that no check covers. A real check for named mutations belongs with task 476.
 - **Mismatches fixed:** none needed. The wire enums matched the domain by name, the reply bodies are
-  entry bodies, and the nullable author is deliberate redaction.
+  entry bodies, and the nullable author is deliberate redaction (read widening).
+- **Fix pass 1 (review round 1, M1–M3, all fixed):**
+  - M1: `ContractAgreementTypes.ReadCompatible` accepts a response `T?` (Nullable<T> or a nullable
+    reference) against a root `T`. Only TWA0041 uses it; details and Set stay strict. One 474 test
+    changed: the Profile `Email` nullability drift now expects TWA0039 only, since
+    `GetProfile.Response.Email` (`string?` against `string`) is widening.
+  - M2: one wrapper per response, and only when it is the response's single non-`[Computed]`
+    member. Mutation on the product: dropping `[Computed]` from `GetFeedback.Response.Attachments`
+    gives `TWA0041 … GetFeedback.Response.Attachments … 'FeedbackItem' has no public member
+    'Attachments'`, one error, not one per `Attachment` member. Restored.
+  - M3: the `ComputedAttribute` Design and summary list child and wrapped classes, and say a
+    redacted value is `T?`, not `[Computed]`.
+  - New analyzer tests (5): narrowing still drifts, reference widening is clean, details widening
+    flags TWA0039, a directly projecting response reports `Item` itself, and two unmatched members
+    are both reported. The child-entry disagreement test is retargeted to `int` against `long`.
+  - Gates re-run after fix pass 1: `dev build` 0 warnings, 0 errors; `dev test --group fast` 14/14
+    projects (analyzers 305/305); web-jaribu-tests 464/464; `dev template-smoke` passed;
+    `dev lint-skills` passed; `ganda repo audit` exit 0 (only the warnings that were already
+    there: kanban-landed claims and the line cap on migration Designer files).
 - **Mutation check:** I dropped `[Computed]` from `AuthorPrincipalId` and from `FilerHasEmail`,
   and added an `Extra` member to the wire `FeedbackSeverity`. web-application then failed with 6
   TWA0041 errors: the child entry's author, both nullable severities on the child entry, the
@@ -123,8 +148,8 @@ Acceptance:
   beta.31), so the analyzer change ships in beta.32 with 474. No bump.
 - **Gates:**
   - `dev build`: 0 warnings, 0 errors.
-  - `dev test --group fast`: 14/14 projects. The analyzer tests are 300 with 0 failed; 11 are new
-    in `contract-agreement-feedback-analyzer-tests.cs`, with the shape in
+  - `dev test --group fast`: 14/14 projects. The analyzer tests are 305 with 0 failed (after fix
+    pass 1); 16 are in `contract-agreement-feedback-analyzer-tests.cs`, with the shape in
     `contract-agreement-feedback-test-fixture.cs`.
   - web-jaribu-tests (co-located feedback suites): 464/464.
   - web-server-integration-tests: 436 passed, 1 skipped (the manual `RunForever`).
@@ -139,18 +164,52 @@ Acceptance:
 ### How to validate
 
 - **Smoke:** `./bin/dev build`, then
-  `(cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet run)`. To see the new rules
-  fire, delete `[Computed]` above `AuthorPrincipalId` in
-  `source/container-apps/web/features/feedback/feedback-activity-entry-contracts.cs` and run
+  `(cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet run)`. To see the rules
+  fire, delete `[Computed]` above `Attachments` in
+  `source/container-apps/web/features/feedback/get-feedback/get-feedback-contracts.cs` and run
   `(cd source/container-apps/web/projects/web-application && dotnet build)`.
 - **Expect:**
   - The build reports 0 warnings and 0 errors.
   - The analyzer tests report `failed: 0`, and the `Should_Check_Contract_Agreement_For_Feedback_Shape`
     cases are included.
-  - With `[Computed]` removed, web-application fails with
-    `TWA0041: 'TimeWarp.Architecture.Features.Feedback.FeedbackActivityEntry.AuthorPrincipalId' does
-    not project from 'FeedbackActivity' (operation group 'feedback'): 'FeedbackActivity.AuthorPrincipalId'
-    is Guid but the contract member is Guid?`. Restore the attribute afterwards.
+  - With `[Computed]` removed, web-application fails with exactly one error:
+    `TWA0041: 'TimeWarp.Architecture.Features.Feedback.GetFeedback.Response.Attachments' does not
+    project from 'FeedbackItem' (operation group 'feedback'): 'FeedbackItem' has no public member
+    'Attachments'`. Restore the attribute afterwards.
+  - `FeedbackActivityEntry.AuthorPrincipalId` (`Guid?` against the root's `Guid`) has no
+    `[Computed]` and builds clean.
+
+### Review
+
+- **Round 1** (general, effort 3), with `review/round-1/merged.md` as the live ledger:
+  - Counts: 1 bug, 1 suggestion, and 1 nit, all open. Nothing is fixed or wontfix yet.
+  - M1 (bug): `[Computed]` on `FeedbackActivityEntry.AuthorPrincipalId` exempts a member that
+    does project from the root, which only silences TWA0041.
+  - M2 (suggestion): the wrapper rule accepts every unmatched contract-class member, but the
+    Design says one.
+  - M3 (nit): the `ComputedAttribute` Design does not list child and wrapped classes.
+- **Reviewer re-ran:**
+  - Analyzer tests: 300/300.
+  - `web-application` build: 0 warnings, 0 errors.
+  - `ganda repo audit`: only the warnings that were already there.
+  - Enum-by-name agreement against `FeedbackContractMap` and the string enum converter: confirmed.
+  - No feedback Jaribu or Playwright file changed.
+- **Disposition:** fix pass 1 fixed M1, M2, and M3 (see `merged.md`). Round 2 is next.
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+
+## Learnings
+
+- Misread (minor): the task's gate says "feedback Jaribu **and Playwright** tests unchanged". The
+  Goal restatement says only "feedback Jaribu tests unchanged". It had no effect, because no
+  Playwright file changed. A restatement should keep every gate the task names.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
+- Fix pass 1: M1, M2, M3 fixed; awaiting round 2
 
 ## Notes
 

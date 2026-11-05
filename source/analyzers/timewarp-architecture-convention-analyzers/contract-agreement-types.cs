@@ -23,7 +23,13 @@
 //      domain, so a wire enum mirrors the domain enum (FeedbackStatus in Features.Feedback and in
 //      Features.Feedback.Domain); the names are what travel. Values are not compared.
 //   5. Both sides are Nullable<T> of compatible T (FeedbackStatus? and the domain's FeedbackStatus?).
-//      Guid? against Guid is still drift: only the two-sided form unwraps.
+// Write side (TWA0039 details, TWA0040 Set elements): Guid? against Guid is still drift, because a
+// contract that may send null would write null into a member the root says is never null. Only the
+// two-sided form unwraps.
+// Read side (TWA0041 projections, ReadCompatible): the contract may widen a root T to T? (Guid? for
+// Guid, string? for string). A handler may redact a projected value for one audience:
+// FeedbackActivityEntry.AuthorPrincipalId is null on the filer's copy. The member still projects
+// from the root, so it is checked, not [Computed]. Narrowing (T against a root T?) is still drift.
 // A class-typed member that none of these accepts may still project member by member; that walk
 // belongs to ContractAgreementProjection. Messages use the short type name unless both sides
 // print the same, which is the mirrored-type case; then they use the full name.
@@ -116,6 +122,25 @@ internal static class ContractAgreementTypes
 
   /// <summary>True when a contract type agrees with a root type (see Design).</summary>
   public static bool Compatible(ITypeSymbol contract, ITypeSymbol root) => Compatible(contract, root, depth: 0);
+
+  /// <summary>
+  /// True when a query-response type agrees with a root type it projects from: <see cref="Compatible(ITypeSymbol, ITypeSymbol)"/>,
+  /// or the contract widens the root's T to T? (read widening, see Design).
+  /// </summary>
+  public static bool ReadCompatible(ITypeSymbol contract, ITypeSymbol root)
+  {
+    if (Compatible(contract, root)) return true;
+
+    if (NullableArgument(contract) is { } contractValue && NullableArgument(root) is null)
+    {
+      return Compatible(contractValue, root);
+    }
+
+    return !contract.IsValueType
+      && contract.NullableAnnotation == NullableAnnotation.Annotated
+      && root.NullableAnnotation != NullableAnnotation.Annotated
+      && Compatible(contract.WithNullableAnnotation(NullableAnnotation.NotAnnotated), root);
+  }
 
   /// <summary>Null when <paramref name="member"/> agrees with the root member of its name, else why not.</summary>
   public static string? Disagreement(INamedTypeSymbol root, Dictionary<string, IPropertySymbol> rootProperties, IPropertySymbol member)

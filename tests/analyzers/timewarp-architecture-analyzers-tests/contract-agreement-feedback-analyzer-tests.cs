@@ -1,6 +1,7 @@
 #region Purpose
 // Tests for the task 475 contract-agreement rules on the FeedbackItem shape: mirrored wire enums,
-// child-class projection (activity entries), and a projection wrapped in one response member.
+// child-class projection (activity entries), read widening (T? against a root T), and a projection
+// wrapped in one response member.
 #endregion
 
 #region Design
@@ -83,14 +84,51 @@ public class Should_Check_Contract_Agreement_For_Feedback_Shape
 
   public static async Task Given_Child_Entry_Member_Disagrees_Flags_TWA0041_On_The_Child()
   {
-    string contracts = Edit(Contracts, "[Computed]\n    public Guid? AuthorPrincipalId", "public Guid? AuthorPrincipalId");
+    string contracts = Edit(Contracts, "public int Sequence { get; set; }", "public long Sequence { get; set; }");
 
     await Test
     (
       contracts,
       Domain,
+      Flag(ContractAgreementAnalyzer.ProjectionId, "App.Features.Feedback.FeedbackActivityEntry", "Sequence", "FeedbackActivity", Group,
+        Mismatch("FeedbackActivity", "Sequence", "int", "long"))
+    ).RunAsync();
+  }
+
+  public static async Task Given_Response_Widens_Root_Reference_To_Nullable_IsClean()
+  {
+    // Read widening covers reference nullability too: string? against the root's string.
+    string contracts = Edit(Contracts, "public string Title { get; set; } = \"\";\n      public FeedbackStatus Status", "public string? Title { get; set; }\n      public FeedbackStatus Status");
+
+    await Test(contracts, Domain).RunAsync();
+  }
+
+  public static async Task Given_Child_Entry_Narrows_Root_Nullable_Flags_TWA0041()
+  {
+    // Widening is one way: a contract T against a root T? is still drift.
+    string domain = Edit(Domain, "public Guid AuthorPrincipalId { get; }", "public Guid? AuthorPrincipalId { get; }");
+    string contracts = Edit(Contracts, "public Guid? AuthorPrincipalId { get; set; }", "public Guid AuthorPrincipalId { get; set; }");
+
+    await Test
+    (
+      contracts,
+      domain,
       Flag(ContractAgreementAnalyzer.ProjectionId, "App.Features.Feedback.FeedbackActivityEntry", "AuthorPrincipalId", "FeedbackActivity", Group,
-        Mismatch("FeedbackActivity", "AuthorPrincipalId", "Guid", "Guid?"))
+        Mismatch("FeedbackActivity", "AuthorPrincipalId", "Guid?", "Guid"))
+    ).RunAsync();
+  }
+
+  public static async Task Given_Details_Widens_Root_To_Nullable_Flags_TWA0039()
+  {
+    // Write side stays strict: a details member that may send null does not satisfy a root string.
+    string contracts = Edit(Contracts, "string Title { get; set; }\n", "string? Title { get; set; }\n");
+    contracts = Edit(contracts, "public string Title { get; set; } = \"\";\n      public string Body { get; set; } = \"\";\n      public bool EmailCopy", "public string? Title { get; set; }\n      public string Body { get; set; } = \"\";\n      public bool EmailCopy");
+
+    await Test
+    (
+      contracts,
+      Domain,
+      Flag(ContractAgreementAnalyzer.DetailsMemberId, Root, "IFeedbackItemDetails", "Title", Group, Mismatch(Root, "Title", "string", "string?"))
     ).RunAsync();
   }
 
@@ -142,6 +180,33 @@ public class Should_Check_Contract_Agreement_For_Feedback_Shape
       contracts,
       Domain,
       Flag(ContractAgreementAnalyzer.ProjectionId, "App.Features.Feedback.FeedbackAdminView", "Attachments", Root, Group, Missing(Root, "Attachments"))
+    ).RunAsync();
+  }
+
+  public static async Task Given_Response_Projects_Directly_Reports_Unmatched_Class_Member_Itself()
+  {
+    // One wrapper per response, and only when it is the response's one non-computed member. Once
+    // the response projects FeedbackItemId directly, Item is a missing root member, not a wrapper.
+    string contracts = Edit(Contracts, "public sealed class Response : BaseResponse { public FeedbackAdminView Item { get; set; } = new(); }", "public sealed class Response : BaseResponse { public Guid FeedbackItemId { get; set; } public FeedbackAdminView Item { get; set; } = new(); }");
+
+    await Test
+    (
+      contracts,
+      Domain,
+      Flag(ContractAgreementAnalyzer.ProjectionId, "App.Features.Feedback.GetFeedbackForAdmin.Response", "Item", Root, Group, Missing(Root, "Item"))
+    ).RunAsync();
+  }
+
+  public static async Task Given_Two_Unmatched_Members_Neither_Is_A_Wrapper_Flags_Both()
+  {
+    string contracts = Edit(Contracts, "[Computed]\n      public bool EmailCopyAvailable", "public bool EmailCopyAvailable");
+
+    await Test
+    (
+      contracts,
+      Domain,
+      Flag(ContractAgreementAnalyzer.ProjectionId, "App.Features.Feedback.ListMyFeedback.Response", "Items", Root, Group, Missing(Root, "Items")),
+      Flag(ContractAgreementAnalyzer.ProjectionId, "App.Features.Feedback.ListMyFeedback.Response", "EmailCopyAvailable", Root, Group, Missing(Root, "EmailCopyAvailable"))
     ).RunAsync();
   }
 
