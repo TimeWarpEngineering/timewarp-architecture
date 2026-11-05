@@ -106,6 +106,11 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
 - 2026-11-05 implementer (ganda task work): read current master Roles SPA, contracts, generators,
   and the 476 proposal. Wrote `proposal.md` with options A–D as code. Marked
   `contracts-frontend-example.md` as superseded. No product code changed.
+- `ganda repo audit` exits 0 with two warnings that were already there before this task:
+  - `kanban-landed`: 9 live claims on other tasks have no worktree here. I did not run `--fix`,
+    because it would act on other tasks' claims, which may be held on another machine.
+  - `source-file-line-cap`: 3 EF migration designer and snapshot files, plus one kanban research
+    runfile. The check is at warning severity since 469-001, and TWA0038 enforces the cap.
 
 ## Results
 
