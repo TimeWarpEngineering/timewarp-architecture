@@ -59,7 +59,7 @@ public sealed class RemoveFeedbackAttachment
       string storageKey = attachment.StorageKey;
       await AttachmentStore.RemoveAsync(attachment.Id, cancellationToken).ConfigureAwait(false);
       await BlobStore.DeleteAsync(storageKey, cancellationToken).ConfigureAwait(false);
-      return new Response(attachment.Id.Value);
+      return new Response(attachmentId: attachment.Id.Value);
     }
   }
 }

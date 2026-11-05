@@ -56,15 +56,15 @@ public sealed class GetFeedback
         .ConfigureAwait(false);
 
       return new Response(
-        item.Id.Value,
-        FeedbackPermalink.For(item.Id.Value),
-        FeedbackContractMap.ToContract(item.Kind),
-        item.Title,
-        item.Body,
-        item.FiledAt,
-        attachments,
-        FeedbackContractMap.ToContract(item.Status),
-        FeedbackContractMap.FilerThread(item));
+        feedbackItemId: item.Id.Value,
+        permalink: FeedbackPermalink.For(item.Id.Value),
+        kind: FeedbackContractMap.ToContract(item.Kind),
+        title: item.Title,
+        body: item.Body,
+        filedAt: item.FiledAt,
+        attachments: attachments,
+        status: FeedbackContractMap.ToContract(item.Status),
+        activity: FeedbackContractMap.FilerThread(item));
     }
   }
 }

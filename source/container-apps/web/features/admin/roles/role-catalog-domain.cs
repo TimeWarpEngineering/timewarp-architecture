@@ -8,7 +8,8 @@
 // role-catalog-agreement-tests.cs in web-infrastructure-tests (which sees all three assemblies)
 // fails when a copy differs from its source in members or order. Add a permission, scope, or
 // product role to the source first; the test then names the line to copy here.
-// ProductRoleIds backs Role.IsProductRole, the product-role delete guard.
+// ProductRoleIds backs Role.IsProductRole, the product-role delete guard. AgentScopeRank backs the
+// catalog order Role.AgentScopes reads back in (task 478).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Domain;
@@ -69,6 +70,20 @@ public static class RoleCatalog
 
   public static bool IsAgentScope(string scope) =>
     AgentScopes.Contains(scope, StringComparer.Ordinal);
+
+  /// <summary>Position of <paramref name="scope"/> in <see cref="AgentScopes"/>; int.MaxValue when it is not in the catalog.</summary>
+  public static int AgentScopeRank(string scope)
+  {
+    for (int index = 0; index < AgentScopes.Count; index++)
+    {
+      if (AgentScopes[index].Equals(scope, StringComparison.Ordinal))
+      {
+        return index;
+      }
+    }
+
+    return int.MaxValue;
+  }
 
   public static bool IsProductRole(RoleId id) => ProductRoleIds.Contains(id);
 }
