@@ -127,13 +127,45 @@ public class Set_agent_scopes
   {
     var role = Role.Create("Auditor", "Read-only access.");
     role.SetAgentScopes(["feedback:read", "identity:read", "feedback:read"]);
-    role.AgentScopes.Select(scope => scope.Scope).ShouldBe(["feedback:read", "identity:read"]);
+    role.AgentScopes.Select(scope => scope.Scope).ShouldBe(["identity:read", "feedback:read"]);
 
     role.SetAgentScopes(["demo:invoke"]);
     role.AgentScopes.Select(scope => scope.Scope).ShouldBe(["demo:invoke"]);
 
     role.SetAgentScopes([]);
     role.AgentScopes.ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task Reads_back_in_catalog_order_when_set_in_reverse()
+  {
+    var role = Role.Create("Auditor", "Read-only access.");
+    role.SetAgentScopes(RoleCatalog.AgentScopes.Reverse());
+    role.AgentScopes.Select(scope => scope.Scope).ShouldBe(RoleCatalog.AgentScopes);
+    return Task.CompletedTask;
+  }
+
+  public static Task Reads_back_in_catalog_order_whatever_the_load_order()
+  {
+    // EF fills the backing list in whatever order the owned rows arrive.
+    var role = Role.Create("Auditor", "Read-only access.");
+    List<AgentScopeGrant> backing = Invariants.BackingList<AgentScopeGrant>(role, "AgentScopeList");
+    backing.Add(new AgentScopeGrant("feedback:status"));
+    backing.Add(new AgentScopeGrant("demo:invoke"));
+    backing.Add(new AgentScopeGrant("identity:read"));
+
+    role.AgentScopes.Select(scope => scope.Scope).ShouldBe(["identity:read", "demo:invoke", "feedback:status"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Keeps_existing_children_as_the_same_instance()
+  {
+    var role = Role.Create("Auditor", "Read-only access.");
+    role.SetAgentScopes(["identity:read"]);
+    AgentScopeGrant existing = role.AgentScopes[0];
+
+    role.SetAgentScopes(["feedback:read", "identity:read"]);
+    role.AgentScopes[0].ShouldBeSameAs(existing);
     return Task.CompletedTask;
   }
 
@@ -222,7 +254,7 @@ public class Invariants
     return validator.Validate(role);
   }
 
-  private static List<T> BackingList<T>(Role role, string fieldName) =>
+  internal static List<T> BackingList<T>(Role role, string fieldName) =>
     (List<T>)typeof(Role).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance)
       .ShouldNotBeNull($"Role.{fieldName} is the EF field-access backing list")
       .GetValue(role)!;

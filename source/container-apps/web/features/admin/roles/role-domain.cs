@@ -9,8 +9,11 @@
 // use for the four product roles and for snapshot copies. Empty RoleId is rejected.
 // Named mutations only: UpdateDetails replaces Name and Description as a pair (UpdateRole sends
 // both); SetPermissions and SetAgentScopes are full replace, matching the IIdempotentCommand PUTs
-// that call them, so a retry leaves the same set. Duplicates collapse (ordinal) and the requested
-// order is kept. A child already present is kept as the same instance and only missing values are
+// that call them, so a retry leaves the same set. Duplicates collapse (ordinal). Permissions keep
+// the requested order. AgentScopes reads back in RoleCatalog.AgentScopes order (the AgentScopes.All
+// copy) whatever the requested order or the order EF loaded the owned rows in (task 478): every
+// read wants catalog order, so the root sorts and the Roles handlers project it as is. A scope
+// outside the catalog sorts last, so Invariants still sees it. A child already present is kept as the same instance and only missing values are
 // new, so EF sees unchanged rows as unchanged and deletes/inserts only the difference.
 // Children are value records over private backing lists (PermissionList, AgentScopeList); the EF
 // mapping uses field access on those names. Catalog membership is checked against RoleCatalog,
@@ -45,7 +48,9 @@ public sealed class Role : Entity<RoleId>, IAggregateRoot
   public string Description { get; private set; }
 
   public IReadOnlyList<PermissionGrant> Permissions => PermissionList;
-  public IReadOnlyList<AgentScopeGrant> AgentScopes => AgentScopeList;
+  /// <summary>The agent scopes in <see cref="RoleCatalog.AgentScopes"/> order.</summary>
+  public IReadOnlyList<AgentScopeGrant> AgentScopes =>
+    [.. AgentScopeList.OrderBy(grant => RoleCatalog.AgentScopeRank(grant.Scope))];
 
   /// <summary>True for the four product roles (RoleIds.All); those cannot be deleted.</summary>
   public bool IsProductRole => RoleCatalog.IsProductRole(Id);
