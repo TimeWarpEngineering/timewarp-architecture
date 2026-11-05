@@ -54,10 +54,21 @@ Acceptance:
 
 ## Decision
 
-Pending: Steve. The question is in `proposal.md` section 8: should the entity-to-response
-projections be generated, and if yes, with a home-grown generator on the TWA0041 rules (option B)
-or with the Mapperly package that is already referenced (option C)? Option A is "the analyzer
-alone".
+Steve, 2026-11-05: **Option A, the analyzer alone.** No projection or handler generator now.
+
+Reasoning: only 3 mutation calls across Roles and Feedback are mechanical, all in Roles; mapping by
+name has a real leak case (`GetFeedback.Response.Activity` must be the redacted filer thread) that
+compiles clean when the opt-out is forgotten; TWA0039–TWA0043 already close the agreement problem.
+Revisit option B once the Order aggregate (backlog 118) shows the projection shape a third time.
+
+Fold-in on this task (no implementation tasks split; none needed):
+
+- Record the decision in `tw-aggregate-pattern` (projection stays hand-written, one shared
+  projection per aggregate with named arguments; the analyzer proves agreement).
+- File follow-ups: remove the unused `Riok.Mapperly` reference from `web-application`; move
+  agent-scope ordering into `Role.AgentScopes` so GetRole, GetRoles, and SetRoleAgentScopes stop
+  ordering by hand; share one `GetRole`/`GetRoles` projection and one attachment projection
+  (named arguments) to close the section 4 gaps.
 
 ## Results
 
