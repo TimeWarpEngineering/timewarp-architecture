@@ -5,8 +5,8 @@
   Purpose: The shell's default user card for the signed-in person.
 
   Design: A leaf under the nav. Signed out renders nothing, so the column does not
-  keep an empty box. The name is read on each render: the profile alias, then the
-  identity name, then Account. The alias arrives after sign-in and can change
+  keep an empty box. The name is read on each render: the profile display name, then the
+  identity name, then Account. The display name arrives after sign-in and can change
   without a new authentication parameter, so it is not cached beside the auth
   task. The detail is the profile email when it is set. The card links to the
   profile page only when that page's policy allows it. This component reads the
@@ -26,7 +26,7 @@
 
   private bool Loaded;
 
-  private string DisplayName => ShellUserName(IdentityName, ProfileState.Alias);
+  private string DisplayName => ShellUserName(IdentityName, ProfileState.DisplayName);
 
   protected override async Task OnParametersSetAsync()
   {

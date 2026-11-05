@@ -6,9 +6,9 @@
 // RoleId is not declared on the Query: the {RoleId:guid} segment in [ApiRoute] makes the
 // source generator emit it on the partial, and the min(1) route constraint replaces a
 // FluentValidation rule for it. Response implements IRoleDetails so the edit form binds the
-// same shape it submits via UpdateRole. PermissionIds (task 182-004 / 206) is the role's stored
+// same shape it submits via UpdateRole. Permissions (task 182-004 / 206) is the role's stored
 // permission membership from IRolePermissionStore — RoleDetailPage edits the bundle, not IRoleDetails.
-// AgentScopes (task 466) is the role's stored agent-scope list, separate from PermissionIds.
+// AgentScopes (task 466) is the role's stored agent-scope list, separate from Permissions.
 // GetMockResponseFactory lets the SPA's MockWebApiService serve this endpoint offline with
 // deterministic RoleIds data.
 // [EndpointAuthorize] (task 182-002): admin.roles.read (PermissionIds); manage is separate.
@@ -57,7 +57,7 @@ public static partial class GetRole
     public string Description { get; set; }
 
     /// <summary>Stored permission ids for this role (empty when none granted).</summary>
-    public List<string> PermissionIds { get; }
+    public List<string> Permissions { get; }
 
     /// <summary>Stored agent scopes for this role (empty when the role approves none).</summary>
     public List<string> AgentScopes { get; }
@@ -67,14 +67,14 @@ public static partial class GetRole
       Guid roleId,
       string name,
       string description,
-      List<string>? permissionIds = null,
+      List<string>? permissions = null,
       List<string>? agentScopes = null
     )
     {
       RoleId = Guard.Against.NullOrEmpty(roleId);
       Name = Guard.Against.NullOrEmpty(name);
       Description = Guard.Against.NullOrEmpty(description);
-      PermissionIds = permissionIds ?? [];
+      Permissions = permissions ?? [];
       AgentScopes = agentScopes ?? [];
     }
   }
@@ -87,7 +87,7 @@ public static partial class GetRole
         roleId: RoleIds.Administrator,
         name: nameof(RoleIds.Administrator),
         description: "The Administrator role is for administrators. And has access to all modules.",
-        permissionIds:
+        permissions:
         [
           PermissionIds.AdminAccess,
           PermissionIds.AdminRolesRead,

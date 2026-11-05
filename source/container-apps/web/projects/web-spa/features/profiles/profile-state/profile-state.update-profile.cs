@@ -51,7 +51,7 @@ partial class ProfileState
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        ProfileState.Alias = response.Alias;
+        ProfileState.DisplayName = response.DisplayName;
         ProfileState.Email = response.Email;
         ProfileState.Language = response.Language;
         ProfileState.Region = response.Region;

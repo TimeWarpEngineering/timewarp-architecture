@@ -1,7 +1,7 @@
 ---
 name: tw-aggregate-pattern
 description: "**TIMEWARP SKILL** — the golden aggregate-root pattern: typed id, `Entity<TId>` base, fail-closed `Create`, named mutations with no public setters, a private nested `Invariants` validator, and save-time enforcement via `DomainInvariantsGuard`/`AggregateDbContext`. Invoke before adding or reviewing an `IAggregateRoot`, or when TWA0011/TWA0012 fire. WHEN: add an aggregate, IAggregateRoot, aggregate root, TWA0011, TWA0012, Invariants validator, typed id."
-when-to-use: aggregate root, IAggregateRoot, Entity<TId>, typed id, TypedId, Invariants validator, DomainInvariantsGuard, AggregateDbContext, TWA0011, TWA0012, fail-closed construction, named mutation, concurrency token, Version
+when-to-use: aggregate root, IAggregateRoot, Entity<TId>, typed id, TypedId, Invariants validator, DomainInvariantsGuard, AggregateDbContext, TWA0011, TWA0012, contract agreement, TWA0039, TWA0040, TWA0041, TWA0042, TWA0043, NotAggregate, Computed, fail-closed construction, named mutation, concurrency token, Version
 ---
 
 # Aggregate pattern (TWA0011/0012)
@@ -57,6 +57,33 @@ lives.
 |------|----------|-----|
 | **TWA0011** | An `IAggregateRoot` must declare a nested `Invariants : AbstractValidator<T>` | Fail-closed: no validator means `DomainInvariantsGuard` cannot check the aggregate at save time |
 | **TWA0012** | That nested `Invariants` must be `private` | Keeps it out of `AddValidatorsFromAssemblyContaining` auto-registration — it is a save-time domain check, not a request validator |
+| **TWA0039–TWA0043** | The root agrees with its operation group's contracts (below) | Contracts are UI-first and the domain is domain-first; the build proves the root satisfies what the contracts ask for |
+
+### Contract agreement (TWA0039–TWA0043)
+
+The domain is hand-written and never generated from contracts. `ContractAgreementAnalyzer` runs in
+the compilation that sees both `web-contracts` and `web-domain` (web-application) and checks the
+root against the `[Operation]` group it serves. **Link:** the root's slice namespace is its
+namespace without a trailing `.Domain` (`Features.Admin.Roles.Domain` → `Features.Admin.Roles`);
+the root satisfies every group with an operation in that namespace, and then every operation in
+the group is checked wherever it lives. Nothing is declared on the entity. **Names match exactly;
+drift is an error, not a mapping.** The one name rule is the key: a contract `RoleId` maps to the
+root's `Id`. Compatible types: the same type and nullability; a value wrapper and what it wraps
+(`RoleId` ↔ `Guid` through `Value`, `PermissionGrant` ↔ `string` through its one property); two
+collections with compatible elements.
+
+| Id | Severity | Requires |
+|----|----------|----------|
+| TWA0039 | error | Each member of an `I*Details` interface a command implements exists on the root with a compatible type |
+| TWA0040 | error | A `Set<Name>` command with one list member has a public `Set<Name>(collection)` mutation (the root's own name drops out: `SetRolePermissions` → `Role.SetPermissions`) |
+| TWA0041 | error | Each query-response member (a `ListResponse<T>` is checked through `T`) maps to a root member; a handler-derived value is `[Computed]` on the member or the response |
+| TWA0042 | warning | Any other command says why with `[NotAggregate("reason")]` (a delete by route id; an operation grouped here for hosts that stores elsewhere) |
+| TWA0043 | warning | A group whose operations sit in two roots' slice namespaces is ambiguous; give each root its own group |
+
+When a check fires, fix the side that drifted: rename the contract member or the domain member so
+both say the same thing, or add the missing mutation. `[Computed]` and `[NotAggregate]` live in
+`TimeWarp.Architecture.Attributes` and state a fact about the contract; they are not a way to
+silence drift.
 
 ## Exemplar
 

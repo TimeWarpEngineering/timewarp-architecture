@@ -7,7 +7,7 @@
 // (UpdateProfile, profile.write) — never a register/session gate. Data loads only once
 // interactive (RendererInfo.IsInteractive; server prerender has no WASM HttpClient
 // BaseAddress). Fetch and save go through ProfileState (TWA0022). Loading is
-// FetchProfileData [TrackAction], not Alias is null. Layout is FormSection
+// FetchProfileData [TrackAction], not DisplayName is null. Layout is FormSection
 // (Profile + Preferences) with FormField full-width controls and FormActions
 // (Cancel reloads the draft from state; Save submits).
 #endregion

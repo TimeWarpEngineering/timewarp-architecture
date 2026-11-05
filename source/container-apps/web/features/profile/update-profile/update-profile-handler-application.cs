@@ -61,7 +61,7 @@ public sealed class UpdateProfile
         created = true;
       }
 
-      profile.Rename(command.Alias);
+      profile.Rename(command.DisplayName);
       profile.SetEmail(command.Email);
       profile.SetLanguage(command.Language);
       profile.SetRegion(command.Region);
@@ -90,7 +90,7 @@ public sealed class UpdateProfile
               $"Profile '{profileId}' create raced but re-find returned null.");
           }
 
-          winner.Rename(command.Alias);
+          winner.Rename(command.DisplayName);
           winner.SetEmail(command.Email);
           winner.SetLanguage(command.Language);
           winner.SetRegion(command.Region);
@@ -118,7 +118,7 @@ public sealed class UpdateProfile
 
     private static Response ToResponse(Profile profile) =>
       new(
-        alias: profile.DisplayName,
+        displayName: profile.DisplayName,
         email: profile.Email,
         language: profile.Language,
         region: profile.Region,

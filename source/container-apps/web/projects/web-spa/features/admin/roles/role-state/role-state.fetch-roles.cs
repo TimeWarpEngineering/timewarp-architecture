@@ -4,7 +4,7 @@
 
 #region Design
 // DefaultApiHandler pattern (WeatherForecasts): only Query mapping + success mutation live here.
-// Seeds DraftPermissionIds from each RoleDto.PermissionIds so the detail editor matches
+// Seeds DraftPermissionIds from each RoleDto.Permissions so the detail editor matches
 // the server (task 182-004 / 206). DraftAgentScopes is seeded the same way (task 466).
 #endregion
 
@@ -36,7 +36,7 @@ partial class RoleState
         RoleState.RolesList = [.. response.Items];
         RoleState.DraftPermissionIds = response.Items.ToDictionary(
           static dto => dto.RoleId,
-          static dto => new HashSet<string>(dto.PermissionIds ?? [], StringComparer.Ordinal));
+          static dto => new HashSet<string>(dto.Permissions ?? [], StringComparer.Ordinal));
         RoleState.DraftAgentScopes = response.Items.ToDictionary(
           static dto => dto.RoleId,
           static dto => new HashSet<string>(dto.AgentScopes ?? [], StringComparer.Ordinal));

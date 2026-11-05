@@ -24,6 +24,7 @@ public static partial class SetUserXaiApiKey
 {
   /// <summary>The new key. It is not returned.</summary>
   [ApiRoute("api/Users/Current/xai-api-key", HttpVerb.Put)]
+  [NotAggregate("Grouped under profile for hosts; the key is a protected secret row (UserXaiApiKey), not Profile state.")]
   [Operation("user-xai-api-key.set", Description = "Set or replace the current user's xAI API key.", Group = "profile")]
   public sealed partial class Command : IApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
