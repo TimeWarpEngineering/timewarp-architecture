@@ -59,6 +59,7 @@ Acceptance:
 - Created: 1002142 (2026-11-05)
 - 2026-11-05 implementer (ganda task work): ordering moved into `Role.AgentScopes`; handlers,
   Design regions, and domain tests updated; build, tests, and audit run (see Results).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b6a65fe8-eb49-4187-a33a-876151f3de12, max-turns 500, Done — 2026-11-05T08:36:54Z
 
 ## Results
 
