@@ -65,6 +65,11 @@ Acceptance:
 - Implemented: ganda task work implement oracle (Claude Opus 5.5), 2026-11-05. A helper subagent did
   the contract-side renames (Alias, PermissionIds) and the Profile `[Operation]` attributes.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1ddff63d-ec04-4442-984f-848ece8369ec, max-turns 500, Done — 2026-11-05T04:09:35Z
+- Review oracle round 1: ganda task work review node (Claude Opus 5.5), 2026-11-05. Effort 3
+  (by-diff), roster general. Result: 0 bugs, 1 suggestion and 1 nit open (M1, M2). Fix pass requested.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c5de13c3-6676-44e6-b592-5f383d9dcbd3, max-turns 200, artifacts general.md, merged.md — 2026-11-05T04:14:49Z
+- Fix pass (implement-fix-2 oracle, Claude Opus 5.5), 2026-11-05: fixed M1 and M2. Round 2 review
+  is the next host node.
 
 ## Results
 
@@ -138,6 +143,22 @@ Acceptance:
   - The SPA integration tests touched by the rename compile in `dev build`. Their assertions
     changed only in member names.
 
+### Review
+
+- Round 1 (effort 3, general): 0 bug, 1 suggestion, 1 nit. Both are fixed.
+  - M1 (fixed): `Given_Group_With_No_Root_In_Its_Slice_IsClean` was vacuous. It now adds real
+    drift (`PermissionIds` on the responses, no `[NotAggregate]` on DeleteRole) and moves the root
+    out of the slice, all through the asserting `Edit`. A mutation check proved it: with the root
+    left in the slice, the test failed with 2 × TWA0041 and 1 × TWA0042. The other bare `Replace`
+    (the Alias drift test) uses `Edit` now too.
+  - M2 (fixed): the GetProfile Purpose line says "display name", and the `ShellUserCard`
+    parameter is `displayName`.
+  - Fix-pass gates: `dev build` 0 warnings and 0 errors; analyzer tests `failed: 0`;
+    `ganda repo audit` exit 0 (the same two pre-existing warning-severity checks).
+- The reviewer re-ran `dev build` (0 warnings, 0 errors) and the analyzer tests (289, 0 failed). The
+  reviewer also confirmed that the convention analyzers load in web-application.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ### How to validate
 
 - **Smoke:** `./bin/dev build` in the task worktree, then
@@ -152,6 +173,11 @@ Acceptance:
   - With `[Computed]` removed, web-application fails with `TWA0041:
     'TimeWarp.Architecture.Features.Profiles.GetProfile.Response.Avatar' does not project from
     'Profile' (operation group 'profile')`. Restore the attribute afterwards.
+
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Fix pass: M1 and M2 fixed; awaiting round 2.
 
 ## Notes
 
