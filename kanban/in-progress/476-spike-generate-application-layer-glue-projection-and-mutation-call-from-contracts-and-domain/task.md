@@ -57,6 +57,7 @@ Acceptance:
   "Projection and mutation calls stay hand-written" section to `skills/tw-aggregate-pattern/SKILL.md`.
   Filed and published follow-ups 477 (remove Riok.Mapperly), 478 (agent-scope order in
   `Role.AgentScopes`), and 479 (shared Roles and attachment projections, named arguments).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session de478108-b52c-4c6d-8833-d7d615999709, max-turns 500, Done — 2026-11-05T07:24:44Z
 
 ## Decision
 
