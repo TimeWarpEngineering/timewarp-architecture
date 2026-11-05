@@ -37,6 +37,12 @@ Acceptance: `git grep -n -i mapperly -- ':!kanban'` prints nothing; `dev build` 
 - Created: 1002142 (2026-11-05)
 - 2026-11-05 implementer: removed the `Riok.Mapperly` reference and pin; ran build, template-smoke, audit, check-version.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 00a2def6-6f77-44f6-9a86-cbf2560d0ee0, max-turns 500, Done — 2026-11-05T08:08:22Z
+- Review oracle: claude (vendor anthropic, model claude-opus-5-5), tw-implementation-review effort 1, roster general, 1 round, disposition clean — 2026-11-05
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 82fac0d9-f70c-4b62-9f1f-a441100cfe3b, max-turns 80, artifacts general.md, merged.md — 2026-11-05T08:10:45Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -54,6 +60,16 @@ Filed from task 476 (decision A, analyzer alone). Evidence: 476 `proposal.md` se
 - `ganda repo audit`: exit 0. The `kanban-landed` and `source-file-line-cap` warnings were already
   there and are warning severity by policy; nothing to fix.
 - `dev check-version`: source 2.0.0-beta.32 is ahead of NuGet 2.0.0-beta.31; no bump needed.
+
+### Review
+
+- Rounds: 1. Effort 1, roster: general. Review oracle: claude, claude-opus-5-5.
+- Final counts: 0 bug, 0 suggestion, 0 nit. 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. No wontfix and no escalations.
+- Reviewer checks: the mapperly grep outside `kanban/` is empty. `dotnet build` of
+  `web-application`, `web-infrastructure`, and `web-jaribu-tests` gives 0 warnings and 0 errors.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
