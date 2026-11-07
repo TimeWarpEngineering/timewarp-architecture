@@ -74,7 +74,7 @@
     <PackageVersion Include="Ardalis.GuardClauses" Version="[5.0.0]" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
-    <PackageVersion Include="libphonenumber-csharp" Version="9.0.42" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.43" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.85.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.85.0" />
@@ -141,8 +141,8 @@
          inside that package. TimeWarp.Mediator.Contracts and TimeWarp.Mediator.Analyzers stop at
          14.0.0. TimeWarp.Nuru 4.0.0-beta.11 still restores Contracts 14 transitively for dev-cli;
          that dependency is not a direct pin. -->
-    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />
-    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.4" />
+    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.5" />
+    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.5" />
     <!-- FastEndpoints.OpenApi 9.0.0-beta.7 (net11.0) depends on Microsoft.AspNetCore.OpenApi
          >= 11.0.0-rc.3.26522.148, the same as this repo's ASP.NET Core train. That package allows
          Microsoft.OpenApi [3.10.2, 4.0.0). The foundation-server Microsoft.OpenApi reference lifts
@@ -181,17 +181,17 @@
     <!-- Task 353: CommonMark parser for SafeMarkdown. Raw HTML is off and the SPA renders the AST
          itself, so no HTML string from Markdig reaches the DOM. -->
     <PackageVersion Include="Markdig" Version="1.6.0" />
-    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.16" />
-    <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.16" />
-    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.17" />
     <!-- Task 335-001: State DevTools. Telemetry weaves the action-span behavior into web-spa's
          ClientPipeline; Export (web-server, Development) ships those spans to the inspector that
          DevTools.Hosting starts from the AppHost in run mode. Same version as the State pins. -->
-    <PackageVersion Include="TimeWarp.State.Telemetry" Version="12.0.0-beta.16" />
-    <PackageVersion Include="TimeWarp.State.DevTools.Export" Version="12.0.0-beta.16" />
-    <PackageVersion Include="TimeWarp.State.DevTools.Hosting" Version="12.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.State.Telemetry" Version="12.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.State.DevTools.Export" Version="12.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.State.DevTools.Hosting" Version="12.0.0-beta.17" />
     <!-- Task 335-002: browser (WASM) exporter. web-spa references it in Debug only. -->
-    <PackageVersion Include="TimeWarp.State.DevTools.Wasm" Version="12.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.State.DevTools.Wasm" Version="12.0.0-beta.17" />
     <PackageVersion Include="timewarp-heroicons" Version="2.2.0" />
     <PackageVersion Include="timewarp-simple-icons" Version="16.36.0" />
   </ItemGroup>
@@ -205,8 +205,8 @@
     <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.11.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
   </ItemGroup>
   
