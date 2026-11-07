@@ -89,6 +89,7 @@ Acceptance:
   warnings are other tasks' claims (kanban-landed), the migration and research files over the
   line cap (already severity warning since 469-001), and the git-ignored local
   `.vscode/settings.json`. None is fixable on this id.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 67ac9ff3-78aa-4dd7-b80d-283880f4cc9d, max-turns 500, Blocked — 2026-11-07T08:20:34Z
 
 ## Results
 
@@ -170,3 +171,7 @@ What would unblock this walk (Steve's call; no cross-repo task or PR was opened)
 3. **Move contract-bound states into a referenced project with `[assembly: MediatorAssembly]`.**
    Mediator would then find generated Actions by metadata. This moves state out of the slice
    layout (`tw-slice-isolation`), so it is listed only for completeness.
+
+## Blocked
+
+2026-11-07: Steve to choose an unblock path (task 483 Notes, "Blocker"). Mediator 15.0.0-beta.5 throws NoHandlerException for any Action a sibling generator emits, because 3b only covers requests written in source. Options: (1) a Mediator change to declare generated requests, plus a State change for the manifest; (2) re-scope so a code fix writes the Action shells into source and this generator emits only Handlers and hooks; (3) move contract-bound states into a referenced [MediatorAssembly] project.
