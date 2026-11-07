@@ -62,6 +62,9 @@ Acceptance:
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-06)
 - 2026-11-07 implementer (ganda task work, Claude Opus 5.5): pins bumped, TWS0013 fixed at the source, gates run.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 2725c6bb-bd34-45c9-b1b4-9a003d8ab39c, max-turns 500, Done — 2026-11-07T07:44:10Z
+- Review oracle: tw-implementation-review, effort 2, roster general, Claude Opus 5.5 (claude-opus-5-5), ganda task work
+  headless, turn cap 120 — 2026-11-07, disposition accepted-exceptions
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4438c3bd-7d9a-4553-b169-3d5ea75dabfd, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-07T07:48:18Z
 
 ## Results
 
@@ -143,6 +146,30 @@ ganda repo audit
 Expect: `ganda nuget outdated` prints "All packages are up to date"; `dev build` reports 0 Warning(s) 0 Error(s); the
 web-spa integration run includes `Serialize_Every_State_Without_Reflection` passing (the Aspire HTTPS facts need a trusted
 HTTPS dev certificate); template smoke ends without "Template smoke FAILED"; audit exits 0.
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 2 (by-diff budget, 457 lines).
+- Final counts: bug 0, suggestion 0, nit 1 wontfix, 0 open.
+- Disposition: **accepted-exceptions**. M1 (nit) is about redundant usings in `web-spa/state-json-context.cs`: 13 of
+  its 18 feature usings repeat web-spa global usings. It is wontfix because it is cosmetic only, with no effect on
+  behavior, the build, or the template variants. Task 483 edits this file and can drop the lines.
+- Re-verified by the reviewer in this worktree:
+  - `./bin/dev build`: 0 warnings, 0 errors.
+  - `ganda nuget outdated`: all up to date.
+  - `Serialize_Every_State_Without_Reflection`: 1/1 passed.
+  - `TypedIdSourceGenerator` tests: 11/11 passed.
+- Not re-run by the reviewer: template smoke (default and matrix), `dev check-version`, and `ganda repo audit`.
+- The Goal restatement matches the task, so there is no misread.
+- Paths:
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
