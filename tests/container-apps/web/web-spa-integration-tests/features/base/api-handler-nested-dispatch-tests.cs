@@ -162,6 +162,11 @@ public sealed partial class NestedDispatchProbeState : State<NestedDispatchProbe
   }
 }
 
+// TWS0013 (task 484): this project references TimeWarp.State.Telemetry through web-spa, so each state
+// it declares is listed on a JsonSerializerContext.
+[System.Text.Json.Serialization.JsonSerializable(typeof(NestedDispatchProbeState))]
+internal sealed partial class NestedDispatchProbeJsonContext : System.Text.Json.Serialization.JsonSerializerContext;
+
 internal sealed class NestedDispatchProbeRequest : IApiRequest
 {
   public string GetRoute() => "probe";

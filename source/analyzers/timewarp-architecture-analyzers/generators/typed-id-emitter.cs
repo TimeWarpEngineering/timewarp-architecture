@@ -167,8 +167,11 @@ internal static class TypedIdEmitter
           return false;
         }
 
-        private sealed class {{name}}JsonConverter : JsonConverter<{{name}}>
+        /// <summary>Reads and writes {{name}} as its Guid string (also as a dictionary key).</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public sealed class {{name}}JsonConverter : JsonConverter<{{name}}>
         {
+          /// <inheritdoc/>
           public override {{name}} Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
           {
             if (reader.TokenType != JsonTokenType.String)
@@ -179,12 +182,15 @@ internal static class TypedIdEmitter
             return new {{name}}(g);
           }
 
+          /// <inheritdoc/>
           public override void Write(Utf8JsonWriter writer, {{name}} value, JsonSerializerOptions options)
             => writer.WriteStringValue(value.Value);
 
+          /// <inheritdoc/>
           public override {{name}} ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             => Read(ref reader, typeToConvert, options);
 
+          /// <inheritdoc/>
           public override void WriteAsPropertyName(Utf8JsonWriter writer, {{name}} value, JsonSerializerOptions options)
             => writer.WritePropertyName(value.Value.ToString());
         }

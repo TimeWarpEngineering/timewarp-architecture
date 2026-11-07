@@ -116,7 +116,8 @@ public class TypedIdSourceGenerator_Tests
     generated.ShouldContain("IComparable<OrderId>");
     generated.ShouldContain("IParsable<OrderId>");
     generated.ShouldContain("ISpanParsable<OrderId>");
-    generated.ShouldContain("class OrderIdJsonConverter");
+    // Public so a JsonSerializerContext in another assembly can use it (SYSLIB1220, task 484).
+    generated.ShouldContain("public sealed class OrderIdJsonConverter");
     generated.ShouldContain("WriteStringValue(value.Value)");
     generated.ShouldContain("OrderId cannot be empty or invalid.");
     generated.ShouldContain("ReadAsPropertyName");

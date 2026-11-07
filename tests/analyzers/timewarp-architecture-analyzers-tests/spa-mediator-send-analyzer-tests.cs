@@ -27,7 +27,7 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
     build_property.UsingMicrosoftNETSdkBlazorWebAssembly = true
     """;
 
-  // Mirrors TimeWarp.Mediator 15.0.0-beta.4: ISender declares three Send overloads that return
+  // Mirrors TimeWarp.Mediator 15.0.0-beta.5: ISender declares three Send overloads that return
   // ValueTask and has no CreateStream. ISender<TScope> : ISender. IMediator adds nothing over
   // ISender + IPublisher. The analyzer keys on the type and method name only.
   private const string MediatorStubs =
