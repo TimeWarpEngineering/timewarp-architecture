@@ -30,7 +30,7 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
   [Option("yes", "y", Description = "Confirm: stop the AppHost and permanently delete its volumes (required)")]
   public bool Yes { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DbNukeCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DbNukeCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -39,7 +39,7 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DbNukeCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DbNukeCommand command, CancellationToken ct)
     {
       string? repoRoot = Git.FindRoot();
       if (repoRoot is null)

@@ -62,7 +62,7 @@ internal sealed class OpenCommand : ICommand<Unit>
   [Option("resource-group", "g", Description = "aca and aca-neon: resource group (default: Azure__ResourceGroup, else the AppHost user secret Azure:ResourceGroup)")]
   public string? ResourceGroup { get; set; }
 
-  internal sealed class Handler : ICommandHandler<OpenCommand, Unit>
+  internal sealed class Handler : IRequestHandler<OpenCommand, Unit>
   {
     private const int ListenerTimeoutSeconds = 30;
     private readonly ITerminal Terminal;
@@ -72,7 +72,7 @@ internal sealed class OpenCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(OpenCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(OpenCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

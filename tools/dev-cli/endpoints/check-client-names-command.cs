@@ -13,7 +13,7 @@ namespace DevCli.Commands;
 [NuruRoute("check-client-names", Description = "Fail when a tracked file contains a client name")]
 internal sealed class CheckClientNamesCommand : ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<CheckClientNamesCommand, Unit>
+  internal sealed class Handler : IRequestHandler<CheckClientNamesCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -22,7 +22,7 @@ internal sealed class CheckClientNamesCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(CheckClientNamesCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(CheckClientNamesCommand command, CancellationToken cancellationToken)
     {
       string? root = Git.FindRoot();
       if (root is null)

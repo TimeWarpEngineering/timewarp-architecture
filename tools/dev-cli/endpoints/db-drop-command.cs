@@ -14,7 +14,7 @@ internal sealed class DbDropCommand : DbGroup, ICommand<Unit>
   [Option("yes", "y", Description = "Confirm destructive drop (required)")]
   public bool Yes { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DbDropCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DbDropCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -23,7 +23,7 @@ internal sealed class DbDropCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DbDropCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DbDropCommand command, CancellationToken ct)
     {
       if (!command.Yes)
       {

@@ -35,7 +35,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
   [Option("dry-run", Description = "Print az and user-secrets invocations without running them")]
   public bool DryRun { get; set; }
 
-  internal sealed class Handler : ICommandHandler<EntraSetupCommand, Unit>
+  internal sealed class Handler : IRequestHandler<EntraSetupCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -44,7 +44,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(EntraSetupCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(EntraSetupCommand command, CancellationToken ct)
     {
       EntraSetupOptions options = new(
         command.Name,

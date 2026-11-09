@@ -17,7 +17,7 @@ internal sealed class KeygenCommand : ICommand<Unit>
   [Option("force", "f", Description = "Overwrite an existing key file")]
   public bool Force { get; set; }
 
-  internal sealed class Handler : ICommandHandler<KeygenCommand, Unit>
+  internal sealed class Handler : IRequestHandler<KeygenCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
@@ -28,7 +28,7 @@ internal sealed class KeygenCommand : ICommand<Unit>
       Paths = paths;
     }
 
-    public Task<Unit> Handle(KeygenCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(KeygenCommand command, CancellationToken ct)
     {
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;
 
@@ -49,7 +49,7 @@ internal sealed class KeygenCommand : ICommand<Unit>
         Environment.ExitCode = 1;
       }
 
-      return Task.FromResult(Unit.Value);
+      return ValueTask.FromResult(Unit.Value);
     }
   }
 }

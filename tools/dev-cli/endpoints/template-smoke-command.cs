@@ -18,7 +18,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
   [Option("app-tests", Description = "Also run each generated app's test projects (aspire, integration, Playwright; needs Docker)")]
   public bool AppTests { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TemplateSmokeCommand, Unit>
+  internal sealed class Handler : IRequestHandler<TemplateSmokeCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -27,7 +27,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(TemplateSmokeCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TemplateSmokeCommand command, CancellationToken ct)
     {
       await new TemplateSmokeRunner(Terminal).RunAsync(command.Matrix, command.AppTests, ct);
       return Unit.Value;

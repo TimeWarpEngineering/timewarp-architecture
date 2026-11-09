@@ -20,7 +20,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
   [Option("tenant", Description = "Tenant id, default domain, or display name (match against visible Azure tenants)")]
   public string? Tenant { get; set; }
 
-  internal sealed class Handler : ICommandHandler<EntraStatusCommand, Unit>
+  internal sealed class Handler : IRequestHandler<EntraStatusCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private EntraStatusCommand Command = null!;
@@ -33,7 +33,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(EntraStatusCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(EntraStatusCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;

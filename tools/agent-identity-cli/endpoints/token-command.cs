@@ -20,7 +20,7 @@ internal sealed class TokenCommand : ICommand<Unit>
   [Option("scopes", null, Description = "Comma-separated scopes (default: identity:read)")]
   public string? Scopes { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TokenCommand, Unit>
+  internal sealed class Handler : IRequestHandler<TokenCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
@@ -35,7 +35,7 @@ internal sealed class TokenCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async Task<Unit> Handle(TokenCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TokenCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;

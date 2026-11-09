@@ -52,7 +52,7 @@ internal sealed class TestCommand : ICommand<Unit>
   [Option("max-integration", Description = "Integration-group projects running at once (default: 3; Docker and host heavy)")]
   public int? MaxIntegration { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TestCommand, Unit>
+  internal sealed class Handler : IRequestHandler<TestCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly Lock OutputLock = new();
@@ -66,7 +66,7 @@ internal sealed class TestCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(TestCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TestCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;

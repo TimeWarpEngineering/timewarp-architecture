@@ -98,6 +98,11 @@ TWA0017–TWA0019 (ingress route prefix generator diagnostics).
 ## Session
 
 - Created: 1529859 (2026-11-09)
+- Audit fixes landed on this branch before the walk: suppression baseline seeded,
+  `/.timewarp/signals/` ignored, TimeWarp.Nuru 4.0.0-beta.12 with Amuru 3.0.0-beta.2 and
+  Terminal 2.0.0-beta.1. CLI handlers are `IRequestHandler` and return `ValueTask` so
+  `tools/dev-cli/dev.cs` and `tools/agent-identity-cli/agent.cs` build. Two advisory
+  warnings remain (`kanban-landed` dead claims, `source-file-line-cap`); neither is auto-fixable.
 
 ## Notes
 

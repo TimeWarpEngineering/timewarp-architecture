@@ -17,7 +17,7 @@ internal sealed class DbResetCommand : DbGroup, ICommand<Unit>
   [Option("yes", "y", Description = "Confirm destructive reset (required)")]
   public bool Yes { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DbResetCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DbResetCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -26,7 +26,7 @@ internal sealed class DbResetCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DbResetCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DbResetCommand command, CancellationToken ct)
     {
       if (!command.Yes)
       {
