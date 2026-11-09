@@ -129,6 +129,7 @@ No `TWA*` id above TWA0043 is declared under `source/analyzers/`.
   warnings remain (`kanban-landed` dead claims, `source-file-line-cap`); neither is auto-fixable.
 - Implementer: grok task-work (2026-11-10). Classification, package description, and
   `documentation/developer/guides/analyzer-package-split.md`. Analyzers not deleted.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1c16f-8d9b-7231-a926-7580c628763a, max-turns 500, Blocked — 2026-11-09T18:05:29Z
 
 ## Notes
 
@@ -181,4 +182,6 @@ grep -n 'TWA0004, TWA0023, and TWA0038' source/analyzers/timewarp-architecture-c
 
 ## Blocked
 
-- 2026-11-10: Deletion of TWA0004, TWA0023, and TWA0038 from this package waits until `timewarp-source-generators` task 034 ports those ids and publishes `TimeWarp.SourceGenerators`. The classification above is the move set 034 should port. Removing the analyzers first drops TWA0004 for `timewarp-state`. Resume this walk after that package exists: bump the SourceGenerators pin and delete the three analyzers and their tests in the same change.
+2026-11-09: timewarp-source-generators task 034 must port TWA0004, TWA0023, and TWA0038 with those same ids and publish TimeWarp.SourceGenerators. Then this walk bumps that pin and deletes the three analyzers and their tests from TimeWarp.Architecture.Analyzers in one change. Spec: https://github.com/TimeWarpEngineering/timewarp-architecture/blob/task/486-split-timewarparchitectureanalyzers-move-generic-c/documentation/developer/guides/analyzer-package-split.md
+
+- https://github.com/TimeWarpEngineering/timewarp-architecture/blob/task/486-split-timewarparchitectureanalyzers-move-generic-c/documentation/developer/guides/analyzer-package-split.md
