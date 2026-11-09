@@ -2,6 +2,8 @@
 ; https://github.com/dotnet/roslyn-analyzers/blob/main/src/Microsoft.CodeAnalysis.Analyzers/ReleaseTrackingAnalyzers.Help.md
 ; Retired / reserved — do not reuse: TWE001, TWE004 (declared, never reported), TWE012 TWE013
 ; TWE014 (server-offers generator; never shipped). See diagnostic-descriptors.cs.
+; Not the style split (task 486): TWA0001 and TWA0017–TWA0019 stay in this generators package.
+; Generic style ids TWA0004, TWA0023, and TWA0038 live in the convention-analyzers package.
 
 ### New Rules
 
