@@ -97,6 +97,57 @@ golden path with **Orleans** for aggregates that earn actor hosting; the fleet l
   cross-cutting concerns land — x402 metering is a pipeline behavior; same
   replace-the-sample-with-real pattern as the web-server sample-options note above.
 
+## Add-on slots (agent attention), stage after V1 loop closes (Steven, 2026-11-09)
+
+Steven's vision (exact, 2026-11-09): an agent-first services marketplace like Alibaba.
+Each listing or order (for example a CNC cut to a certain spec) carries **add-on slots**
+that other agents buy through x402 to be mentioned or offered alongside it — a marketplace
+for agent attention. Human views are secondary; discovery, purchase and fulfilment are
+agent-to-agent first. The numbered-slot shape comes from
+[mergemax.dev/sponsor](https://mergemax.dev/sponsor) (slot count, open price, timed run,
+card fields, review-before-money). We are not sponsoring MergeMax; we are borrowing the
+slot idea for agents buying attention on each other's listings.
+
+**Sequencing (Steven + Busara, 2026-11-09):** slots go on **listings first**, timed and
+buyable any time like MergeMax's. Slots on orders come later (an order slot only exists
+while the order is open). The single-site version lives in this template so any generated
+site can sell slots; a multi-seller marketplace would get its own product repo later.
+Do not build add-on slots until this task's V1 quote→pay→job→ship loop closes end to end.
+Paid slot purchases ride the metering / PaymentGate seam from task **309**.
+
+Eval:
+[evaluations/2026-11-09-mergemax-sponsor.md](https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-09-mergemax-sponsor.md)
+([reframe PR #119](https://github.com/TimeWarpEngineering/timewarp-intel/pull/119),
+[verdict PR #120](https://github.com/TimeWarpEngineering/timewarp-intel/pull/120)).
+Earlier audience and thin-slice verdicts were superseded; no separate kanban tasks were
+filed — the work folds into this task and 309.
+
+### Add-on slot checklist (after V1)
+
+- [ ] Listing model with N numbered slots: position, fixed price, category eligibility
+      (relevance scoring rejected — it is a ranking engine)
+- [ ] Free discovery of listings and open slots on the agent plane (never 402)
+- [ ] Anonymous x402 slot purchase, validated before the payment challenge, paid through
+      309's metering / PaymentGate seam
+- [ ] Idempotent receipt keyed to settlement (replay must not fill a slot twice)
+- [ ] Sponsored disclosure fields on every add-on (`sponsored:true`, payer, slot number)
+- [ ] Opt-in (off by default) with boundary docs: tip vs metered vs add-on slot vs listing
+      service payment
+- [ ] Proven by a buyer-agent test that includes a replayed payment
+- [ ] Separate, disclosed `add-ons` array in listing responses (never mixed into the core
+      result)
+- [ ] Requester opt-out flag to exclude add-ons
+- [ ] Seller / operator takedown (no on-chain refund; document that)
+- [ ] Expiry from go-live frees the slot number (no step-down or rebook in V1)
+- [ ] Proven by a requester-agent test asserting disclosure, opt-out and expiry
+
+### Notes on risk
+
+Riskiest assumption: requesting agents may filter paid add-ons out as noise or prompt
+injection — to the requester a paid mention is untrusted third-party content. Clear paid
+labels, category eligibility and requester opt-out are what make a slot worth buying.
+Relevance scoring was rejected.
+
 ## Bamboo micro-factory reference data (Steve, 2026-10-05)
 
 Real-world reference for the showcase domain: product families, machine capabilities and
