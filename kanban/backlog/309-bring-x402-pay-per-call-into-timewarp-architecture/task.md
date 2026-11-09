@@ -95,7 +95,7 @@ Plus client module in Results; default posture is State's recommendation above.
 
 | Repo | Task | Role |
 |------|------|------|
-| Architecture | [118](https://github.com/TimeWarpEngineering/timewarp-architecture/blob/master/kanban/to-do/118-add-real-domain-showcase-flag-agentic-ai-marketplace-as-in-tree-dogfood-domain.md) | Bamboo microfactory marketplace needs x402 metering (quote → pay → job → ship); api = agent plane |
+| Architecture | [118](https://github.com/TimeWarpEngineering/timewarp-architecture/blob/master/kanban/backlog/118-add-real-domain-showcase-flag-agentic-ai-marketplace-as-in-tree-dogfood-domain.md) | Bamboo microfactory marketplace needs x402 metering (quote → pay → job → ship); api = agent plane |
 | Architecture | [113](https://github.com/TimeWarpEngineering/timewarp-architecture/tree/master/kanban/done/113-golden-persistence-implementation-postgres-first-aspire-wired-with-actor-model-evaluation) | Actor/fleet gate; marketplace layer precedes fleet |
 | Architecture | [104](https://github.com/TimeWarpEngineering/timewarp-architecture/tree/master/kanban/done/104-agent-ready-identity-and-x402-program) (done) | Identity + TimeWarp.X402 + tip/meter foundations |
 | Architecture | [104-009](https://github.com/TimeWarpEngineering/timewarp-architecture/blob/master/kanban/done/104-009-port-voluntary-tip-jar-example-from-timewarp-software.md) (done) | First tip port (USDC / PaymentGate) |
@@ -173,6 +173,12 @@ USDC, facilitator `https://x402.org/facilitator` (no auth).
 - [ ] Record State.Plus decision (default: out; optional later PaymentState)
 - [ ] Tests: mocked facilitator + Sepolia walkthrough doc
 - [ ] Cross-link / supersede software 019
+- [ ] Emit x402 Bazaar extension metadata on paid challenges (starting with add-on
+      slot purchases for 118) so supporting facilitators can index them, after checking
+      what PaymentChallengeBuilder already supports — see intel eval
+      [2026-11-09-mergemax-sponsor.md](https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-09-mergemax-sponsor.md)
+      ([PR #119](https://github.com/TimeWarpEngineering/timewarp-intel/pull/119),
+      [PR #120](https://github.com/TimeWarpEngineering/timewarp-intel/pull/120))
 - [ ] One PR; merge via `ganda pr merge` when Steven asks
 
 ## Notes
