@@ -130,6 +130,9 @@ No `TWA*` id above TWA0043 is declared under `source/analyzers/`.
 - Implementer: grok task-work (2026-11-10). Classification, package description, and
   `documentation/developer/guides/analyzer-package-split.md`. Analyzers not deleted.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1c16f-8d9b-7231-a926-7580c628763a, max-turns 500, Blocked — 2026-11-09T18:05:29Z
+- Resume: TimeWarp.SourceGenerators 1.0.0-beta.13 is on nuget.org (source-generators task 034).
+  The package reports TWA0004, TWA0023, and TWA0038. Bump the pin from 1.0.0-beta.11 and delete
+  those three analyzers and their tests from TimeWarp.Architecture.Analyzers in one change.
 
 ## Notes
 
@@ -182,6 +185,4 @@ grep -n 'TWA0004, TWA0023, and TWA0038' source/analyzers/timewarp-architecture-c
 
 ## Blocked
 
-2026-11-09: timewarp-source-generators task 034 must port TWA0004, TWA0023, and TWA0038 with those same ids and publish TimeWarp.SourceGenerators. Then this walk bumps that pin and deletes the three analyzers and their tests from TimeWarp.Architecture.Analyzers in one change. Spec: https://github.com/TimeWarpEngineering/timewarp-architecture/blob/task/486-split-timewarparchitectureanalyzers-move-generic-c/documentation/developer/guides/analyzer-package-split.md
-
-- https://github.com/TimeWarpEngineering/timewarp-architecture/blob/task/486-split-timewarparchitectureanalyzers-move-generic-c/documentation/developer/guides/analyzer-package-split.md
+Cleared 2026-11-10. TimeWarp.SourceGenerators 1.0.0-beta.13 is on nuget.org and reports TWA0004, TWA0023, and TWA0038. Remaining work: bump the pin from 1.0.0-beta.11 and delete those three analyzers and their tests from TimeWarp.Architecture.Analyzers in one change.
