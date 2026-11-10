@@ -133,6 +133,8 @@ No `TWA*` id above TWA0043 is declared under `source/analyzers/`.
 - Implementer: grok task-work (2026-11-10). Classification, package description, and
   `documentation/developer/guides/analyzer-package-split.md`. Analyzers not deleted.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1c16f-8d9b-7231-a926-7580c628763a, max-turns 500, Blocked — 2026-11-09T18:05:29Z
+- CI: ci (fast) failed after the pwsh conversion because the Aspire and vally version
+  assignments no longer matched the dev-cli checks. Both are one assignment again.
 - Resume: TimeWarp.SourceGenerators 1.0.0-beta.13 is on nuget.org (source-generators task 034).
   The package reports TWA0004, TWA0023, and TWA0038.
 - Implementer: grok task-work (2026-11-10). Pinned TimeWarp.SourceGenerators at 1.0.0-beta.13 and
