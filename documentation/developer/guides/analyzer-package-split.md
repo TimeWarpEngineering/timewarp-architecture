@@ -13,7 +13,7 @@ Diagnostic IDs stay `TWA*`. Do not rename them to `TW*`. `.editorconfig` and glo
 - `dotnet_diagnostic.TWA0038.severity`
 - `dotnet_diagnostic.TWA0038.max_lines`
 
-`timewarp-source-generators` task **034** ports the generic set. `TimeWarp.SourceGenerators` 1.0.0-beta.13 reports TWA0004, TWA0023, and TWA0038. This repo pins that version in `Directory.Packages.props`. The three analyzers are not compiled into `TimeWarp.Architecture.Analyzers`. Architecture references both packages (`Directory.Build.props`). Two analyzers with the same ID in one compilation report twice, so the deletion and the pin bump are one change. `timewarp-state` task **153** drops `TimeWarp.Architecture.Analyzers` and takes TWA0004 from that SourceGenerators release.
+`timewarp-source-generators` task **034** ports the generic set. `TimeWarp.SourceGenerators` (1.0.0-beta.13 and later; pin in `Directory.Packages.props`) reports TWA0004, TWA0023, and TWA0038. The three analyzers are not compiled into `TimeWarp.Architecture.Analyzers`. Architecture references both packages (`Directory.Build.props`). Two analyzers with the same ID in one compilation report twice, so the deletion and the pin bump are one change. `timewarp-state` task **153** drops `TimeWarp.Architecture.Analyzers` and takes TWA0004 from that SourceGenerators release.
 
 ## Move set (generic)
 

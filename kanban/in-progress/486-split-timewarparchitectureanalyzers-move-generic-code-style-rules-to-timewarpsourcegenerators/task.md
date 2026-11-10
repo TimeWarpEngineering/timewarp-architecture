@@ -2,11 +2,13 @@
 
 ## Goal (implementer restatement)
 
-`TimeWarp.SourceGenerators` 1.0.0-beta.13 reports TWA0004, TWA0023, and TWA0038 with the same ids and the same defaults (purpose region and file length warn and are enabled; type-stem naming warns and is off). This repo already references that package. Leaving the three analyzers in `TimeWarp.Architecture.Analyzers` would report each hit twice, so the pin bump and the deletion are one change.
+Generic style rules TWA0004, TWA0023, and TWA0038 are reported by TimeWarp.SourceGenerators. This repo already takes that package, so those three analyzers must leave TimeWarp.Architecture.Analyzers in the same change as the pin bump. Two reporters of one id would flag every hit twice. Defaults stay: a missing purpose region and a file over the length limit warn and are enabled; type-stem naming warns and is off.
 
-Every other reported id stays in this package. TWA0028 and TWA0036 stay Architecture. Generator diagnostics TWA0001 and TWA0017–TWA0019 stay in `TimeWarp.Architecture.Generators`. The TWA0023 opt-out attribute stays in `TimeWarp.Architecture.Attributes`. `.editorconfig` keys are unchanged because the ids do not change.
+Every other reported id stays here. TWA0028 and TWA0036 stay Architecture-specific. Generator diagnostics TWA0001 and TWA0017–TWA0019 stay in TimeWarp.Architecture.Generators. The TWA0023 opt-out attribute stays in TimeWarp.Architecture.Attributes. Editorconfig keys stay, because the ids do not change.
 
-Acceptance: `Directory.Packages.props` pins `TimeWarp.SourceGenerators` at 1.0.0-beta.13; the three analyzer sources and their tests are gone from `timewarp-architecture-convention-analyzers`; the unshipped release table no longer lists those ids; the package description and `documentation/developer/guides/analyzer-package-split.md` say SourceGenerators reports them; the build still enforces TWA0004 and TWA0038 through that package. `timewarp-state` is the only external reference (published pin `2.0.0-beta.31`, which still contains the rules). Dropping that reference is task 153.
+Split acceptance: Directory.Packages.props pins TimeWarp.SourceGenerators at 1.0.0-beta.13. The three analyzer sources and their tests are gone from timewarp-architecture-convention-analyzers. AnalyzerReleases.Unshipped.md no longer lists those ids. The package description and documentation/developer/guides/analyzer-package-split.md say SourceGenerators reports them. A build still enforces TWA0004 and TWA0038 through that package. timewarp-state is the only outside reference, on published pin 2.0.0-beta.31, which still contains the rules. Dropping that reference is task 153.
+
+Review-fix acceptance: AGENTS.md and the split guide state the minimum, TimeWarp.SourceGenerators 1.0.0-beta.13 and later, and point at Directory.Packages.props for the pin. The TypeStemIdentifierAttribute Design region names TimeWarp.SourceGenerators (TWA0023) as the analyzer that matches the attribute by simple name and does not reference this assembly.
 
 ## Description
 
@@ -118,6 +120,7 @@ No `TWA*` id above TWA0043 is declared under `source/analyzers/`.
 - [x] Update AnalyzerReleases / docs / release notes
 - [x] Confirm no non-Architecture consumer still needs this package for style-only rules (only `timewarp-state`, pin `2.0.0-beta.31`; task 153 drops it)
 - [x] Cross-link results back to tasks 034 and 153
+- [x] Review round 1: docs state the SourceGenerators minimum and point at the pin; the opt-out Design region names TimeWarp.SourceGenerators (TWA0023)
 
 ## Session
 
@@ -142,6 +145,15 @@ No `TWA*` id above TWA0043 is declared under `source/analyzers/`.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1c4e9-51d9-77c1-a4b8-6234c3bcd8e0, max-turns 500, Done — 2026-11-10T10:46:21Z
 - Review oracle round 1 (2026-11-10): claude-opus-5-5, effort 3, roster general. Found 0 bugs, 1 suggestion,
   and 1 nit, all open. A fix pass for M1 and M2 is requested. See `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 873f8321-7bbc-4851-be8d-46a48add47bd, max-turns 200, artifacts general.md, merged.md — 2026-11-10T10:54:59Z
+- Implement-fix-2: grok task-work (2026-11-10). M1: AGENTS.md and the split guide say
+  TimeWarp.SourceGenerators 1.0.0-beta.13 and later, and point at Directory.Packages.props for the pin.
+  M2: TypeStemIdentifierAttribute Design names TimeWarp.SourceGenerators (TWA0023) as the simple-name
+  matcher that does not reference this assembly. Round 1 files were left unchanged.
+
+## Review
+
+- Round 1 findings M1 and M2 are fixed on this branch. Host runs review round 2.
 
 ## Notes
 
@@ -165,9 +177,11 @@ TWA0028 stays Architecture (it checks `TimeWarp.Foundation.Enumerations.Enumerat
 
 `ganda repo audit --fix` lowered the suppression baseline and redeployed the git hooks. `.github/workflows/workflow.yml` run steps are pwsh so `workflow-pwsh-shell` passes. `source-file-line-cap` remains a warning for the same generated and research files as before (task 469-001).
 
+Review round 1 M1 and M2 are fixed. `AGENTS.md` and `documentation/developer/guides/analyzer-package-split.md` say TimeWarp.SourceGenerators 1.0.0-beta.13 and later, and point at `Directory.Packages.props` for the pin. The `TypeStemIdentifierAttribute` Design region names TimeWarp.SourceGenerators (TWA0023) as the analyzer that matches by simple name and does not reference that assembly. The package description, `Directory.Build.props`, and the unshipped header already stated a minimum and were left as they were. Round 1 review files stay as the reviewer wrote them.
+
 ### Review
 
-Round 1 (general, effort 3) has 2 open findings and no disposition yet. M1 (suggestion): AGENTS.md and the split guide repeat the exact SourceGenerators pin; write the minimum version and point at `Directory.Packages.props`. M2 (nit): the `TypeStemIdentifierAttribute` Design region still names the convention analyzers as the TWA0023 matcher. The reviewer re-ran the gates and they pass: `dev build` had 0 warnings and 0 errors, and the analyzer tests passed 263 of 263. Paths: `review/review-framework.md` and `review/round-1/merged.md`.
+Round 1 (general, effort 3) opened M1 (suggestion) and M2 (nit). Both are fixed on this branch. Paths: `review/review-framework.md` and `review/round-1/merged.md`. The host runs review round 2.
 
 ### How to validate
 
@@ -184,6 +198,10 @@ test ! -f tests/analyzers/timewarp-architecture-analyzers-tests/type-stem-identi
 test -f source/analyzers/timewarp-architecture-attributes/type-stem-identifier-attribute.cs
 awk -F'|' '/^\| TWA/ && $4 ~ /generic/ { print $2 }' kanban/in-progress/486-split-timewarparchitectureanalyzers-move-generic-code-style-rules-to-timewarpsourcegenerators/task.md
 grep -n '1.0.0-beta.13' documentation/developer/guides/analyzer-package-split.md source/analyzers/timewarp-architecture-convention-analyzers/AnalyzerReleases.Unshipped.md
+grep -n '1.0.0-beta.13 and later; pin in `Directory.Packages.props`' AGENTS.md documentation/developer/guides/analyzer-package-split.md
+grep -n 'TimeWarp.SourceGenerators (TWA0023)' source/analyzers/timewarp-architecture-attributes/type-stem-identifier-attribute.cs
+! grep -n 'convention-analyzers match by' source/analyzers/timewarp-architecture-attributes/type-stem-identifier-attribute.cs
+! grep -n '(pin 1.0.0-beta.13)' AGENTS.md documentation/developer/guides/analyzer-package-split.md
 ```
 
 **Expect**
@@ -192,4 +210,6 @@ grep -n '1.0.0-beta.13' documentation/developer/guides/analyzer-package-split.md
 - The three analyzer sources and their tests are absent. The opt-out attribute file is present.
 - The awk lines are TWA0004, TWA0023, and TWA0038. TWA0028 and TWA0036 rows say Architecture.
 - The guide and the unshipped release file both mention 1.0.0-beta.13. The unshipped table has no TWA0004, TWA0023, or TWA0038 rows.
+- AGENTS.md and the split guide each contain `1.0.0-beta.13 and later; pin in Directory.Packages.props`. Neither contains `(pin 1.0.0-beta.13)`.
+- The attribute Design region names `TimeWarp.SourceGenerators (TWA0023)`. It does not say convention-analyzers match by simple name.
 - A project that imports the root `Directory.Build.props` still fails the build on a missing Purpose region or a file over 500 lines, from SourceGenerators, once.
