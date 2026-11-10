@@ -945,9 +945,6 @@
       "IDE0021": 1,
       "IDE0058": 1
     },
-    "tests/analyzers/timewarp-architecture-analyzers-tests/type-stem-identifier-exemptions-analyzer-tests.cs": {
-      "TWA0023": 1
-    },
     "tests/analyzers/timewarp-architecture-sourcegenerator-tests/timewarp-architecture-sourcegenerator-tests.csproj": {
       "CA1707": 1,
       "CA1849": 1,

@@ -49,7 +49,7 @@ and plain CSS (`tw-blazor-css-strategy`). Aspire. EF Core when `postgres` is on.
 | Tests | `tw-jaribu` for the framework. Co-located runfiles, C-create / C-share, and host lanes: `skills/tw-feature-placement/references/co-located-jaribu-runfiles.md` |
 | Deploy | `tw-deploy` |
 | Release cut | `tw-release`. Maintainer notes: `documentation/developer/guides/` (not packed). |
-| Diagnostics TWA / TWE / SG | The build message, plus `AnalyzerReleases.Unshipped.md` under `source/analyzers/timewarp-architecture-convention-analyzers/` and `source/analyzers/timewarp-architecture-analyzers/`. Retired ids are commented there. Generic style ids TWA0004, TWA0023, and TWA0038 are the move set in `documentation/developer/guides/analyzer-package-split.md`. |
+| Diagnostics TWA / TWE / SG | The build message, plus `AnalyzerReleases.Unshipped.md` under `source/analyzers/timewarp-architecture-convention-analyzers/` and `source/analyzers/timewarp-architecture-analyzers/`. Retired ids are commented there. Generic style ids TWA0004, TWA0023, and TWA0038 are reported by `TimeWarp.SourceGenerators` (pin 1.0.0-beta.13). See `documentation/developer/guides/analyzer-package-split.md`. |
 | Platform NuGet vs project reference | Root `Directory.Build.props`, `Directory.Packages.props`, and `msbuild/timewarp-platform-packages.props`. |
 
 ## Generated ingress prefixes
