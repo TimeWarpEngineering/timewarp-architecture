@@ -8,7 +8,8 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- One Aspire version. The AppHost SDK (Sdk Version="$(AspireVersion)"), every Aspire.*
-         package pin, and the CI Aspire.Cli install read this. Preview packages keep their own
+         package pin, and the CI Aspire.Cli install read this. The workflow assigns that value
+         on one line so the dev-cli check can see the property. Preview packages keep their own
          build suffix after the property: $(AspireVersion)-preview… -->
     <AspireVersion>13.6.4</AspireVersion>
   </PropertyGroup>
