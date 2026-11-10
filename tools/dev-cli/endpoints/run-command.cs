@@ -39,7 +39,7 @@ internal sealed class RunCommand : ICommand<Unit>
   [Option("launch-profile", "lp", Description = "AppHost launch profile from launchSettings.json (e.g. https, http; default: first profile). Requires Aspire CLI 13.6+")]
   public string? LaunchProfile { get; set; }
 
-  internal sealed class Handler : ICommandHandler<RunCommand, Unit>
+  internal sealed class Handler : IRequestHandler<RunCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private CancellationToken Ct;
@@ -51,7 +51,7 @@ internal sealed class RunCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(RunCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(RunCommand command, CancellationToken ct)
     {
       Ct = ct;
       LaunchProfile = command.LaunchProfile;

@@ -18,7 +18,7 @@ namespace DevCli.Commands;
 [NuruRouteExample("publish compose", Description = "Generate docker-compose.yaml + .env + migration script, then run the safety checks")]
 internal sealed class PublishComposeCommand : PublishGroup, ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<PublishComposeCommand, Unit>
+  internal sealed class Handler : IRequestHandler<PublishComposeCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -27,7 +27,7 @@ internal sealed class PublishComposeCommand : PublishGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(PublishComposeCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(PublishComposeCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

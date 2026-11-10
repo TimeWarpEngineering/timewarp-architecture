@@ -16,7 +16,7 @@ namespace DevCli.Commands;
 [NuruRoute("regenerate-generated", Description = "Rewrite the checked-in ingress prefix golden from the generator")]
 internal sealed class RegenerateGeneratedCommand : ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<RegenerateGeneratedCommand, Unit>
+  internal sealed class Handler : IRequestHandler<RegenerateGeneratedCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private CancellationToken Ct;
@@ -27,7 +27,7 @@ internal sealed class RegenerateGeneratedCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(RegenerateGeneratedCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(RegenerateGeneratedCommand command, CancellationToken ct)
     {
       Ct = ct;
 

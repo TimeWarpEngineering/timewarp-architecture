@@ -372,8 +372,8 @@ dotnet_diagnostic.IDE0290.severity = none
 # Multi-dot partials (application-state.close-modal.cs) require SourceGenerators ≥ 1.0.0-beta.9.
 dotnet_diagnostic.TW0001.severity = warning
 
-# TW0002: "XML documentation should be moved to a markdown file" (XmlDocsToMarkdownAnalyzer).
-# Off — with AI-assisted docs, the XML→markdown migration nag is no longer helpful. Task 171.
+# TW0002 was XmlDocsToMarkdownAnalyzer. TimeWarp.SourceGenerators 1.0.0-beta.12 removed it.
+# The severity key stays so an older package pin does not turn the nag back on. Task 171.
 dotnet_diagnostic.TW0002.severity = none
 
 # TWS0002: TimeWarp.State HandlerMustNotSendAction (distinct from TW0002). Error once the
@@ -394,7 +394,7 @@ dotnet_diagnostic.TW0007.filename = global-usings.cs
 
 # Task 147-007: EF Core scaffold output under platform/postgres/migrations/ — tooling-mandated
 # basenames (timestamp_Name.cs, *.Designer.cs, *ModelSnapshot.cs), not house kebab / Purpose regions.
-# generated_code=true skips TWA0004 (PurposeRegionAnalyzer uses GeneratedCodeAnalysisFlags.None).
+# generated_code=true skips TWA0004 (TimeWarp.SourceGenerators uses GeneratedCodeAnalysisFlags.None).
 [source/container-apps/web/platform/postgres/migrations/**.cs]
 generated_code = true
 dotnet_diagnostic.TW0001.severity = none
@@ -414,7 +414,7 @@ dotnet_diagnostic.TWA0008.severity = none
 directory-structure.exclude = documentation
 # source-file-line-cap: the only files over 500 lines are generated EF migrations
 # (platform/postgres/migrations) and a done task's research script under kanban/. This ganda
-# build has no exclude key for the check, so it runs as Warning; TWA0038 (file-length-analyzer)
+# build has no exclude key for the check, so it runs as Warning; TWA0038 (TimeWarp.SourceGenerators)
 # enforces the cap in every build with those paths exempt. Restore Error when ganda gains an
 # exclude key. Task 469-001.
 source-file-line-cap.severity = warning

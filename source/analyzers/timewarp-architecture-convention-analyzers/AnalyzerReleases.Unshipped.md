@@ -3,6 +3,11 @@
 ; Retired / reserved — do not reuse: TWA0005 (MVC verb vs [ApiRoute]; FastEndpoints take the verb
 ; from the contract), TWA0029 TWA0030 TWA0031 (server-offers agreement; replaced by typed
 ; availability flags and page-scoped actions).
+;
+; Generic style rules are not reported here (task 486). TimeWarp.SourceGenerators 1.0.0-beta.13
+; reports them with the same IDs: TWA0004, TWA0023, and TWA0038. Do not reuse those IDs here.
+; Style-only consumers (timewarp-state, for TWA0004) drop TimeWarp.Architecture.Analyzers
+; (timewarp-state task 153). Spec: documentation/developer/guides/analyzer-package-split.md.
 
 ### New Rules
 
@@ -10,7 +15,6 @@ Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
 TWA0002 | Design | Warning | ContractNullabilityValidatorAnalyzer: nullable property has a NotEmpty()/NotNull() presence rule
 TWA0003 | Design | Warning | ContractNullabilityValidatorAnalyzer: required property has a fabricated empty-string default
-TWA0004 | Documentation | Warning | PurposeRegionAnalyzer: source file lacks a #region Purpose block
 TWA0006 | Design | Warning | EndpointCoverageAnalyzer: routed contract has no server endpoint
 TWA0007 | Design | Warning | AspireResourceNameAnalyzer: Aspire resource name is not a ServiceNames constant value
 TWA0008 | Design | Warning | TemplateConditionalTokenAnalyzer: comment or string contains a template-conditional token
@@ -25,7 +29,6 @@ TWA0016 | Naming | Warning | FeatureFilenameGrammarAnalyzer: unregistered or mis
 TWA0020 | Design | Warning | EndpointAuthPostureAnalyzer: [ApiEndpoint] combined with [ClientOnlyContract] (outer or nested)
 TWA0021 | Security | Warning | MockAuthenticationRegistrationAnalyzer: mock auth DI registration outside MockAuthenticationRegistration
 TWA0022 | Design | Warning | SpaMediatorSendAnalyzer: direct mediator Send in SPA client code instead of a generated ActionSet method
-TWA0023 | Naming | Disabled | DisabledByDefault: TypeStemIdentifierAnalyzer — identifier must end with the type stem (interface I-strip)
 TWA0024 | Design | Warning | EndpointAuthorizePolicyAgreementAnalyzer: [EndpointAuthorize] Policy is not registered by this server
 TWA0025 | Design | Warning | PageLocalMessageBarAnalyzer: FluentMessageBar or shared MessageBar with Error/Success intent outside the shell MessageBars host
 TWA0026 | Design | Warning | ComponentSideEffectAnalyzer: component calls navigation / JS / API / HttpClient / storage-write / [SideEffectService] directly instead of dispatching an action
@@ -37,7 +40,6 @@ TWA0034 | Design | Warning | ReferenceableResourceAnalyzer: two [ReferenceableRe
 TWA0035 | Design | Info | OperationAttributeAnalyzer: hosted contract request has no [Operation] (TimeWarp.Contracts)
 TWA0036 | Design | Warning | IsoDateRenderingAnalyzer: date or time rendered as text in a non-ISO 8601 shape
 TWA0037 | Design | Warning | DirectFluentMessageBarAnalyzer: raw FluentMessageBar outside the shared components/MessageBar.razor and the shell MessageBars host
-TWA0038 | Maintainability | Warning | FileLengthAnalyzer: source file is longer than the line limit (500 by default; dotnet_diagnostic.TWA0038.max_lines overrides)
 TWA0039 | Design | Error | ContractAgreementAnalyzer: aggregate root lacks a member of its operation group's I*Details interface, or the type disagrees
 TWA0040 | Design | Error | ContractAgreementAnalyzer: Set<Name> command with one list has no Set<Name>(collection) mutation on the aggregate root
 TWA0041 | Design | Error | ContractAgreementAnalyzer: query response member does not project from an aggregate root member (exact name, compatible type) and is not [Computed]; child classes and a projection wrapped in a response's one non-computed member are walked too; a response may widen a root T to T?

@@ -17,7 +17,7 @@ namespace DevCli.Commands;
 [NuruRoute("lint-skills", Description = "Lint skills and eval specs with the pinned vally CLI")]
 internal sealed class LintSkillsCommand : ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<LintSkillsCommand, Unit>
+  internal sealed class Handler : IRequestHandler<LintSkillsCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private CancellationToken Ct;
@@ -28,7 +28,7 @@ internal sealed class LintSkillsCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(LintSkillsCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(LintSkillsCommand command, CancellationToken ct)
     {
       Ct = ct;
 

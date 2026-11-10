@@ -3,7 +3,7 @@
     <PackageId>$(TwArchitectureAnalyzersPackageId)</PackageId>
     <Title>$(TwArchitectureAnalyzersPackageId)</Title>
 
-    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWA0002–TWA0043; retired ids in AnalyzerReleases.Unshipped.md). Analyzer-only package; safe to reference from every project including contracts.</Description>
+    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWA0002–TWA0043 except the generic style ids; retired ids in AnalyzerReleases.Unshipped.md). Analyzer-only package; safe to reference from every project including contracts. Generic style rules TWA0004, TWA0023, and TWA0038 are reported by TimeWarp.SourceGenerators 1.0.0-beta.13 and later, with those same IDs. A reference that exists only for those rules takes TimeWarp.SourceGenerators and does not take this package.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <!-- Convention-enforcement DiagnosticAnalyzers only (no source generators), so this assembly is

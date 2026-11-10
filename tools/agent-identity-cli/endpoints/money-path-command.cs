@@ -25,7 +25,7 @@ internal sealed class MoneyPathCommand : ICommand<Unit>
   [Option("payment-signature", null, Description = "Base64 x402 PAYMENT-SIGNATURE for the paid retry (live settle)")]
   public string? PaymentSignature { get; set; }
 
-  internal sealed class Handler : ICommandHandler<MoneyPathCommand, Unit>
+  internal sealed class Handler : IRequestHandler<MoneyPathCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
@@ -40,7 +40,7 @@ internal sealed class MoneyPathCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async Task<Unit> Handle(MoneyPathCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(MoneyPathCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;

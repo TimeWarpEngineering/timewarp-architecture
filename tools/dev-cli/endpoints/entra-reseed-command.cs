@@ -21,7 +21,7 @@ internal sealed class EntraReseedCommand : EntraGroup, ICommand<Unit>
   [Option("clear", Description = "Set ReseedSiteSettings=false so later boots keep admin edits")]
   public bool Clear { get; set; }
 
-  internal sealed class Handler : ICommandHandler<EntraReseedCommand, Unit>
+  internal sealed class Handler : IRequestHandler<EntraReseedCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private EntraReseedCommand Command = null!;
@@ -31,7 +31,7 @@ internal sealed class EntraReseedCommand : EntraGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(EntraReseedCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(EntraReseedCommand command, CancellationToken ct)
     {
       Command = command;
 

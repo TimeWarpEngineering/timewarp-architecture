@@ -26,7 +26,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
   [Option("dry-run", Description = "Print pack output and install steps without running them")]
   public bool DryRun { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TemplateInstallCommand, Unit>
+  internal sealed class Handler : IRequestHandler<TemplateInstallCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private TemplateInstallCommand Command = null!;
@@ -39,7 +39,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(TemplateInstallCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TemplateInstallCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;

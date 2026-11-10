@@ -17,7 +17,7 @@ namespace DevCli.Commands;
 [NuruRouteExample("publish kubernetes", Description = "Generate the Helm chart + migration script, run the safety checks, then helm lint (when helm is installed)")]
 internal sealed class PublishKubernetesCommand : PublishGroup, ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<PublishKubernetesCommand, Unit>
+  internal sealed class Handler : IRequestHandler<PublishKubernetesCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -26,7 +26,7 @@ internal sealed class PublishKubernetesCommand : PublishGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(PublishKubernetesCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(PublishKubernetesCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

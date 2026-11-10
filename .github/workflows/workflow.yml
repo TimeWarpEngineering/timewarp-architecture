@@ -100,6 +100,11 @@ on:
           - nightly
         default: merge
 
+# ganda workflow-pwsh-shell: every run step is pwsh (timewarp-ganda task 508).
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   detect-paths:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
@@ -116,56 +121,52 @@ jobs:
       - name: Classify changed paths
         id: filter
         run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE="${{ github.event.pull_request.base.sha }}"
-            HEAD="${{ github.event.pull_request.head.sha }}"
-          else
-            BASE="${{ github.event.before }}"
-            HEAD="${{ github.sha }}"
-          fi
-          if [ -z "${BASE}" ] || [ "${BASE}" = "0000000000000000000000000000000000000000" ]; then
+          $ErrorActionPreference = 'Stop'
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            $base = '${{ github.event.pull_request.base.sha }}'
+            $head = '${{ github.event.pull_request.head.sha }}'
+          } else {
+            $base = '${{ github.event.before }}'
+            $head = '${{ github.sha }}'
+          }
+          if ([string]::IsNullOrEmpty($base) -or $base -eq '0000000000000000000000000000000000000000') {
             # New branch / unknown base — run all path-gated jobs that apply.
-            echo "ci=true" >> "$GITHUB_OUTPUT"
-            echo "skill=true" >> "$GITHUB_OUTPUT"
-            echo "template=true" >> "$GITHUB_OUTPUT"
-            echo "No usable base SHA — enabling all path-gated jobs."
+            'ci=true' >> $env:GITHUB_OUTPUT
+            'skill=true' >> $env:GITHUB_OUTPUT
+            'template=true' >> $env:GITHUB_OUTPUT
+            Write-Host 'No usable base SHA — enabling all path-gated jobs.'
             exit 0
-          fi
+          }
           # Shallow checkout (task 368): fetch just the two commits to compare. `git diff` of two
           # commits compares their trees, so no history between them is needed. A base that can no
           # longer be fetched (force push) is treated like an unknown base.
-          if ! git fetch --no-tags --depth=1 origin "$BASE" "$HEAD"; then
-            echo "ci=true" >> "$GITHUB_OUTPUT"
-            echo "skill=true" >> "$GITHUB_OUTPUT"
-            echo "template=true" >> "$GITHUB_OUTPUT"
-            echo "Could not fetch base $BASE — enabling all path-gated jobs."
+          git fetch --no-tags --depth=1 origin $base $head
+          if ($LASTEXITCODE -ne 0) {
+            'ci=true' >> $env:GITHUB_OUTPUT
+            'skill=true' >> $env:GITHUB_OUTPUT
+            'template=true' >> $env:GITHUB_OUTPUT
+            Write-Host "Could not fetch base $base — enabling all path-gated jobs."
             exit 0
-          fi
-          changed=$(git diff --name-only "$BASE" "$HEAD" || true)
-          echo "Changed files:"
-          echo "$changed"
+          }
+          $changedLines = @(git diff --name-only $base $head)
+          $global:LASTEXITCODE = 0
+          Write-Host 'Changed files:'
+          $changedLines | Write-Host
 
-          ci=false
-          skill=false
-          template=false
+          $ci = 'false'
+          $skill = 'false'
+          $template = 'false'
+          $ciPattern = '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props|goldens/)'
+          $skillPattern = '(^|/)SKILL\.md$|(^|/)eval\.yaml$|^\.vally\.yaml$|^evals/|^skills/|\.github/workflows/|^tools/dev-cli/'
+          $templatePattern = '^(source/|tests/|timewarp-templates/|\.template\.config/|msbuild/|Directory\.Build\.props|Directory\.Packages\.props|timewarp-architecture\.slnx|tools/dev-cli/|\.github/workflows/)'
+          if ($changedLines -match $ciPattern) { $ci = 'true' }
+          if ($changedLines -match $skillPattern) { $skill = 'true' }
+          if ($changedLines -match $templatePattern) { $template = 'true' }
 
-          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props|goldens/)'; then
-            ci=true
-          fi
-
-          if echo "$changed" | grep -Eq '(^|/)SKILL\.md$|(^|/)eval\.yaml$|^\.vally\.yaml$|^evals/|^skills/|\.github/workflows/|^tools/dev-cli/'; then
-            skill=true
-          fi
-
-          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|msbuild/|Directory\.Build\.props|Directory\.Packages\.props|timewarp-architecture\.slnx|tools/dev-cli/|\.github/workflows/)'; then
-            template=true
-          fi
-
-          echo "ci=$ci" >> "$GITHUB_OUTPUT"
-          echo "skill=$skill" >> "$GITHUB_OUTPUT"
-          echo "template=$template" >> "$GITHUB_OUTPUT"
-          echo "ci=$ci skill=$skill template=$template"
+          "ci=$ci" >> $env:GITHUB_OUTPUT
+          "skill=$skill" >> $env:GITHUB_OUTPUT
+          "template=$template" >> $env:GITHUB_OUTPUT
+          Write-Host "ci=$ci skill=$skill template=$template"
 
   ci-group:
     # Task 366: PR/merge CI as parallel jobs, one per `dev workflow` phase/group. Groups are defined
@@ -228,20 +229,23 @@ jobs:
       - name: Install Aspire CLI
         if: matrix.name == 'publish'
         run: |
-          set -euo pipefail
-          version=$(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props)
-          if [ -z "$version" ]; then
-            echo "Directory.Packages.props has no <AspireVersion>."
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
+          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
             exit 1
-          fi
-          echo "Installing Aspire.Cli $version from Directory.Packages.props"
-          dotnet tool install --global Aspire.Cli --version "$version"
+          }
+          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
+          dotnet tool install --global Aspire.Cli --version $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run CI Pipeline
         run: |
           # Make OpenSSL (the runner's HttpClient) honour the trusted dev cert (see Trust step above).
-          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
           dotnet run tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # Task 308: rewrite the checked-in ingress prefix golden from the two host builds, then fail
       # if that rewrite changed the tree. A hand-edited golden, or a contract change that skipped
@@ -249,14 +253,17 @@ jobs:
       - name: Regenerate ingress prefixes and fail on diff
         if: success() && matrix.name == 'fast'
         run: |
-          set -euo pipefail
+          $ErrorActionPreference = 'Stop'
           dotnet run tools/dev-cli/dev.cs -- regenerate-generated
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --exit-code -- goldens/ingress
-          if [ -n "$(git status --porcelain -- goldens/ingress)" ]; then
-            echo "goldens/ingress has unstaged or untracked changes after regenerate"
-            git status --porcelain -- goldens/ingress
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $porcelain = @(git status --porcelain -- goldens/ingress)
+          if ($porcelain.Count -gt 0) {
+            Write-Host 'goldens/ingress has unstaged or untracked changes after regenerate'
+            $porcelain | Write-Host
             exit 1
-          fi
+          }
 
       # Task 290: browser proof. The web-spa Playwright tests write screenshots and the prerendered
       # HTML to their test output, <test bin>/playwright-screenshots/<test class>/ (task 316).
@@ -336,8 +343,9 @@ jobs:
     steps:
       - name: All CI groups passed
         run: |
-          echo "ci-group: ${{ needs.ci-group.result }}"
-          [ "${{ needs.ci-group.result }}" = "success" ] || [ "${{ needs.ci-group.result }}" = "skipped" ]
+          $result = '${{ needs.ci-group.result }}'
+          Write-Host "ci-group: $result"
+          if ($result -ne 'success' -and $result -ne 'skipped') { exit 1 }
 
   release:
     # Release (`release: published`) and workflow_dispatch: one job, one `dev workflow` pass in
@@ -387,12 +395,13 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
         run: |
           # Unchanged from the single-job pipeline (no dev-cert trust step on release: the dir is absent).
-          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          if [ "${{ github.event_name }}" == "release" ]; then
+          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+          if ('${{ github.event_name }}' -eq 'release') {
             dotnet run tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          else
+          } else {
             dotnet run tools/dev-cli/dev.cs -- workflow
-          fi
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload Artifacts
         if: always()
@@ -442,14 +451,16 @@ jobs:
       # The version is tools/dev-cli/vally-cli.version — the same pin `dev lint-skills` requires.
       - name: Install vally CLI
         run: |
-          set -euo pipefail
-          version=$(tr -d '[:space:]' < tools/dev-cli/vally-cli.version)
-          if [ -z "$version" ]; then
-            echo "tools/dev-cli/vally-cli.version is missing or empty."
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads tools/dev-cli/vally-cli.version.
+          $version=(Get-Content -Raw tools/dev-cli/vally-cli.version) -replace '\s',''
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'tools/dev-cli/vally-cli.version is missing or empty.'
             exit 1
-          fi
-          echo "Installing @microsoft/vally-cli@$version from tools/dev-cli/vally-cli.version"
+          }
+          Write-Host "Installing @microsoft/vally-cli@$version from tools/dev-cli/vally-cli.version"
           npm install -g "@microsoft/vally-cli@$version"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lint skill specs
         run: dotnet run tools/dev-cli/dev.cs -- lint-skills
@@ -499,12 +510,13 @@ jobs:
       # runner's Docker). Everything else: SmokeDefault only (task 375).
       - name: Template smoke (pack → install → generate → build)
         run: |
-          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.mode }}" = "nightly" ]; then
+          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+          if ('${{ github.event_name }}' -eq 'schedule' -or '${{ inputs.mode }}' -eq 'nightly') {
             dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests
-          else
+          } else {
             dotnet run tools/dev-cli/dev.cs -- template-smoke
-          fi
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # The smoke packs this branch's platform packages as 2.0.0-smoke and restores them into
       # ~/.nuget/packages. Evict them before the cache post-step saves, so a cache never carries

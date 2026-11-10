@@ -10,9 +10,9 @@
 // Vendor-prefix clipping (TimeWarpTerminal → Terminal) is attribute-only; the analyzer never
 // infers it. Locals, foreach, and catch variables have no AttributeTargets.Local — their hatch
 // is #pragma warning disable TWA0023 or an editorconfig exclusion.
-// Lives in TimeWarp.Architecture.Attributes (not Foundation): convention-analyzers match by
-// simple name and must not ProjectReference this assembly. Do not wire this package repo-wide;
-// consumers reference it where they opt out.
+// Lives in TimeWarp.Architecture.Attributes (not Foundation): TimeWarp.SourceGenerators (TWA0023)
+// matches by simple name and does not reference this assembly. Do not wire this package
+// repo-wide; consumers reference it where they opt out.
 #endregion
 
 namespace TimeWarp.Architecture.Attributes;
