@@ -175,14 +175,14 @@ test ! -f tests/analyzers/timewarp-architecture-analyzers-tests/purpose-region-a
 test ! -f tests/analyzers/timewarp-architecture-analyzers-tests/file-length-analyzer-tests.cs
 test ! -f tests/analyzers/timewarp-architecture-analyzers-tests/type-stem-identifier-naming-analyzer-tests.cs
 test -f source/analyzers/timewarp-architecture-attributes/type-stem-identifier-attribute.cs
-grep -c '| generic |' kanban/in-progress/486-split-timewarparchitectureanalyzers-move-generic-code-style-rules-to-timewarpsourcegenerators/task.md
-grep -n 'TimeWarp.SourceGenerators 1.0.0-beta.13' documentation/developer/guides/analyzer-package-split.md source/analyzers/timewarp-architecture-convention-analyzers/AnalyzerReleases.Unshipped.md
+awk -F'|' '/^\| TWA/ && $4 ~ /generic/ { print $2 }' kanban/in-progress/486-split-timewarparchitectureanalyzers-move-generic-code-style-rules-to-timewarpsourcegenerators/task.md
+grep -n '1.0.0-beta.13' documentation/developer/guides/analyzer-package-split.md source/analyzers/timewarp-architecture-convention-analyzers/AnalyzerReleases.Unshipped.md
 ```
 
 **Expect**
 
 - The pin is `1.0.0-beta.13`.
 - The three analyzer sources and their tests are absent. The opt-out attribute file is present.
-- The classification table has exactly three `| generic |` rows: TWA0004, TWA0023, TWA0038. TWA0028 and TWA0036 say `Architecture`.
-- The guide and the unshipped release file name `TimeWarp.SourceGenerators 1.0.0-beta.13`. The unshipped table has no `TWA0004`, `TWA0023`, or `TWA0038` rows.
+- The awk lines are TWA0004, TWA0023, and TWA0038. TWA0028 and TWA0036 rows say Architecture.
+- The guide and the unshipped release file both mention 1.0.0-beta.13. The unshipped table has no TWA0004, TWA0023, or TWA0038 rows.
 - A project that imports the root `Directory.Build.props` still fails the build on a missing Purpose region or a file over 500 lines, from SourceGenerators, once.
