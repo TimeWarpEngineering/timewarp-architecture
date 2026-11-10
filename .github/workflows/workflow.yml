@@ -230,12 +230,8 @@ jobs:
         if: matrix.name == 'publish'
         run: |
           $ErrorActionPreference = 'Stop'
-          $props = Get-Content -Raw Directory.Packages.props
-          if ($props -notmatch '<AspireVersion>([^<]*)</AspireVersion>') {
-            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
-            exit 1
-          }
-          $version = $Matches[1].Trim()
+          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
+          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
           if ([string]::IsNullOrWhiteSpace($version)) {
             Write-Host 'Directory.Packages.props has no <AspireVersion>.'
             exit 1
@@ -456,7 +452,8 @@ jobs:
       - name: Install vally CLI
         run: |
           $ErrorActionPreference = 'Stop'
-          $version = (Get-Content -Raw tools/dev-cli/vally-cli.version) -replace '\s', ''
+          # One assignment: dev-cli checks that this line reads tools/dev-cli/vally-cli.version.
+          $version=(Get-Content -Raw tools/dev-cli/vally-cli.version) -replace '\s',''
           if ([string]::IsNullOrWhiteSpace($version)) {
             Write-Host 'tools/dev-cli/vally-cli.version is missing or empty.'
             exit 1
