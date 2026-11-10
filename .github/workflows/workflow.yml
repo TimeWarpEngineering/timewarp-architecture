@@ -265,6 +265,16 @@ jobs:
             exit 1
           }
 
+      # Task 487: `dev test` collects MTP code coverage, one Cobertura file per test project at
+      # artifacts/coverage/<project>/coverage.cobertura.xml. Each matrix job uploads its own group.
+      - name: coverage
+        if: success() && matrix.name != 'publish'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.name }}
+          path: artifacts/coverage
+          if-no-files-found: warn
+
       # Task 290: browser proof. The web-spa Playwright tests write screenshots and the prerendered
       # HTML to their test output, <test bin>/playwright-screenshots/<test class>/ (task 316).
       # Diagnostic upload, so retention-days: 1.
