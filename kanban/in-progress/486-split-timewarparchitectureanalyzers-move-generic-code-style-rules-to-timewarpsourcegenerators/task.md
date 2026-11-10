@@ -140,6 +140,8 @@ No `TWA*` id above TWA0043 is declared under `source/analyzers/`.
   new with timewarp-ganda task 508; the file had no product diff before this). `source-file-line-cap`
   stays a warning (task 469-001).
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1c4e9-51d9-77c1-a4b8-6234c3bcd8e0, max-turns 500, Done — 2026-11-10T10:46:21Z
+- Review oracle round 1 (2026-11-10): claude-opus-5-5, effort 3, roster general. Found 0 bugs, 1 suggestion,
+  and 1 nit, all open. A fix pass for M1 and M2 is requested. See `review/round-1/merged.md`.
 
 ## Notes
 
@@ -162,6 +164,10 @@ TWA0028 stays Architecture (it checks `TimeWarp.Foundation.Enumerations.Enumerat
 `./bin/dev build --quiet` succeeded. Analyzer tests: 263 passed, 0 failed (Jaribu, from the test project directory, Release, `--no-build`). A throwaway 510-line file with no Purpose region, since deleted, produced error TWA0004 and error TWA0038 through `timewarp-source-generators` 1.0.0-beta.13. Each id appeared twice in the log because MSBuild echoes the csc line. The csc command line named that analyzer once.
 
 `ganda repo audit --fix` lowered the suppression baseline and redeployed the git hooks. `.github/workflows/workflow.yml` run steps are pwsh so `workflow-pwsh-shell` passes. `source-file-line-cap` remains a warning for the same generated and research files as before (task 469-001).
+
+### Review
+
+Round 1 (general, effort 3) has 2 open findings and no disposition yet. M1 (suggestion): AGENTS.md and the split guide repeat the exact SourceGenerators pin; write the minimum version and point at `Directory.Packages.props`. M2 (nit): the `TypeStemIdentifierAttribute` Design region still names the convention analyzers as the TWA0023 matcher. The reviewer re-ran the gates and they pass: `dev build` had 0 warnings and 0 errors, and the analyzer tests passed 263 of 263. Paths: `review/review-framework.md` and `review/round-1/merged.md`.
 
 ### How to validate
 
