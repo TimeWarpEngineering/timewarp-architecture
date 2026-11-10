@@ -150,11 +150,14 @@ No `TWA*` id above TWA0043 is declared under `source/analyzers/`.
   TimeWarp.SourceGenerators 1.0.0-beta.13 and later, and point at Directory.Packages.props for the pin.
   M2: TypeStemIdentifierAttribute Design names TimeWarp.SourceGenerators (TWA0023) as the simple-name
   matcher that does not reference this assembly. Round 1 files were left unchanged.
+- Review oracle round 2 (2026-11-10): claude-opus-5-5, effort 1, roster general, max-turns 80. Delta
+  `e345d6ffc..b4001294e`. M1 and M2 are verified fixed and no new findings were raised. Disposition is clean.
+  See `review/round-2/merged.md` and `review/disposition.md`.
 
 ## Review
 
-- Round 1 findings M1 and M2 are fixed on this branch. Host runs review round 2.
-
+- Round 1 findings M1 and M2 are fixed on this branch. Round 2 verified them. Disposition is clean (`review/disposition.md`).
+- Round 2: Done
 ## Notes
 
 Filed by Jenzi after Steven approved "file the tasks to make this happen" (2026-11-09). Trigger:
@@ -181,7 +184,9 @@ Review round 1 M1 and M2 are fixed. `AGENTS.md` and `documentation/developer/gui
 
 ### Review
 
-Round 1 (general, effort 3) opened M1 (suggestion) and M2 (nit). Both are fixed on this branch. Paths: `review/review-framework.md` and `review/round-1/merged.md`. The host runs review round 2.
+Round 1 (general, effort 3) opened M1 (suggestion) and M2 (nit). Commit b4001294e fixed both. Round 2 (general, effort 1) re-checked the fix delta, found both fixed, and raised nothing new.
+
+Final counts: bug 0; suggestion 1 fixed; nit 1 fixed; 0 open; 0 wontfix. Review disposition: **clean** after 2 rounds, with no escalations. Paths: `review/review-framework.md`, `review/round-2/merged.md` (the last merged file), and `review/disposition.md`.
 
 ### How to validate
 

@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 3582
-- Effort: 3
+- Lines changed: 130
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope — task 486
 
@@ -25,3 +25,8 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+- Delta `e345d6ffc..b4001294e` (round-1 base to fix head): `AGENTS.md`, `documentation/developer/guides/analyzer-package-split.md`, `source/analyzers/timewarp-architecture-attributes/type-stem-identifier-attribute.cs`, plus kanban kitchen edits.
+- Effort 1, roster general (review oracle, claude-opus-5-5). Re-verify M1 and M2; scan the fix delta for new defects.
