@@ -26,9 +26,17 @@ pass by really collecting and uploading coverage in CI.
 - [x] Add the `coverage` upload step to workflow.yml
 - [x] `ganda repo audit`: ci-code-coverage passes
 - [x] `dev build`, `dev test --group fast` (13 Cobertura files), `dev check-version`
-- [ ] `dev template-smoke`
-- [ ] Commit, push, open PR
+- [x] `dev template-smoke` (default variant, SUCCEEDED)
+- [x] Commit, push, open PR
 
 ## Session
 
 - Created: 3db28a25-2474-4f26-9c94-cf08f42e9c9a (2026-11-10)
+
+## Results
+
+- `ganda repo audit`: ci-code-coverage passes. Remaining warnings: source-file-line-cap (intentional) and vscode-window-icon (the ignored `.vscode/settings.json` is per-checkout, so a fresh worktree lacks it).
+- `dev build`: 0 warnings, 0 errors. `dev test --no-build --group fast`: 14 of 14 projects passed, 13 `coverage.cobertura.xml` files written under `artifacts/coverage/<project>/`.
+- `dev check-version`: source 2.0.0-beta.32 is already ahead of the published beta.31, so no bump.
+- `dev template-smoke` (default variant): SUCCEEDED.
+- Pattern mirrors timewarp-pele: CodeCoverage extension package, `--coverage` flags in dev-cli, `coverage` upload step. Differences: the results directory is per project because `dev test` runs projects in parallel, and each CI matrix job uploads its own `coverage-<group>` artifact.
