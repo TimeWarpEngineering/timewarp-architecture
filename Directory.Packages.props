@@ -250,6 +250,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.9.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.15" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
     <PackageVersion Include="TimeWarp.Jaribu.TestingPlatform" Version="1.0.0-beta.15" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.13" />
   </ItemGroup>

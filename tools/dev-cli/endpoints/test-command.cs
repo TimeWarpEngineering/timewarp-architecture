@@ -330,12 +330,19 @@ internal sealed class TestCommand : ICommand<Unit>
     private static CommandResult BuildTestCommand(string project, int portBase)
     {
       return Shell.Builder("dotnet")
-        .WithArguments(DotNetTestArguments.Test())
+        .WithArguments(DotNetTestArguments.Test(CoverageDirectory(project)))
         .WithWorkingDirectory(ProjectDirectory(project))
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, portBase.ToString(CultureInfo.InvariantCulture))
         .WithNoValidation()
         .Build();
     }
+
+    // One folder per project under <repo>/artifacts/coverage so parallel projects never share a file.
+    private static string CoverageDirectory(string project) =>
+      Path.Combine(FindRepoRootOrThrow(), DotNetTestArguments.CoverageRoot, Path.GetFileNameWithoutExtension(project));
+
+    private static string FindRepoRootOrThrow() =>
+      Git.FindRoot() ?? throw new InvalidOperationException("Could not find repository root.");
 
     private static string ProjectDirectory(string project) =>
       Path.GetDirectoryName(project)

@@ -38,6 +38,13 @@
     <NoWarn>$(NoWarn);TWA0004</NoWarn> <!-- #region Purpose not yet adopted for test files — separate decision; TWA0008 (template-token guard) is the reason the convention analyzers are wired here -->
   </PropertyGroup>
 
+  <!-- Task 487: MTP code coverage for `dev test`; CI uploads artifacts/coverage.
+       The PackageReference is in the root Directory.Build.props (the ganda cpm-consistency audit
+       reads only that file and *.csproj); this property switches it on for the tests tree. -->
+  <PropertyGroup Label="Code Coverage">
+    <CollectTestCoverage>true</CollectTestCoverage>
+  </PropertyGroup>
+
   <!-- Repo-wide convention analyzers for TEST code too: tests/ ships as template content, so
        TWA0008 (template-conditional tokens in comments/strings mangle generation) must cover it.
        Analyzer-test files that embed C# source in strings are the likeliest carriers. source/

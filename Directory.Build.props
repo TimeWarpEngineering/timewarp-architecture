@@ -127,6 +127,11 @@
        The wiring sits here, not in an imported msbuild/ file, because the ganda cpm-consistency audit
        finds PackageReference items only in Directory.Build.props and *.csproj files.
        Rules that are off for a tree belong in that tree's props or in .editorconfig, not here. -->
+  <!-- Task 487: MTP code coverage extension for test projects (tests/Directory.Build.props sets
+       CollectTestCoverage). `dev test` turns collection on with the MTP coverage flag; the extension ships in the template. -->
+  <ItemGroup Label="Code Coverage" Condition="'$(CollectTestCoverage)' == 'true'">
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+  </ItemGroup>
   <ItemGroup Label="Convention Analyzers"
              Condition="'$(EnableConventionAnalyzers)' == 'true' and '$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
