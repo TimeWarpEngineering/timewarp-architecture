@@ -10,6 +10,10 @@ fields with `SyncAssistantDraft` / `SyncByokDraft` plus `SyncUnedited*` dirty tr
   `UpdateXaiByokMode.Command` (or copy from the whole `GetSiteSettings.Response`).
 - Delete the shadow dirty-tracking; dirty = working copy differs from stored Response.
 
+## Depends on
+
+- 489-001
+
 ## Checklist
 
 - [ ] Interfaces / copy source
