@@ -9,6 +9,10 @@
   owned by the page (or a pending action); save dispatches the command built from it.
 - Same treatment for `PrincipalState` role/scope checkbox drafts on `PrincipalDetailPage`.
 
+## Depends on
+
+- 489-002
+
 ## Checklist
 
 - [ ] GetRole fetch + RoleState holds whole Response
