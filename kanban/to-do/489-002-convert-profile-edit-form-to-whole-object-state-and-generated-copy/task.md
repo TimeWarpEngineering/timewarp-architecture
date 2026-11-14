@@ -2,17 +2,32 @@
 
 ## Description
 
-[Brief description of the task]
+Reference conversion.
+
+- `ProfileState`: replace `DisplayName`, `Email`, `Avatar`, `Language`, `Region`, `Theme`,
+  `Notifications` with `GetProfile.Response? Profile`, set only in
+  `profile-state.fetch-profile-data.cs` / `profile-state.update-profile.cs`. Update chrome
+  consumers (header avatar / display name) and `profile-state.agent-page-facts.cs`.
+- `ProfilePage.razor`: replace `SyncCommandFromState()` with
+  `UpdateProfile.Command.From(ProfileState.Profile)` on load and Cancel. Copy only on entering
+  edit, not every render.
+- The `?? "en-US"` / `?? "US"` / `?? "system"` defaults move server-side (Response always
+  carries them) — they are the non-mechanical part.
+- Keep the Avatar fallback icon behaviour.
+
+## Depends on
+
+- 489-001
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] State + handlers
+- [ ] Page
+- [ ] Consumers of the removed properties
+- [ ] Tests (integration / playwright profile save + cancel)
 
-## Session
+## Results
 
-- Created: e7ee2c9a-1f25-4a62-b061-6f595b0d40a1 (2026-11-14)
+## Parent
 
-## Notes
-
-[Additional context]
+- 489
