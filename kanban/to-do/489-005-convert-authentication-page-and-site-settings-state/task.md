@@ -13,6 +13,10 @@ Hardest conversion; do last.
 - Replace `SyncDraftFromState()` and the repeated `Command.EntraAcceptedTenants = [..]` lines.
 - Consider adding Cancel now that reset is cheap.
 
+## Depends on
+
+- 489-004
+
 ## Checklist
 
 - [ ] State holds whole Response; update all readers
