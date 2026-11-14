@@ -2,17 +2,28 @@
 
 ## Description
 
-[Brief description of the task]
+Source generator (or analyzer-backed generator) driven by `I*Details` interfaces:
+
+- For every Command implementing `I*Details`: `static Command From(I*Details source)` copying
+  every interface member. Lists copied, not shared (`List<T>` on editable details).
+- For every mutable Response implementing `I*Details` (setters): a real deep `Clone()` so
+  TimeWarp.State's per-action state clone does not share a mutable instance. Get-only /
+  `[Computed]` members (e.g. `GetProfile.Response.Avatar`) must survive the clone.
+- Members outside the interface that the Command needs (e.g. `Version`) — decide: widen the
+  interface, or a generator hook / partial method. Record the decision.
+
+Parent: see parent kitchen for the pattern.
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Verify how TimeWarp.State 12.0.0-beta.17's generated state cloner treats contract
+      objects (ICloneable? field copy?) and get-only members
+- [ ] Generator + diagnostics (e.g. mutable `I*Details` Response with `ICloneable => this`)
+- [ ] Unit tests for generated `From` and `Clone`
+- [ ] Short developer doc for the edit-form pattern under `documentation/developer/`
 
-## Session
+## Results
 
-- Created: e7ee2c9a-1f25-4a62-b061-6f595b0d40a1 (2026-11-14)
+## Parent
 
-## Notes
-
-[Additional context]
+- 489
