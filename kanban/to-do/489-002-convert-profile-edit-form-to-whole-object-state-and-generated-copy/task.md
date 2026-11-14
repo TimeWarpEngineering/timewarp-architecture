@@ -15,6 +15,10 @@ Reference conversion.
   carries them) — they are the non-mechanical part.
 - Keep the Avatar fallback icon behaviour.
 
+## Depends on
+
+- 489-001
+
 ## Checklist
 
 - [ ] State + handlers
