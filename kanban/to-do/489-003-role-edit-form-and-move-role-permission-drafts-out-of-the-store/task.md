@@ -2,17 +2,27 @@
 
 ## Description
 
-[Brief description of the task]
+- Add a `GetRole` fetch to the SPA (`GetRole.Response : IRoleDetails`) and an edit form next to
+  the create-only `RoleForm`, using `UpdateRole.Command.From(IRoleDetails)`. Shows create vs
+  edit side by side with the shared `RoleDetailsValidator`.
+- Move `RoleState.DraftPermissionIds` / `DraftAgentScopes` out of the store into a working copy
+  owned by the page (or a pending action); save dispatches the command built from it.
+- Same treatment for `PrincipalState` role/scope checkbox drafts on `PrincipalDetailPage`.
+
+## Depends on
+
+- 489-002
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] GetRole fetch + RoleState holds whole Response
+- [ ] Role edit form
+- [ ] Permission/scope drafts out of RoleState
+- [ ] Principal role/scope drafts out of PrincipalState
+- [ ] Tests
 
-## Session
+## Results
 
-- Created: e7ee2c9a-1f25-4a62-b061-6f595b0d40a1 (2026-11-14)
+## Parent
 
-## Notes
-
-[Additional context]
+- 489
