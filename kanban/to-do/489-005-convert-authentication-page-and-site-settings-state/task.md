@@ -2,17 +2,30 @@
 
 ## Description
 
-[Brief description of the task]
+Hardest conversion; do last.
+
+- `SiteSettingsState` holds `GetSiteSettings.Response` whole instead of ~15 flattened fields.
+- Remove `DraftAcceptedTenants` from the store. Tenant add/remove edit
+  `Command.EntraAcceptedTenants` on the working copy; tenant lookup/resolution stays an action
+  whose result the page applies to its copy.
+- `Version`, `AssistantName`, `XaiByokMode`, `Configuration*` are not on
+  `ISiteSettingsDetails` — handle per the decision made in the generator task.
+- Replace `SyncDraftFromState()` and the repeated `Command.EntraAcceptedTenants = [..]` lines.
+- Consider adding Cancel now that reset is cheap.
+
+## Depends on
+
+- 489-004
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] State holds whole Response; update all readers
+- [ ] Tenant draft out of store
+- [ ] Page conversion
+- [ ] Tests
 
-## Session
+## Results
 
-- Created: e7ee2c9a-1f25-4a62-b061-6f595b0d40a1 (2026-11-14)
+## Parent
 
-## Notes
-
-[Additional context]
+- 489
