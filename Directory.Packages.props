@@ -21,7 +21,10 @@
     <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.5" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.5" />
     <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.0" />
+    <!-- 2.0.1-beta.1, not stable 2.0.0: TimeWarp.Nuru 4.0.0-beta.14 depends on
+         TimeWarp.Build.Tasks >= 2.0.1-beta.1, so a 2.0.0 pin is NU1605 (downgrade) in the dev-cli
+         runfile. Take the next stable when it is at least this version (task 492). -->
+    <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.1-beta.1" />
     <PackageVersion Include="TimeWarp.Components" Version="1.0.0-beta.2" />
     <!-- Foundation packages (task 051). Used ONLY by an app generated from the template (the repo
          itself uses project refs). Per task-124 policy, these pins equal the release <Version> and

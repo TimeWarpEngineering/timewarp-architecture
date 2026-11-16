@@ -142,9 +142,15 @@ timewarp-state pattern). `dev workflow` needed no change: it reads `<AspireVersi
    FeedbackListPage) already uses `OnValidSubmit` with no `AsyncMode`, `PendingTask`, or manual
    `Validate`/`ValidateAsync` in the submit handler. TodoItemForm has no validator in markup. That is
    the net11 pattern 3.0 recommends, so **no code change**. Playwright exercises those forms and passed.
-4. **TimeWarp.Build.Tasks 2.0.0 (major).** Release v2.0.0 is "retarget to net11.0" (PR #11);
-   TWBT0001 fires only on .NET Framework MSBuild. This repo builds with the dotnet CLI only, so **no
-   code change**.
+4. **TimeWarp.Build.Tasks 2.0.0 (major) → pinned 2.0.1-beta.1.** Release v2.0.0 is "retarget to
+   net11.0" (PR #11); TWBT0001 fires only on .NET Framework MSBuild, and this repo builds with the
+   dotnet CLI only, so no code change. The pin is 2.0.1-beta.1, not 2.0.0, because
+   TimeWarp.Nuru 4.0.0-beta.14 depends on `TimeWarp.Build.Tasks >= 2.0.1-beta.1`, so a 2.0.0 pin is
+   NU1605 (downgrade) in the `tools/dev-cli/dev.cs` runfile. `./bin/dev build` does not compile that
+   runfile; the first commit's attest `bin-dev` check caught it. v2.0.1-beta.1 only consumes the
+   published 2.0.0 (PR #12). The pin comment says to take the next stable at or above it.
+   `./bin/dev` was rebuilt (`dotnet run --file tools/dev-cli/dev.cs -- self-install`) on the new
+   Nuru/Amuru/Terminal pins with no source change.
 5. **FastEndpoints 9.0.0 GA, Mediator beta.9, Contracts beta.33, Nuru beta.14, Amuru beta.5,
    Terminal beta.2, Multiavatar beta.15, OpenTelemetry 1.21, Scalar 2.21, Extensions 11.0.0:** no
    compile or test change.
@@ -159,12 +165,12 @@ an analyzer rule).
 
 | Gate | Command | Result |
 |------|---------|--------|
-| Build | `./bin/dev build` | Build completed successfully, 0 Warning(s), 0 Error(s) |
-| Test (full, incl. Playwright) | `./bin/dev test -q` | 23 of 23 projects passed (web-spa-playwright-tests passed, 393 s) |
+| Build | `./bin/dev build` | Build completed successfully, 0 Warning(s), 0 Error(s) (rerun after the Build.Tasks pin fix: same) |
+| Test (full, incl. Playwright) | `./bin/dev test -q` | 23 of 23 projects passed (rerun after the Build.Tasks pin fix: 23/23, web-spa-playwright-tests 416.8 s) |
 | Template smoke | `./bin/dev template-smoke --matrix` | Template smoke SUCCEEDED; SmokeDefault, SmokeNoApi, SmokeNoGrpc, SmokeNoPostgres, SmokeNoWeb, SmokeNoYarp OK; generated web-jaribu 464/464, api-jaribu 9/9, timewarp-testing 14/14 |
 | Version | `./bin/dev check-version` | Source 2.0.0-beta.32 vs NuGet 2.0.0-beta.31: "Version in source is new — safe to release." No bump needed. |
 | Outdated | `ganda nuget outdated` | 6 outdated (the EF family; blocked on Npgsql, see Notes). 62 before. |
-| Audit | `ganda repo audit` | Repository passes. Advisories fixed with `--fix --checks memsearch-scaffold,vscode-window-icon`. One advisory remains: source-file-line-cap on pre-existing generated EF migration files and a done-task research runfile (warning severity; TWA0038 enforces). |
+| Audit | `ganda repo audit` | First commit's attest failed `bin-dev` (NU1605 above); after the fix, rerun: Repository passes. Advisories fixed with `--fix --checks memsearch-scaffold,vscode-window-icon`. One advisory remains: source-file-line-cap on pre-existing generated EF migration files and a done-task research runfile (warning severity; TWA0038 enforces). |
 
 ### How to validate
 
