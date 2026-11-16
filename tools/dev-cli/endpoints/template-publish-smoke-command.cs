@@ -85,7 +85,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
   [Option("skip-wait", Description = "Skip flatcontainer availability wait (packages already known present)")]
   public bool SkipWait { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TemplatePublishSmokeCommand, Unit>
+  internal sealed class Handler : IRequestHandler<TemplatePublishSmokeCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private CancellationToken Ct;
@@ -103,7 +103,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(TemplatePublishSmokeCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TemplatePublishSmokeCommand command, CancellationToken ct)
     {
       Ct = ct;
 

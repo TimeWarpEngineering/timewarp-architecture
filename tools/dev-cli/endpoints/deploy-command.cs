@@ -34,7 +34,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
   [Option("no-browser", Description = "Print the URL instead of opening a browser")]
   public bool NoBrowser { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DeployCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -43,7 +43,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       await DeployRunner.RunAsync(
         Terminal,
@@ -51,7 +51,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
         command.Yes,
         command.NoBrowser,
         (target, token) => new DeployMigrateCommand.Handler(Terminal).Handle(
-          new DeployMigrateCommand { Target = target, Yes = true }, token),
+          new DeployMigrateCommand { Target = target, Yes = true }, token).AsTask(),
         ct);
       return Unit.Value;
     }

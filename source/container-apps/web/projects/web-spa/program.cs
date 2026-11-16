@@ -46,8 +46,9 @@
 // snapshots turn on only then. The package reference is Debug-only and the call compiles only with
 // the DEBUG symbol, so a Release build or publish has neither the assembly nor the call. Each DEBUG
 // block sits inside the cnd:noEmit escape so dotnet new keeps it: DEBUG is not a template symbol.
-// Snapshots use a reflection resolver: Debug WebAssembly is not trimmed, and a failed snapshot never
-// fails the action. A Development Debug start without an inspector costs one discovery GET (204).
+// Snapshots resolve type info from StateJsonContext (task 484, TWS0013) and fall back to reflection
+// for a state it does not list (TimeWarp.State.Plus): Debug WebAssembly is not trimmed, and a failed
+// snapshot never fails the action. A Development Debug start without an inspector costs one discovery GET (204).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
@@ -120,7 +121,10 @@ public static class Program
       {
         options.IncludeSnapshots = true;
         options.JsonSerializerOptions =
-          new JsonSerializerOptions(JsonSerializerDefaults.Web) { TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
+          new JsonSerializerOptions(JsonSerializerDefaults.Web)
+          {
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(StateJsonContext.Default, new DefaultJsonTypeInfoResolver()),
+          };
       }
     );
     builder.Services.AddTimeWarpStateDevToolsWasmExporter(endpoint);

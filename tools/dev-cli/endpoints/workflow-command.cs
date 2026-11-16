@@ -72,7 +72,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     "timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj",
   ];
 
-  internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
+  internal sealed class Handler : IRequestHandler<WorkflowCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
@@ -85,7 +85,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       RepoCleanService = repoCleanService;
     }
 
-    public async Task<Unit> Handle(WorkflowCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       Ct = ct;
 
@@ -270,7 +270,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       return true;
     }
 
-    private async Task<bool> RunStepAsync(string stepName, Task<Unit> step)
+    private async Task<bool> RunStepAsync(string stepName, ValueTask<Unit> step)
     {
       await step;
 

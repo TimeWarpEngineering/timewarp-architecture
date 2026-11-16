@@ -1,0 +1,1197 @@
+{
+  "files": {
+    ".editorconfig": {
+      "IDE0290": 1,
+      "RCS1043": 1,
+      "RCS1093": 1,
+      "RCS1138": 1,
+      "RCS1139": 1,
+      "RCS1140": 1,
+      "RCS1141": 1,
+      "RCS1142": 1,
+      "RCS1168": 1,
+      "RCS1181": 1,
+      "RCS1189": 1,
+      "RCS1228": 1,
+      "TW0001": 1,
+      "TW0002": 1,
+      "TWA0004": 1,
+      "TWA0008": 1,
+      "TWA0015": 1,
+      "TWA0016": 1,
+      "ca1308": 1
+    },
+    ".githooks/post-checkout.cs": {
+      "CA2007": 1
+    },
+    ".githooks/post-commit.cs": {
+      "CA2007": 1
+    },
+    ".githooks/post-merge.cs": {
+      "CA2007": 1
+    },
+    ".githooks/pre-commit.cs": {
+      "CA1849": 2,
+      "CA2007": 1,
+      "RS0030": 2
+    },
+    ".githooks/pre-push.cs": {
+      "CA1849": 3,
+      "CA2007": 1,
+      "RS0030": 3
+    },
+    "Directory.Build.props": {
+      "0419": 1,
+      "1570": 1,
+      "1571": 1,
+      "1572": 1,
+      "1573": 1,
+      "1574": 1,
+      "1580": 1,
+      "1581": 1,
+      "1584": 1,
+      "1587": 1,
+      "1589": 1,
+      "1590": 1,
+      "1592": 1,
+      "1710": 1,
+      "1711": 1,
+      "1712": 1,
+      "1734": 1,
+      "CA1014": 1,
+      "CA1716": 1,
+      "CA1724": 1,
+      "CA1812": 1,
+      "IL2026": 1,
+      "IL2067": 1,
+      "IL2070": 1,
+      "IL2075": 1,
+      "IL2104": 1,
+      "IL3050": 1,
+      "IL3053": 1
+    },
+    "Directory.Build.targets": {
+      "1591": 1
+    },
+    "source/analyzers/Directory.Build.props": {
+      "NU5128": 1
+    },
+    "source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj": {
+      "CA1031": 1,
+      "CA1062": 1,
+      "RS1041": 1
+    },
+    "source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj": {
+      "CA1031": 1,
+      "CA1062": 1,
+      "RS1041": 1
+    },
+    "source/container-apps/Directory.Build.props": {
+      "CA1002": 1,
+      "CA1024": 1,
+      "CA1031": 1,
+      "CA1032": 1,
+      "CA1034": 1,
+      "CA1040": 1,
+      "CA1052": 1,
+      "CA1062": 1,
+      "CA1303": 1,
+      "CA1304": 1,
+      "CA1305": 1,
+      "CA1311": 1,
+      "CA1515": 1,
+      "CA1725": 1,
+      "CA1819": 1,
+      "CA2007": 1,
+      "CA2016": 1,
+      "CA2201": 1,
+      "CA2227": 1,
+      "CA2234": 1,
+      "CA5394": 1,
+      "RCS1102": 1,
+      "RCS1194": 1,
+      "RS0030": 1
+    },
+    "source/container-apps/api/features/agent-bearer-sample/get-agent-bearer-identity/get-agent-bearer-identity-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/api/projects/api-server/api-server.csproj": {
+      "1591": 1
+    },
+    "source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj": {
+      "ASPIRE010": 1
+    },
+    "source/container-apps/aspire/projects/aspire-app-host/publish-target.cs": {
+      "ASPIRECOMPUTE003": 1
+    },
+    "source/container-apps/aspire/projects/aspire-service-defaults/aspire-service-defaults.csproj": {
+      "CA1062": 1
+    },
+    "source/container-apps/grpc/projects/grpc-server/grpc-server.csproj": {
+      "CA1051": 1,
+      "CA1848": 1,
+      "CA1849": 1
+    },
+    "source/container-apps/web/features/admin/principals/effective-roles-resolver-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/principals/get-principal/get-principal-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/principals/list-principals/list-principals-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/principals/set-principal-agent-scopes/set-principal-agent-scopes-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/principals/set-principal-roles/set-principal-roles-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/roles/delete-role/delete-role-validator-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/roles/in-memory-role-store-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/roles/set-role-agent-scopes/set-role-agent-scopes-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/roles/set-role-permissions/set-role-permissions-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/admin/roles/update-role/update-role-validator-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/agent-chat/complete-agent-chat/complete-agent-chat-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/agent-chat/get-agent-chat-configuration/get-agent-chat-configuration-contracts.cs": {
+      "CA1056": 3
+    },
+    "source/container-apps/web/features/agent-chat/get-agent-chat-configuration/get-agent-chat-configuration-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/agent-chat/site-xai-api-key-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/agent-chat/user-xai-api-key-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/agent-chat/xai-api-key-status-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/agent-chat/xai-chat-options-application.cs": {
+      "CA1056": 1
+    },
+    "source/container-apps/web/features/agent-links/agent-human-link-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/agent-links/list-agent-human-links/list-agent-human-links-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/authorization/permission-ids-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/browser-logs/forward-browser-logs/forward-browser-logs-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/feedback/ef-feedback-store-infrastructure.cs": {
+      "CA1862": 1
+    },
+    "source/container-apps/web/features/feedback/feedback-admin-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/feedback/feedback-attachment-submit-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/feedback/feedback-attachment-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/feedback/feedback-filing-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/feedback/feedback-owner-name-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/feedback/feedback-triage-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/hello/hello/hello-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/identity/credential-last-used-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/identity/entra-authentication-options-application.cs": {
+      "CA1054": 1
+    },
+    "source/container-apps/web/features/identity/entra-sign-in-policy-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/identity/get-sign-in-methods/get-sign-in-methods-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/identity/identity-progressive-profile-gate-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/identity/registration-context-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/identity/rename-credential/rename-credential-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0005": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/identity/seed-on-read-site-settings-store-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/identity/site-settings-seeder-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/metered-capability/invoke-metered-capability/invoke-metered-capability-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/profile/ef-profile-store-infrastructure.cs": {
+      "CA1862": 1
+    },
+    "source/container-apps/web/features/profile/get-profile/get-profile-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/profile/update-profile/update-profile-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/settings/get-assistant-identity/get-assistant-identity-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/settings/get-site-settings/get-site-settings-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/settings/resolve-entra-tenant/resolve-entra-tenant-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/settings/site-settings-configuration-drift-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/settings/update-assistant-name/update-assistant-name-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/settings/update-xai-byok-mode/update-xai-byok-mode-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/features/tip/submit-tip/submit-tip-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/platform/abuse/abuse-rate-limiting-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/platform/agent-discovery/markdown-content-negotiation-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/platform/authorization/agent-scope-approval-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/platform/authorization/permission-claim-policies-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/platform/authorization/permission-evaluator-agent-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/platform/authorization/permission-evaluator-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0007": 1,
+      "IDE0008": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "source/container-apps/web/platform/identity-host/hosted-identity-session-authentication-state-provider-server.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/platform/identity-host/local-return-url-server.cs": {
+      "CA1054": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260804154245_InitialPostgresModel.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260812102254_AddRolePermissions.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260812180000_AddCredentialManageSelfPermission.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260904134226_AddProfileEmailAndAgentHumanLinks.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260915135643_AddSiteSettings.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260916120000_DropSiteSettingsEntraTrustedTenants.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260916200000_AddPrincipalMergedIntoPrincipalId.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260923063306_AddCredentialNicknameAndRegisteredWith.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260923110932_AddCredentialLastUsedAt.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20260923180147_AddCredentialAccountHint.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261009001245_AddFeedbackItems.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261010075816_AddFeedbackAttachments.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261012115946_AddFeedbackTriage.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261013120000_AddAdminProfilesReadPermission.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261014110100_AddSiteSettingsAssistantName.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261014121541_AddFeedbackAttachmentBytes.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261017135945_AddFeedbackSeverity.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261020162201_AddSiteSettingsEntraTenantAcceptance.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261021184129_AddDataProtectionKeys.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261021214830_AddProtectedSecrets.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261025144841_ConvertEntraAcceptedTenants.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261025175631_AddSiteSettingsXaiByokMode.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261102105501_AddAgentScopeGrants.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/20261104193441_AddRoles.Designer.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/platform/postgres/migrations/PostgresDbContextModelSnapshot.cs": {
+      "612": 1,
+      "618": 1
+    },
+    "source/container-apps/web/projects/web-server/web-server-authentication.cs": {
+      "IDE0200": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/admin/principals/principal-state/principal-state.set-principal-roles.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/application/agent-surface-state/agent-surface-state.cs": {
+      "CA1056": 2
+    },
+    "source/container-apps/web/projects/web-spa/features/application/agent/catalog-agent-functions.cs": {
+      "BL0013": 2
+    },
+    "source/container-apps/web/projects/web-spa/features/application/agent/catalog-agent-session.cs": {
+      "CA2000": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-dispatcher.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-publisher.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/application/ask-reference-state/ask-reference-state.open.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/application/ask-tag-state/ask-tag-state.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/application/command-palette-state/command-palette-state.open.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/application/modals/agent-ask/AgentAsk.razor": {
+      "BL0013": 2
+    },
+    "source/container-apps/web/projects/web-spa/features/application/modals/agent-ask/AskAnswerBar.razor": {
+      "CA1056": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/base/api-handler.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/base/authenticated-handler.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/features/base/base-component.auth.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/global-usings.cs": {
+      "IDE0005": 1
+    },
+    "source/container-apps/web/projects/web-spa/program.cs": {
+      "IL2026": 1,
+      "IL3050": 1
+    },
+    "source/container-apps/web/projects/web-spa/services/identity-session-authentication-state-provider.cs": {
+      "BL0013": 1
+    },
+    "source/container-apps/web/projects/web-spa/web-spa.csproj": {
+      "CA1848": 1,
+      "CA1873": 1,
+      "CA2254": 1
+    },
+    "source/foundation/Directory.Build.props": {
+      "CA1034": 1,
+      "CA1040": 1,
+      "CA1062": 1,
+      "CA1304": 1,
+      "CA1311": 1,
+      "CA1725": 1,
+      "CA1819": 1,
+      "CA1852": 1,
+      "CA1861": 1,
+      "CA2007": 1,
+      "CA2016": 1,
+      "CA2227": 1
+    },
+    "source/foundation/foundation-contracts-generators/foundation-contracts-generators.csproj": {
+      "CA1031": 1,
+      "CA1062": 1,
+      "NU5128": 1,
+      "RS1041": 1
+    },
+    "source/foundation/foundation-contracts/services/null-api-service.cs": {
+      "CA1031": 1
+    },
+    "source/foundation/foundation-domain/entities/base/entity.cs": {
+      "RCS1170": 1
+    },
+    "source/libraries/timewarp-identity/ceremonies/webauthn/webauthn-registration-result.cs": {
+      "CA1819": 1
+    },
+    "source/libraries/timewarp-identity/credentials/credential.cs": {
+      "CA1819": 1,
+      "IDE0052": 1
+    },
+    "source/libraries/timewarp-identity/settings/entra-tenant-resolver.cs": {
+      "CA1031": 1
+    },
+    "tests/Directory.Build.props": {
+      "CA1034": 1,
+      "CA1051": 1,
+      "CA1052": 1,
+      "CA1062": 1,
+      "CA1303": 1,
+      "CA1515": 1,
+      "CA1707": 1,
+      "CA1822": 1,
+      "CA1852": 1,
+      "CA1859": 1,
+      "CA1861": 1,
+      "CA2000": 1,
+      "CA2007": 1,
+      "CA2201": 1,
+      "CA2214": 1,
+      "CA2234": 1,
+      "CA2252": 1,
+      "IDE0007": 1,
+      "NU1608": 1,
+      "RCS1102": 1,
+      "RS0030": 1,
+      "TWA0004": 1
+    },
+    "tests/analyzers/timewarp-architecture-analyzers-tests/roslyn-test-verifier.cs": {
+      "CA1822": 1
+    },
+    "tests/analyzers/timewarp-architecture-analyzers-tests/template-conditional-token-analyzer-tests.cs": {
+      "RCS1190": 1
+    },
+    "tests/analyzers/timewarp-architecture-analyzers-tests/template-flag-constants-analyzer-tests.cs": {
+      "RCS1190": 1
+    },
+    "tests/analyzers/timewarp-architecture-analyzers-tests/timewarp-architecture-analyzers-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/analyzers/timewarp-architecture-sourcegenerator-tests/timewarp-architecture-sourcegenerator-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/common/timewarp-testing-tests/host-graph-factory-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "tests/common/timewarp-testing-tests/in-proc-test-ports-tests.cs": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1,
+      "IDE0211": 1
+    },
+    "tests/common/timewarp-testing-tests/timewarp-testing-tests.csproj": {
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1
+    },
+    "tests/common/timewarp-testing/global-suppressions.cs": {
+      "IDE0052": 2
+    },
+    "tests/common/timewarp-testing/in-proc-test-ports.cs": {
+      "CA1056": 5
+    },
+    "tests/common/timewarp-testing/timewarp-testing.csproj": {
+      "CS0436": 1
+    },
+    "tests/container-apps/api/api-jaribu-tests/api-jaribu-tests.csproj": {
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1
+    },
+    "tests/container-apps/api/api-server-integration-tests/api-server-integration-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CS0436": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/container-apps/aspire/aspire-tests/aspire-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/container-apps/web/web-contracts-tests/web-contracts-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/container-apps/web/web-domain-tests/web-domain-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/container-apps/web/web-infrastructure-tests/ef-entra-accepted-tenants-migration-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-infrastructure-tests/ef-pending-migrations-probe-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-infrastructure-tests/ef-principal-role-store-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-infrastructure-tests/ef-principal-store-contract-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-infrastructure-tests/ef-role-store-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-infrastructure-tests/ef-site-settings-store-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-infrastructure-tests/postgres-connection-recovery-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-infrastructure-tests/web-infrastructure-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj": {
+      "CA1849": 1,
+      "CA2000": 1,
+      "IDE0021": 1,
+      "IDE0058": 1,
+      "IDE0161": 1
+    },
+    "tests/container-apps/web/web-server-integration-tests/features/agent-chat/xai-api-key-admin-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-server-integration-tests/features/data-protection/data-protection-key-ring-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-server-integration-tests/features/settings/site-settings-boot-pending-migrations-tests.cs": {
+      "CA2100": 1
+    },
+    "tests/container-apps/web/web-server-integration-tests/web-server-integration-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CS0436": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/components/filter-bar-render-tests.cs": {
+      "CA2025": 2
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/application/ask-edit-mode-pill-tests.cs": {
+      "BL0016": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/application/ask-privacy-banner-tests.cs": {
+      "BL0016": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/application/ask-send-button-tests.cs": {
+      "BL0016": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/application/ask-settings-menu-tests.cs": {
+      "BL0016": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/application/ask-starter-prompts-tests.cs": {
+      "BL0016": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/application/catalog-agent-feedback-page-context-tests.cs": {
+      "BL0016": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/feedback/safe-markdown-render-tests.cs": {
+      "BL0006": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/identity/passkey-web-authn-js-module-tests.cs": {
+      "BL0016": 2
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/identity/sign-in-state-tests.cs": {
+      "BL0016": 1
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/notification/notification-copy-test-doubles.cs": {
+      "BL0006": 1,
+      "BL0016": 2
+    },
+    "tests/container-apps/web/web-spa-integration-tests/features/profiles/sign-out-state-tests.cs": {
+      "BL0016": 2
+    },
+    "tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CS0436": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/container-apps/web/web-spa-playwright-tests/web-spa-playwright-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CS0436": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/container-apps/yarp/yarp-integration-tests/yarp-integration-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "CS0436": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/foundation/foundation-application-tests/foundation-application-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/foundation/foundation-contracts-tests/foundation-contracts-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/foundation/foundation-infrastructure-tests/aggregate-db-context-tests.cs": {
+      "RCS1170": 2
+    },
+    "tests/foundation/foundation-infrastructure-tests/foundation-infrastructure-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/libraries/timewarp-402-tests/timewarp-402-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/libraries/timewarp-identity-tests/timewarp-identity-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/tools/agent-identity-cli-tests/agent-identity-cli-tests.csproj": {
+      "CA1031": 1,
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tests/tools/dev-cli-tests/dev-cli-tests.csproj": {
+      "CA1707": 1,
+      "CA1849": 1,
+      "IDE0021": 1,
+      "IDE0058": 1
+    },
+    "tools/agent-identity-cli/Directory.Build.props": {
+      "CA1031": 1,
+      "CA1849": 1,
+      "IDE0211": 1
+    },
+    "tools/dev-cli/Directory.Build.props": {
+      "CA1031": 1,
+      "CA1034": 1,
+      "CA1303": 1,
+      "CA1508": 1,
+      "CA1515": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "CA2007": 1,
+      "CA2016": 1,
+      "CA5399": 1,
+      "IDE0005": 1,
+      "IDE0211": 1,
+      "RCS1046": 1
+    }
+  }
+}

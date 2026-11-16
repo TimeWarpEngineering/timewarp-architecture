@@ -23,7 +23,7 @@ internal sealed class PublishAllCommand : PublishGroup, ICommand<Unit>
   [Option("no-build", Description = "Skip build/restore of aspire-tests (the Release solution build already built it)")]
   public bool NoBuild { get; set; }
 
-  internal sealed class Handler : ICommandHandler<PublishAllCommand, Unit>
+  internal sealed class Handler : IRequestHandler<PublishAllCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -32,7 +32,7 @@ internal sealed class PublishAllCommand : PublishGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(PublishAllCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(PublishAllCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

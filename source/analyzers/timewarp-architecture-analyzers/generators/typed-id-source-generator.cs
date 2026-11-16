@@ -21,6 +21,9 @@
 // Invalid shapes (not a readonly partial record struct) report TWE006 as a build error: a silently
 // skipped id would still compile as a contract property and serialize fail-open as {} — the exact
 // defect this generator exists to close.
+// The nested JsonConverter is public (EditorBrowsable Never) so System.Text.Json source generation can
+// use it from a JsonSerializerContext in any assembly. A private converter made the context skip the id
+// (SYSLIB1220 / SYSLIB1030, task 484). The TypeConverter stays private: only TypeDescriptor reads it.
 // Record-struct equality stays compiler-synthesized — do not emit Equals/GetHashCode/==/!=.
 // Comparison operators (< <= > >=) are emitted for CA1036 once IComparable is implemented.
 // Layout: this class only wires the pipeline. TypedIdCollector builds the models in

@@ -20,7 +20,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
   [Option("label", "l", Description = "Optional cosmetic label for the credential")]
   public string? Label { get; set; }
 
-  internal sealed class Handler : ICommandHandler<RegisterCommand, Unit>
+  internal sealed class Handler : IRequestHandler<RegisterCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
@@ -35,7 +35,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async Task<Unit> Handle(RegisterCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(RegisterCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;

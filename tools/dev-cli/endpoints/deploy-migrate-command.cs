@@ -77,7 +77,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
   [Option("client-ip", Description = "aca: your public IPv4 for the temporary firewall rule (default: what https://api.ipify.org reports)")]
   public string? ClientIp { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DeployMigrateCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DeployMigrateCommand, Unit>
   {
     private const string Verb = "dev deploy migrate";
     private readonly ITerminal Terminal;
@@ -89,7 +89,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DeployMigrateCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeployMigrateCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

@@ -45,7 +45,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
   [Option("yes", "y", Description = "Confirm without prompting and run aspire destroy --yes --non-interactive")]
   public bool Yes { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DeprovisionCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DeprovisionCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -54,7 +54,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DeprovisionCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeprovisionCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

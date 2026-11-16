@@ -36,7 +36,7 @@ public static class StaticRenderHost
     BrandOptions brandOptions = brand ?? new BrandOptions();
     ServiceCollection serviceCollection = new();
     serviceCollection.AddLogging();
-    serviceCollection.AddSingleton(TimeProvider.System);
+    serviceCollection.AddSingleton(System.TimeProvider.System);
     serviceCollection.AddFluentUIComponents();
     serviceCollection.AddAuthorizationCore(TimeWarp.Architecture.PolicyRegistration.AddPolicies);
     serviceCollection.AddScoped<AuthenticationStateProvider>(_ => new FixedAuthenticationStateProvider(user));

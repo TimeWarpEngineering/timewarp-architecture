@@ -15,7 +15,7 @@ namespace DevCli.Commands;
 [NuruRoute("disable", Description = "Remove Microsoft365 from SignInOptions:Methods in Web.Server user secrets (no Azure change)")]
 internal sealed class EntraDisableCommand : EntraGroup, ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<EntraDisableCommand, Unit>
+  internal sealed class Handler : IRequestHandler<EntraDisableCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private EntraCli Cli = null!;
@@ -25,7 +25,7 @@ internal sealed class EntraDisableCommand : EntraGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(EntraDisableCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(EntraDisableCommand command, CancellationToken ct)
     {
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {

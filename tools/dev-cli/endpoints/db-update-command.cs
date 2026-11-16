@@ -12,7 +12,7 @@ namespace DevCli.Commands;
 [NuruRoute("update", Description = "Apply pending EF migrations via the running AppHost")]
 internal sealed class DbUpdateCommand : DbGroup, ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<DbUpdateCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DbUpdateCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -21,7 +21,7 @@ internal sealed class DbUpdateCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DbUpdateCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DbUpdateCommand command, CancellationToken ct)
     {
       Environment.ExitCode = await DbAppHost.RunUpdateAsync(Terminal, ct).ConfigureAwait(false);
       return Unit.Value;
@@ -33,7 +33,7 @@ internal sealed class DbUpdateCommand : DbGroup, ICommand<Unit>
 [NuruRoute("db-update", Description = "Alias for 'db update'")]
 internal sealed class DbUpdateAliasCommand : ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<DbUpdateAliasCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DbUpdateAliasCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -42,7 +42,7 @@ internal sealed class DbUpdateAliasCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DbUpdateAliasCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DbUpdateAliasCommand command, CancellationToken ct)
     {
       Environment.ExitCode = await DbAppHost.RunUpdateAsync(Terminal, ct).ConfigureAwait(false);
       return Unit.Value;

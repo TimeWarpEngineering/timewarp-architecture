@@ -11,7 +11,7 @@ namespace DevCli.Commands;
 [NuruRoute("status", Description = "Show current EF migration status via the running AppHost")]
 internal sealed class DbStatusCommand : DbGroup, ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<DbStatusCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DbStatusCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -20,7 +20,7 @@ internal sealed class DbStatusCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DbStatusCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DbStatusCommand command, CancellationToken ct)
     {
       int exit = await DbAppHost.RunMigrationsCommandAsync(
         Terminal,
