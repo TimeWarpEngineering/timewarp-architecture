@@ -61,17 +61,125 @@ follow-up pin bump, not this task.
 - Do not open tasks or PRs in other repos. If a TimeWarp package needs a fix upstream, stop and
   report.
 
+## Goal (implementer restatement)
+
+Move the repo off the .NET 11 RC3 toolchain to .NET 11 GA (SDK 11.0.100) and bring every NuGet pin
+current, so `ganda nuget outdated` reports 0.
+
+Acceptance:
+- `global.json` on 11.0.100 (`rollForward: latestFeature`); CI workflow confirmed unaffected or updated.
+- Every pin in the description table at its listed version (plus anything new outdated lists), no
+  backward pins. FastEndpoints GA with the beta-pin comment rewritten.
+- Majors (Blazilla 3, TimeWarp.Build.Tasks 2) read for breaking changes; every forced code change
+  listed in Results.
+- New analyzer diagnostics fixed at source (no suppressions), each listed in Results.
+- `dev build` 0/0, `dev test`, `dev template-smoke --matrix`, Playwright, `dev check-version` pass;
+  `ganda repo audit` clean.
+- No cross-repo tasks/PRs; upstream defects are reported, not fixed here.
+
 ## Checklist
 
-- [ ] SDK and Microsoft.* pins on GA; Roslyn 5.12.0; CI unaffected or updated
-- [ ] TimeWarp pins current (Mediator beta.9, Contracts beta.33, SourceGenerators, Jaribu, Nuru, Amuru, Terminal, Build.Tasks 2, Multiavatar)
-- [ ] Third-party pins current (FastEndpoints 9 GA with comment rewrite, Blazilla 3 with validator fixes, Scalar, OpenTelemetry, icons)
-- [ ] `ganda nuget outdated` 0; build 0/0; tests; template-smoke --matrix; Playwright; check-version; audit clean
-- [ ] Results list every forced code change and every new diagnostic fixed
+- [x] SDK and Microsoft.* pins on GA; Roslyn 5.12.0; CI updated (EF family held on rc.3, see Notes)
+- [x] TimeWarp pins current (Mediator beta.9, Contracts beta.33, SourceGenerators, Jaribu, Nuru, Amuru, Terminal, Build.Tasks 2, Multiavatar)
+- [x] Third-party pins current (FastEndpoints 9 GA with comment rewrite, Blazilla 3 with validator fixes, Scalar, OpenTelemetry, icons)
+- [ ] `ganda nuget outdated` 0 (6 EF pins blocked on Npgsql 11.0.0 GA, see Notes); build 0/0; tests; template-smoke --matrix; Playwright; check-version; audit clean
+- [x] Results list every forced code change and every new diagnostic fixed
 
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-16)
+- Implemented 2026-11-16 (implementer-claude, ganda task work): pins, SDK, CI, lift references,
+  gates. Boy-scout: `ganda repo audit --fix --checks memsearch-scaffold,vscode-window-icon`
+  refreshed `.githooks/*.cs` and added `.githooks/prepare-commit-msg{,.cs}`.
+
+## Results
+
+### Pins moved
+
+- `global.json` and all 22 test-project `global.json` files: SDK `11.0.100-rc.3.26522.148` → `11.0.100`
+  (`rollForward: latestFeature` kept).
+- `Directory.Packages.props`: 56 of the 62 rows `ganda nuget outdated` listed, at the versions in
+  the description table (`ganda nuget outdated --update --force`, then the EF family put back on
+  rc.3; see Notes).
+- Not on the original list: `<AspireVersion>` 13.6.4 → **13.6.5**, and the Kubernetes /
+  EntityFrameworkCore preview suffix `-preview.1.26523.11` → `-preview.1.26559.7`. Restore failed
+  on 13.6.4 with new advisories (NU1904 critical GHSA-4g86-54fm-h9h8 on
+  Aspire.Dashboard.Sdk.linux-x64, NU1903 high GHSA-f7vh-h5g3-7jrh on Aspire.Hosting /
+  Aspire.Hosting.AppHost). Outdated does not list Aspire because the pins read `$(AspireVersion)`.
+  The local Aspire CLI was updated to 13.6.5 to match (`dotnet tool update -g Aspire.Cli`).
+- New pin `Microsoft.CodeAnalysis.Workspaces.MSBuild` 5.12.0 (Roslyn lift, below).
+- Comments rewritten: the FastEndpoints beta-pin comment (now GA), the shared-framework train
+  note (11.0.0 / SDK 11.0.100), the four "No 11.x, so the pin is 10.11.0" Extensions comments
+  (removed), the Extensions.AI.OpenAI note, the Nuru version in the Mediator note, the Pkcs history
+  line, and the Npgsql/EF note (why the EF family is still on rc.3).
+- `.config/dotnet-tools.json` `dotnet-ef` stays `11.0.0-rc.3.26522.148`, matching the held EF family.
+
+### CI
+
+`.github/workflows/workflow.yml`: the four `actions/setup-dotnet` steps used
+`dotnet-version: '11.0.x'` + `dotnet-quality: 'preview'` with an "RC1 is the go-live SDK" comment.
+They now use `global-json-file: global.json`, so CI runs the SDK `global.json` names (the
+timewarp-state pattern). `dev workflow` needed no change: it reads `<AspireVersion>`, not the SDK.
+
+### Code changes the bumps forced
+
+1. **Roslyn 5.12 vs EF Design (NU1608, restore).** `Microsoft.EntityFrameworkCore.Design` (rc.3
+   and 11.0.0 GA alike) depends on `Microsoft.CodeAnalysis.CSharp.Workspaces` /
+   `Workspaces.MSBuild` 5.9.0, whose `Common`/`CSharp` deps are exact. `TimeWarp.SourceGenerators`
+   1.0.0-beta.16 declares `Microsoft.CodeAnalysis.CSharp >= 5.12.0` (beta.13 declared 5.9.0, so the
+   versions matched before). Fix: `web-infrastructure.csproj` and `web-server.csproj` (the two EF
+   Design consumers) add `Microsoft.CodeAnalysis.CSharp.Workspaces` and
+   `Microsoft.CodeAnalysis.Workspaces.MSBuild` with `PrivateAssets="all"`, lifting the Workspaces
+   family to 5.12.0. No suppression.
+2. **Jaribu 1.0.0-beta.16 `TestRunner.TimeProvider` (CS0229).** web-spa-integration-tests has
+   `using static TimeWarp.Jaribu.TestRunner`. beta.16 adds a `TimeProvider` member, so a bare
+   `TimeProvider.System` is ambiguous. Fixed by qualifying `System.TimeProvider.System` at three
+   sites: `components/filter-bar-render-tests.cs` (2) and `infrastructure/static-render-host.cs` (1).
+3. **Blazilla 3.0.1 (major).** Read MIGRATION.md (v3.0.1) and v3.0.0 release (#235: native .NET 11
+   async validation). Breaking items: `AsyncMode` obsolete, `PendingTask` unused on net11,
+   `EditContext.Validate()` obsolete on net11, `ValidateAsync` signature, async field validation.
+   Every `<FluentValidator>` site (RoleForm, ProfilePage ×2, AuthenticationPage, AiPage ×3,
+   FeedbackListPage) already uses `OnValidSubmit` with no `AsyncMode`, `PendingTask`, or manual
+   `Validate`/`ValidateAsync` in the submit handler. TodoItemForm has no validator in markup. That is
+   the net11 pattern 3.0 recommends, so **no code change**. Playwright exercises those forms and passed.
+4. **TimeWarp.Build.Tasks 2.0.0 (major).** Release v2.0.0 is "retarget to net11.0" (PR #11);
+   TWBT0001 fires only on .NET Framework MSBuild. This repo builds with the dotnet CLI only, so **no
+   code change**.
+5. **FastEndpoints 9.0.0 GA, Mediator beta.9, Contracts beta.33, Nuru beta.14, Amuru beta.5,
+   Terminal beta.2, Multiavatar beta.15, OpenTelemetry 1.21, Scalar 2.21, Extensions 11.0.0:** no
+   compile or test change.
+
+### New analyzer diagnostics
+
+None. With Roslyn 5.12.0, NetAnalyzers 11.0.100, SourceGenerators beta.16 and Mediator beta.9,
+`./bin/dev build` reported 0 warnings. The only compile error was CS0229 above (a name clash, not
+an analyzer rule).
+
+### Gates
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Build | `./bin/dev build` | Build completed successfully, 0 Warning(s), 0 Error(s) |
+| Test (full, incl. Playwright) | `./bin/dev test -q` | 23 of 23 projects passed (web-spa-playwright-tests passed, 393 s) |
+| Template smoke | `./bin/dev template-smoke --matrix` | Template smoke SUCCEEDED; SmokeDefault, SmokeNoApi, SmokeNoGrpc, SmokeNoPostgres, SmokeNoWeb, SmokeNoYarp OK; generated web-jaribu 464/464, api-jaribu 9/9, timewarp-testing 14/14 |
+| Version | `./bin/dev check-version` | Source 2.0.0-beta.32 vs NuGet 2.0.0-beta.31: "Version in source is new — safe to release." No bump needed. |
+| Outdated | `ganda nuget outdated` | 6 outdated (the EF family; blocked on Npgsql, see Notes). 62 before. |
+| Audit | `ganda repo audit` | Repository passes. Advisories fixed with `--fix --checks memsearch-scaffold,vscode-window-icon`. One advisory remains: source-file-line-cap on pre-existing generated EF migration files and a done-task research runfile (warning severity; TWA0038 enforces). |
+
+### How to validate
+
+Smoke:
+```bash
+cat global.json                       # 11.0.100
+ganda nuget outdated 2>&1 | grep -- '->'   # only the 6 EF-family rows
+./bin/dev build                       # 0 warnings, 0 errors
+./bin/dev test -g playwright          # Blazilla 3 forms (roles, profile, auth) still submit
+```
+
+Expect: SDK 11.0.100; outdated lists only Microsoft.EntityFrameworkCore{,.Design,.InMemory,.Tools},
+Microsoft.AspNetCore.DataProtection.EntityFrameworkCore and
+Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore (rc.3 → 11.0.0); build 0/0;
+Playwright passes.
 
 ## Notes
 
@@ -79,3 +187,12 @@ Steve 2026-11-16: "review mediator and state, as both have had many commits and 
 behind" → survey found no library-surface changes since the current pins, only the toolchain
 move to .NET 11 GA and Roslyn 5.12.0. Task 483 (`[ContractState]`) stays blocked on its own
 design question; nothing here changes it. Architecture 2.0.0-beta.32 releases after this lands.
+
+**EF family held on rc.3 (task 492, 2026-11-16).** `Npgsql.EntityFrameworkCore.PostgreSQL`
+11.0.0-rc.3 is the newest Npgsql provider on nuget.org (no 11.0.0 GA), and its nuspec pins
+`Microsoft.EntityFrameworkCore` and `.Relational` to exactly `[11.0.0-rc.3.26522.148]`. Moving the
+EF family to 11.0.0 was tried and fails restore with NU1107. So six pins stay on rc.3 and
+`ganda nuget outdated` reports 6, not 0. This is not a backward pin; those packages are unchanged.
+Follow-up: when Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0 ships, move it, the six EF pins and
+`dotnet-ef` in `.config/dotnet-tools.json` together. The Roslyn lift references in web-infrastructure
+and web-server stay until EF Design itself takes Roslyn ≥ 5.12 (11.0.0 GA still takes 5.9.0).

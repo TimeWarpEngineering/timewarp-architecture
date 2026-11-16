@@ -204,9 +204,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
-          dotnet-version: '11.0.x'
-          dotnet-quality: 'preview'
+          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
+          global-json-file: global.json
 
       # One key for every group: each job builds the whole solution, so they restore the same set.
       # The first group to finish saves it; the others skip the save.
@@ -377,9 +376,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
-          dotnet-version: '11.0.x'
-          dotnet-quality: 'preview'
+          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
+          global-json-file: global.json
 
       # Read-only: the release run reuses the ci cache for the same CPM inputs but never saves one,
       # so nothing a release run restores or packs can seed a later run.
@@ -448,9 +446,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
-          dotnet-version: '11.0.x'
-          dotnet-quality: 'preview'
+          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
+          global-json-file: global.json
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -499,9 +496,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
-          dotnet-version: '11.0.x'
-          dotnet-quality: 'preview'
+          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
+          global-json-file: global.json
 
       # Own key: the smoke restores the generated app's set, not the monorepo solution's.
       - name: Cache NuGet packages
