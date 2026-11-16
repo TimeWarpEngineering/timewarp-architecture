@@ -91,6 +91,7 @@ Acceptance:
 - Implemented 2026-11-16 (implementer-claude, ganda task work): pins, SDK, CI, lift references,
   gates. Boy-scout: `ganda repo audit --fix --checks memsearch-scaffold,vscode-window-icon`
   refreshed `.githooks/*.cs` and added `.githooks/prepare-commit-msg{,.cs}`.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-16T11:00:22Z
 
 ## Results
 
