@@ -22,6 +22,12 @@
 // (one TestGroups group, or all); --phase publish is clean -> build -> publish all. No
 // --phase runs everything in order, as before. Release mode accepts no --phase/--group: packing
 // and pushing stay one job and one pass.
+// Task 493: the pull request build decision is PullRequestBuildClassifier (TimeWarp.Nuru.DevCli
+// content, timewarp-nuru 595), with this repo's additions in .timewarp/dev.jsonc pullRequestBuild.
+// It runs first on the all phase and is the whole of --phase classify, which writes ci=true|false to
+// GITHUB_OUTPUT for workflow.yml's detect-paths job; the ci-group jobs skip on ci=false. The test
+// and publish phases do not classify: their shallow checkout cannot diff base...head, and the
+// classify job already gated them. The classifier builds on every event but pull_request.
 // The release path deliberately does not run tests — they already ran on the PR/merge that
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
 // API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only
@@ -46,7 +52,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   [Option("api-key", "k", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
   public string? ApiKey { get; set; }
 
-  [Option("phase", "p", Description = "Pr/merge only: run one phase, test or publish (default: all)")]
+  [Option("phase", "p", Description = "Pr/merge only: run one phase, classify, test, or publish (default: all)")]
   public string? Phase { get; set; }
 
   [Option("group", "g", Description = "With --phase test: run one test group, fast, playwright, or integration (default: all)")]
@@ -97,11 +103,35 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       if (!ValidatePhase(command, mode)) return Unit.Value;
 
       if (mode == CiMode.Release)
+      {
         await RunReleaseAsync(command.ApiKey);
-      else
-        await RunPrAsync(command.Phase ?? PhaseAll, command.Group);
+        return Unit.Value;
+      }
 
+      string phase = command.Phase ?? PhaseAll;
+      if (phase is PhaseAll or PhaseClassify)
+      {
+        PullRequestBuildDecision decision = await PullRequestBuildClassifier.DecideAsync(RepoRoot, ct);
+        Terminal.WriteLine(decision.Message);
+        if (phase == PhaseClassify)
+        {
+          await WriteGitHubOutputAsync("ci", decision.RequiresBuild ? "true" : "false", ct);
+          return Unit.Value;
+        }
+
+        if (!decision.RequiresBuild) return Unit.Value;
+      }
+
+      await RunPrAsync(phase, command.Group);
       return Unit.Value;
+    }
+
+    private static async Task WriteGitHubOutputAsync(string name, string value, CancellationToken ct)
+    {
+      string? outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
+      if (string.IsNullOrEmpty(outputPath)) return;
+
+      await File.AppendAllTextAsync(outputPath, $"{name}={value}\n", ct);
     }
 
     private bool FindRepoRoot()
@@ -119,6 +149,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     }
 
     private const string PhaseAll = "all";
+    private const string PhaseClassify = "classify";
     private const string PhaseTest = "test";
     private const string PhasePublish = "publish";
 
@@ -127,8 +158,8 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       string? error = null;
       if (mode == CiMode.Release && (command.Phase is not null || command.Group is not null))
         error = "--phase and --group apply to pr/merge only; release runs as one job.";
-      else if (command.Phase is not null && command.Phase is not (PhaseTest or PhasePublish))
-        error = $"Unknown phase '{command.Phase}'. Phases: {PhaseTest}, {PhasePublish}.";
+      else if (command.Phase is not null && command.Phase is not (PhaseClassify or PhaseTest or PhasePublish))
+        error = $"Unknown phase '{command.Phase}'. Phases: {PhaseClassify}, {PhaseTest}, {PhasePublish}.";
       else if (command.Group is not null && command.Phase != PhaseTest)
         error = "--group requires --phase test.";
       else if (command.Group is not null && !TestGroups.IsGroup(command.Group))
