@@ -101,6 +101,8 @@ Acceptance:
   comment in `Directory.Packages.props` and the two OpenApi reference comments in
   `foundation-server.csproj` now state the GA nuspec facts. Goal restatement amended with the
   original's fix-forward/stop clause and the Aspire rule (see Learnings).
+- Review oracle round 2: grok session 01a1e417-6866-79f2-af79-626ad1ea39d0 (2026-11-16), effort 1, roster general, max-turns 80
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e417-6866-79f2-af79-626ad1ea39d0, max-turns 80, artifacts review/round-2/general.md, review/round-2/merged.md, review/disposition.md — 2026-11-16
 
 ## Results
 
@@ -199,7 +201,9 @@ Playwright passes.
 
 ### Review
 
-Round 1 ran on 2026-11-16 at effort 2, general reviewer only. M1 is open (bug): the rewritten FastEndpoints pin comment still states the RC3 `Microsoft.OpenApi` range `[3.10.2, 4.0.0)`, and `foundation-server.csproj` still says the OpenApi lift is rc.2 to the RC3 train. Counts: bug 1 open; suggestion 0; nit 0. Disposition is not written. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 (2026-11-16), effort 2, general only, raised M1 (bug): the FastEndpoints pin comment and the foundation-server OpenApi comments still described the RC3 range. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+Round 2 (2026-11-16), effort 1, general only, re-reviewed `15da1a135` since round-1 base `d57de9b6a`. M1 is fixed. No new findings. Counts: bug 1 fixed; suggestion 0; nit 0. Open: 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`. Gates were not re-run; the fix-pass record below covers the comment-only edit.
 
 ### Review fix pass
 
@@ -229,7 +233,7 @@ Fix-pass gates (comment-only edits; recorded once here):
 
 - Round 1: Blocked — open M1
 - Round 1 fix pass: M1 fixed (comments only; see `### Review fix pass` under Results)
-
+- Round 2: Done
 ## Notes
 
 Steve 2026-11-16: "review mediator and state, as both have had many commits and this repo is
@@ -249,3 +253,5 @@ and web-server stay until EF Design itself takes Roslyn ≥ 5.12 (11.0.0 GA stil
 ## Learnings
 
 Misread: `## Goal (implementer restatement)` drops the original requirement's escape hatch ("if a bump breaks, fix forward or stop and report in `## Notes`") and states success as every table pin at the listed version with `ganda nuget outdated` at 0. The implementation followed the original task: the EF family stays on rc.3 because `Npgsql.EntityFrameworkCore.PostgreSQL` 11.0.0-rc.3 exact-pins `Microsoft.EntityFrameworkCore` and `.Relational` at `[11.0.0-rc.3.26522.148]`, and that stop is recorded in Notes. The nuget.org index has no 11.0.0 of that provider. That hold is not a defect. The restatement also omits "bump Aspire only if outdated lists it"; the 13.6.5 bump is the original's fix-forward path after restore advisories, and it is recorded.
+
+Round 2 (2026-11-16): the acceptance bullet now includes that escape hatch. It also says Aspire bumps only if outdated lists it or a fix-forward needs it. The task's Aspire bullet says bump only if outdated lists it, and it says the Aspire CLI must agree with `<AspireVersion>`. The restatement still does not mention the CLI. Results records the CLI update to 13.6.5, and the 13.6.5 pin bump stays the fix-forward already described above. Neither gap is a defect in the pin change.

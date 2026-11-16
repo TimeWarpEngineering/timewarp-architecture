@@ -4,17 +4,26 @@
 **Host task:** kanban/in-progress/492-move-to-net-11-ga-sdk-and-packages-and-bring-all-nu-get-pins-current-mediator-15-0-0-beta-9-fast-endpoints-9-0-0-blazilla-3-build-tasks-2/
 **Diff scope:** branch `task/492-move-to-net-11-ga-sdk-and-packages-and-bring-all` vs merge-base `7d832296c743eed79532c7205655a7e17e71e671` (commits `efb95145a`..`d57de9b6a`; 38 files, 657 lines). Local `master` is one kanban-land commit ahead (`85af96d6d`, task.md rename only).
 **Plan / brief:** task.md Description, Requirements, and `## Goal (implementer restatement)`: .NET 11 GA SDK `11.0.100`, current NuGet pins, majors called out, gates recorded in `## Results`.
-**Effort:** 2 (general only; by-diff budget)
+**Effort:** round 1: 2 (general). Round 2: 1 (general). The budget block below is the round-2 host recording.
 **Reviewer roster:** general
-**Session IDs:** review oracle grok `01a1e404-05dd-76b3-8f24-4c107a376806` (2026-11-16). Implementer session was not reported.
+**Session IDs:** round 1 review oracle grok `01a1e404-05dd-76b3-8f24-4c107a376806` (2026-11-16). Round 2 review oracle grok `01a1e417-6866-79f2-af79-626ad1ea39d0` (2026-11-16). Implementer session was not reported.
 
 ## Budget (by-diff)
 
-- Lines changed: 657
-- Effort: 2
+- Lines changed: 127
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
+
+Round 1 values this block replaced: 657 lines, effort 2, turn cap 120. Round 1 scope stays in the header above and in `review/round-1/`.
+
+## Round 2
+
+**Date:** 2026-11-16
+**Diff scope:** `15da1a135` since round-1 base `d57de9b6a64813333955adf0f255f59b6b160721`. Product delta is the FastEndpoints pin comment in `Directory.Packages.props` and the two OpenApi comments in `source/foundation/foundation-server/foundation-server.csproj`. Re-verify M1 on that delta.
+**Effort:** 1 (general only; budget block above)
+**Session IDs:** grok `01a1e417-6866-79f2-af79-626ad1ea39d0`, max-turns 80
 
 ## Ground rules
 
