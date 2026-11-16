@@ -155,10 +155,10 @@
          agent-identity-cli handlers are IRequestHandler and return ValueTask (task 486). -->
     <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.9" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.9" />
-    <!-- FastEndpoints 9.0.0 is the GA line for net11.0. FastEndpoints.OpenApi depends on
-         Microsoft.AspNetCore.OpenApi, pinned here on the same 11.0.0 train as ASP.NET Core. That
-         package allows Microsoft.OpenApi [3.10.2, 4.0.0). The foundation-server Microsoft.OpenApi
-         reference lifts that floor to the 3.11.0 pin. -->
+    <!-- FastEndpoints 9.0.0 is the GA line for net11.0. FastEndpoints.OpenApi 9.0.0 (net11.0)
+         depends on Microsoft.AspNetCore.OpenApi 11.0.0, which is the pin below, on the same
+         11.0.0 train as ASP.NET Core. Microsoft.AspNetCore.OpenApi 11.0.0 depends on
+         Microsoft.OpenApi [3.11.0, 4.0.0), and 3.11.0 is the Microsoft.OpenApi pin. -->
     <PackageVersion Include="FastEndpoints" Version="9.0.0" />
     <PackageVersion Include="FastEndpoints.OpenApi" Version="9.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />

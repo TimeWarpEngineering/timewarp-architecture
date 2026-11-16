@@ -69,7 +69,10 @@ current, so `ganda nuget outdated` reports 0.
 Acceptance:
 - `global.json` on 11.0.100 (`rollForward: latestFeature`); CI workflow confirmed unaffected or updated.
 - Every pin in the description table at its listed version (plus anything new outdated lists), no
-  backward pins. FastEndpoints GA with the beta-pin comment rewritten.
+  backward pins, so `ganda nuget outdated` reports 0. When a bump breaks, fix forward or stop and
+  report it in `## Notes` (that is how a pin may stay behind). Aspire bumps only if outdated lists it
+  or a fix-forward needs it. FastEndpoints GA with the beta-pin comment rewritten so it states the GA
+  dependency facts.
 - Majors (Blazilla 3, TimeWarp.Build.Tasks 2) read for breaking changes; every forced code change
   listed in Results.
 - New analyzer diagnostics fixed at source (no suppressions), each listed in Results.
@@ -92,6 +95,12 @@ Acceptance:
   gates. Boy-scout: `ganda repo audit --fix --checks memsearch-scaffold,vscode-window-icon`
   refreshed `.githooks/*.cs` and added `.githooks/prepare-commit-msg{,.cs}`.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-16T11:00:22Z
+- Review oracle: grok session 01a1e404-05dd-76b3-8f24-4c107a376806 (2026-11-16), effort 2, roster general, round 1, max-turns 120
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e404-05dd-76b3-8f24-4c107a376806, max-turns 120, artifacts general.md, merged.md — 2026-11-16T11:09:22Z
+- Fix pass for review round 1 (implementer-claude, 2026-11-16): M1 fixed. The FastEndpoints pin
+  comment in `Directory.Packages.props` and the two OpenApi reference comments in
+  `foundation-server.csproj` now state the GA nuspec facts. Goal restatement amended with the
+  original's fix-forward/stop clause and the Aspire rule (see Learnings).
 
 ## Results
 
@@ -188,6 +197,39 @@ Microsoft.AspNetCore.DataProtection.EntityFrameworkCore and
 Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore (rc.3 → 11.0.0); build 0/0;
 Playwright passes.
 
+### Review
+
+Round 1 ran on 2026-11-16 at effort 2, general reviewer only. M1 is open (bug): the rewritten FastEndpoints pin comment still states the RC3 `Microsoft.OpenApi` range `[3.10.2, 4.0.0)`, and `foundation-server.csproj` still says the OpenApi lift is rc.2 to the RC3 train. Counts: bug 1 open; suggestion 0; nit 0. Disposition is not written. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+### Review fix pass
+
+M1 (round 1) fixed. Checked against the local NuGet cache nuspecs (same files the reviewer fetched):
+`microsoft.aspnetcore.openapi/11.0.0` depends on `Microsoft.OpenApi` `[3.11.0, 4.0.0)`;
+`fastendpoints.openapi/9.0.0` net11.0 depends on `Microsoft.AspNetCore.OpenApi` 11.0.0.
+
+- `Directory.Packages.props`: the FastEndpoints comment now says FastEndpoints.OpenApi 9.0.0
+  (net11.0) depends on Microsoft.AspNetCore.OpenApi 11.0.0 (the pin), which depends on
+  Microsoft.OpenApi `[3.11.0, 4.0.0)` (3.11.0 is the pin). The "lifts that floor" sentence is gone.
+- `source/foundation/foundation-server/foundation-server.csproj`: the two comments over the
+  `Microsoft.AspNetCore.OpenApi` and `Microsoft.OpenApi` references no longer say "lift an rc.2
+  floor to the RC3 train" / "lift a 3.10.2 floor"; each states the GA dependency and that the pin
+  matches it. The direct references stay, as the finding asked.
+- No other `RC3`, `rc.2`, or `3.10.2` text remains in `Directory.Packages.props`,
+  `Directory.Build.props`, `msbuild/`, or foundation-server.
+
+Fix-pass gates (comment-only edits; recorded once here):
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Build | `./bin/dev build` | Build succeeded, 0 Warning(s), 0 Error(s) |
+| Test (full, incl. Playwright) | `./bin/dev test -q` | 23 of 23 projects passed (web-spa-playwright-tests 455.5 s) |
+| Audit | `ganda repo audit` | Repository passes; same single advisory as before (source-file-line-cap, warning, pre-existing generated EF migrations and a done-task runfile) |
+
+## Review
+
+- Round 1: Blocked — open M1
+- Round 1 fix pass: M1 fixed (comments only; see `### Review fix pass` under Results)
+
 ## Notes
 
 Steve 2026-11-16: "review mediator and state, as both have had many commits and this repo is
@@ -203,3 +245,7 @@ EF family to 11.0.0 was tried and fails restore with NU1107. So six pins stay on
 Follow-up: when Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0 ships, move it, the six EF pins and
 `dotnet-ef` in `.config/dotnet-tools.json` together. The Roslyn lift references in web-infrastructure
 and web-server stay until EF Design itself takes Roslyn ≥ 5.12 (11.0.0 GA still takes 5.9.0).
+
+## Learnings
+
+Misread: `## Goal (implementer restatement)` drops the original requirement's escape hatch ("if a bump breaks, fix forward or stop and report in `## Notes`") and states success as every table pin at the listed version with `ganda nuget outdated` at 0. The implementation followed the original task: the EF family stays on rc.3 because `Npgsql.EntityFrameworkCore.PostgreSQL` 11.0.0-rc.3 exact-pins `Microsoft.EntityFrameworkCore` and `.Relational` at `[11.0.0-rc.3.26522.148]`, and that stop is recorded in Notes. The nuget.org index has no 11.0.0 of that provider. That hold is not a defect. The restatement also omits "bump Aspire only if outdated lists it"; the 13.6.5 bump is the original's fix-forward path after restore advisories, and it is recorded.
