@@ -53,7 +53,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Command command = new()
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Email = "ada@example.com",
         Language = "en-US",
         Region = "US",
@@ -65,7 +65,7 @@ namespace TimeWarp.Architecture.Features.Profiles
       Command? parsed = JsonSerializer.Deserialize<Command>(json, ContractSerializationDefaults.Options);
 
       parsed.ShouldNotBeNull();
-      parsed.Alias.ShouldBe("Ada");
+      parsed.DisplayName.ShouldBe("Ada");
       parsed.Email.ShouldBe("ada@example.com");
       parsed.Language.ShouldBe("en-US");
       parsed.Region.ShouldBe("US");
@@ -78,7 +78,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Command command = new()
       {
-        Alias = "",
+        DisplayName = "",
         Language = "en-US",
         Region = "US",
         Theme = "system"
@@ -93,7 +93,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Command command = new()
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Email = "not-an-email",
         Language = "en-US",
         Region = "US",
@@ -109,7 +109,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Command command = new()
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Email = null,
         Language = "en-US",
         Region = "US",
@@ -125,7 +125,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Command command = new()
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Language = "en-US asdfasdf",
         Region = "US",
         Theme = "system"
@@ -141,7 +141,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Command command = new()
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Language = "en-US",
         Region = "US asdf",
         Theme = "system"
@@ -157,7 +157,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Command command = new()
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Language = "en-US",
         Region = "US",
         Theme = "neon"
@@ -179,7 +179,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Command command = new()
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Language = "en-US",
         Region = "US",
         Theme = "system"
@@ -199,7 +199,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
       ValidationResult thaiLanguage = new Validator().Validate(new Command
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Language = "th-TH",
         Region = "US",
         Theme = "system"
@@ -208,7 +208,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
       ValidationResult thaiRegion = new Validator().Validate(new Command
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Language = "en-US",
         Region = "TH",
         Theme = "system"
@@ -217,7 +217,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
       ValidationResult both = new Validator().Validate(new Command
       {
-        Alias = "Ada",
+        DisplayName = "Ada",
         Language = "th-TH",
         Region = "TH",
         Theme = "system"
@@ -371,7 +371,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     private static Command ValidCommand() => new()
     {
-      Alias = "Ada",
+      DisplayName = "Ada",
       Email = "ada@example.com",
       Language = "en-US",
       Region = "US",

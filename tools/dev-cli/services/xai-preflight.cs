@@ -7,7 +7,7 @@
 // duplicate XaiChatDefaults (source/container-apps/web/features/agent-chat/xai-chat-contracts.cs).
 // A key in the environment (XAI__ApiKey) or in `dotnet user-secrets list` output counts.
 // That list prints `Key = Value` (spaces around the separator), the same shape
-// AspireDeploy.ParseUserSecret reads. The value is never returned.
+// AspireDeployParameters.ParseUserSecret reads. The value is never returned.
 // SetupCommand must stay identical to XaiChatDefaults.SetupCommand.
 #endregion
 

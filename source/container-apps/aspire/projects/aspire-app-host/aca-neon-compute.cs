@@ -49,4 +49,24 @@ internal static class AcaNeonCompute
       container.Resources.Memory = Memory;
     }
   }
+
+  /// <summary>Applies <see cref="Apply"/> to each declared project when the target is aca-neon.</summary>
+  /// <remarks>The ingress applies it to itself (IngressResource), because only the publish-mode image is a container app.</remarks>
+  internal static void ApplyTo(PublishTarget publishTarget, AppHostProjects projects)
+  {
+    if (!publishTarget.IsContainerAppsNeon)
+    {
+      return;
+    }
+
+#if api
+    projects.ApiServer.PublishAsAzureContainerApp((_, app) => Apply(app));
+#endif
+#if grpc
+    projects.GrpcServer.PublishAsAzureContainerApp((_, app) => Apply(app));
+#endif
+#if web
+    projects.WebServer.PublishAsAzureContainerApp((_, app) => Apply(app));
+#endif
+  }
 }

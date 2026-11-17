@@ -53,7 +53,7 @@ public class TryReadOrganization_Given_
     const string json = """
       {"value":[{"id":"00000000-0000-0000-0000-000000000001","displayName":"Contoso, Ltd","verifiedDomains":[{"name":"contoso.onmicrosoft.com","isDefault":false,"isInitial":true},{"name":"contoso.com","isDefault":true,"isInitial":false}]}]}
       """;
-    EntraTenants.TryReadOrganization(json, out string? id, out string? displayName, out string? defaultDomain)
+    EntraTenantJson.TryReadOrganization(json, out string? id, out string? displayName, out string? defaultDomain)
       .ShouldBeTrue();
     id.ShouldBe("00000000-0000-0000-0000-000000000001");
     displayName.ShouldBe("Contoso, Ltd");
@@ -63,7 +63,7 @@ public class TryReadOrganization_Given_
 
   public static Task InvalidJson_Should_ReturnFalse()
   {
-    EntraTenants.TryReadOrganization("{not-json", out _, out _, out _).ShouldBeFalse();
+    EntraTenantJson.TryReadOrganization("{not-json", out _, out _, out _).ShouldBeFalse();
     return Task.CompletedTask;
   }
 }
@@ -78,7 +78,7 @@ public class TryReadTenantIdsFromTenantList_Given_
     const string json = """
       [{"tenantId":"00000000-0000-0000-0000-000000000001"},{"id":"74ca6706-93ef-4a23-b05a-e9ab17b7f86f"}]
       """;
-    EntraTenants.TryReadTenantIdsFromTenantList(json, out IReadOnlyList<string> ids).ShouldBeTrue();
+    EntraTenantJson.TryReadTenantIdsFromTenantList(json, out IReadOnlyList<string> ids).ShouldBeTrue();
     ids.ShouldBe(
     [
       "00000000-0000-0000-0000-000000000001",
@@ -230,14 +230,14 @@ public class DefaultAppDisplayName_Given_
 
   public static Task WithDomain_Should_Suffix()
   {
-    EntraTenants.DefaultAppDisplayName("contoso.com")
+    EntraAppLookup.DefaultAppDisplayName("contoso.com")
       .ShouldBe("TimeWarp Architecture Dev (contoso.com)");
     return Task.CompletedTask;
   }
 
   public static Task NullDomain_Should_ReturnBare()
   {
-    EntraTenants.DefaultAppDisplayName(null).ShouldBe(EntraSetup.DefaultDisplayName);
+    EntraAppLookup.DefaultAppDisplayName(null).ShouldBe(EntraSetup.DefaultDisplayName);
     return Task.CompletedTask;
   }
 }
@@ -249,7 +249,7 @@ public class AppLookupNames_Given_
 
   public static Task Default_Should_ReturnSuffixedThenLegacy()
   {
-    IReadOnlyList<string> names = EntraTenants.AppLookupNames(null, "contoso.com");
+    IReadOnlyList<string> names = EntraAppLookup.AppLookupNames(null, "contoso.com");
     names.ShouldBe(
     [
       "TimeWarp Architecture Dev (contoso.com)",
@@ -260,7 +260,7 @@ public class AppLookupNames_Given_
 
   public static Task ExplicitName_Should_ReturnOnlyThat()
   {
-    IReadOnlyList<string> names = EntraTenants.AppLookupNames(" My App ", "contoso.com");
+    IReadOnlyList<string> names = EntraAppLookup.AppLookupNames(" My App ", "contoso.com");
     names.ShouldBe(["My App"]);
     return Task.CompletedTask;
   }
@@ -273,7 +273,7 @@ public class ResolveExistingApp_Given_
 
   public static Task PreferSuffixed_Should_IgnoreLegacyIds()
   {
-    EntraTenants.ResolveExistingApp(
+    EntraAppLookup.ResolveExistingApp(
       ["preferred-id"],
       ["legacy-a", "legacy-b"],
       out string? appId,
@@ -285,7 +285,7 @@ public class ResolveExistingApp_Given_
 
   public static Task ReuseLegacy_WhenSuffixedMissing()
   {
-    EntraTenants.ResolveExistingApp(
+    EntraAppLookup.ResolveExistingApp(
       [],
       ["legacy-id"],
       out string? appId,
@@ -297,7 +297,7 @@ public class ResolveExistingApp_Given_
 
   public static Task TwoPreferred_Should_BeAmbiguous()
   {
-    EntraTenants.ResolveExistingApp(
+    EntraAppLookup.ResolveExistingApp(
       ["a", "b"],
       ["legacy"],
       out string? appId,
@@ -315,7 +315,7 @@ public class PublicOriginMissingFromRedirectUris_Given_
 
   public static Task Missing_Should_BeTrue()
   {
-    EntraTenants.PublicOriginMissingFromRedirectUris(
+    EntraAppLookup.PublicOriginMissingFromRedirectUris(
       "https://arch.timewarp.work",
       ["https://localhost:63611/signin-oidc"]).ShouldBeTrue();
     return Task.CompletedTask;
@@ -323,7 +323,7 @@ public class PublicOriginMissingFromRedirectUris_Given_
 
   public static Task PresentAsPrefix_Should_BeFalse()
   {
-    EntraTenants.PublicOriginMissingFromRedirectUris(
+    EntraAppLookup.PublicOriginMissingFromRedirectUris(
       "https://arch.timewarp.work/",
       ["https://arch.timewarp.work/signin-oidc"]).ShouldBeFalse();
     return Task.CompletedTask;
@@ -331,7 +331,7 @@ public class PublicOriginMissingFromRedirectUris_Given_
 
   public static Task NullOrigin_Should_BeFalse()
   {
-    EntraTenants.PublicOriginMissingFromRedirectUris(
+    EntraAppLookup.PublicOriginMissingFromRedirectUris(
       null,
       ["https://localhost:63611/signin-oidc"]).ShouldBeFalse();
     return Task.CompletedTask;
@@ -345,7 +345,7 @@ public class SignInAudienceSummary_Given_
 
   public static Task WithDomain_Should_MentionAtDomain()
   {
-    EntraTenants.SignInAudienceSummary("contoso.com")
+    EntraAppLookup.SignInAudienceSummary("contoso.com")
       .ShouldBe(
         "Sign in with an @contoso.com account (single-tenant app). Other tenants' accounts must be invited as guests first.");
     return Task.CompletedTask;
@@ -353,7 +353,7 @@ public class SignInAudienceSummary_Given_
 
   public static Task WithoutDomain_Should_UseGenericWording()
   {
-    EntraTenants.SignInAudienceSummary(null)
+    EntraAppLookup.SignInAudienceSummary(null)
       .ShouldBe(
         "Sign in with an account from this tenant (single-tenant app). Other tenants' accounts must be invited as guests first.");
     return Task.CompletedTask;
@@ -361,7 +361,7 @@ public class SignInAudienceSummary_Given_
 
   public static Task MultiTenantNote_Should_Name_Admin_Policy_And_Account_Types()
   {
-    string note = EntraTenants.MultiTenantAcceptanceNote();
+    string note = EntraAppLookup.MultiTenantAcceptanceNote();
     note.ShouldContain("/Admin/Authentication");
     note.ShouldContain("AzureADMultipleOrgs");
     note.ShouldContain("AzureADandPersonalMicrosoftAccount");

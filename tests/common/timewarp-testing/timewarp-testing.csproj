@@ -15,7 +15,7 @@
     <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Shared IPrincipalStore contract suite (principal-store-contract-tests.cs) compiles here so
+    <!-- Shared IPrincipalStore contract suite (principal-store-contract-tests/) compiles here so
          generated apps (always package-mode; identity-tests tree template-excluded) still have
          the suite for web-infrastructure-tests' EF fixture. Explicit dual-mode reference — the
          transitive path via web-server is #if(web) conditional and must not be load-bearing. -->

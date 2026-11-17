@@ -4,7 +4,7 @@
 
 #region Design
 // Wired through AddFluentValidatedOptions(...).ValidateOnStart() in web-server's
-// Program.ConfigureSettings, so misconfiguration crashes the host at boot instead of failing on the
+// WebServerSettings.ConfigureServices, so misconfiguration crashes the host at boot instead of failing on the
 // first token-issuance request.
 // Public, matching WebAuthnOptionsValidator's precedent (not the internal-to-dodge-auto-registration
 // convention SampleOptionsValidator uses): this type must be referenceable BY NAME from web-server

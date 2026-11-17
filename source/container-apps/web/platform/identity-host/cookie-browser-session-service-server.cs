@@ -1,6 +1,6 @@
 #region Purpose
 // Cookie-backed IBrowserSessionService implementation: SignInAsync/AuthenticateAsync against the
-// named identity-session scheme (Program.ConfigureAuthentication registers it via AddCookie).
+// named identity-session scheme (WebServerAuthentication registers it via AddCookie).
 #endregion
 
 #region Design

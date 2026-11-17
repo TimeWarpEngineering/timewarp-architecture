@@ -7,8 +7,8 @@
 
 #region Design
 // Same host as AskMarkdown_Given_Wasm (in-process Web.Server, fake upstream, mock principal). The
-// SPA is signed out here, so the palette lists no commands: the Ctrl-K path and the approval card
-// are proven in AskSignIn_Given_Wasm, which signs in. Focus checks are retrying expectations
+// SPA is signed out here, so the palette lists no commands: the Ctrl-K path is proven in
+// AskSignInReprobe_Given_Wasm and the approval card in AskSignInRenameNavigate_Given_Wasm, which sign in. Focus checks are retrying expectations
 // because the textarea mounts a render after the panel. Every typing step uses the keyboard on
 // whatever has focus, never a click or Fill on the textarea. The send uses the send button, so
 // focus has really left the textarea before the answer returns it.

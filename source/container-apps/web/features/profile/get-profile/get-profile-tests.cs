@@ -54,7 +54,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     public static Task ValidResponse_Should_RoundTripThroughJson()
     {
       Response response = new Response(
-        alias: "Ada",
+        displayName: "Ada",
         email: "ada@example.com",
         language: "en-US",
         region: "US",
@@ -66,7 +66,7 @@ namespace TimeWarp.Architecture.Features.Profiles
       Response? parsed = JsonSerializer.Deserialize<Response>(json, ContractSerializationDefaults.Options);
 
       parsed.ShouldNotBeNull();
-      parsed.Alias.ShouldBe("Ada");
+      parsed.DisplayName.ShouldBe("Ada");
       parsed.Email.ShouldBe("ada@example.com");
       parsed.Language.ShouldBe("en-US");
       parsed.Region.ShouldBe("US");
@@ -79,7 +79,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     public static Task MockFactory_Should_ReturnDefaults()
     {
       Response response = GetMockResponseFactory()(new Query());
-      response.Alias.ShouldBe("alias");
+      response.DisplayName.ShouldBe("alias");
       response.Email.ShouldBeNull();
       response.Language.ShouldBe("en-US");
       response.Region.ShouldBe("US");
@@ -92,7 +92,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     public static Task EmptyAliasJson_Should_ThrowDuringDeserialization()
     {
       const string json =
-        """{"alias":"","email":null,"language":"en-US","region":"US","theme":"system","notifications":false,"avatar":"x"}""";
+        """{"displayName":"","email":null,"language":"en-US","region":"US","theme":"system","notifications":false,"avatar":"x"}""";
 
       Should.Throw<Exception>(() =>
         JsonSerializer.Deserialize<Response>(json, ContractSerializationDefaults.Options));
@@ -228,7 +228,7 @@ namespace TimeWarp.Architecture.Features.Profiles
         ok => ok,
         _ => throw new InvalidOperationException("Expected Response"));
 
-      response.Alias.ShouldBe("alias");
+      response.DisplayName.ShouldBe("alias");
       response.Language.ShouldBe("en-US");
       response.Avatar.ShouldStartWith("data:image/svg+xml;base64,");
       response.Avatar.Length.ShouldBeGreaterThan(500);
@@ -247,7 +247,7 @@ namespace TimeWarp.Architecture.Features.Profiles
         ok => ok,
         _ => throw new InvalidOperationException("Expected Response"));
 
-      response.Alias.ShouldBe("Member");
+      response.DisplayName.ShouldBe("Member");
       response.Email.ShouldBeNull();
       response.Language.ShouldBe("en-US");
       response.Region.ShouldBe("US");
@@ -277,7 +277,7 @@ namespace TimeWarp.Architecture.Features.Profiles
       Response response = (await handler.Handle(new Query(), CancellationToken.None))
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected Response"));
 
-      response.Alias.ShouldBe("Grace");
+      response.DisplayName.ShouldBe("Grace");
       response.Email.ShouldBe("grace@example.com");
       response.Language.ShouldBe("fr-FR");
       response.Region.ShouldBe("FR");

@@ -50,7 +50,7 @@ internal sealed class EntraTenantDiscovery
       return (false, "", "");
     }
 
-    if (!EntraSetup.TryReadAccount(output.Stdout, out string tenantId, out string user))
+    if (!EntraAzJson.TryReadAccount(output.Stdout, out string tenantId, out string user))
     {
       terminal.WriteErrorLine("Could not parse tenant id from `az account show`.".Red());
       return (false, "", "");
@@ -72,7 +72,7 @@ internal sealed class EntraTenantDiscovery
     CommandOutput accountListOutput = await Cli.CaptureAzReadOnlyAsync(accountListArguments).ConfigureAwait(false);
     if (accountListOutput.Success)
     {
-      if (EntraTenants.TryReadTenantIdsFromAccountList(accountListOutput.Stdout, out IReadOnlyList<string> accountIds))
+      if (EntraTenantJson.TryReadTenantIdsFromAccountList(accountListOutput.Stdout, out IReadOnlyList<string> accountIds))
       {
         fromAccount.AddRange(accountIds);
       }
@@ -90,7 +90,7 @@ internal sealed class EntraTenantDiscovery
     CommandOutput tenantListOutput = await Cli.CaptureAzReadOnlyAsync(tenantListArguments).ConfigureAwait(false);
     if (tenantListOutput.Success)
     {
-      if (EntraTenants.TryReadTenantIdsFromTenantList(tenantListOutput.Stdout, out IReadOnlyList<string> tenantIds))
+      if (EntraTenantJson.TryReadTenantIdsFromTenantList(tenantListOutput.Stdout, out IReadOnlyList<string> tenantIds))
       {
         fromTenantList.AddRange(tenantIds);
       }
@@ -161,7 +161,7 @@ internal sealed class EntraTenantDiscovery
       ];
       CommandOutput output = await Cli.CaptureAzReadOnlyAsync(arguments).ConfigureAwait(false);
       if (output.Success
-        && EntraTenants.TryReadOrganization(output.Stdout, out _, out string? displayName, out string? defaultDomain))
+        && EntraTenantJson.TryReadOrganization(output.Stdout, out _, out string? displayName, out string? defaultDomain))
       {
         bool resolved = !string.IsNullOrWhiteSpace(displayName) || !string.IsNullOrWhiteSpace(defaultDomain);
         return new EntraTenant(tenantId, displayName, defaultDomain, resolved);
@@ -189,7 +189,7 @@ internal sealed class EntraTenantDiscovery
     ];
     CommandOutput tokenOutput = await Cli.CaptureAzTokenAsync(tokenArguments).ConfigureAwait(false);
     if (!tokenOutput.Success
-      || !EntraTenants.TryReadAccessToken(tokenOutput.Stdout, out string? accessToken)
+      || !EntraTenantJson.TryReadAccessToken(tokenOutput.Stdout, out string? accessToken)
       || string.IsNullOrEmpty(accessToken))
     {
       return new EntraTenant(tenantId, null, null, NameResolved: false);
@@ -207,7 +207,7 @@ internal sealed class EntraTenantDiscovery
     ];
     CommandOutput graphOutput = await Cli.CaptureAzReadOnlyMaskedAsync(graphArguments).ConfigureAwait(false);
     if (graphOutput.Success
-      && EntraTenants.TryReadOrganization(graphOutput.Stdout, out _, out string? otherName, out string? otherDomain))
+      && EntraTenantJson.TryReadOrganization(graphOutput.Stdout, out _, out string? otherName, out string? otherDomain))
     {
       bool resolved = !string.IsNullOrWhiteSpace(otherName) || !string.IsNullOrWhiteSpace(otherDomain);
       return new EntraTenant(tenantId, otherName, otherDomain, resolved);

@@ -369,7 +369,7 @@
 }
 
 .twe-agent-ask ::deep .sc-ai-input:focus-within {
-  border-color: var(--twe-primary);
+  border-color: var(--twe-focus-ring);
   box-shadow: var(--twe-shadow);
 }
 

@@ -23,6 +23,7 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class GetFeedback
 {
   [ApiRoute("api/Feedback/{FeedbackItemId:guid}", HttpVerb.Get)]
+  [Operation("feedback.get", Description = "Get one of the current user's feedback items with its visible thread.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>
@@ -39,11 +40,15 @@ public static partial class GetFeedback
     public object Clone() => this;
 
     public Guid FeedbackItemId { get; }
+    /// <summary>App-rooted page path the handler builds from the item id.</summary>
+    [Computed]
     public string Permalink { get; }
     public FeedbackKind Kind { get; }
     public string Title { get; }
     public string Body { get; }
     public DateTimeOffset FiledAt { get; }
+    /// <summary>Files linked at submit. They live in the attachment store, not on FeedbackItem.</summary>
+    [Computed]
     public IReadOnlyList<Attachment> Attachments { get; }
     public FeedbackStatus Status { get; }
     public IReadOnlyList<FeedbackActivityEntry> Activity { get; }

@@ -42,8 +42,15 @@ public partial class SafetySuiteTestArguments_Given_
     string[] matched =
     [
       .. Directory.EnumerateFiles(suiteDirectory, "*.cs", SearchOption.AllDirectories)
-        .SelectMany(file => ClassDeclaration().Matches(File.ReadAllText(file)).Select(match => match.Groups["name"].Value))
-        .Where(name => name.Contains(AspirePublishTargets.SafetySuiteClassSuffix, StringComparison.OrdinalIgnoreCase))
+        .SelectMany(file => ClassDeclaration().Matches(File.ReadAllText(file)))
+        .Select(match => (Name: match.Groups["name"].Value, IsPartial: match.Groups["partial"].Success))
+        .Where(declaration => declaration.Name.Contains(AspirePublishTargets.SafetySuiteClassSuffix, StringComparison.OrdinalIgnoreCase))
+        .GroupBy(declaration => declaration.Name, StringComparer.Ordinal)
+        // A suite split across partial files declares its class once per file; it is still one class.
+        // A repeated name that is not partial everywhere is a second class, so every declaration stays
+        // and the exact-set assertion fails.
+        .SelectMany(group => group.All(declaration => declaration.IsPartial) ? group.Take(1) : group)
+        .Select(declaration => declaration.Name)
         .Order(StringComparer.Ordinal),
     ];
 
@@ -51,7 +58,7 @@ public partial class SafetySuiteTestArguments_Given_
     return Task.CompletedTask;
   }
 
-  [GeneratedRegex(@"\bclass\s+(?<name>\w+)")]
+  [GeneratedRegex(@"(?<partial>\bpartial\s+)?\bclass\s+(?<name>\w+)")]
   private static partial Regex ClassDeclaration();
 
   private static string RepoRoot()

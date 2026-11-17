@@ -3,5 +3,17 @@
   "checkVersionConfig": {
     // git-tag: compare repo Version to latest GitHub release (release workflow)
     "checkVersionStrategy": "git-tag"
+  },
+
+  // Pull request build decision (task 493, timewarp-nuru 595): additions to the
+  // PullRequestBuildClassifier rule in TimeWarp.Nuru.DevCli. An entry is a path,
+  // "dir/", or "dir/**". buildPaths always build; nonBuildPaths skip, but never
+  // source/, tests/, tools/, msbuild/, .github/workflows/, or .editorconfig.
+  // buildPaths: the template content and the ingress golden build from these roots,
+  // markdown included (the template pack ships its readme).
+  // nonBuildPaths: skills and their evals are gated by the skill-lint job, not ci.
+  "pullRequestBuild": {
+    "buildPaths": ["timewarp-templates/**", ".template.config/**", "goldens/**"],
+    "nonBuildPaths": ["skills/**", "evals/**", ".vally.yaml"]
   }
 }

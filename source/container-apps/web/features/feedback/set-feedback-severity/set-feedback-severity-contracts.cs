@@ -21,6 +21,8 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class SetFeedbackSeverity
 {
   [ApiRoute("api/admin/feedback/{FeedbackItemId:guid}/severity", HttpVerb.Put)]
+  [Operation("feedback.set-severity", Description = "Set a feedback item's review severity.", Group = "feedback")]
+  [NotAggregate("Writes FeedbackItem through SetSeverity, a checked transition that appends an entry; no agreement check covers a named mutation.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackSeverity Severity { get; set; }

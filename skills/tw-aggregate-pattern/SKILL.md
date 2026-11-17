@@ -1,7 +1,7 @@
 ---
 name: tw-aggregate-pattern
 description: "**TIMEWARP SKILL** — the golden aggregate-root pattern: typed id, `Entity<TId>` base, fail-closed `Create`, named mutations with no public setters, a private nested `Invariants` validator, and save-time enforcement via `DomainInvariantsGuard`/`AggregateDbContext`. Invoke before adding or reviewing an `IAggregateRoot`, or when TWA0011/TWA0012 fire. WHEN: add an aggregate, IAggregateRoot, aggregate root, TWA0011, TWA0012, Invariants validator, typed id."
-when-to-use: aggregate root, IAggregateRoot, Entity<TId>, typed id, TypedId, Invariants validator, DomainInvariantsGuard, AggregateDbContext, TWA0011, TWA0012, fail-closed construction, named mutation, concurrency token, Version
+when-to-use: aggregate root, IAggregateRoot, Entity<TId>, typed id, TypedId, Invariants validator, DomainInvariantsGuard, AggregateDbContext, TWA0011, TWA0012, contract agreement, TWA0039, TWA0040, TWA0041, TWA0042, TWA0043, NotAggregate, Computed, fail-closed construction, named mutation, concurrency token, Version
 ---
 
 # Aggregate pattern (TWA0011/0012)
@@ -57,6 +57,70 @@ lives.
 |------|----------|-----|
 | **TWA0011** | An `IAggregateRoot` must declare a nested `Invariants : AbstractValidator<T>` | Fail-closed: no validator means `DomainInvariantsGuard` cannot check the aggregate at save time |
 | **TWA0012** | That nested `Invariants` must be `private` | Keeps it out of `AddValidatorsFromAssemblyContaining` auto-registration — it is a save-time domain check, not a request validator |
+| **TWA0039–TWA0043** | The root agrees with its operation group's contracts (below) | Contracts are UI-first and the domain is domain-first; the build proves the root satisfies what the contracts ask for |
+
+### Contract agreement (TWA0039–TWA0043)
+
+The domain is hand-written and never generated from contracts. `ContractAgreementAnalyzer` runs in
+the compilation that sees both `web-contracts` and `web-domain` (web-application) and checks the
+root against the `[Operation]` group it serves. **Link:** the root's slice namespace is its
+namespace without a trailing `.Domain` (`Features.Admin.Roles.Domain` → `Features.Admin.Roles`);
+the root satisfies every group with an operation in that namespace, and then every operation in
+the group is checked wherever it lives. Nothing is declared on the entity. **Names match exactly;
+drift is an error, not a mapping.** The one name rule is the key: a contract `RoleId` maps to the
+root's `Id`. Compatible types: the same type and nullability; a value wrapper and what it wraps
+(`RoleId` ↔ `Guid` through `Value`, `PermissionGrant` ↔ `string` through its one property); two
+collections with compatible elements; two enums with the same member names (the wire enum that
+mirrors a domain enum, because contracts must not reference domain; values are not compared); and
+`T?` against `T?` of compatible `T`. On the write side (details members, `Set` elements), `Guid?`
+against `Guid` is still drift. A query response may widen the root's `T` to `T?`: the handler may
+null a projected value for one audience (`FeedbackActivityEntry.AuthorPrincipalId` on the filer's
+copy), and the member is still checked, not `[Computed]`. `T` against a root `T?` is drift on
+both sides.
+
+Query responses are walked past the top level. A member and its root member that are both classes
+(or both collections of classes) are compared member by member. For example,
+`FeedbackActivityEntry` projects from the owned `FeedbackActivity` child, and the message names the
+child. A non-list response wraps its projection when its only non-`[Computed]` member has no root
+member of its name and is a contract class (or a list of one). `GetFeedbackForAdmin.Response.Item`
+(`FeedbackAdminView`) and `ListMyFeedback.Response.Items` are checked against the root one level
+down, the way a `ListResponse<T>` is checked through `T`. A response that projects any other member
+has no wrapper, so an unmatched class member there is reported as missing.
+
+| Id | Severity | Requires |
+|----|----------|----------|
+| TWA0039 | error | Each member of an `I*Details` interface a command implements exists on the root with a compatible type |
+| TWA0040 | error | A `Set<Name>` command with one list member has a public `Set<Name>(collection)` mutation (the root's own name drops out: `SetRolePermissions` → `Role.SetPermissions`) |
+| TWA0041 | error | Each query-response member (a `ListResponse<T>` is checked through `T`) maps to a root member; a handler-derived value is `[Computed]` on the member or the response |
+| TWA0042 | warning | Any other command says why with `[NotAggregate("reason")]`: a delete by route id; an operation grouped here for hosts that stores elsewhere; or a named mutation no check covers (a status transition, a thread append), with the reason naming the mutation |
+| TWA0043 | warning | A group whose operations sit in two roots' slice namespaces is ambiguous; give each root its own group |
+
+When a check fires, fix the side that drifted: rename the contract member or the domain member so
+both say the same thing, or add the missing mutation. `[Computed]` and `[NotAggregate]` live in
+`TimeWarp.Architecture.Attributes` and state a fact about the contract; they are not a way to
+silence drift.
+
+### Projection and mutation calls stay hand-written
+
+The analyzer proves a projection *can* be written. The handler still writes it. There is no
+mapper library and no projection or handler generator.
+
+- **One projection per aggregate and response shape.** Put it in one static method in the
+  slice's application layer (for example `FeedbackContractMap`). A second handler that returns the
+  same shape calls that method, so the shape is never written twice.
+- **Named arguments.** Write `new Response(roleId: role.Id.Value, name: role.Name, …)`. Two members
+  of the same type cannot be swapped silently, and a dropped optional parameter is visible in the
+  diff.
+- **Agreement by name is not the value.** A member can match its root member by name and still
+  need a filtered or redacted value for its audience: `GetFeedback.Response.Activity` is the filer
+  thread with internal notes removed and admin ids redacted, not `FeedbackItem.Activity`. A test
+  asserts what each audience must not see.
+- **Ordering and normalization belong to the root.** When every read of a collection wants the
+  same order, the root's property returns it in that order. A handler does not reorder it.
+- **The handler supplies who and when.** A handler calls the named mutation with the command's
+  values, behind any `Can…` check. When the mutation records who acted or when, the handler also
+  passes the acting principal and the clock; the root does not read ambient context. A rule that
+  answers with a status code (protected core, 409) runs in the handler before the call.
 
 ## Exemplar
 
@@ -66,6 +130,18 @@ table/schema `profiles`, TypedId key conversion) is applied by `PostgresDbContex
 `ApplyConfigurationsFromAssembly`. `Version`'s `.IsConcurrencyToken()`
 is supplied for free by the `AggregateDbContext` `Version` convention — an aggregate's own
 mapping does not declare it.
+
+`web/features/admin/roles/role-domain.cs` is the exemplar for owned child collections:
+
+- Value-record children (`PermissionGrant`, `AgentScopeGrant`) sit over private backing lists.
+  The mapping is `OwnsMany` with field access on those lists and keys made of the owner id plus
+  the value, so there is no surrogate id.
+- Full-replace setters keep a child instance that is already present, so EF writes only the
+  difference.
+- A catalog the domain cannot reference (contracts, other libraries) is copied into the domain
+  (`role-catalog-domain.cs`). A test that sees both assemblies fails when the copy drifts.
+- A rule that must answer with a status code (protected core, 409) stays in the application
+  layer. The domain only throws.
 
 ## Persistence golden path (Postgres + EF)
 

@@ -17,7 +17,12 @@ public class Arguments_Given_
 
   public static Task Test_Should_SkipBuildAndRestore()
   {
-    DotNetTestArguments.Test().ShouldBe(["test", "-c", "Release", "--no-build", "--no-restore"]);
+    DotNetTestArguments.Test("artifacts/coverage/x").ShouldBe(
+    [
+      "test", "-c", "Release", "--no-build", "--no-restore", "--",
+      "--results-directory", "artifacts/coverage/x", "--coverage",
+      "--coverage-output-format", "cobertura", "--coverage-output", "coverage.cobertura.xml"
+    ]);
     return Task.CompletedTask;
   }
 }

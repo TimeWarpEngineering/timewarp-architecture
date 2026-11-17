@@ -30,6 +30,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 public static partial class DeleteRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Delete)]
+  [NotAggregate("Removes the role; the request carries only the route id, so there is no root member to agree on.")]
   [Operation("roles.delete", Description = "Delete a role.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IQueryStringRouteProvider, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {

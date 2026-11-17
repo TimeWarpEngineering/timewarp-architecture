@@ -28,6 +28,8 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
   using Shouldly;
   using TimeWarp.Architecture.Authorization;
   using TimeWarp.Architecture.Features;
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
+  using TimeWarp.Architecture.Features.Admin.Roles.Domain;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
@@ -197,7 +199,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
 
     public static async Task Administrator_Role_Should_Grant_PrincipalsManage()
     {
-      InMemoryRolePermissionStore store = new();
+      InMemoryRolePermissionStore store = new(new InMemoryRoleStore());
       bool granted = await AdminLockoutGuards.RolesGrantPermissionAsync(
         [RoleIds.Administrator],
         PermissionIds.AdminPrincipalsManage,
@@ -208,7 +210,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
 
     public static async Task Member_Only_Should_Not_Grant_PrincipalsManage()
     {
-      InMemoryRolePermissionStore store = new();
+      InMemoryRolePermissionStore store = new(new InMemoryRoleStore());
       bool granted = await AdminLockoutGuards.RolesGrantPermissionAsync(
         [RoleIds.Member],
         PermissionIds.AdminPrincipalsManage,
@@ -244,10 +246,11 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
 
     public static async Task EmptyEffective_Should_NotSubstituteMember()
     {
-      InMemoryRolePermissionStore store = new();
-      await store.SetPermissionIdsForRoleAsync(
-        RoleIds.Member,
-        [PermissionIds.AdminPrincipalsManage]);
+      InMemoryRoleStore roles = new();
+      Role member = (await roles.FindAsync(RoleId.From(RoleIds.Member))).ShouldNotBeNull();
+      member.SetPermissions([PermissionIds.AdminPrincipalsManage]);
+      await roles.UpdateAsync(member);
+      InMemoryRolePermissionStore store = new(roles);
 
       bool granted = await AdminLockoutGuards.RolesGrantPermissionAsync(
         [],

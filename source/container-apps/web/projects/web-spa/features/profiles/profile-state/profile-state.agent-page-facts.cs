@@ -4,7 +4,7 @@
 
 #region Design
 // UpdateProfile replaces the whole record, so the agent must echo the current values of every
-// field it does not change. hasSnapshot is false until the profile has loaded (Alias is null).
+// field it does not change. hasSnapshot is false until the profile has loaded (DisplayName is null).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
@@ -18,10 +18,10 @@ partial class ProfileState : IAgentPageFacts
   public void AddAgentPageFacts(JsonObject document, string path)
   {
     ArgumentNullException.ThrowIfNull(document);
-    document["hasSnapshot"] = Alias is not null;
+    document["hasSnapshot"] = DisplayName is not null;
     document["profile"] = new JsonObject
     {
-      ["alias"] = Alias,
+      ["displayName"] = DisplayName,
       ["email"] = Email,
       ["language"] = Language,
       ["region"] = Region,

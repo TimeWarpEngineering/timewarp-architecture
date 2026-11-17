@@ -18,7 +18,7 @@
   flex-shrink: 0;
   border-radius: 10px;
   background: color-mix(in srgb, var(--twe-purple) 8%, var(--twe-paper));
-  color: var(--twe-purple-deep);
+  color: var(--twe-on-accent-tint);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -37,7 +37,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--twe-purple-deep);
+  color: var(--twe-on-accent-tint);
 }
 
 .twe-devnote__title {

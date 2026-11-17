@@ -128,7 +128,11 @@ public class BrandOptions_Should_
     script.ShouldContain(BrandOptions.FluentThemeStorageKey);
     script.ShouldContain("existing.base = \"brand\";");
     script.ShouldNotContain("Northwind");
-    script.ShouldNotContain("mode");
+    // Reads the stored mode and the OS preference for the initial body attribute; never stores a mode.
+    script.ShouldNotContain("existing.mode = ");
+    script.ShouldContain("existing.mode === \"dark\" || existing.mode === \"light\"");
+    script.ShouldContain("(prefers-color-scheme: dark)");
+    script.ShouldContain("document.body.setAttribute(\"data-theme\", stored || (osDark ? \"dark\" : \"light\"));");
     script.ShouldNotContain("<");
 
     string harmonized = BrandThemeScript.Render(new BrandOptions());

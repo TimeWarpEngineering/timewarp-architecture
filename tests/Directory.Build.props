@@ -38,29 +38,20 @@
     <NoWarn>$(NoWarn);TWA0004</NoWarn> <!-- #region Purpose not yet adopted for test files — separate decision; TWA0008 (template-token guard) is the reason the convention analyzers are wired here -->
   </PropertyGroup>
 
-  <!-- Repo-wide convention analyzers for TEST code too: tests/ ships as template content, so
-       TWA0008 (template-conditional tokens in comments/strings mangle generation) must cover it —
-       analyzer-test files embedding C# source in strings are the likeliest carriers.
-       UseAnalyzerPackages is computed at root Directory.Build.props (imported above); do not
-       re-detect here (task 131 F-012). Wiring ItemGroups remain — source/DBP does not reach tests. -->
-  <ItemGroup Condition="'$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)../source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
-                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
-                      IsAspireProjectResource="false" />
-    <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
-    <!-- TWA0022 gates on the Blazor WASM SDK's own property; no test project uses that SDK, so
-         pipeline-driving test code is naturally out of scope. -->
-    <CompilerVisibleProperty Include="UsingMicrosoftNETSdkBlazorWebAssembly" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(UseAnalyzerPackages)' == 'true'">
-    <PackageReference Include="$(TwArchitectureAnalyzersPackageId)" PrivateAssets="all" />
-    <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
-    <CompilerVisibleProperty Include="UsingMicrosoftNETSdkBlazorWebAssembly" />
-  </ItemGroup>
+  <!-- Task 487: MTP code coverage for `dev test`; CI uploads artifacts/coverage.
+       The PackageReference is in the root Directory.Build.props (the ganda cpm-consistency audit
+       reads only that file and *.csproj); this property switches it on for the tests tree. -->
+  <PropertyGroup Label="Code Coverage">
+    <CollectTestCoverage>true</CollectTestCoverage>
+  </PropertyGroup>
 
-  <!-- template.json feeds TWA0010 (see source/Directory.Build.props). -->
-  <ItemGroup Condition="Exists('$(RepositoryRoot).template.config/template.json')">
-    <AdditionalFiles Include="$(RepositoryRoot).template.config/template.json" />
-  </ItemGroup>
+  <!-- Repo-wide convention analyzers for TEST code too: tests/ ships as template content, so
+       TWA0008 (template-conditional tokens in comments/strings mangle generation) must cover it.
+       Analyzer-test files that embed C# source in strings are the likeliest carriers. source/
+       Directory.Build.props does not reach tests/, so this tree opts in itself. The wiring is in the
+       root Directory.Build.props (task 470). -->
+  <PropertyGroup Label="Convention Analyzers">
+    <EnableConventionAnalyzers>true</EnableConventionAnalyzers>
+  </PropertyGroup>
 
 </Project>

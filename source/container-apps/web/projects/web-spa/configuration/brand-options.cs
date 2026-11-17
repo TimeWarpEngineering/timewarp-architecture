@@ -10,7 +10,8 @@
 // swap the mark. Shell colors stay in tokens.css; /brand.css overrides the brand keys only.
 // Fluent reads the seed from the body attribute (task 290). ExactRamp is not a body attribute
 // in FluentUI 5, so BrandThemeScript writes it into Fluent's theme storage before blazor.web.js
-// and leaves a stored light or dark mode in place. The shell does not call SetThemeAsync.
+// and leaves a stored light or dark mode in place (it also sets the initial body[data-theme]
+// from that mode or the OS preference). The shell does not call SetThemeAsync.
 // An absolute http(s) logo may carry a query or a fragment, so a cache-busted CDN URL is valid.
 // A relative or root-relative logo stays a path: ? and # are rejected there.
 #endregion

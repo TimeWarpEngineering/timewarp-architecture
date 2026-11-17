@@ -21,6 +21,8 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class UploadFeedbackAttachment
 {
   [ApiRoute("api/Feedback/attachments", HttpVerb.Post)]
+  [Operation("feedback.upload-attachment", Description = "Upload a pending attachment for a feedback filing.", Group = "feedback")]
+  [NotAggregate("Stores a pending FeedbackAttachment; no FeedbackItem exists until submit links it.")]
   public sealed partial class Command
     : IFileUploadRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {

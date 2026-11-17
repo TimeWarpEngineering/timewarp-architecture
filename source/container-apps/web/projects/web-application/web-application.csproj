@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="Riok.Mapperly" />
     <!-- IOptions, IHostEnvironment, IConfiguration, and ILogger are in the net11 shared
          framework (NU1510). TokenBucketRateLimiter is not, so RateLimiting stays. -->
     <PackageReference Include="System.Threading.RateLimiting" />

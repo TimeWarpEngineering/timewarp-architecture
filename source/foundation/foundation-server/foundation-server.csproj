@@ -7,9 +7,9 @@
   <ItemGroup>
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FastEndpoints.OpenApi" />
-    <!-- Lift FastEndpoints.OpenApi's net11.0 floor (11.0.0-rc.2) to the RC3 train pin. -->
+    <!-- FastEndpoints.OpenApi 9.0.0 (net11.0) depends on this package at 11.0.0, the pin. -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    <!-- Lift Microsoft.AspNetCore.OpenApi's Microsoft.OpenApi 3.10.2 floor to the 3.11.0 pin. -->
+    <!-- Microsoft.AspNetCore.OpenApi 11.0.0 depends on this package at [3.11.0, 4.0.0); 3.11.0 is the pin. -->
     <PackageReference Include="Microsoft.OpenApi" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="OneOf" />

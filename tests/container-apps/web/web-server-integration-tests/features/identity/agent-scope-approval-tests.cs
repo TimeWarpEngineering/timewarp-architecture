@@ -19,6 +19,7 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
+using IRoleStore = TimeWarp.Architecture.Features.Admin.Roles.Application.IRoleStore;
 
 public class Refuses_
 {
@@ -77,7 +78,7 @@ public class Refuses_
   public static async Task RoleGrant_Allows_FeedbackRead()
   {
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
-    IRoleAgentScopeStore roleScopes = scope.ServiceProvider.GetRequiredService<IRoleAgentScopeStore>();
+    IRoleStore roleScopes = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     IPrincipalRoleStore roles = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     try
     {
@@ -153,7 +154,7 @@ public class Refuses_
   public static async Task MemberScopes_Should_NotApproveARolelessAgent()
   {
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
-    IRoleAgentScopeStore roleScopes = scope.ServiceProvider.GetRequiredService<IRoleAgentScopeStore>();
+    IRoleStore roleScopes = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     IEffectiveRolesResolver roles = scope.ServiceProvider.GetRequiredService<IEffectiveRolesResolver>();
     try
     {

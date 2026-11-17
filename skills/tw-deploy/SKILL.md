@@ -6,20 +6,21 @@ when-to-use: deploy, deployment, dev deploy, dev deprovision, dev open, dev depl
 
 # Deploy (Aspire publish targets)
 
-The AppHost (`source/container-apps/aspire/projects/aspire-app-host/program.cs`) is the single
+The AppHost (`source/container-apps/aspire/projects/aspire-app-host/`) is the single
 source of truth for deployment. Every deployment artifact — `docker-compose.yaml`, `.env`, the
 Helm chart, the migration script — is **generated** by `aspire publish` / `aspire deploy`. There
 are no hand-written Dockerfiles, manifests, or charts, and there is no `devops/` tree. The
-AppHost Design region holds the per-line reasoning; this skill is the operator's map.
+AppHost Design regions hold the per-line reasoning (`program.cs` maps each concern to its file);
+this skill is the operator's map.
 
 ## Detection — when to invoke
 
 | Signal | Where |
 |--------|-------|
 | Deploying the app anywhere other than `dev run` | any target below |
-| Adding or changing a publish target / compute environment | AppHost `program.cs` |
+| Adding or changing a publish target / compute environment | AppHost `publish-target.cs` |
 | Adding a setting that must differ in production | parameters, not literals |
-| Touching code guarded by `IsPublishMode` / `IsRunMode` | AppHost `program.cs` |
+| Touching code guarded by `IsPublishMode` / `IsRunMode` | AppHost `program.cs` and its concern files |
 | Adding a schema migration that must reach production | migrations section |
 
 ## Target matrix
@@ -476,11 +477,14 @@ and the ACR Basic cost exception) is [azure-container-apps-neon.md](references/a
 
 ## Related
 
-- AppHost `program.cs` Design region — per-decision reasoning behind every rule above.
+- AppHost Design regions — per-decision reasoning behind every rule above: `publish-target.cs`
+  (targets and their posture), `postgres-resources.cs` (database and migrations),
+  `ingress-resource.cs` (ingress ports, routes, forwarding), `web-server-resource.cs` (Entra
+  parameters, run-mode tooling).
 - `tools/dev-cli/endpoints/deploy-command.cs` / `deprovision-command.cs` — `dev deploy` /
   `dev deprovision`; their Design regions record the preflight and the `aspire destroy` hand-off.
 - `tools/dev-cli/endpoints/deploy-migrate-command.cs` / `open-command.cs` — `dev deploy migrate` /
-  `dev open`; `services/deploy-browser.cs` is the opener both verbs use; `services/deploy-operate.cs` records that a missing migrations artifact is published
+  `dev open`; `services/deploy-browser.cs` is the opener both verbs use; `services/deploy/deploy-operate.cs` records that a missing migrations artifact is published
   (files only) and then applied, how the Compose project is found, and the firewall-rule cleanup.
 - aspire-tests `compose-publish-tests` / `kubernetes-publish-tests` / `aca-publish-tests` — the
   production-safety suites. `aca-neon-publish-tests` guards the Neon target.

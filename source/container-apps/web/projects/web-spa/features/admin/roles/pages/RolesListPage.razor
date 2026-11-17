@@ -44,8 +44,8 @@
           <tbody>
             @foreach (GetRoles.RoleDto role in RoleState.Roles ?? [])
             {
-              int grantCount = role.PermissionIds.Count;
-              IReadOnlyList<string> prefixes = PermissionIds.PrefixesOf(role.PermissionIds);
+              int grantCount = role.Permissions.Count;
+              IReadOnlyList<string> prefixes = PermissionIds.PrefixesOf(role.Permissions);
               <tr @key="role.RoleId">
                 <Cell>
                   <a href="@RoleDetailPage.GetPageUrl(role.RoleId)" data-qa="RoleDetail">@role.Name</a>

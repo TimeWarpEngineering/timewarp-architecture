@@ -21,10 +21,11 @@
 // port-backed durable consumer (task 104-032); they are NOT IAggregateRoot — store-CAS lives in
 // EfPrincipalStore, not AggregateDbContext's Version hook.
 // PrincipalRoleAssignment (identity.principal_roles) is the durable IPrincipalRoleStore backend
-// (task 147-006). RolePermissionGrant (identity.role_permissions) is the durable
-// IRolePermissionStore backend (task 182-001). RoleAgentScopeGrant
-// (identity.role_agent_scopes) and PrincipalAgentScopeGrant (identity.principal_agent_scopes)
-// are the durable agent-scope approval backends (task 466). SiteSettings (identity.site_settings) is the
+// (task 147-006). Role (identity.roles, task 473) is an IAggregateRoot that owns its permission
+// ids (identity.role_permissions) and agent scopes (identity.role_agent_scopes); the
+// IRolePermissionStore and IRoleAgentScopeStore read ports project those owned rows.
+// PrincipalAgentScopeGrant (identity.principal_agent_scopes) is the principal half of agent-scope
+// approval (task 466). SiteSettings (identity.site_settings) is the
 // durable ISiteSettingsStore backend (task 219-006) — singleton row, store-CAS, not IAggregateRoot.
 // DataProtectionKey (schema "data_protection", table "keys") is the ASP.NET key ring. It is not an
 // aggregate. PostgresDbModule persists keys here only when a connection string is configured.
@@ -59,6 +60,7 @@ namespace TimeWarp.Architecture.Persistence;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Admin.Roles.Domain;
 using TimeWarp.Architecture.Features.AgentLinks.Domain;
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using TimeWarp.Architecture.Features.Feedback.Infrastructure;
@@ -81,8 +83,7 @@ public sealed partial class PostgresDbContext : AggregateDbContext, IDataProtect
   public DbSet<Principal> Principals => Set<Principal>();
   public DbSet<Credential> Credentials => Set<Credential>();
   public DbSet<PrincipalRoleAssignment> PrincipalRoleAssignments => Set<PrincipalRoleAssignment>();
-  public DbSet<RolePermissionGrant> RolePermissionGrants => Set<RolePermissionGrant>();
-  public DbSet<RoleAgentScopeGrant> RoleAgentScopeGrants => Set<RoleAgentScopeGrant>();
+  public DbSet<Role> Roles => Set<Role>();
   public DbSet<PrincipalAgentScopeGrant> PrincipalAgentScopeGrants => Set<PrincipalAgentScopeGrant>();
   public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
   public DbSet<ProtectedSecret> ProtectedSecrets => Set<ProtectedSecret>();

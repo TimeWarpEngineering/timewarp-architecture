@@ -6,7 +6,8 @@
 
 #region Design
 // Callers: RecordAsync — CompletePasskeyAuthentication.Handler, CompleteAgentTokenIssuance.Handler,
-// EntraTicketProcessor (sync-hit, already-linked bootstrap, link/attach/mint; task 252 — it applies the
+// EntraSignInStamp, which EntraTicketProcessor (sync-hit, already-linked bootstrap, bootstrap-create
+// winner) and EntraAccountLinker (link/attach/mint/merge) call (task 252 — the stamp applies the
 // AccountHint refresh to the same snapshot first, so hint + stamp persist in this one write).
 // RecordCoalescedAsync — the web and api agent-token bearer authentication handlers.
 // Two write shapes (task 248-002). RecordAsync(store, credential) — the caller already holds the

@@ -3,30 +3,37 @@
 #endregion
 
 #region Design
-// Updates the shared in-memory stub; a missing id reuses GetRole's 404-shaped problem details so
-// all roles handlers report absence identically.
+// Task 473: load the Role, UpdateDetails (name and description as a pair), save through
+// IRoleStore. A missing id reuses GetRole's 404-shaped problem details so all roles handlers
+// report absence identically. Product roles may be renamed; only deletion is refused.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
+using TimeWarp.Architecture.Features.Admin.Roles.Domain;
 using static TimeWarp.Architecture.Features.Admin.Roles.UpdateRole;
 
 public sealed partial class UpdateRole
 {
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
-    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
-    {
-      OneOf<Response, SharedProblemDetails> result = RoleStore.Roles.ContainsKey(command.RoleId)
-        ? OnUpdate(command)
-        : GetRole.Handler.RoleNotFound(command.RoleId);
+    private readonly IRoleStore RoleStore;
 
-      return ValueTask.FromResult(result);
+    public Handler(IRoleStore roleStore)
+    {
+      RoleStore = roleStore ?? throw new ArgumentNullException(nameof(roleStore));
     }
 
-    private static OneOf<Response, SharedProblemDetails> OnUpdate(Command command)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
-      RoleStore.Roles[command.RoleId] = (command.Name, command.Description);
+      Role? role = await RoleStore.FindAsync(RoleId.From(command.RoleId), cancellationToken).ConfigureAwait(false);
+      if (role is null)
+      {
+        return GetRole.Handler.RoleNotFound(command.RoleId);
+      }
+
+      role.UpdateDetails(command.Name, command.Description);
+      await RoleStore.UpdateAsync(role, cancellationToken).ConfigureAwait(false);
       return new Response();
     }
   }

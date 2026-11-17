@@ -82,7 +82,7 @@ public partial class IngressSmoke_Given_
     // Task 155: the AppHost deliberately carries NO wait edge between web-server and
     // web-migrations (a builder-graph WaitFor deadlocks dashboard restarts; WaitForCompletion
     // breaks DCP endpoint wiring for web-server, still so on Aspire 13.6 per task 270 —
-    // see AppHost program.cs Design region). That means web-server's own Healthy state above says
+    // see AppHost postgres-resources.cs Design region). That means web-server's own Healthy state above says
     // nothing about migration progress. This suite always boots an EPHEMERAL Postgres
     // (--Postgres:UseDataVolume=false), so RunDatabaseUpdateOnStart has real work to do on every
     // run — unlike a real dev volume, which is already-current after the first boot — so without

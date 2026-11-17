@@ -4,11 +4,13 @@
 #:package Shouldly
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
+#:include permission-evaluator-fakes-tests.cs
 
 // Co-located Jaribu tests for PermissionEvaluator + AgentScopePermissionSeed (182-001 / 182-006).
+// Run standalone:  dotnet run source/container-apps/web/platform/authorization/permission-evaluator-tests.cs
 
 #region Purpose
-// Host-free coverage of role→permission and agent scope→permission expansion, scheme gates, seed invariants.
+// Host-free coverage of role→permission expansion, scheme gates, bootstrap admin, seed invariants, and single-flight caching.
 #endregion
 
 //-:cnd:noEmit
@@ -21,13 +23,14 @@ namespace TimeWarp.Architecture.Authorization
 {
 
   using TimeWarp.Architecture.Features;
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
 
   using System.Threading.Tasks;
-  using Microsoft.Extensions.Options;
   using Shouldly;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;
+  using static TimeWarp.Architecture.Authorization.PermissionEvaluatorFactory;
 
   [TestTag("Application")]
   public class PermissionEvaluator_Given_
@@ -39,7 +42,7 @@ namespace TimeWarp.Architecture.Authorization
     {
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles: new InMemoryPrincipalRoleStore(),
-        rolePermissions: new InMemoryRolePermissionStore(),
+        rolePermissions: RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
       PrincipalId id = PrincipalId.New();
 
@@ -70,7 +73,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
@@ -98,7 +101,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
@@ -134,8 +137,9 @@ namespace TimeWarp.Architecture.Authorization
 
       // Store can grant read without manage (rebundle without a new product role Guid).
       // EffectiveRolesResolver only emits RoleIds.All entries, so rebundle Administrator grants.
-      InMemoryRolePermissionStore rolePermissions = new();
-      await rolePermissions.SetPermissionIdsForRoleAsync(
+      InMemoryRoleStore roles = new();
+      InMemoryRolePermissionStore rolePermissions = new(roles);
+      await roles.SetPermissionsAsync(
         RoleIds.Administrator,
         [
           PermissionIds.AdminAccess,
@@ -165,149 +169,6 @@ namespace TimeWarp.Architecture.Authorization
       permissions.ShouldNotContain(PermissionIds.AdminPrincipalsManage);
     }
 
-    public static async Task AgentToken_WithoutAmbientCaller_Should_YieldEmptyEvenWithAdminRoles()
-    {
-      InMemoryPrincipalRoleStore principalRoles = new();
-      PrincipalId id = PrincipalId.New();
-      await principalRoles.SetRoleIdsAsync(id, [RoleIds.Administrator]);
-
-      PermissionEvaluator evaluator = CreateEvaluator(
-        principalRoles,
-        new InMemoryRolePermissionStore(),
-        bootstrap: [],
-        agentScopes: FakeAgentPermissionScopeSource.Empty);
-
-      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
-        id,
-        AuthenticationSchemeNames.AgentToken);
-
-      permissions.ShouldBeEmpty();
-      (await evaluator.HasPermissionAsync(
-          id,
-          AuthenticationSchemeNames.AgentToken,
-          PermissionIds.AdminAccess))
-        .ShouldBeFalse();
-    }
-
-    public static async Task AgentToken_WithScopes_Should_GrantMappedOnly()
-    {
-      PrincipalId id = PrincipalId.New();
-      InMemoryPrincipalRoleStore principalRoles = new();
-      await principalRoles.SetRoleIdsAsync(id, [RoleIds.Administrator]);
-
-      PermissionEvaluator evaluator = CreateEvaluator(
-        principalRoles,
-        new InMemoryRolePermissionStore(),
-        bootstrap: [],
-        agentScopes: FakeAgentPermissionScopeSource.For(id, [AgentScopes.IdentityRead]));
-
-      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
-        id,
-        AuthenticationSchemeNames.AgentToken);
-
-      permissions.ShouldBe(
-      [
-        PermissionIds.AgentLinkManageSelf,
-        PermissionIds.IdentityRead,
-      ]);
-      (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.AgentToken, PermissionIds.IdentityRead))
-        .ShouldBeTrue();
-      (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.AgentToken, PermissionIds.AdminAccess))
-        .ShouldBeFalse();
-      (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.AgentToken, PermissionIds.CredentialManageSelf))
-        .ShouldBeFalse();
-    }
-
-    public static async Task AgentToken_MultipleScopes_Should_UnionPermissions()
-    {
-      PrincipalId id = PrincipalId.New();
-      PermissionEvaluator evaluator = CreateEvaluator(
-        new InMemoryPrincipalRoleStore(),
-        new InMemoryRolePermissionStore(),
-        bootstrap: [],
-        agentScopes: FakeAgentPermissionScopeSource.For(
-          id,
-          [AgentScopes.IdentityRead, AgentScopes.DemoInvoke, AgentScopes.CredentialManage]));
-
-      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
-        id,
-        AuthenticationSchemeNames.AgentToken);
-
-      permissions.ShouldBe(
-      [
-        PermissionIds.AgentLinkManageSelf,
-        PermissionIds.IdentityRead,
-        PermissionIds.CredentialManageSelf,
-        PermissionIds.DemoInvoke,
-      ]);
-    }
-
-    public static async Task AgentToken_UnknownScope_Should_BeIgnored()
-    {
-      PrincipalId id = PrincipalId.New();
-      PermissionEvaluator evaluator = CreateEvaluator(
-        new InMemoryPrincipalRoleStore(),
-        new InMemoryRolePermissionStore(),
-        bootstrap: [],
-        agentScopes: FakeAgentPermissionScopeSource.For(
-          id,
-          ["not-a-real-scope", AgentScopes.DemoInvoke]));
-
-      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
-        id,
-        AuthenticationSchemeNames.AgentToken);
-
-      permissions.ShouldBe([PermissionIds.DemoInvoke]);
-    }
-
-    public static async Task AgentToken_PrincipalMismatch_Should_YieldEmpty()
-    {
-      PrincipalId requested = PrincipalId.New();
-      PrincipalId ambient = PrincipalId.New();
-      PermissionEvaluator evaluator = CreateEvaluator(
-        new InMemoryPrincipalRoleStore(),
-        new InMemoryRolePermissionStore(),
-        bootstrap: [],
-        agentScopes: FakeAgentPermissionScopeSource.For(
-          ambient,
-          [AgentScopes.IdentityRead]));
-
-      (await evaluator.GetPermissionsAsync(requested, AuthenticationSchemeNames.AgentToken))
-        .ShouldBeEmpty();
-    }
-
-    public static async Task AgentToken_NeverGrantsAdmin_EvenWithAdminRolesInStore()
-    {
-      PrincipalId id = PrincipalId.New();
-      InMemoryPrincipalRoleStore principalRoles = new();
-      await principalRoles.SetRoleIdsAsync(id, [RoleIds.Administrator]);
-
-      PermissionEvaluator evaluator = CreateEvaluator(
-        principalRoles,
-        new InMemoryRolePermissionStore(),
-        bootstrap: [],
-        agentScopes: FakeAgentPermissionScopeSource.For(
-          id,
-          [AgentScopes.IdentityRead, AgentScopes.CredentialManage, AgentScopes.DemoInvoke]));
-
-      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
-        id,
-        AuthenticationSchemeNames.AgentToken);
-
-      foreach (string adminPermission in RolePermissionSeed.AdminPermissions)
-      {
-        permissions.ShouldNotContain(adminPermission);
-      }
-
-      permissions.ShouldBe(
-      [
-        PermissionIds.AgentLinkManageSelf,
-        PermissionIds.IdentityRead,
-        PermissionIds.CredentialManageSelf,
-        PermissionIds.DemoInvoke,
-      ]);
-    }
-
     public static async Task NullOrUnknownScheme_Should_YieldEmptyPermissions()
     {
       InMemoryPrincipalRoleStore principalRoles = new();
@@ -316,7 +177,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       (await evaluator.GetPermissionsAsync(id, authenticationScheme: null)).ShouldBeEmpty();
@@ -328,7 +189,7 @@ namespace TimeWarp.Architecture.Authorization
       PrincipalId id = PrincipalId.New();
       PermissionEvaluator evaluator = CreateEvaluator(
         new InMemoryPrincipalRoleStore(),
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: [id.Value.ToString()]);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
@@ -349,7 +210,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
@@ -399,7 +260,7 @@ namespace TimeWarp.Architecture.Authorization
       PrincipalId id = PrincipalId.New();
       await principalRoles.SetRoleIdsAsync(id, [RoleIds.Administrator]);
 
-      CountingRolePermissionStore countingStore = new(new InMemoryRolePermissionStore());
+      CountingRolePermissionStore countingStore = new(RoleGrantFixture.SeededPermissions());
       PermissionEvaluator evaluator = CreateEvaluator(principalRoles, countingStore, bootstrap: []);
 
       Task<bool>[] checks =
@@ -429,7 +290,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       (await evaluator.HasPermissionAsync(
@@ -475,12 +336,6 @@ namespace TimeWarp.Architecture.Authorization
           Interlocked.Decrement(ref InFlight);
         }
       }
-
-      public Task SetPermissionIdsForRoleAsync(
-        Guid roleId,
-        IReadOnlyList<string> permissionIds,
-        CancellationToken cancellationToken = default) =>
-        Inner.SetPermissionIdsForRoleAsync(roleId, permissionIds, cancellationToken);
     }
 
     private static class InterlockedExtensions
@@ -494,55 +349,6 @@ namespace TimeWarp.Architecture.Authorization
         }
       }
     }
-
-    /// <summary>
-    /// Host-free fake for <see cref="IAgentPermissionScopeSource"/> (not IAgentCallerContext —
-    /// that type collides under JARIBU_MULTI web+api).
-    /// </summary>
-    private sealed class FakeAgentPermissionScopeSource : IAgentPermissionScopeSource
-    {
-      public static FakeAgentPermissionScopeSource Empty { get; } = new(null, null);
-
-      private readonly PrincipalId? AmbientPrincipalId;
-      private readonly IReadOnlyList<string>? Scopes;
-
-      private FakeAgentPermissionScopeSource(PrincipalId? ambientPrincipalId, IReadOnlyList<string>? scopes)
-      {
-        AmbientPrincipalId = ambientPrincipalId;
-        Scopes = scopes;
-      }
-
-      public static FakeAgentPermissionScopeSource For(PrincipalId principalId, IReadOnlyList<string> scopes) =>
-        new(principalId, scopes);
-
-      public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId)
-      {
-        if (AmbientPrincipalId is null || Scopes is null || AmbientPrincipalId != principalId)
-        {
-          return null;
-        }
-
-        return Scopes;
-      }
-    }
-
-    private static PermissionEvaluator CreateEvaluator(
-      IPrincipalRoleStore principalRoles,
-      IRolePermissionStore rolePermissions,
-      string[] bootstrap,
-      IAgentPermissionScopeSource? agentScopes = null)
-    {
-      IOptions<BootstrapAdministratorOptions> options = Options.Create(
-        new BootstrapAdministratorOptions
-        {
-          BootstrapAdministratorPrincipalIds = bootstrap
-        });
-      EffectiveRolesResolver resolver = new(principalRoles, options, new InMemoryPrincipalStore());
-      return new PermissionEvaluator(
-        resolver,
-        rolePermissions,
-        agentScopes ?? FakeAgentPermissionScopeSource.Empty);
-    }
   }
 
   [TestTag("Application")]
@@ -551,9 +357,9 @@ namespace TimeWarp.Architecture.Authorization
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<InMemoryRolePermissionStore_Given_>();
 
-    public static async Task Constructor_Should_SeedDefaultGrants()
+    public static async Task NewRoleStore_Should_ReadDefaultGrants()
     {
-      InMemoryRolePermissionStore store = new();
+      InMemoryRolePermissionStore store = RoleGrantFixture.SeededPermissions();
 
       foreach ((Guid roleId, IReadOnlyList<string> expected) in RolePermissionSeed.DefaultGrants)
       {
@@ -562,16 +368,18 @@ namespace TimeWarp.Architecture.Authorization
       }
     }
 
-    public static async Task Set_Should_ReplaceAndClear()
+    public static async Task RoleWrite_Should_ReplaceAndClearWhatTheReadPortSees()
     {
-      InMemoryRolePermissionStore store = new();
+      InMemoryRoleStore roles = new();
+      InMemoryRolePermissionStore store = new(roles);
       Guid roleId = RoleIds.Operator;
 
-      await store.SetPermissionIdsForRoleAsync(roleId, [PermissionIds.AdminAccess]);
+      await roles.SetPermissionsAsync(roleId, [PermissionIds.AdminAccess]);
       (await store.GetPermissionIdsForRoleAsync(roleId)).ShouldBe([PermissionIds.AdminAccess]);
 
-      await store.SetPermissionIdsForRoleAsync(roleId, []);
+      await roles.SetPermissionsAsync(roleId, []);
       (await store.GetPermissionIdsForRoleAsync(roleId)).ShouldBeEmpty();
+      (await store.GetPermissionIdsForRoleAsync(Guid.NewGuid())).ShouldBeEmpty();
     }
   }
 }

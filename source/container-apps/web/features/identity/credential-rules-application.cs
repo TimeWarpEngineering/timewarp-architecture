@@ -4,7 +4,7 @@
 
 #region Design
 // One copy of each rule (task 275): RevokeCredential.Handler enforces CanRevoke (409 LastCredential
-// otherwise) and EntraTicketProcessor enforces HoldsMicrosoft365 (409 Microsoft365AlreadyLinked).
+// otherwise) and EntraAccountLinker enforces HoldsMicrosoft365 (409 Microsoft365AlreadyLinked).
 // GetCredentials calls the same predicates to set its availability flags (CredentialSummary.CanRevoke,
 // Response.CanLinkMicrosoft365 — task 282), so what the client shows and what the server enforces
 // cannot drift. Inputs are counts and types rather than Credential instances, so callers apply the

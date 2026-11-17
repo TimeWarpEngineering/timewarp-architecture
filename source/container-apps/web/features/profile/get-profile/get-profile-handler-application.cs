@@ -8,7 +8,7 @@
 //   - Authenticated: IProfileStore Find; create-if-missing with ProfileId.From(principal Guid) and
 //     defaults Member / en-US / US / system / Notifications=false (D1). Concurrent create races
 //     throw on unique PK / TryAdd → re-find. Application never takes PostgresDbContext (D4).
-//   - Response: Alias ← DisplayName; Email optional; Language/Region/Theme/Notifications from aggregate.
+//   - Response: DisplayName ← profile.DisplayName; Email optional; Language/Region/Theme/Notifications from aggregate.
 // Task 149: Avatar is local TimeWarp.Multiavatar (MultiavatarGenerator.Generate), seeded by
 // user id — no network, no HttpClient, no fallback SVG path. Not domain/EF.
 // Task 150: identity comes from ICurrentPrincipalAccessor, not ICurrentUserService. The
@@ -91,7 +91,7 @@ public sealed class GetProfile
       string avatar = GetAvatarDataUri(userId);
 
       return new Response(
-        alias: profile.DisplayName,
+        displayName: profile.DisplayName,
         email: profile.Email,
         language: profile.Language,
         region: profile.Region,

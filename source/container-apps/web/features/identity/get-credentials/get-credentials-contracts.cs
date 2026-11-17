@@ -44,7 +44,7 @@
 // Server-owned availability (task 282): the server decides which actions are valid now and ships
 // the answer as typed flags — CredentialSummary.CanRevoke / CanRename per row and
 // Response.CanLinkMicrosoft365 for the page — all computed from Identity's CredentialRules, the same
-// predicates RevokeCredential.Handler and EntraTicketProcessor enforce. The SPA reads the flags to
+// predicates RevokeCredential.Handler and EntraAccountLinker enforce. The SPA reads the flags to
 // show or hide its buttons and keeps no copy of the rules; the endpoints still refuse a stale action
 // (409). Typed flags, not an allowed-names list: the compiler checks every read, and there is no
 // string vocabulary for the two sides to agree on. The flags ride on this read because Settings and

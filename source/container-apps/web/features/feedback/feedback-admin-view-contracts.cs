@@ -32,9 +32,15 @@ public sealed class FeedbackAdminView : ICloneable
   public string Title { get; }
   public string Body { get; }
   public DateTimeOffset FiledAt { get; }
+  /// <summary>Whether the filer's profile has an email. The handler reads it from the profile slice.</summary>
+  [Computed]
   public bool FilerHasEmail { get; }
+  /// <summary>Files linked at submit. They live in the attachment store, not on FeedbackItem.</summary>
+  [Computed]
   public IReadOnlyList<GetFeedback.Attachment> Attachments { get; }
   public IReadOnlyList<FeedbackActivityEntry> Activity { get; }
+  /// <summary>The filer's profile display name (task 336). The handler reads it from the profile slice.</summary>
+  [Computed]
   public string? OwnerDisplayName { get; }
 
   public FeedbackAdminView(

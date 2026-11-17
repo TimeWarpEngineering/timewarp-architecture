@@ -17,7 +17,7 @@ namespace DevCli.Commands;
 [NuruRouteExample("publish aca-neon", Description = "Generate the ACA + Neon Bicep (no Flexible Server, min replicas 0) and run the safety checks")]
 internal sealed class PublishAcaNeonCommand : PublishGroup, ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<PublishAcaNeonCommand, Unit>
+  internal sealed class Handler : IRequestHandler<PublishAcaNeonCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -26,7 +26,7 @@ internal sealed class PublishAcaNeonCommand : PublishGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(PublishAcaNeonCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(PublishAcaNeonCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

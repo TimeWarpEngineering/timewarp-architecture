@@ -68,7 +68,7 @@
 
   private void SyncCommandFromState()
   {
-    Command.Alias = ProfileState.Alias ?? "";
+    Command.DisplayName = ProfileState.DisplayName ?? "";
     Command.Email = ProfileState.Email;
     Command.Language = ProfileState.Language ?? "en-US";
     Command.Region = ProfileState.Region ?? "US";
@@ -106,12 +106,12 @@
           <FormField>
             <FluentAvatar
               Image=@ProfileState.Avatar
-              Name=@ProfileState.Alias
+              Name=@ProfileState.DisplayName
               Size="AvatarSize.Size56" />
           </FormField>
           <FormField Label="Display name">
-            <FluentTextInput @bind-Value=Details.Alias Name="Alias" AriaLabel="Display name" data-qa="ProfileAlias" Width="100%" />
-            <ValidationMessage For="@(() => Details.Alias)" />
+            <FluentTextInput @bind-Value=Details.DisplayName Name="DisplayName" AriaLabel="Display name" data-qa="ProfileDisplayName" Width="100%" />
+            <ValidationMessage For="@(() => Details.DisplayName)" />
           </FormField>
           <FormField Label="Email (optional)">
             <FluentTextInput @bind-Value=Details.Email Name="Email" AriaLabel="Email (optional)" data-qa="ProfileEmail" Width="100%" />

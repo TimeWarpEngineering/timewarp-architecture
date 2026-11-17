@@ -108,16 +108,16 @@ public sealed class ListFeedback
       Item[] items =
       [
         .. result.Items.Select(item => new Item(
-          item.Id.Value,
-          item.OwnerPrincipalId,
-          FeedbackContractMap.ToContract(item.Kind),
-          FeedbackContractMap.ToContract(item.Status),
-          item.Title,
-          item.FiledAt,
-          ownerNames.GetValueOrDefault(item.OwnerPrincipalId),
-          FeedbackContractMap.ToContract(item.Severity)))
+          feedbackItemId: item.Id.Value,
+          ownerPrincipalId: item.OwnerPrincipalId,
+          kind: FeedbackContractMap.ToContract(item.Kind),
+          status: FeedbackContractMap.ToContract(item.Status),
+          title: item.Title,
+          filedAt: item.FiledAt,
+          ownerDisplayName: ownerNames.GetValueOrDefault(item.OwnerPrincipalId),
+          severity: FeedbackContractMap.ToContract(item.Severity)))
       ];
-      return new Response(result.TotalCount, items, page, pageSize);
+      return new Response(totalCount: result.TotalCount, items: items, page: page, pageSize: pageSize);
     }
   }
 }

@@ -104,7 +104,7 @@ public class GetRole_Response_Should
     parsed.RoleId.ShouldBe(RoleIds.Member);
     parsed.Name.ShouldBe("Member");
     parsed.Description.ShouldBe("Default passkey principal.");
-    parsed.PermissionIds.ShouldBe([PermissionIds.ProfileRead, PermissionIds.SettingsRead]);
+    parsed.Permissions.ShouldBe([PermissionIds.ProfileRead, PermissionIds.SettingsRead]);
     return Task.CompletedTask;
   }
 }
@@ -133,10 +133,10 @@ public class GetRoles_Response_Should
     parsed.Items.Length.ShouldBe(2);
     parsed.Items[0].RoleId.ShouldBe(RoleIds.Administrator);
     parsed.Items[0].Name.ShouldBe("Administrator");
-    parsed.Items[0].PermissionIds.ShouldBe([PermissionIds.AdminAccess, PermissionIds.AdminRolesManage]);
+    parsed.Items[0].Permissions.ShouldBe([PermissionIds.AdminAccess, PermissionIds.AdminRolesManage]);
     parsed.Items[1].RoleId.ShouldBe(RoleIds.Member);
     parsed.Items[1].Description.ShouldBe("Default passkey principal.");
-    parsed.Items[1].PermissionIds.ShouldBe([PermissionIds.ProfileRead]);
+    parsed.Items[1].Permissions.ShouldBe([PermissionIds.ProfileRead]);
     return Task.CompletedTask;
   }
 }

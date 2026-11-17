@@ -4,58 +4,24 @@
 
 #region Design
 // RFC 219 fork 1 + D4 + D10. HTTP Challenge/OnTicketReceived stay in the server adapter; this type
-// is the store-side decision. Link requires the caller's PrincipalId (D4: identity-session is
-// enough — no passkey re-assert). Duplicate handle is 409 with no foreign-id oracle (104-005).
-// Sync-hit is Find-by-handle of an active EntraAccount. Revoked rows are non-hits for sync and for
-// link-merge (403 EntraCredentialRevoked, not Restore; unique Type+Handle still blocks re-insert).
+// is the store-side decision. Every entry point checks the issuer first: a mismatch logs Warning
+// with expected vs token issuer URIs (not secrets) and returns a 400 whose detail names that check.
+// The link mode and the already-have attach go to EntraAccountLinker (link, merge, and
+// one-Microsoft-365-per-principal rules live there). Last-used stamps and the account hint refresh
+// go to EntraSignInStamp. Both are built here from the injected stores, so the DI registration is
+// this one type.
+// Sync-hit is Find-by-handle of an active EntraAccount. Revoked rows are non-hits for sync
+// (403 EntraCredentialRevoked, not Restore; unique Type+Handle still blocks re-insert).
 // Bootstrap Create is gated by IEntraSignInPolicy (site settings AllowBootstrap AND tenant
 // acceptance: restricted list or any non-empty tid). Unknown-handle bootstrap does NOT mint a
 // principal immediately: ProcessAsync returns EntraChoiceRequired so the HTTP adapter parks
 // claims and the SPA choose page decides create vs already-have. CompleteBootstrapCreateAsync
 // is the original mint (Principal.Create + EntraAccount + first-admin). AttachEntraToPrincipalAsync
 // is link semantics for the already-have path.
-// Link: when the handle is owned by another active (non-revoked) unmerged principal B,
-// MergePrincipalAsync(B, A) instead of 409 — the Entra sign-in is proof of B. That save deletes
-// B's user xAI API key row. This processor does not delete it again. Revoked foreign
-// rows refuse with 403 (do not merge). 409 remains for already-on-this-account and for
-// merged/quarantined owners. Sync-hit and AllowBootstrap-off are unchanged.
 // Concurrent first-login for the same tid:oid can miss both finds, create two principals, and
 // lose on unique (Type, Handle) at AddCredentialAsync. On that InvalidOperationException, re-Find
 // by handle; an active winner is treated as sync-hit (return that PrincipalId). IPrincipalStore
 // has no delete-principal — the losing AddPrincipalAsync row is abandoned.
-// Issuer mismatch logs Warning with expected vs token issuer URIs (not secrets) and returns a
-// 400 whose detail names that check.
-// One active EntraAccount per principal (task 229): link of a second handle is 409 Microsoft 365
-// already linked before AddCredentialAsync (CredentialRules.HoldsMicrosoft365, shared with
-// GetCredentials' CanLinkMicrosoft365 flag, task 282). Switch is Unlink then Link. Concurrent links of two
-// different handles can both pass the list-then-insert check (same TOCTOU class as last-credential
-// revoke); unique (Type, Handle) does not serialize two distinct oids.
-// Credential.Label is the provider, EntraIdTokenClaims.ProviderLabel ("Microsoft 365"), on both
-// bootstrap and link Create; the account is Credential.AccountHint = the token's preferred_username
-// (task 250 — display-only, never a join key; the join stays tid+oid). Principal.SetDisplayName stays
-// the name claim. Refresh decision (task 250): a sign-in that resolves to an existing active Entra
-// credential (sync-hit, and the already-linked early return of CompleteBootstrapCreateAsync) also
-// refreshes AccountHint when the token carries a different preferred_username — that backfills links
-// made before 250 (which have no hint) and follows UPN renames. A token WITHOUT preferred_username
-// leaves the stored hint alone (absence is not evidence the account changed). The refresh is
-// advisory like last-used and is persisted BY the last-used stamp write (task 252, below): a lost
-// Version race is DROPPED — a concurrent revoke/rename wins and the next sign-in retries. The
-// hint is PII: it is never logged here and reaches the wire only via the caller's own GetCredentials.
-// Last-used (task 252): every successful Entra sign-in stamps Credential.LastUsedAt through
-// CredentialUsageRecorder.RecordAsync — the same per-ceremony write as passkey sign-in and agent-token
-// issuance (248-002). Stamp points: sync-hit, the already-linked early return of
-// CompleteBootstrapCreateAsync, the bootstrap-create race winner, and every link that lands a
-// credential (new link, bootstrap mint, already-have attach, and link-merge of a foreign owner — the
-// merged row is re-read first because MergePrincipalAsync re-parented and re-versioned it). Each stamp
-// runs AFTER the principal liveness/quarantine check of its path, so a quarantined principal never
-// stamps. One UPDATE per sign-in: the AccountHint refresh is applied to the same snapshot in memory
-// (SetAccountHint) and persisted by the recorder's stamp write, so hint + stamp land in one Version
-// bump. Consequently every sign-in writes once (the stamp always advances), not only when the hint
-// changed. Races follow the recorder's rule: a lost Version race is dropped, never retried, for both
-// fields — revoke wins; the next sign-in retries. Edge: if the stamp does not advance (the clock
-// regressed below the stored instant) the recorder skips the write and a changed hint waits for the
-// next sign-in — advisory display state, not worth a second write. A new link is INSERT (Add) then
-// the stamp UPDATE: the recorder owns the clock and the race rule, so Create does not pre-stamp.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -80,7 +46,8 @@ public sealed class EntraTicketProcessor
   private readonly IPrincipalStore PrincipalStore;
   private readonly IPrincipalRoleStore PrincipalRoleStore;
   private readonly IEntraSignInPolicy EntraSignInPolicy;
-  private readonly CredentialUsageRecorder UsageRecorder;
+  private readonly EntraSignInStamp Stamp;
+  private readonly EntraAccountLinker Linker;
   private readonly ILogger<EntraTicketProcessor> Logger;
 
   public EntraTicketProcessor
@@ -95,7 +62,8 @@ public sealed class EntraTicketProcessor
     PrincipalStore = principalStore;
     PrincipalRoleStore = principalRoleStore;
     EntraSignInPolicy = entraSignInPolicy;
-    UsageRecorder = usageRecorder;
+    Stamp = new EntraSignInStamp(principalStore, usageRecorder);
+    Linker = new EntraAccountLinker(principalStore, entraSignInPolicy, Stamp);
     Logger = logger;
   }
 
@@ -128,7 +96,7 @@ public sealed class EntraTicketProcessor
 
     if (isLink)
     {
-      return await ProcessLinkAsync(existing, handle, material, claims, linkCallerPrincipalId, cancellationToken);
+      return await Linker.LinkAsync(existing, handle, material, claims, linkCallerPrincipalId, cancellationToken);
     }
 
     return await ProcessBootstrapAsync(existing, claims, cancellationToken);
@@ -138,112 +106,6 @@ public sealed class EntraTicketProcessor
   {
     expectedIssuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(claims.TenantId));
     return string.Equals(claims.Issuer, expectedIssuer, StringComparison.Ordinal);
-  }
-
-  private async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> ProcessLinkAsync
-  (
-    Credential? existing,
-    byte[] handle,
-    byte[] material,
-    EntraIdTokenClaims claims,
-    PrincipalId? linkCallerPrincipalId,
-    CancellationToken cancellationToken
-  )
-  {
-    if (linkCallerPrincipalId is null)
-    {
-      return IdentityProblems.Unauthenticated();
-    }
-
-    EntraSignInDecision linkDecision = await EntraSignInPolicy.EvaluateAsync(
-      EntraSignInMode.Link,
-      claims.TenantId,
-      cancellationToken);
-    if (!linkDecision.Allowed)
-    {
-      return linkDecision.Problem ?? IdentityProblems.UntrustedTenant();
-    }
-
-    PrincipalId caller = linkCallerPrincipalId.Value;
-    if (existing is { IsRevoked: true })
-    {
-      return IdentityProblems.EntraCredentialRevoked();
-    }
-
-    if (existing is { IsRevoked: false })
-    {
-      return await CompleteLinkWhenHandleOwnedAsync(existing, claims, caller, cancellationToken);
-    }
-
-    OneOf<PrincipalId, SharedProblemDetails> alreadyLinked = await RefuseIfCallerAlreadyHasEntraAsync(
-      caller,
-      cancellationToken);
-    if (alreadyLinked.IsT1)
-    {
-      return alreadyLinked.AsT1;
-    }
-
-    OneOf<PrincipalId, SharedProblemDetails> attached =
-      await AttachEntraToPrincipalAsync(handle, material, claims.AccountHint, caller, cancellationToken);
-    if (attached.IsT1)
-    {
-      return attached.AsT1;
-    }
-
-    return attached.AsT0;
-  }
-
-  private async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> CompleteLinkWhenHandleOwnedAsync(
-    Credential existing,
-    EntraIdTokenClaims claims,
-    PrincipalId caller,
-    CancellationToken cancellationToken)
-  {
-    if (existing.PrincipalId == caller)
-    {
-      return IdentityProblems.AlreadyOnThisAccount("Microsoft 365 account");
-    }
-
-    Principal? owner = await PrincipalStore.GetPrincipalAsync(existing.PrincipalId, cancellationToken);
-    if (owner is null)
-    {
-      return IdentityProblems.AuthenticationFailed();
-    }
-
-    if (!owner.IsActive || owner.MergedIntoPrincipalId is not null)
-    {
-      return IdentityProblems.CredentialAlreadyRegistered("Entra account");
-    }
-
-    OneOf<PrincipalId, SharedProblemDetails> alreadyLinked = await RefuseIfCallerAlreadyHasEntraAsync(
-      caller,
-      cancellationToken);
-    if (alreadyLinked.IsT1)
-    {
-      return alreadyLinked.AsT1;
-    }
-
-    try
-    {
-      await PrincipalStore.MergePrincipalAsync(existing.PrincipalId, caller, cancellationToken);
-    }
-    catch (InvalidOperationException)
-    {
-      return IdentityProblems.AccountNotMergeable();
-    }
-    catch (ConcurrencyConflictException)
-    {
-      return IdentityProblems.TooMuchContention();
-    }
-
-    // Merge re-parented and re-versioned the row; stamp a fresh snapshot, not the pre-merge one.
-    Credential? merged = await PrincipalStore.GetCredentialAsync(existing.Id, cancellationToken);
-    if (merged is { IsRevoked: false })
-    {
-      await RecordSignInAsync(merged, claims, cancellationToken);
-    }
-
-    return caller;
   }
 
   private async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> ProcessBootstrapAsync
@@ -275,7 +137,7 @@ public sealed class EntraTicketProcessor
         return IdentityProblems.Quarantined();
       }
 
-      await RecordSignInAsync(existing, claims, cancellationToken);
+      await Stamp.RecordSignInAsync(existing, claims, cancellationToken);
       return existing.PrincipalId;
     }
 
@@ -343,7 +205,7 @@ public sealed class EntraTicketProcessor
         return IdentityProblems.Quarantined();
       }
 
-      await RecordSignInAsync(existing, claims, cancellationToken);
+      await Stamp.RecordSignInAsync(existing, claims, cancellationToken);
       return existing.PrincipalId;
     }
 
@@ -392,14 +254,14 @@ public sealed class EntraTicketProcessor
           return IdentityProblems.Quarantined();
         }
 
-        await RecordSignInAsync(winner, claims, cancellationToken);
+        await Stamp.RecordSignInAsync(winner, claims, cancellationToken);
         return winner.PrincipalId;
       }
 
       return IdentityProblems.CredentialAlreadyRegistered("Entra account");
     }
 
-    await UsageRecorder.RecordAsync(PrincipalStore, entraCredential, cancellationToken);
+    await Stamp.RecordNewAsync(entraCredential, cancellationToken);
     _ = await PrincipalRoleStore.TryClaimFirstAdministratorAsync(created.Id, cancellationToken);
     return created.Id;
   }
@@ -415,93 +277,6 @@ public sealed class EntraTicketProcessor
       return IdentityProblems.InvalidEntraTokenIssuerMismatch();
     }
 
-    byte[] handle = EntraAccountHandle.Encode(claims.TenantId, claims.ObjectId);
-    byte[] material = EntraIssuerMaterial.FromTenantId(claims.TenantId);
-    Credential? existing = await PrincipalStore.FindCredentialByHandleAsync(
-      CredentialType.EntraAccount,
-      handle,
-      cancellationToken);
-    if (existing is not null)
-    {
-      if (existing.PrincipalId == principalId && !existing.IsRevoked)
-      {
-        return IdentityProblems.AlreadyOnThisAccount("Microsoft 365 account");
-      }
-
-      return IdentityProblems.CredentialAlreadyRegistered("Entra account");
-    }
-
-    OneOf<PrincipalId, SharedProblemDetails> alreadyLinked = await RefuseIfCallerAlreadyHasEntraAsync(
-      principalId,
-      cancellationToken);
-    if (alreadyLinked.IsT1)
-    {
-      return alreadyLinked;
-    }
-
-    return await AttachEntraToPrincipalAsync(
-      handle,
-      material,
-      claims.AccountHint,
-      principalId,
-      cancellationToken);
-  }
-
-  private async Task<OneOf<PrincipalId, SharedProblemDetails>> RefuseIfCallerAlreadyHasEntraAsync(
-    PrincipalId principalId,
-    CancellationToken cancellationToken)
-  {
-    IReadOnlyList<Credential> callerCredentials = await PrincipalStore.ListCredentialsAsync(
-      principalId,
-      includeRevoked: false,
-      cancellationToken);
-    if (CredentialRules.HoldsMicrosoft365(callerCredentials.Select(static credential => credential.Type)))
-    {
-      return IdentityProblems.Microsoft365AlreadyLinked();
-    }
-
-    return principalId;
-  }
-
-  private async Task RecordSignInAsync(
-    Credential existing,
-    EntraIdTokenClaims claims,
-    CancellationToken cancellationToken)
-  {
-    // Hint refresh rides the stamp write (one UPDATE); an absent claim keeps the stored hint.
-    if (claims.AccountHint is not null)
-    {
-      existing.SetAccountHint(claims.AccountHint);
-    }
-
-    // Advisory: a lost Version race is dropped inside the recorder, never retried (Design region).
-    await UsageRecorder.RecordAsync(PrincipalStore, existing, cancellationToken);
-  }
-
-  private async Task<OneOf<PrincipalId, SharedProblemDetails>> AttachEntraToPrincipalAsync(
-    byte[] handle,
-    byte[] material,
-    string? accountHint,
-    PrincipalId principalId,
-    CancellationToken cancellationToken)
-  {
-    var credential = Credential.Create(
-      principalId,
-      CredentialType.EntraAccount,
-      handle,
-      material,
-      EntraIdTokenClaims.ProviderLabel,
-      accountHint: accountHint);
-    try
-    {
-      await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
-    }
-    catch (InvalidOperationException)
-    {
-      return IdentityProblems.CredentialAlreadyRegistered("Entra account");
-    }
-
-    await UsageRecorder.RecordAsync(PrincipalStore, credential, cancellationToken);
-    return principalId;
+    return await Linker.AttachToPrincipalAsync(claims, principalId, cancellationToken);
   }
 }

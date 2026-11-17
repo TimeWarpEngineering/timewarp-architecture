@@ -128,8 +128,8 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
       return;
     }
 
-    // Anchor on the first token (same pattern as PurposeRegionAnalyzer) so span matching in
-    // analyzer tests is stable and suppressions can target the diagnostic.
+    // Anchor on the first token so span matching in analyzer tests is stable and a leading
+    // pragma can suppress the diagnostic.
     SyntaxNode root = context.Tree.GetRoot(context.CancellationToken);
     SyntaxToken firstToken = root.GetFirstToken();
     if (firstToken.RawKind == 0)

@@ -16,7 +16,7 @@ namespace DevCli.Commands;
 [NuruRouteExample("publish aca", Description = "Generate the ACA Bicep + migration script/bundle, then run the safety checks (no Azure credentials needed)")]
 internal sealed class PublishAcaCommand : PublishGroup, ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<PublishAcaCommand, Unit>
+  internal sealed class Handler : IRequestHandler<PublishAcaCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -25,7 +25,7 @@ internal sealed class PublishAcaCommand : PublishGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(PublishAcaCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(PublishAcaCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

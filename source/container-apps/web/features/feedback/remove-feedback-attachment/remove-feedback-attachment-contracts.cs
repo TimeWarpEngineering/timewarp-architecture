@@ -19,6 +19,8 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class RemoveFeedbackAttachment
 {
   [ApiRoute("api/Feedback/attachments/{AttachmentId:guid}", HttpVerb.Delete)]
+  [Operation("feedback.remove-attachment", Description = "Remove a pending attachment the current user uploaded.", Group = "feedback")]
+  [NotAggregate("Deletes a pending FeedbackAttachment, which is its own entity, not FeedbackItem state.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>

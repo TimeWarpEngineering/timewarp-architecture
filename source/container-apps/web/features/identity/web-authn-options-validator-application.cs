@@ -4,7 +4,7 @@
 
 #region Design
 // Wired through AddFluentValidatedOptions(...).ValidateOnStart() in web-server's
-// Program.ConfigureSettings, so misconfiguration crashes the host at boot instead of failing on the
+// WebServerSettings.ConfigureServices, so misconfiguration crashes the host at boot instead of failing on the
 // first ceremony request.
 // Public, unlike SampleOptionsValidator/foundation's internal-options-validator convention: this
 // type must be referenceable BY NAME from web-server (a different assembly) to pass as

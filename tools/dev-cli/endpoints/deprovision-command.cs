@@ -27,7 +27,7 @@
 //      aca-neon has no Key Vault: success and failure both say the Neon project is not deleted.
 // Runtime neutrality: Compose teardown is Aspire's (honours ASPIRE_CONTAINER_RUNTIME); the runtime
 // name only appears in the printed manual commands.
-// Pure argument and text helpers live in services/aspire-deploy.cs (dev-cli-tests).
+// Pure argument and text helpers live in services/deploy/ (AspireDeploy and its siblings; dev-cli-tests).
 #endregion
 
 namespace DevCli.Commands;
@@ -45,7 +45,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
   [Option("yes", "y", Description = "Confirm without prompting and run aspire destroy --yes --non-interactive")]
   public bool Yes { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DeprovisionCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DeprovisionCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -54,21 +54,21 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DeprovisionCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeprovisionCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 
       DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deprovision", command.Target, PreflightScope.Deprovision, ct);
       if (preflight is null) return Unit.Value;
       Terminal.WriteLine(preflight.Detail);
-      foreach (string line in AspireDeploy.BuildParameterLines(preflight.Parameters))
+      foreach (string line in AspireDeployParameters.BuildParameterLines(preflight.Parameters))
       {
         Terminal.WriteLine(line);
       }
 
       if (!command.Yes && Terminal.IsInputRedirected)
       {
-        Terminal.WriteErrorLine(AspireDeploy.DestroyConfirmationRefusal.Red());
+        Terminal.WriteErrorLine(AspireDeployText.DestroyConfirmationRefusal.Red());
         Environment.ExitCode = 1;
         return Unit.Value;
       }
@@ -88,7 +88,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"aspire destroy failed (exit {destroy.ExitCode}).".Red());
         string runtime = AspireDeploy.ContainerRuntime(Environment.GetEnvironmentVariable(AspireDeploy.ContainerRuntimeVariable));
-        foreach (string line in AspireDeploy.BuildManualCleanupLines(preflight.Target, runtime))
+        foreach (string line in AspireDeployText.BuildManualCleanupLines(preflight.Target, runtime))
         {
           Terminal.WriteLine(line);
         }
@@ -97,7 +97,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
         return Unit.Value;
       }
 
-      foreach (string line in AspireDeploy.BuildPostDestroyLines(preflight.Target))
+      foreach (string line in AspireDeployText.BuildPostDestroyLines(preflight.Target))
       {
         Terminal.WriteLine(line);
       }

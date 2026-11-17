@@ -22,7 +22,7 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
   [Option("dry-run", Description = "Print the dotnet ef invocation without running it")]
   public bool DryRun { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DbAddMigrationCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DbAddMigrationCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -31,7 +31,7 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DbAddMigrationCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DbAddMigrationCommand command, CancellationToken ct)
     {
       if (!DbEf.IsValidMigrationName(command.Name))
       {

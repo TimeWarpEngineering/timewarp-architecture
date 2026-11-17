@@ -8,7 +8,7 @@ public class UnionRedirectUris_Given_
 
   public static Task ExistingPlusDesired_Should_PreserveFirstSeenOrderAndSkipDuplicates()
   {
-    IReadOnlyList<string> union = EntraSetup.UnionRedirectUris(
+    IReadOnlyList<string> union = EntraRedirectUris.UnionRedirectUris(
       ["https://localhost:63611/signin-oidc", "https://already.example/signin-oidc"],
       ["https://localhost:63611/signin-oidc", "https://localhost:63610/signin-oidc", ""]);
 
@@ -23,7 +23,7 @@ public class UnionRedirectUris_Given_
 
   public static Task CaseInsensitiveDuplicate_Should_KeepFirstCasing()
   {
-    IReadOnlyList<string> union = EntraSetup.UnionRedirectUris(
+    IReadOnlyList<string> union = EntraRedirectUris.UnionRedirectUris(
       ["https://LocalHost:63611/signin-oidc"],
       ["https://localhost:63611/signin-oidc"]);
 
@@ -39,7 +39,7 @@ public class BuildDesiredRedirectUris_Given_
 
   public static Task Defaults_Should_IncludeWebServerAndIngress()
   {
-    IReadOnlyList<string> uris = EntraSetup.BuildDesiredRedirectUris(null, []);
+    IReadOnlyList<string> uris = EntraRedirectUris.BuildDesiredRedirectUris(null, []);
     uris.ShouldBe(
     [
       EntraSetup.WebServerHttpsRedirect,
@@ -50,10 +50,10 @@ public class BuildDesiredRedirectUris_Given_
 
   public static Task PublicOrigin_Should_AppendSigninOidcWithoutDoubling()
   {
-    IReadOnlyList<string> fromHost = EntraSetup.BuildDesiredRedirectUris("https://arch.timewarp.work/", []);
+    IReadOnlyList<string> fromHost = EntraRedirectUris.BuildDesiredRedirectUris("https://arch.timewarp.work/", []);
     fromHost.ShouldContain("https://arch.timewarp.work/signin-oidc");
 
-    IReadOnlyList<string> already = EntraSetup.BuildDesiredRedirectUris(
+    IReadOnlyList<string> already = EntraRedirectUris.BuildDesiredRedirectUris(
       "https://arch.timewarp.work/signin-oidc",
       []);
     already.ShouldContain("https://arch.timewarp.work/signin-oidc");
@@ -104,10 +104,10 @@ public class ParseUserSecretsList_Given_
       Authentication:Entra:ClientSecret = a=b=c
       junk line
       """;
-    Dictionary<string, string> secrets = EntraSetup.ParseUserSecretsList(stdout);
+    Dictionary<string, string> secrets = EntraUserSecrets.ParseUserSecretsList(stdout);
     secrets[EntraSetup.PasskeyMethodKey].ShouldBe("Passkey");
     secrets[EntraSetup.ClientSecretKey].ShouldBe("a=b=c");
-    EntraSetup.HasClientSecret(secrets).ShouldBeTrue();
+    EntraUserSecrets.HasClientSecret(secrets).ShouldBeTrue();
     return Task.CompletedTask;
   }
 }
@@ -138,7 +138,7 @@ public class TryFindExactAppIds_Given_
     const string json = """
       [{"appId":"11111111-1111-1111-1111-111111111111","displayName":"TimeWarp Architecture Dev"}]
       """;
-    EntraSetup.TryFindExactAppIds(json, EntraSetup.DefaultDisplayName, out IReadOnlyList<string> ids)
+    EntraAzJson.TryFindExactAppIds(json, EntraSetup.DefaultDisplayName, out IReadOnlyList<string> ids)
       .ShouldBeTrue();
     ids.ShouldBe(["11111111-1111-1111-1111-111111111111"]);
     return Task.CompletedTask;
@@ -146,7 +146,7 @@ public class TryFindExactAppIds_Given_
 
   public static Task EmptyArray_Should_ReturnNoIds()
   {
-    EntraSetup.TryFindExactAppIds("[]", EntraSetup.DefaultDisplayName, out IReadOnlyList<string> ids)
+    EntraAzJson.TryFindExactAppIds("[]", EntraSetup.DefaultDisplayName, out IReadOnlyList<string> ids)
       .ShouldBeTrue();
     ids.ShouldBeEmpty();
     return Task.CompletedTask;
@@ -161,7 +161,7 @@ public class TryReadAccount_Given_
   public static Task TenantAndUser_Should_Parse()
   {
     const string json = """{"tenantId":"00000000-0000-0000-0000-000000000001","user":"dev@example.com"}""";
-    EntraSetup.TryReadAccount(json, out string tenantId, out string user).ShouldBeTrue();
+    EntraAzJson.TryReadAccount(json, out string tenantId, out string user).ShouldBeTrue();
     tenantId.ShouldBe("00000000-0000-0000-0000-000000000001");
     user.ShouldBe("dev@example.com");
     return Task.CompletedTask;
@@ -193,7 +193,7 @@ public class TryDecideMintClientSecret_Given_
 
   public static Task NewSecret_Should_MintEvenWhenListFailed()
   {
-    EntraSetup.TryDecideMintClientSecret(
+    EntraClientSecrets.TryDecideMintClientSecret(
       newSecret: true,
       listSucceeded: false,
       hasExistingClientSecret: true,
@@ -210,7 +210,7 @@ public class TryDecideMintClientSecret_Given_
 
   public static Task ListFailedWithoutNewSecret_Should_AbortWithoutMint()
   {
-    EntraSetup.TryDecideMintClientSecret(
+    EntraClientSecrets.TryDecideMintClientSecret(
       newSecret: false,
       listSucceeded: false,
       hasExistingClientSecret: false,
@@ -227,7 +227,7 @@ public class TryDecideMintClientSecret_Given_
 
   public static Task ListSucceededWithoutSecret_Should_Mint()
   {
-    EntraSetup.TryDecideMintClientSecret(
+    EntraClientSecrets.TryDecideMintClientSecret(
       newSecret: false,
       listSucceeded: true,
       hasExistingClientSecret: false,
@@ -244,7 +244,7 @@ public class TryDecideMintClientSecret_Given_
 
   public static Task ListSucceededWithSecretSameApp_Should_Skip()
   {
-    EntraSetup.TryDecideMintClientSecret(
+    EntraClientSecrets.TryDecideMintClientSecret(
       newSecret: false,
       listSucceeded: true,
       hasExistingClientSecret: true,
@@ -261,7 +261,7 @@ public class TryDecideMintClientSecret_Given_
 
   public static Task SameAppDifferentCasing_Should_Skip()
   {
-    EntraSetup.TryDecideMintClientSecret(
+    EntraClientSecrets.TryDecideMintClientSecret(
       newSecret: false,
       listSucceeded: true,
       hasExistingClientSecret: true,
@@ -278,7 +278,7 @@ public class TryDecideMintClientSecret_Given_
 
   public static Task ChangedApp_Should_Mint()
   {
-    EntraSetup.TryDecideMintClientSecret(
+    EntraClientSecrets.TryDecideMintClientSecret(
       newSecret: false,
       listSucceeded: true,
       hasExistingClientSecret: true,
@@ -295,7 +295,7 @@ public class TryDecideMintClientSecret_Given_
 
   public static Task ChangedTenant_Should_Mint()
   {
-    EntraSetup.TryDecideMintClientSecret(
+    EntraClientSecrets.TryDecideMintClientSecret(
       newSecret: false,
       listSucceeded: true,
       hasExistingClientSecret: true,
@@ -319,12 +319,12 @@ public class MintClientSecretMessages_Given_
   public static Task ChangedApp_DryRunTranscript_Should_NameTheReasonAndMaskTheSecret()
   {
     const string oldClient = "11111111-1111-1111-1111-111111111111";
-    string changed = EntraSetup.FormatAppRegistrationChangedMessage(oldClient, "Contoso, Ltd");
+    string changed = EntraClientSecrets.FormatAppRegistrationChangedMessage(oldClient, "Contoso, Ltd");
     changed.ShouldBe(
       "App registration changed (was `11111111-1111-1111-1111-111111111111` in `Contoso, Ltd`); minting a new client secret.");
     changed.ShouldNotContain("password");
 
-    string decision = EntraSetup.FormatMintDryRunDecision(
+    string decision = EntraClientSecrets.FormatMintDryRunDecision(
       mint: true,
       newSecret: false,
       appRegistrationChanged: true);
@@ -353,9 +353,9 @@ public class MintClientSecretMessages_Given_
       "az ad app credential reset --id 11111111-1111-1111-1111-111111111111 --append --display-name dev-20260917 --years 1 --query password -o tsv");
     invocation.ShouldNotContain(EntraSetup.MaskedSecret);
 
-    EntraSetup.FormatClientSecretSummary(minted: true, appRegistrationChanged: true)
+    EntraClientSecrets.FormatClientSecretSummary(minted: true, appRegistrationChanged: true)
       .ShouldBe("******** (minted: app registration changed)");
-    EntraSetup.FormatMintDryRunDecision(mint: false, newSecret: false, appRegistrationChanged: false)
+    EntraClientSecrets.FormatMintDryRunDecision(mint: false, newSecret: false, appRegistrationChanged: false)
       .ShouldBe("dry-run: keeping the existing client secret.");
     return Task.CompletedTask;
   }
@@ -364,14 +364,14 @@ public class MintClientSecretMessages_Given_
   {
     const string stored = "11111111-1111-1111-1111-111111111111";
     const string found = "22222222-2222-2222-2222-222222222222";
-    EntraSetup.StoredClientIdDiffersFromFoundApp(stored, found).ShouldBeTrue();
-    EntraSetup.StoredClientIdDiffersFromFoundApp(stored, stored.ToUpperInvariant()).ShouldBeFalse();
-    EntraSetup.StoredClientIdDiffersFromFoundApp(stored, null).ShouldBeFalse();
-    EntraSetup.FormatClientIdMismatchWarning(stored, found)
+    EntraClientSecrets.StoredClientIdDiffersFromFoundApp(stored, found).ShouldBeTrue();
+    EntraClientSecrets.StoredClientIdDiffersFromFoundApp(stored, stored.ToUpperInvariant()).ShouldBeFalse();
+    EntraClientSecrets.StoredClientIdDiffersFromFoundApp(stored, null).ShouldBeFalse();
+    EntraClientSecrets.FormatClientIdMismatchWarning(stored, found)
       .ShouldContain("dev entra setup");
-    EntraSetup.FormatClientIdMismatchWarning(stored, found)
+    EntraClientSecrets.FormatClientIdMismatchWarning(stored, found)
       .ShouldContain(stored);
-    EntraSetup.FormatClientIdMismatchWarning(stored, found)
+    EntraClientSecrets.FormatClientIdMismatchWarning(stored, found)
       .ShouldContain(found);
     return Task.CompletedTask;
   }
@@ -385,15 +385,15 @@ public class Microsoft365MethodList_Given_
   public static Task EmptySecrets_Beside_Passkey_Should_AppendAtTheNextIndex()
   {
     Dictionary<string, string> secrets = [];
-    EntraSetup.Microsoft365MethodKeyToAdd(["Passkey"], secrets)
+    EntraUserSecrets.Microsoft365MethodKeyToAdd(["Passkey"], secrets)
       .ShouldBe(EntraSetup.SignInMethodsPrefix + "1");
-    EntraSetup.Microsoft365MethodKeysToRemove(secrets).ShouldBeEmpty();
+    EntraUserSecrets.Microsoft365MethodKeysToRemove(secrets).ShouldBeEmpty();
     return Task.CompletedTask;
   }
 
   public static Task CheckedIn_Microsoft365_Should_WriteNothing()
   {
-    EntraSetup.Microsoft365MethodKeyToAdd([EntraSetup.Microsoft365MethodName], new Dictionary<string, string>())
+    EntraUserSecrets.Microsoft365MethodKeyToAdd([EntraSetup.Microsoft365MethodName], new Dictionary<string, string>())
       .ShouldBeNull();
     return Task.CompletedTask;
   }
@@ -404,9 +404,9 @@ public class Microsoft365MethodList_Given_
     {
       [EntraSetup.PasskeyMethodKey] = EntraSetup.Microsoft365MethodName
     };
-    EntraSetup.Microsoft365MethodKeyToAdd(["Passkey"], secrets).ShouldBeNull();
-    EntraSetup.MergeSignInMethods(["Passkey"], secrets).ShouldBe([EntraSetup.Microsoft365MethodName]);
-    EntraSetup.Microsoft365MethodKeysToRemove(secrets).ShouldBe([EntraSetup.PasskeyMethodKey]);
+    EntraUserSecrets.Microsoft365MethodKeyToAdd(["Passkey"], secrets).ShouldBeNull();
+    EntraUserSecrets.MergeSignInMethods(["Passkey"], secrets).ShouldBe([EntraSetup.Microsoft365MethodName]);
+    EntraUserSecrets.Microsoft365MethodKeysToRemove(secrets).ShouldBe([EntraSetup.PasskeyMethodKey]);
     return Task.CompletedTask;
   }
 
@@ -416,7 +416,7 @@ public class Microsoft365MethodList_Given_
     {
       [EntraSetup.SignInMethodsPrefix + "3"] = "Passkey"
     };
-    EntraSetup.Microsoft365MethodKeyToAdd(["Passkey"], secrets)
+    EntraUserSecrets.Microsoft365MethodKeyToAdd(["Passkey"], secrets)
       .ShouldBe(EntraSetup.SignInMethodsPrefix + "4");
     return Task.CompletedTask;
   }
@@ -427,8 +427,8 @@ public class Microsoft365MethodList_Given_
     File.WriteAllText(path, """{"SignInOptions":{"Methods":["Passkey"]}}""");
     try
     {
-      EntraSetup.ReadCheckedInSignInMethods(path).ShouldBe(["Passkey"]);
-      EntraSetup.ReadCheckedInSignInMethods(path + ".missing").ShouldBeEmpty();
+      EntraUserSecrets.ReadCheckedInSignInMethods(path).ShouldBe(["Passkey"]);
+      EntraUserSecrets.ReadCheckedInSignInMethods(path + ".missing").ShouldBeEmpty();
     }
     finally
     {

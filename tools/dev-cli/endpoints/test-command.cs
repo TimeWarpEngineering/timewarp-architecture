@@ -52,7 +52,7 @@ internal sealed class TestCommand : ICommand<Unit>
   [Option("max-integration", Description = "Integration-group projects running at once (default: 3; Docker and host heavy)")]
   public int? MaxIntegration { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TestCommand, Unit>
+  internal sealed class Handler : IRequestHandler<TestCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly Lock OutputLock = new();
@@ -66,7 +66,7 @@ internal sealed class TestCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(TestCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TestCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;
@@ -330,12 +330,19 @@ internal sealed class TestCommand : ICommand<Unit>
     private static CommandResult BuildTestCommand(string project, int portBase)
     {
       return Shell.Builder("dotnet")
-        .WithArguments(DotNetTestArguments.Test())
+        .WithArguments(DotNetTestArguments.Test(CoverageDirectory(project)))
         .WithWorkingDirectory(ProjectDirectory(project))
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, portBase.ToString(CultureInfo.InvariantCulture))
         .WithNoValidation()
         .Build();
     }
+
+    // One folder per project under <repo>/artifacts/coverage so parallel projects never share a file.
+    private static string CoverageDirectory(string project) =>
+      Path.Combine(FindRepoRootOrThrow(), DotNetTestArguments.CoverageRoot, Path.GetFileNameWithoutExtension(project));
+
+    private static string FindRepoRootOrThrow() =>
+      Git.FindRoot() ?? throw new InvalidOperationException("Could not find repository root.");
 
     private static string ProjectDirectory(string project) =>
       Path.GetDirectoryName(project)

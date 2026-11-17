@@ -32,6 +32,6 @@
 }
 
 .twe-segmented__item:focus-visible {
-  outline: 2px solid var(--twe-primary);
+  outline: 2px solid var(--twe-focus-ring);
   outline-offset: 1px;
 }

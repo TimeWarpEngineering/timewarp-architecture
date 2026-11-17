@@ -15,7 +15,7 @@
 // PermissionEvaluator: PII gating (null display name and email without admin.profiles.read, 403
 // for search or profile sorts), search by name or email, each sort column both ways, and the
 // endpoint policy plus the Administrator-only seed. HTTP 401/403 proofs live in
-// web-server-integration-tests (principals-authorization-tests).
+// web-server-integration-tests (principals-authorization-*-tests).
 #endregion
 
 //-:cnd:noEmit
@@ -27,6 +27,8 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 namespace TimeWarp.Architecture.Features.Admin.Principals
 {
 
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
+  using TimeWarp.Architecture.Features.Admin.Roles.Domain;
   using System.Reflection;
   using System.Text.Json;
   using System.Threading.Tasks;
@@ -275,7 +277,8 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
       Caller = caller;
       CallerAccessor = new ListWorldCaller(caller);
       InMemoryPrincipalRoleStore roles = new();
-      InMemoryRolePermissionStore permissions = new();
+      InMemoryRoleStore roleAggregates = new();
+      InMemoryRolePermissionStore permissions = new(roleAggregates);
       if (caller is { } callerId)
       {
         roles.SetRoleIdsAsync(callerId, [RoleIds.Administrator]).GetAwaiter().GetResult();
@@ -284,10 +287,10 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
 
       if (!grantProfilesRead)
       {
-        permissions.SetPermissionIdsForRoleAsync(
-          RoleIds.Administrator,
-          [.. RolePermissionSeed.DefaultGrants[RoleIds.Administrator].Where(static id => id != PermissionIds.AdminProfilesRead)])
-          .GetAwaiter().GetResult();
+        Role administrator = roleAggregates.FindAsync(RoleId.From(RoleIds.Administrator)).GetAwaiter().GetResult()!;
+        administrator.SetPermissions(
+          RolePermissionSeed.DefaultGrants[RoleIds.Administrator].Where(static id => id != PermissionIds.AdminProfilesRead));
+        roleAggregates.UpdateAsync(administrator).GetAwaiter().GetResult();
       }
 
       EffectiveRolesResolver resolver = new(
