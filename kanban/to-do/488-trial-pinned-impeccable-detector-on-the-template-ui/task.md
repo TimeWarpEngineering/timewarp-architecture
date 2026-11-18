@@ -49,4 +49,3 @@ Also out of scope: adding a CI detect step or editing `tw-blazor-css-strategy` i
 - Detector: https://github.com/pbakaus/impeccable (Apache-2.0)
 - Eval: https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-11-impeccable.md
 - Intel PR: https://github.com/TimeWarpEngineering/timewarp-intel/pull/121
-- Filed only; not launched. Do not start until Steven says so.
