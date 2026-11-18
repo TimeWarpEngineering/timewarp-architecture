@@ -2,7 +2,7 @@
 
 ## Description
 
-Filed 2026-10-12 from Steven's voice call. **to-do, unclaimed, not launched.**
+Filed 2026-10-12 from Steven's voice call.
 
 **Firm requirement (Steven):** port the x402 tip-jar code from
 [timewarp-software](https://github.com/TimeWarpEngineering/timewarp-software)
@@ -183,7 +183,6 @@ USDC, facilitator `https://x402.org/facilitator` (no auth).
 
 ## Notes
 
-- Filing only. Do **not** claim-for-work or launch until Steven asks.
 - Quote→pay→job→ship happy path and bamboo microfactory nouns remain **118**.
 - Static tip docs (`public/tip/`) are free content; do not 402 them. Optional
   Blazor tip page is human-plane UX, not required for agent buyer path.
