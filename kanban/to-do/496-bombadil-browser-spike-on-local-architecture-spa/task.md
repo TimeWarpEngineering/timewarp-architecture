@@ -45,4 +45,3 @@ Busara gave these a KILL: B, C, D, E, G, I. F, H, and J were folded in. Do not e
 - Eval: https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-16-bombadil.md
 - Intel PR: https://github.com/TimeWarpEngineering/timewarp-intel/pull/130
 - Busara verdict: A GREEN; B/C/D/E/G/I KILL; F/H/J folded in
-- Filed only; not launched. Do not start until Steven says so.
