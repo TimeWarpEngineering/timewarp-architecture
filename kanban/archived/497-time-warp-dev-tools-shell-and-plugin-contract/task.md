@@ -2,6 +2,8 @@
 
 ## Description
 
+> **Superseded (2026-11-20):** moved to TimeWarpEngineering/timewarp-dev-tools task 001. Steven chose a dedicated repo because this one publishes only its template and cannot ship the contract as a package. Archived here; do not launch.
+
 Build the TimeWarp DevTools shell: a Blazor Server app that hosts dev tools as plugins behind a minimal plugin contract. This is step 3 of task 335, which was moved to done after only its AppHost wiring subtasks (335-001, 335-002) shipped. Today "TimeWarp DevTools" is the State inspector with one hard-coded "State" label in its header; there is no shell, contract, or registry in any repo.
 
 Three planned tools wait on this shell:
