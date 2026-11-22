@@ -93,13 +93,13 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
 
 ## Checklist
 
-- [ ] Review `proposal.md` with Steven
-- [ ] Decide the opt-in shape (`[ContractState(...)]` on the state vs per-contract attribute)
-- [ ] Decide `ContractResult<T>` slots vs keeping hand-written success flags
-- [ ] Decide conflict rule with existing hand-written action sets (generate-if-absent vs require removal)
-- [ ] Decide refetch/invalidation declaration (default none)
-- [ ] Confirm every hand-written piece has a generated hook or failing stub
-- [ ] Steve answers the question in section 7 of `proposal.md`
+- [x] Review `proposal.md` with Steven
+- [x] Decide the opt-in shape (`[ContractState(...)]` on the state vs per-contract attribute) — on the state (483)
+- [x] Decide `ContractResult<T>` slots vs keeping hand-written success flags — flags kept (483)
+- [x] Decide conflict rule with existing hand-written action sets (generate-if-absent vs require removal) — require removal, TWE015 (483)
+- [x] Decide refetch/invalidation declaration (default none) — none (483)
+- [x] Confirm every hand-written piece has a generated hook or failing stub — required hooks are CS8795 (483)
+- [x] Steve answers the question in section 7 of `proposal.md` — 2026-11-06, see Decision
 
 ## Session
 
@@ -245,3 +245,22 @@ modifier. Section 7 asks the question and does not pick.
 
 Parked 2026-11-06 pending timewarp-state task 140 (re-evaluate State source generation against
 Nuru and Mediator). See `question.md` for the question as asked and why it is parked.
+
+Decided 2026-11-06 (Steve): take the whole timewarp-state 140 family. This proposal's Option C
+(`[ContractState]`) is built as architecture task 483, on Mediator 043 (declared generator-emitted
+requests, 15.0.0-beta.10) and State 160 (12.0.0-beta.18). Recorded by 483 on 2026-11-22:
+
+- Generated: per contract the ActionSet (Action and `DefaultApiHandler`), the typed dispatch method,
+  and the hooks (`ContractStateSourceGenerator`). Required hooks are extended partial methods
+  (CS8795): `On<C>Loaded` on every Query (the §4f seed), `Build<C>Request` for `DraftRequests`,
+  `Confirm<C>Async` for a `[Destructive]` request. Optional hooks are `partial void`. No Razor.
+- Roles: GetRoles (was FetchRoles), SetRolePermissions, and SetRoleAgentScopes are generated.
+  CreateRole stays hand-written: it is the `Role.CreateRole` agent tool, and State gives a declared
+  action only a Human catalog entry whose parameter is the Action.
+- Option A: A2 is TWA0044, A3 is TWA0045 (Permissions only; Description stays authored per
+  audience), A4 is TWA0046 with `[NoMockResponse(reason)]`. A1 (SPA coverage) is not built; see 483
+  Notes. None is retired: they check hand-written handlers, which remain.
+- Option B (bodies in hand-written shells) and Option D (`ContractResult<T>` slots) were not taken.
+- §7 notes: `ClearXaiApiKey` and `ClearUserXaiApiKey` are `[Destructive]` now (TWA0044). The
+  CreateRole description difference is accepted as audience text. The §4f seed is required by
+  CS8795, and the generator tests prove it.
