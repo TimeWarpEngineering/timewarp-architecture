@@ -212,7 +212,10 @@ public sealed class ContractSpaAgreementAnalyzer : DiagnosticAnalyzer
 
   private static bool HasMockFactory(INamedTypeSymbol contract)
   {
-    if (contract.GetMembers(MockFactoryName).OfType<IMethodSymbol>().Any(static m => m.IsStatic)) return true;
+    // Same predicate as MockResponseFactoryRegistryGenerator: only a public, static, parameterless factory is registered.
+    bool registered = contract.GetMembers(MockFactoryName).OfType<IMethodSymbol>()
+      .Any(static m => m is { IsStatic: true, Parameters.Length: 0, DeclaredAccessibility: Accessibility.Public });
+    if (registered) return true;
     AttributeData? optOut = contract.GetAttributes().FirstOrDefault(static a => a.AttributeClass?.Name == "NoMockResponseAttribute");
     return optOut?.ConstructorArguments.FirstOrDefault().Value is string reason && !string.IsNullOrWhiteSpace(reason);
   }

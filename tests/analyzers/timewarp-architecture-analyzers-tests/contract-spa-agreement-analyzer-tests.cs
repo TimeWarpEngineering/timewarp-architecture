@@ -123,6 +123,20 @@ public class Should_Keep_Spa_Handlers_In_Agreement_With_Contracts
         public sealed class Command { }
         public sealed class Response { }
       }
+
+      public static class PrivateMock
+      {
+        public sealed class Query { }
+        public sealed class Response { }
+        private static object GetMockResponseFactory() => new();
+      }
+
+      public static class ParameterizedMock
+      {
+        public sealed class Query { }
+        public sealed class Response { }
+        public static object GetMockResponseFactory(int seed) => new();
+      }
     }
     """;
 
@@ -211,6 +225,12 @@ public class Should_Keep_Spa_Handlers_In_Agreement_With_Contracts
   public static async Task Web_Server_Handler_Without_A_Mock_Factory_Flags()
   {
     await Test(Handler("Unmocked.Query", flag: "TWA0046")).RunAsync();
+  }
+
+  public static async Task Factory_The_Registry_Does_Not_Register_Still_Flags()
+  {
+    await Test(Handler("PrivateMock.Query", flag: "TWA0046")).RunAsync();
+    await Test(Handler("ParameterizedMock.Query", flag: "TWA0046")).RunAsync();
   }
 
   public static async Task Api_Server_Handler_Is_Not_Checked_For_A_Mock()

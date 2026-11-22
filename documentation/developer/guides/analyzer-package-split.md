@@ -58,6 +58,7 @@ Reported by `timewarp-architecture-convention-analyzers`:
 | TWA0036 | iso-date-rendering | Dates and times render as ISO 8601, including Razor `RenderTreeBuilder.AddContent`. Template rendering policy. State sets the severity to none. |
 | TWA0037 | direct-fluent-message-bar | `FluentMessageBar` renders through the shared `MessageBar` |
 | TWA0039–TWA0043 | contract-agreement | Aggregate root, command, and query projection agreement |
+| TWA0044–TWA0046 | contract-spa-agreement | SPA handler agrees with its contract: `[Destructive]` and `ConfirmAsync`, `[CatalogAction]` Permissions include the contract policy, a web-server contract has a mock factory or `[NoMockResponse(reason)]` |
 
 ## Do not move with the style split
 
@@ -71,7 +72,7 @@ Retired. The ID is reserved. `TWA0005` remains a constant on `EndpointCoverageAn
 - TWA0001 partial class declaration
 - TWA0017, TWA0018, TWA0019 ingress route prefix
 
-No `TWA*` id above TWA0043 is declared in either analyzer project.
+No `TWA*` id above TWA0046 is declared in either analyzer project. The next free id is TWA0047.
 
 ## Consumers
 

@@ -122,6 +122,8 @@ pinned on master, so the 2026-11-07 blocker is gone. The pieces line up like thi
   change, TWA0044–TWA0046 with `[NoMockResponse]`, the Roles migration, generator, analyzer and runtime
   tests, the tw-blazor section, and the 464 decision record. Found two State limits (Notes).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 379fa066-227d-4aec-8bb3-60d1e834df14, max-turns 500, Done — 2026-11-22T11:18:36Z
+- Review oracle: grok session 01a202fa-dc8d-74f1-b249-e3b3eb4e3fd4 (2026-11-22), effort 3, roster general, round 1. Open suggestions M1 and M2. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a202fa-dc8d-74f1-b249-e3b3eb4e3fd4, max-turns 200, artifacts general.md, merged.md — 2026-11-22T11:31:46Z
 
 ## Results
 
@@ -190,9 +192,29 @@ pinned on master, so the 2026-11-07 blocker is gone. The pieces line up like thi
   `SetRolePermissions(new Command { RoleId })` sends the seeded permissions plus the toggle. With the seed hook
   deleted, the build fails with CS8795 on `OnGetRolesLoaded`.
 
+### Review
+
+Round 1 (general, effort 3): suggestions M1 and M2 in `review/round-1/merged.md`, both fixed in the fix pass.
+
+- M1: `documentation/developer/guides/analyzer-package-split.md` lists TWA0044–TWA0046 and names TWA0047 as the next free id.
+- M2: `ContractSpaAgreementAnalyzer.HasMockFactory` matches the mock registry (public, static, parameterless). A private or
+  parameterized `GetMockResponseFactory` still reports TWA0046.
+
+Fix-pass gates:
+
+- `./bin/dev build`: Build succeeded, 0 Warning(s), 0 Error(s).
+- `tests/analyzers/timewarp-architecture-analyzers-tests/contract-spa-agreement-analyzer-tests.cs` (edited; not a standalone
+  runfile, CI runs it): `dotnet run --project tests/analyzers/timewarp-architecture-analyzers-tests -c Release --no-build --
+  --filter-class Should_Keep_Spa_Handlers_In_Agreement_With_Contracts` → 11/11 passed.
+- `ganda repo audit`: exit 0, 41 passed; the same 2 advisory warnings as before (`source-file-line-cap`, `vscode-window-icon`), neither from this task.
+
 ## Depends on
 
 - timewarp-state 142, 144, 145; timewarp-mediator 029
+
+## Review
+
+- Round 1: M1, M2 fixed in the fix pass
 
 ## Notes
 
@@ -297,3 +319,7 @@ The `[ContractState]` attribute here derives from Mediator 043's attribute; the 
 generator emits each Action" stands as written.
 
 2026-11-22: unblocked. Mediator 15.0.0-beta.10 (043) and State 12.0.0-beta.19 (160) are pinned on master; the walk resumed.
+
+## Learnings
+
+- Misread: the goal restatement's acceptance still says this generator emits a catalog entry whose Description and Permissions come from the contract, and the resume says the analyzer checks both. The task requires that, or a stop when the manifest cannot stay true. The resume limit is what shipped, and the Notes and the 464 decision already say so: State reads only the state's first partial, so the generated actions have no catalog entry and no manifest row; CreateRole stays hand-written because a declared catalog entry cannot be the `Role.CreateRole` agent tool; TWA0045 checks Permissions only. The acceptance bullets were not restated to match.
