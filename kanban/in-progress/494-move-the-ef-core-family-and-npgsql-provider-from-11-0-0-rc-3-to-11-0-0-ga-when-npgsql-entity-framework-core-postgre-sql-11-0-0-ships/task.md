@@ -68,12 +68,12 @@ so the full suite stays on CI.
 
 - [x] Precondition met: Npgsql provider 11.0.0 stable on nuget.org
 - [x] All seven pins moved in `Directory.Packages.props`; rc.3 explanatory comment removed (keep one line saying the family moves with the Npgsql provider)
-- [ ] `ganda nuget outdated` reports 0
+- [x] `ganda nuget outdated` reports 0
 - [x] `dev build` 0 warnings / 0 errors
-- [ ] `dev test`
+- [x] `dev test` — not run here. `./bin/dev test` takes no file, no test file was added or edited, and no test asserts these pins. CI runs the full suite.
 - [x] `dev template-smoke --matrix` (postgres flag affects EF; matrix covers flag-off)
 - [x] `dev check-version` passes (bump `<Version>` only if `check-version` requires it; pins-only change needs no release)
-- [ ] `ganda repo audit` clean
+- [x] `ganda repo audit` clean
 - [x] No cross-repo work; stop and report on anything outside this repo
 
 ## Session
@@ -81,36 +81,35 @@ so the full suite stays on CI.
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-16)
 - Implementation: 01a201da-2110-7482-b05c-bac4413ae3bc (2026-11-22)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a201da-2110-7482-b05c-bac4413ae3bc, max-turns 500, Blocked — 2026-11-22T06:30:29Z
+- Resume: 01a20295-b8c4-75c1-b9b3-ef2b848f7d1a (2026-11-22). Merged origin/master so the branch contains task 498. That cleared package-pin-currency, dev-cli-telemetry, and kanban-landed. The EF pins stayed at 11.0.0.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20295-b8c4-75c1-b9b3-ef2b848f7d1a, max-turns 500, Done — 2026-11-22T09:51:52Z
+- Review oracle: claude (claude-opus-5-5), effort 1, roster general, round 1, disposition clean — 2026-11-22
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 158374fe-ea8a-46c3-9d9a-143bce198d47, max-turns 80, artifacts general.md, merged.md, disposition.md — 2026-11-22T09:52:54Z
 
 ## Results
 
 Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0 is on nuget.org. Its net11.0 nuspec depends on
 Microsoft.EntityFrameworkCore and .Relational `[11.0.0, 12.0.0)`. No 11.0.x newer than 11.0.0
-exists for that provider or for Microsoft.EntityFrameworkCore. Design 11.0.0 still depends on
-Microsoft.CodeAnalysis.* 5.9.0, so the Roslyn 5.12.0 lift stayed.
+exists for that provider, for Microsoft.EntityFrameworkCore, or for the `dotnet-ef` tool.
+Design 11.0.0 still depends on Microsoft.CodeAnalysis.* 5.9.0, so the Roslyn 5.12.0 lift stayed.
+TimeWarp.SourceGenerators on this branch is 1.0.0-beta.17, which is what the lift comment names.
 
 The seven `Directory.Packages.props` pins are 11.0.0. The rc.3 hold comment is gone. One line
-remains: the EF Core family moves with the Npgsql provider. The local `dotnet-ef` tool moved
-from `11.0.0-rc.3.26522.148` to `11.0.0` with the family. `<Version>` stayed `2.0.0-beta.32`.
-Generated migration ProductVersion annotations were left as history.
+remains: the EF Core family moves with the Npgsql provider. The local `dotnet-ef` tool is
+`11.0.0`. `<Version>` stayed `2.0.0-beta.32`. Generated migration ProductVersion annotations
+were left as history.
 
-`ganda nuget outdated` exits 0 and lists the seven EF pins as up to date. It also lists 33
-other outdated packages. Those belong to task 498, which is sequenced after this task and
-excludes the EF family.
+The branch was twenty commits behind origin/master. Those commits are task 498 (the other
+NuGet pins, Aspire 17, and `UseTelemetry`). This walk merged origin/master and kept the EF
+family at 11.0.0. Against origin/master the product diff is only `Directory.Packages.props`
+and `.config/dotnet-tools.json`.
 
-`ganda repo audit` exits 1. The three blocking errors are pre-existing and already tasked:
+`ganda nuget outdated` exits 0 and prints `All packages are up to date!` (134 pins).
 
-- `package-pin-currency`: TimeWarp.Contracts 2.0.0-beta.33, TimeWarp.Mediator 15.0.0-beta.9,
-  TimeWarp.Nuru 4.0.0-beta.15, and the TimeWarp.State 12.0.0-beta.17 family are behind.
-  Task 498 owns that bump.
-- `dev-cli-telemetry`: `tools/dev-cli/dev.cs` has no `UseTelemetry` call. Task 485 owns that.
-  The API is on Nuru 4.0.0-beta.16, which is also task 498.
-- `kanban-landed`: task 483's in-progress kitchen differs from origin-home (a 2026-11-17
-  note on the dead claim). `ganda kanban reconcile --task-id 483 --dry-run` would land that
-  file. This walk did not publish another task's kitchen.
-
-Warnings that did not block on their own: `source-file-line-cap` (four files, including
-generated EF snapshots) and `vscode-window-icon`.
+`ganda repo audit` exits 0: 41 passed, 3 skipped, 2 advisory warnings. The warnings are
+`source-file-line-cap` (a done-task research file and three generated EF snapshot files) and
+`vscode-window-icon` (`.vscode/settings.json` is gitignored; the vscode-settings check passed).
+They are not this pin move.
 
 ### How to validate
 
@@ -121,24 +120,31 @@ SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, SmokeNoGrpc, and SmokeNoYarp, and the c
 prints `Template smoke SUCCEEDED`. `./bin/dev check-version` prints source `2.0.0-beta.32`
 one prerelease ahead of NuGet `2.0.0-beta.31` and does not ask for a bump.
 
-- `./bin/dev build` — exit 0, 0 warnings, 0 errors (00:00:32)
-- `./bin/dev test` — not run. No test file was added or edited, this repo's `test` command
-  does not take a file, and no test asserts these pins. CI runs the full suite.
-- `./bin/dev template-smoke --matrix` — exit 0, Template smoke SUCCEEDED (all six variants,
-  including SmokeNoPostgres)
-- `./bin/dev check-version` — exit 0, source 2.0.0-beta.32 is new versus NuGet 2.0.0-beta.31
-- `ganda nuget outdated` — exit 0; seven EF pins current; 33 other packages outdated (task 498)
-- `ganda repo audit` — exit 1; blocking errors are package-pin-currency, dev-cli-telemetry,
-  and kanban-landed (tasks 498, 485, and 483)
+- `./bin/dev build` — exit 0, 0 warnings, 0 errors (00:00:23.36)
+- `./bin/dev test` — not run. No test file was added or edited. `./bin/dev test` does not
+  take a file. Tests that reference EntityFrameworkCore live in csproj suites
+  (`web-infrastructure-tests`, `web-server-integration-tests`, and others), not standalone
+  Jaribu runfiles. CI runs the full suite.
+- `./bin/dev template-smoke --matrix` — exit 0, Template smoke SUCCEEDED (SmokeDefault,
+  SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, SmokeNoGrpc, SmokeNoYarp)
+- `./bin/dev check-version` — exit 0, source 2.0.0-beta.32 is one prerelease ahead of NuGet 2.0.0-beta.31
+- `ganda nuget outdated` — exit 0, all 134 packages up to date
+- `ganda repo audit` — exit 0, 41 passed, 3 skipped, 2 advisory warnings (source-file-line-cap, vscode-window-icon)
+
+### Review disposition
+
+- Rounds: 1. Effort 1, roster: general.
+- Final counts: bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix).
+- Disposition: **clean**. No findings were raised, and the goal restatement matches the task.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
 - Filed per Steve 2026-11-16 ("yes file it") after 492 left the EF family on rc.3.
 - Pins-only template change; no library packages change, so no release is required
   (see "Release only when platform packages change").
-
-## Blocked
-
-2026-11-22: ganda repo audit stays red until task 498 brings TimeWarp.Contracts, Mediator, Nuru, and the State family current, task 485 adds UseTelemetry on tools/dev-cli/dev.cs (that API is on Nuru 4.0.0-beta.16, which 498 bumps), and ganda kanban reconcile --task-id 483 lands the dead claim's kitchen. https://github.com/TimeWarpEngineering/timewarp-architecture/tree/task/494-move-the-ef-core-family-and-npgsql-provider-from
-
-- https://github.com/TimeWarpEngineering/timewarp-architecture/tree/task/494-move-the-ef-core-family-and-npgsql-provider-from
