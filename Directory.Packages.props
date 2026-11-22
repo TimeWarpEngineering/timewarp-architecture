@@ -65,7 +65,7 @@
          PackageReferences to them are NU1510, so those pins are gone. A co-located runfile must
          not take Options with a #:package directive either.
          Shared-framework Microsoft.* and System.* pins on this train are 11.0.0, matching SDK
-         11.0.100 (task 492). The EF family is the exception; see the Npgsql note below. -->
+         11.0.100 (task 492). The EF family is 11.0.0 with the Npgsql provider (task 494). -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="11.0.0" />
@@ -118,21 +118,14 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0" />
-    <!-- Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0-rc.3 pins Microsoft.EntityFrameworkCore
-         and Microsoft.EntityFrameworkCore.Relational exactly at [11.0.0-rc.3.26522.148]. Move
-         that package with the EF family (Microsoft.EntityFrameworkCore*,
-         Microsoft.AspNetCore.DataProtection.EntityFrameworkCore,
-         Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore). Moving the EF
-         family alone fails restore (NU1608/NU1107). rc.3 is the latest Npgsql provider on
-         nuget.org, so the EF family stays on rc.3 while every other Microsoft.* pin is 11.0.0
-         GA (task 492). When Npgsql 11.0.0 ships, move all seven together. -->
-    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.3" />
+    <!-- The EF Core family moves with Npgsql.EntityFrameworkCore.PostgreSQL. -->
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="11.0.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0" />
     <!-- Roslyn lift for Microsoft.EntityFrameworkCore.Design (rc.3 and 11.0.0 GA both take
          Microsoft.CodeAnalysis.*.Workspaces 5.9.0, whose Common/CSharp deps are exact).
          TimeWarp.SourceGenerators 1.0.0-beta.16 lifts Microsoft.CodeAnalysis.CSharp to 5.12.0 in
