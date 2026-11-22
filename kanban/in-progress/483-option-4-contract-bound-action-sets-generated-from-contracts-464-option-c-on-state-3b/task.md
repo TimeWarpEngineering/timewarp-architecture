@@ -71,6 +71,33 @@ Acceptance:
   `dev check-version` passes.
 - 464 is closed with its decision recorded.
 
+### Restatement on resume (2026-11-22)
+
+Mediator 15.0.0-beta.10 (task 043) and State 12.0.0-beta.19 (task 160, released in beta.18) are
+pinned on master, so the 2026-11-07 blocker is gone. The pieces line up like this:
+
+- `[ContractState]` lives in web-spa (`features/base/`) and derives from Mediator's
+  `GeneratedRequestPatternAttribute` with const templates `{Host}.{Contract}ActionSet.Action`,
+  `.Handler`, and `TimeWarp.Mediator.IAction`. Mediator then emits the `Send` arm. State then
+  emits the `internal` dispatch method that takes the Action, the catalog entry, and the manifest
+  row (origin `declared`).
+- This repo's generator emits, per contract, the ActionSet (`Action` carrying the contract
+  request, `[TrackAction]`, and a `Handler : DefaultApiHandler<Action, TRequest, TResponse>`), a
+  public typed dispatch overload `RoleState.GetRoles(Query? request = null, …)` that calls State's
+  method, and the hook declarations. The ActionRoster generator lists these actions too.
+- Hooks are declared on the state. Required hooks (with an access modifier, so a missing body is
+  CS8795): `On<Contract>Loaded(Response)` for every Query (the 4f seed),
+  `Build<Contract>Request(TRequest)` for a contract in `DraftRequests`, and
+  `Confirm<Contract>Async(TRequest, IConfirmationService, CancellationToken)` when the request is
+  `[Destructive]`. Optional `partial void` hooks: `On<Contract>Succeeded(Response)` for Commands
+  and `OnBuilding<Contract>Request(TRequest)` when the contract has no draft build.
+- Limit found on resume: State gives a declared action a Human-only catalog entry whose one
+  parameter is the Action instance. `Role.CreateRole` is an Agent tool with a typed `command`
+  parameter (catalog, agent, WebMCP, and palette tests depend on it). So CreateRole stays
+  hand-written, and its `[CatalogAction]` Description and Permissions are checked against the
+  contract by an analyzer instead (464 A3). The State need goes in Notes. No cross-repo task is
+  opened.
+
 ## Checklist
 
 - [ ] Generator and State hook

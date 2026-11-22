@@ -17,7 +17,7 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.PeopleTeam();
   public static string Title => "Roles";
 
-  protected override async Task OnInitializedAsync() => await RoleState.FetchRoles();
+  protected override async Task OnInitializedAsync() => await RoleState.GetRoles();
 }
 
 <TimeWarpPage Title="Roles">
@@ -32,7 +32,7 @@
         New Role
       </FluentAnchorButton>
     </div>
-    <Section Title="Roles" LoadingActionType="typeof(RoleState.FetchRolesActionSet.Action)">
+    <Section Title="Roles" LoadingActionType="typeof(RoleState.GetRolesActionSet.Action)">
       <table class="twe-table" data-qa="RolesTable">
           <thead>
             <tr>
@@ -42,7 +42,7 @@
             </tr>
           </thead>
           <tbody>
-            @foreach (GetRoles.RoleDto role in RoleState.Roles ?? [])
+            @foreach (GetRoles.RoleDto role in RoleState.RoleList ?? [])
             {
               int grantCount = role.Permissions.Count;
               IReadOnlyList<string> prefixes = PermissionIds.PrefixesOf(role.Permissions);
