@@ -6,15 +6,24 @@
 **Plan / brief:** `[ContractState]` source generator emits contract-bound action sets (Action, DefaultApiHandler, typed dispatch, required and optional hooks). Roles is the worked example. TWA0044–TWA0046 are the 464 Option A checks that still apply. Task 464 decision is recorded.
 **Effort:** 3
 **Reviewer roster:** general
-**Session IDs:** review oracle grok `01a202fa-dc8d-74f1-b249-e3b3eb4e3fd4` (2026-11-22). Implementer sessions are on `task.md`.
+**Session IDs:** review round 1 grok `01a202fa-dc8d-74f1-b249-e3b3eb4e3fd4` (2026-11-22). Review round 2 grok `01a2030b-0834-78f0-b44f-47879456e3e4` (2026-11-22). Implementer sessions are on `task.md`.
 
 ## Budget (by-diff)
 
-- Lines changed: 2234
-- Effort: 3
+Round 2 re-review. Round 1 was 2234 lines, effort 3, turn cap 200.
+
+- Lines changed: 134
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
+
+## Round 2
+
+**Date:** 2026-11-22
+**Diff scope:** fix delta since round 1, commit `00eec4573` (M1 id guide, M2 `HasMockFactory` predicate and its test). Prior rounds stay frozen.
+**Effort:** 1 (general)
+**Session:** grok `01a2030b-0834-78f0-b44f-47879456e3e4`
 
 ## Ground rules
 
