@@ -52,6 +52,12 @@ updating; do not work around it.
 - [ ] `ganda repo audit` exits 0 with `source-file-line-cap` PASS on the branch.
 - [ ] Temporarily grow one recorded file by a line and confirm the check fails, then revert.
       Record that proof in `## Results`.
+- [ ] `documentation/developer/guides/analyzer-package-split.md`: the Consumers section says
+      timewarp-state pins TimeWarp.Architecture.Analyzers 2.0.0-beta.31. State dropped that
+      reference on 2026-11-10 (state task 153, commit fb4ca031) and takes TWA0004 from
+      TimeWarp.SourceGenerators. Replace the sentence with the current fact: State does not
+      reference any TimeWarp.Architecture package; the only outside consumer is crunchit
+      (Analyzers, Generators, Attributes at 2.0.0-beta.9). (Steve, 2026-11-22.)
 - [ ] No product code changes. Template pack is unaffected (`.timewarp/` is not template
       content; confirm `.template.config` does not include it or add an exclude if it does).
 
