@@ -118,18 +118,24 @@ internal sealed class RunCommand : ICommand<Unit>
       return false;
     }
 
+    // DotNetUserSecretsListBuilder has no WithTimeout, so a linked token bounds the list. Its
+    // cancellation is the timeout warning unless dev run itself was cancelled.
+    private static readonly TimeSpan UserSecretsListTimeout = TimeSpan.FromSeconds(20);
+
     private async Task WarnIfXaiKeyMissingAsync()
     {
       try
       {
         string? environmentValue = Environment.GetEnvironmentVariable(XaiPreflight.EnvironmentVariable);
         string project = Path.Combine(RepoRoot, XaiPreflight.WebServerProject);
-        CommandOutput list = await Shell.Builder("dotnet")
-          .WithArguments("user-secrets", "list", "--project", project)
+        using var listTimeout = CancellationTokenSource.CreateLinkedTokenSource(Ct);
+        listTimeout.CancelAfter(UserSecretsListTimeout);
+        CommandOutput list = await DotNet.UserSecrets()
+          .WithProject(project)
           .WithWorkingDirectory(RepoRoot)
-          .WithTimeout(TimeSpan.FromSeconds(20))
+          .List()
           .WithNoValidation()
-          .CaptureAsync(Ct);
+          .CaptureAsync(listTimeout.Token);
 
         if (XaiPreflight.HasKey(environmentValue, list.Success ? list.Stdout : null))
         {
@@ -139,7 +145,7 @@ internal sealed class RunCommand : ICommand<Unit>
         Terminal.WriteLine(XaiPreflight.WarningLead(list.Success).Yellow());
         Terminal.WriteLine(XaiPreflight.SetupCommand.Yellow());
       }
-      catch (Exception exception) when (exception is not OperationCanceledException)
+      catch (Exception exception) when (exception is not OperationCanceledException || !Ct.IsCancellationRequested)
       {
         Terminal.WriteLine($"{XaiPreflight.UnreadableSecretsLead} ({exception.Message})".Yellow());
         Terminal.WriteLine(XaiPreflight.SetupCommand.Yellow());

@@ -137,16 +137,16 @@ internal sealed class TemplateSmokePackaging
 
     Terminal.WriteLine($"Installing template from {nupkg}...");
     // Force reinstall so an older conflicting identity does not win.
-    CommandOutput uninstall = await Shell.Builder("dotnet")
-      .WithArguments("new", "uninstall", TemplatePackageId)
+    CommandOutput uninstall = await DotNet.New()
       .WithWorkingDirectory(RepoRoot)
+      .Uninstall(TemplatePackageId)
       .WithNoValidation()
       .CaptureAsync(ct);
     _ = uninstall; // may fail if not installed
 
-    CommandOutput result = await Shell.Builder("dotnet")
-      .WithArguments("new", "install", nupkg)
+    CommandOutput result = await DotNet.New()
       .WithWorkingDirectory(RepoRoot)
+      .Install(nupkg)
       .WithNoValidation()
       .CaptureAsync(ct);
 
