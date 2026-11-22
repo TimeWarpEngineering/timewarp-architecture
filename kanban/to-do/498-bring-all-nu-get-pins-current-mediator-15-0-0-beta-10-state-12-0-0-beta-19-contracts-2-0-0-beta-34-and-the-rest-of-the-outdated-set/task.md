@@ -44,14 +44,15 @@ Aspire line moved; the Aspire CLI must then match `<AspireVersion>`.
 
 ## Checklist
 
-- [ ] All pins above moved; `ganda nuget outdated` reports 0 (after 494 has landed first)
+- [ ] All pins above moved; `ganda nuget outdated` reports 0 except the seven EF Core / Npgsql pins, which task 494 moves on its own branch (do not touch them here)
 - [ ] Scalar 3.x and any other major: release notes read, call sites fixed, note in the pin comment
 - [ ] `dev build` 0 warnings / 0 errors; new diagnostics fixed at source
 - [ ] `dev test`
 - [ ] `dev template-smoke --matrix`
 - [ ] Playwright suite passes with the new Playwright pin
 - [ ] `dev check-version`: bump `<Version>` to 2.0.0-beta.33 and the platform package pins in the same commit (library pins change, so a release follows; 2.0.0-beta.32 was never cut, so the bump may be to beta.32 if `check-version` accepts it; follow its output)
-- [ ] `ganda repo audit` clean
+- [ ] Boy-scout (audit `dev-cli-telemetry`, same fix task 485 asks for): add `.UseTelemetry(options => options.ServiceName = "timewarp-architecture-dev")` to the `NuruApp.CreateBuilder()` chain in `tools/dev-cli/dev.cs`; the API is on Nuru 4.0.0-beta.16, which this task pins. Note it under Results so 485 can close as covered
+- [ ] `ganda repo audit` clean. Master is red today on `package-pin-currency`, `dev-cli-telemetry`, and `kanban-landed`; this task fixes the first two and the cockpit reconciled the third on 2026-11-22. Do not treat a check another open task owns as a blocker; report it under Results instead
 - [ ] No cross-repo work; stop and report if an upstream package needs a fix
 
 ## Session
@@ -60,6 +61,8 @@ Aspire line moved; the Aspire CLI must then match `<AspireVersion>`.
 
 ## Notes
 
-- Filed per Steve 2026-11-22 ("file the task and lets do the updates"). Runs after 494 in one
-  work-set so both edit `Directory.Packages.props` serially.
+- Filed per Steve 2026-11-22 ("file the task and lets do the updates"). Order changed the same day:
+  this task runs first and alone, because the walk's audit gate refuses while master is red on
+  pin currency and dev-cli telemetry; 494 (whose pins are already moved on its branch) resumes
+  after this lands.
 - Unblocks task 483 (needs Mediator beta.10 and State beta.19 pinned).
