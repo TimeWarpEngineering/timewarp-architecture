@@ -80,6 +80,7 @@ so the full suite stays on CI.
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-16)
 - Implementation: 01a201da-2110-7482-b05c-bac4413ae3bc (2026-11-22)
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a201da-2110-7482-b05c-bac4413ae3bc, max-turns 500, Blocked — 2026-11-22T06:30:29Z
 
 ## Results
 
@@ -135,3 +136,9 @@ one prerelease ahead of NuGet `2.0.0-beta.31` and does not ask for a bump.
 - Filed per Steve 2026-11-16 ("yes file it") after 492 left the EF family on rc.3.
 - Pins-only template change; no library packages change, so no release is required
   (see "Release only when platform packages change").
+
+## Blocked
+
+2026-11-22: ganda repo audit stays red until task 498 brings TimeWarp.Contracts, Mediator, Nuru, and the State family current, task 485 adds UseTelemetry on tools/dev-cli/dev.cs (that API is on Nuru 4.0.0-beta.16, which 498 bumps), and ganda kanban reconcile --task-id 483 lands the dead claim's kitchen. https://github.com/TimeWarpEngineering/timewarp-architecture/tree/task/494-move-the-ef-core-family-and-npgsql-provider-from
+
+- https://github.com/TimeWarpEngineering/timewarp-architecture/tree/task/494-move-the-ef-core-family-and-npgsql-provider-from
