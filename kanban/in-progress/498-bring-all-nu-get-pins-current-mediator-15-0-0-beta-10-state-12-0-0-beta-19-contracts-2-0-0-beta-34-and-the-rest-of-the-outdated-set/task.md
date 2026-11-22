@@ -42,6 +42,35 @@ Aspire line moved; the Aspire CLI must then match `<AspireVersion>`.
 - SourceGenerators beta.17, Jaribu beta.18, Nuru/DevCli beta.16, Amuru beta.10: read release
   notes for any analyzer or API change and fix at source.
 
+### Aspire 17 is in scope (Steve, 2026-11-22)
+
+Steve decided: move to Aspire 17 in this task. We own every repo in the chain and do not pin
+backward; State 12.0.0-beta.19 already made this move. Do the migration here, in the same PR:
+
+- `<AspireVersion>` 13.6.5 -> 17.0.0 (latest 17.x on nuget.org), every `Aspire.*` pin follows the
+  property as today; drop any `-preview` suffix that 17 no longer needs.
+- ASPIRE013: enable the Aspire CLI bundle (remove `AspireUseCliBundle=false` and whatever tasks
+  201/209/232/262/285 added to keep it off). The AppHost starts through the `aspire` CLI. Update
+  `dev run` and any dev-cli code that launched the AppHost with `dotnet run`, the CI lanes that
+  start it, and `tw-deploy` / `tw-dev-cli` skill text that states the old behavior. The Aspire
+  CLI on dev machines and CI must be 17 (`aspire update --self`; CI installs the pinned version).
+- ASPIRE012: `Aspire.AppHost.Sdk` -> `Microsoft.NET.Sdk` for the AppHost project(s), per the
+  Aspire 17 migration guide (`aspire update --migrate` is the tool; use the `aspire-orchestration`
+  / `aspire` skills).
+- CS0618: `AddProject<T>` -> `AddDotnetProject` in all AppHost files (six found), and the TWA0007
+  analyzer plus its tests move to match on `AddDotnetProject`. Keep the ServiceNames resource-name
+  rule intact (names must equal web-server/api-server/grpc-server).
+- Then State family to 12.0.0-beta.19 including DevTools.Hosting, as the table says.
+- `dev run` must start the stack locally, and the Aspire lanes of `dev test` must pass.
+
+### Checklist additions (Aspire 17)
+
+- [ ] `<AspireVersion>` 17.x; all Aspire pins restore
+- [ ] CLI bundle on; AppHost SDK swapped; `AddDotnetProject` everywhere; TWA0007 updated with tests
+- [ ] dev-cli, CI workflow, and skills updated for the Aspire 17 CLI (pinned version in CI)
+- [ ] `dev run` starts; Aspire test lanes pass; `dev template-smoke --matrix` passes
+- [ ] Release-note / pin comment states the Aspire 17 move and its date
+
 ## Goal (implementer restatement)
 
 Bring every central pin `ganda nuget outdated` still reports forward, and leave the seven
@@ -153,3 +182,5 @@ task takes it. Holding DevTools.Hosting at beta.17 is a backward pin and is not 
 ## Blocked
 
 2026-11-22: TimeWarp.State.DevTools.Hosting 12.0.0-beta.19 needs Aspire.Hosting 17.0.0. Aspire 13.6.5 → 17 is a migration: the AppHost must use the Aspire CLI bundle (ASPIRE013, which reverses the AspireUseCliBundle=false choice kept by tasks 201, 209, 232, 262 and 285), Aspire.AppHost.Sdk becomes Microsoft.NET.Sdk (ASPIRE012), and AddProject becomes AddDotnetProject, including the TWA0007 analyzer. Unblock: an Aspire 17 migration task lands first, or Steve decides task 498 takes it on.
+
+2026-11-22: resolved. Steve chose to take Aspire 17 inside this task (see "Aspire 17 is in scope" in the Description). Resume the walk.
