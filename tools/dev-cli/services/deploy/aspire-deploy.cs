@@ -31,7 +31,7 @@ namespace DevCli.Services;
 /// <summary>Targets and the <c>aspire deploy</c> / <c>aspire destroy</c> argument builders for <c>dev deploy</c> / <c>dev deprovision</c>.</summary>
 internal static class AspireDeploy
 {
-  internal static readonly Version MinimumCliVersion = new(13, 6);
+  internal static readonly Version MinimumCliVersion = new(17, 0);
 
   internal const string DeployEnvironment = "Production";
   internal const string ContainerRuntimeVariable = "ASPIRE_CONTAINER_RUNTIME";

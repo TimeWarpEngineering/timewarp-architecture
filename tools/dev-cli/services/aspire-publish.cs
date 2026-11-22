@@ -19,7 +19,8 @@
 // (not the linter) is the gate. It runs after the safety suite passes, as before task 367.
 // Runtime neutrality (task 277): `aspire publish` only writes files — no image build, no deploy —
 // and nothing here calls a container CLI or a cluster.
-// The Aspire CLI must be at least 13.6 (refused below that). A CLI older than <AspireVersion>
+// The Aspire CLI must be at least 17.0 (refused below that): since Aspire 17 (task 498) the AppHost
+// build takes DCP and the dashboard from the CLI bundle. A CLI older than <AspireVersion>
 // in Directory.Packages.props warns, with `dotnet tool update -g Aspire.Cli`, and publish continues.
 // PublishAndCheckAsync and PublishFilesAsync both check. dev deploy migrate skips the aspire
 // preflight, so PublishFilesAsync is the check on that path. dev deploy already warned in
@@ -35,7 +36,7 @@ namespace DevCli.Services;
 internal static class AspirePublish
 {
   internal const string SafetySuiteDirectory = "tests/container-apps/aspire/aspire-tests";
-  private static readonly Version MinimumCliVersion = new(13, 6);
+  private static readonly Version MinimumCliVersion = new(17, 0);
 
   /// <summary>
   /// Publishes every target, then checks them all in one safety-suite run. Returns the output

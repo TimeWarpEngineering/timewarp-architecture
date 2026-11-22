@@ -93,6 +93,11 @@ CLI 17 requirement, and CI installs the pinned CLI wherever the AppHost builds. 
 Aspire-booting suite passes on 17 (aspire-tests, api-server and web-spa integration, Playwright)
 and template-smoke --matrix passes.
 
+Review round 1 fix pass: the release job installs the pinned Aspire CLI before `dev workflow`
+(probe mode skips it), and `dev publish` / `dev deploy` (and `dev deprovision`, which shares the
+deploy preflight) refuse a CLI below 17.0, because each builds the AppHost. `dev db nuke` keeps
+13.6. The tw-deploy skill and the Design comments say the same.
+
 ## Checklist
 
 - [x] All pins above moved; `ganda nuget outdated` reports 0 except the seven EF Core / Npgsql pins, which task 494 moves on its own branch (do not touch them here)
@@ -114,6 +119,9 @@ and template-smoke --matrix passes.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e8fcd1ae-74e9-4b97-a2a5-2067a155e974, max-turns 500, Blocked — 2026-11-22T07:00:50Z
 - 2026-11-22 implement oracle (resumed): Aspire 17 migration done in this task; gates below.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f7789f39-fcfa-4f52-ae2e-a18454074030, max-turns 500, Done — 2026-11-22T08:49:48Z
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20272-a2e4-74a2-95ab-7f6b1c9327ac, max-turns 200, artifacts none, warning: 1 turn below the floor of 8 — 2026-11-22T08:50:11Z
+- Review oracle round 1: reviewer-grok (grok, vendor xai, model grok-4.7), session 01a20272-ddfd-7171-87fc-672623d3891e, effort 3, roster general, max-turns 200 (2026-11-22). Open findings M1 and M2 in `review/round-1/merged.md`. No disposition.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20272-ddfd-7171-87fc-672623d3891e, max-turns 200, artifacts general.md, merged.md — 2026-11-22T08:59:32Z
 
 ## Blocker: State 12.0.0-beta.19 needs Aspire 17 (resolved: migrated in this task)
 
@@ -183,7 +191,11 @@ task takes it. Holding DevTools.Hosting at beta.17 is a backward pin and is not 
     the update hint adds `aspire setup`. The pins/AppHost/CI agreement check moved to
     `tools/dev-cli/services/aspire-version-sources.cs` (TWA0038 line cap on `aspire-run.cs`) and now
     requires the two AppHost packages without their own version and refuses `Aspire.AppHost.Sdk`.
-  - CI (`workflow.yml`): every `ci` group and the template-smoke job install the pinned Aspire CLI.
+  - CI (`workflow.yml`): every `ci` group, the release job (skipped in probe mode), and the
+    template-smoke job install the pinned Aspire CLI (review round 1 M1).
+  - `dev publish` and `dev deploy` / `dev deprovision` refuse an Aspire CLI below 17.0
+    (`AspirePublish.MinimumCliVersion`, `AspireDeploy.MinimumCliVersion`; review round 1 M2).
+    `dev db nuke` keeps 13.6 (it runs `aspire stop` and does not build the AppHost).
   - `skills/tw-deploy`: Aspire CLI version section states the bundle, `aspire setup`, and the
     per-verb minimums.
 - Found on this machine: a bundle an older CLI left in `~/.aspire/bundle` (DCP 0.23.6) won over the
@@ -217,15 +229,35 @@ task takes it. Holding DevTools.Hosting at beta.17 is a backward pin and is not 
   then "Repository passes" with one advisory: `source-file-line-cap` on four files this change does
   not touch (three EF migration designer/snapshot files and a done-task research runfile).
 
+- Review round 1 fix pass (M1, M2):
+  - `dotnet run --file tools/dev-cli/dev.cs -- self-install`: pass.
+  - `./bin/dev build`: pass, 0 warnings / 0 errors.
+  - `tests/tools/dev-cli-tests` (covers `AspireVersionSources` over `workflow.yml`, and the
+    `AspireCli` version checks; not standalone runfiles): project run, 343/343 passed.
+  - `./bin/dev lint-skills` (tw-deploy changed): pass.
+  - `ganda repo audit`: "Repository passes", one advisory (`source-file-line-cap` on the same four
+    files this change does not touch).
+
 ### How to validate
 
 - Smoke: `aspire --version` is 17.0.0 (else `dotnet tool update -g Aspire.Cli --version 17.0.0`,
   then `aspire setup`); `./bin/dev build`; `./bin/dev run`, open the dashboard, and wait for
   web-server, api-server, grpc-server, ingress and web-migrations; then
-  `./bin/dev template-smoke --matrix`.
+  `./bin/dev template-smoke --matrix`. Fix pass: with an Aspire CLI below 17 on `PATH`,
+  `./bin/dev publish compose`; with 17.0.0, the same command runs.
 - Expect: build 0 warnings / 0 errors; `dev run` brings every resource to Running/Healthy with
   web-server on its allocated port (not :5000) and web-migrations Finished; template smoke
   SUCCEEDED for all six variants; `ganda nuget outdated` lists only the seven EF Core / Npgsql pins.
+  Fix pass: the pre-17 CLI is refused with the update command; the release job in `workflow.yml`
+  has an Install Aspire CLI step before Run CI Pipeline.
+
+### Review
+
+Round 1 (general, effort 3): M1 and M2 in `review/round-1/merged.md`, both fixed in the fix pass (release job installs the pinned Aspire CLI; `dev publish` and `dev deploy` refuse a CLI below 17.0).
+
+## Review
+
+- Round 1: M1 fixed, M2 fixed (fix pass 2026-11-22). Round 2 pending.
 
 ## Notes
 

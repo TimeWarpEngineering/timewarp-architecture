@@ -429,6 +429,23 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
         run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
 
+      # `dev workflow` builds the solution, which includes the AppHost. Since Aspire 17 (task 498) that
+      # build takes DCP and the dashboard from the Aspire CLI bundle. Same pinned install as the ci groups.
+      # Probe mode builds nothing, so it skips the install.
+      - name: Install Aspire CLI
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
+          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
+            exit 1
+          }
+          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
+          dotnet tool install --global Aspire.Cli --version $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Run CI Pipeline
         if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
         run: |
