@@ -122,6 +122,7 @@ deploy preflight) refuse a CLI below 17.0, because each builds the AppHost. `dev
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20272-a2e4-74a2-95ab-7f6b1c9327ac, max-turns 200, artifacts none, warning: 1 turn below the floor of 8 — 2026-11-22T08:50:11Z
 - Review oracle round 1: reviewer-grok (grok, vendor xai, model grok-4.7), session 01a20272-ddfd-7171-87fc-672623d3891e, effort 3, roster general, max-turns 200 (2026-11-22). Open findings M1 and M2 in `review/round-1/merged.md`. No disposition.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20272-ddfd-7171-87fc-672623d3891e, max-turns 200, artifacts general.md, merged.md — 2026-11-22T08:59:32Z
+- Review oracle round 2: reviewer-grok (grok, vendor xai, model grok-4.7), session 01a20280-df44-7a33-a806-7719c1fce04b, effort 1, roster general, max-turns 80 (2026-11-22). M1 and M2 stay fixed. No new findings. Disposition clean in `review/disposition.md`.
 
 ## Blocker: State 12.0.0-beta.19 needs Aspire 17 (resolved: migrated in this task)
 
@@ -255,10 +256,12 @@ task takes it. Holding DevTools.Hosting at beta.17 is a backward pin and is not 
 
 Round 1 (general, effort 3): M1 and M2 in `review/round-1/merged.md`, both fixed in the fix pass (release job installs the pinned Aspire CLI; `dev publish` and `dev deploy` refuse a CLI below 17.0).
 
+Round 2 (general, effort 1): re-review of that fix (`2df38b0bc`). M1 and M2 stay fixed. No new findings. Counts: bug 0 open / 2 fixed; suggestion 0; nit 0; 0 wontfix. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Review
 
-- Round 1: M1 fixed, M2 fixed (fix pass 2026-11-22). Round 2 pending.
-
+- Round 1: M1 fixed, M2 fixed (fix pass 2026-11-22).
+- Round 2: Done
 ## Notes
 
 - Filed per Steve 2026-11-22 ("file the task and lets do the updates"). Order changed the same day:
