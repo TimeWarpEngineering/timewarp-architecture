@@ -134,9 +134,6 @@
     "source/container-apps/api/projects/api-server/api-server.csproj": {
       "1591": 1
     },
-    "source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj": {
-      "ASPIRE010": 1
-    },
     "source/container-apps/aspire/projects/aspire-app-host/publish-target.cs": {
       "ASPIRECOMPUTE003": 1
     },

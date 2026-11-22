@@ -103,19 +103,19 @@ public class CliVersionGuard_Given_
     return Task.CompletedTask;
   }
 
-  public static Task Cli136OrLater_Should_AllowLaunchProfile()
+  public static Task Cli17OrLater_Should_RunTheAppHost()
   {
-    AspireRun.ValidateCliVersion("13.6.0+56f3e9c0", AspireRun.MinimumLaunchProfileVersion, "--launch-profile").ShouldBeNull();
-    AspireRun.ValidateCliVersion("14.0.0", AspireRun.MinimumLaunchProfileVersion, "--launch-profile").ShouldBeNull();
+    AspireRun.ValidateCliVersion("17.0.0+2d325b13", AspireRun.MinimumRunVersion, AspireRun.RunRequirement).ShouldBeNull();
+    AspireRun.ValidateCliVersion("18.0.0", AspireRun.MinimumRunVersion, AspireRun.RunRequirement).ShouldBeNull();
     return Task.CompletedTask;
   }
 
-  public static Task CliOlderThan136_Should_FailWithUpdateCommand()
+  public static Task CliOlderThan17_Should_FailWithUpdateCommand()
   {
-    string? error = AspireRun.ValidateCliVersion("13.5.4+deadbeef", AspireRun.MinimumLaunchProfileVersion, "--launch-profile");
+    string? error = AspireRun.ValidateCliVersion("13.6.5+b33d2220", AspireRun.MinimumRunVersion, AspireRun.RunRequirement);
     error.ShouldNotBeNull();
-    error.ShouldStartWith("--launch-profile requires Aspire CLI 13.6 or later");
-    error.ShouldContain("13.5.4");
+    error.ShouldStartWith($"{AspireRun.RunRequirement} requires Aspire CLI 17.0 or later");
+    error.ShouldContain("13.6.5");
     error.ShouldContain("aspire update --self");
     error.ShouldContain("dotnet tool update -g Aspire.Cli");
     return Task.CompletedTask;
@@ -123,7 +123,7 @@ public class CliVersionGuard_Given_
 
   public static Task UnparseableVersion_Should_FailWithUpdateCommand()
   {
-    string? error = AspireRun.ValidateCliVersion("garbage", AspireRun.MinimumLaunchProfileVersion, "--launch-profile");
+    string? error = AspireRun.ValidateCliVersion("garbage", AspireRun.MinimumRunVersion, AspireRun.RunRequirement);
     error.ShouldNotBeNull();
     error.ShouldContain("aspire update --self");
     return Task.CompletedTask;
@@ -135,27 +135,27 @@ public class AssessCliVersion_Given_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<AssessCliVersion_Given_>();
 
-  private static readonly Version RepoVersion = new(13, 6, 2);
+  private static readonly Version RepoVersion = new(17, 0, 2);
 
   public static Task OlderThanRepoButAboveMinimum_Should_WarnWithUpdateCommand()
   {
     AspireRun.CliVersionAssessment assessment = AspireRun.AssessCliVersion(
-      "13.6.1+56f3e9c0", AspireRun.MinimumLaunchProfileVersion, "--launch-profile", RepoVersion);
+      "17.0.1+56f3e9c0", AspireRun.MinimumRunVersion, AspireRun.RunRequirement, RepoVersion);
     assessment.Error.ShouldBeNull();
     assessment.Warning.ShouldNotBeNull();
-    assessment.Warning.ShouldContain("13.6.1");
-    assessment.Warning.ShouldContain("13.6.2");
+    assessment.Warning.ShouldContain("17.0.1");
+    assessment.Warning.ShouldContain("17.0.2");
     assessment.Warning.ShouldContain(AspireRun.ToolUpdateCommand);
     return Task.CompletedTask;
   }
 
   public static Task SameOrNewerThanRepo_Should_NotWarn()
   {
-    AspireRun.AssessCliVersion("13.6.2+abc", AspireRun.MinimumLaunchProfileVersion, "--launch-profile", RepoVersion)
+    AspireRun.AssessCliVersion("17.0.2+abc", AspireRun.MinimumRunVersion, AspireRun.RunRequirement, RepoVersion)
       .Warning.ShouldBeNull();
-    AspireRun.AssessCliVersion("13.7.0", AspireRun.MinimumLaunchProfileVersion, "--launch-profile", RepoVersion)
+    AspireRun.AssessCliVersion("17.1.0", AspireRun.MinimumRunVersion, AspireRun.RunRequirement, RepoVersion)
       .Warning.ShouldBeNull();
-    AspireRun.AssessCliVersion("14.0.0", AspireRun.MinimumLaunchProfileVersion, "--launch-profile", RepoVersion)
+    AspireRun.AssessCliVersion("18.0.0", AspireRun.MinimumRunVersion, AspireRun.RunRequirement, RepoVersion)
       .Error.ShouldBeNull();
     return Task.CompletedTask;
   }
@@ -163,9 +163,9 @@ public class AssessCliVersion_Given_
   public static Task BelowHardMinimum_Should_Refuse()
   {
     AspireRun.CliVersionAssessment assessment = AspireRun.AssessCliVersion(
-      "13.5.4+deadbeef", AspireRun.MinimumLaunchProfileVersion, "--launch-profile", RepoVersion);
+      "13.6.5+b33d2220", AspireRun.MinimumRunVersion, AspireRun.RunRequirement, RepoVersion);
     assessment.Error.ShouldNotBeNull();
-    assessment.Error.ShouldStartWith("--launch-profile requires Aspire CLI 13.6 or later");
+    assessment.Error.ShouldStartWith($"{AspireRun.RunRequirement} requires Aspire CLI 17.0 or later");
     assessment.Error.ShouldContain(AspireRun.ToolUpdateCommand);
     assessment.Warning.ShouldNotBeNull();
     assessment.Warning.ShouldContain(AspireRun.ToolUpdateCommand);
@@ -175,7 +175,7 @@ public class AssessCliVersion_Given_
   public static Task UnparseableVersion_Should_RefuseWithoutALagWarning()
   {
     AspireRun.CliVersionAssessment assessment = AspireRun.AssessCliVersion(
-      "garbage", AspireRun.MinimumLaunchProfileVersion, "--launch-profile", RepoVersion);
+      "garbage", AspireRun.MinimumRunVersion, AspireRun.RunRequirement, RepoVersion);
     assessment.Error.ShouldNotBeNull();
     assessment.Warning.ShouldBeNull();
     return Task.CompletedTask;
@@ -210,7 +210,7 @@ public class RepoAspireVersion_Given_
   public static Task RepoFiles_Should_ShareOneAspireVersion()
   {
     string root = RepoRoot();
-    string? error = AspireRun.ValidateAspireVersionSources(
+    string? error = AspireVersionSources.Validate(
       File.ReadAllText(Path.Combine(root, AspireRun.DirectoryPackagesPropsFile)),
       File.ReadAllText(Path.Combine(root, AspireRun.AppHostProject)),
       File.ReadAllText(Path.Combine(root, ".github/workflows/workflow.yml")));
@@ -226,19 +226,47 @@ public class RepoAspireVersion_Given_
         <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.6.2" />
       </Project>
       """;
-    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), WorkflowReadingProperty());
+    string? error = AspireVersionSources.Validate(props, AppHostUsingProperty(), WorkflowReadingProperty());
     error.ShouldNotBeNull();
     error.ShouldContain("$(AspireVersion)");
     return Task.CompletedTask;
   }
 
-  public static Task LiteralSdk_Should_Fail()
+  public static Task ObsoleteAppHostSdk_Should_Fail()
   {
-    const string props = "<AspireVersion>13.6.2</AspireVersion>";
-    const string project = "<Project Sdk=\"Aspire.AppHost.Sdk/13.6.2\">";
-    string? error = AspireRun.ValidateAspireVersionSources(props, project, WorkflowReadingProperty());
+    const string props = "<AspireVersion>17.0.0</AspireVersion>";
+    const string literal = "<Project Sdk=\"Aspire.AppHost.Sdk/17.0.0\">";
+    const string property = "<Project Sdk=\"Microsoft.NET.Sdk\"><Sdk Name=\"Aspire.AppHost.Sdk\" Version=\"$(AspireVersion)\" /></Project>";
+    foreach (string project in new[] { literal, property })
+    {
+      string? error = AspireVersionSources.Validate(props, project, WorkflowReadingProperty());
+      error.ShouldNotBeNull();
+      error.ShouldContain("ASPIRE012");
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task MissingAppHostPackage_Should_Fail()
+  {
+    const string props = "<AspireVersion>17.0.0</AspireVersion>";
+    const string project = "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><PackageReference Include=\"Aspire.Hosting.AppHost\" /></ItemGroup></Project>";
+    string? error = AspireVersionSources.Validate(props, project, WorkflowReadingProperty());
     error.ShouldNotBeNull();
-    error.ShouldContain("literal");
+    error.ShouldContain("Aspire.Hosting.Dotnet");
+    return Task.CompletedTask;
+  }
+
+  public static Task AppHostPackageWithOwnVersion_Should_Fail()
+  {
+    const string props = "<AspireVersion>17.0.0</AspireVersion>";
+    string project = AppHostUsingProperty().Replace(
+      "<PackageReference Include=\"Aspire.Hosting.Dotnet\" />",
+      "<PackageReference Include=\"Aspire.Hosting.Dotnet\" VersionOverride=\"13.6.5\" />",
+      StringComparison.Ordinal);
+    string? error = AspireVersionSources.Validate(props, project, WorkflowReadingProperty());
+    error.ShouldNotBeNull();
+    error.ShouldContain("$(AspireVersion)");
     return Task.CompletedTask;
   }
 
@@ -246,7 +274,7 @@ public class RepoAspireVersion_Given_
   {
     const string props = "<AspireVersion>13.6.2</AspireVersion>";
     const string workflow = "dotnet tool install --global Aspire.Cli --version 13.6.2";
-    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), workflow);
+    string? error = AspireVersionSources.Validate(props, AppHostUsingProperty(), workflow);
     error.ShouldNotBeNull();
     error.ShouldContain("literal");
     return Task.CompletedTask;
@@ -265,7 +293,7 @@ public class RepoAspireVersion_Given_
         <PackageVersion Include="Aspire.Hosting.Yarp" Version="$(AspireVersion)" />
       </Project>
       """;
-    AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), WorkflowReadingProperty())
+    AspireVersionSources.Validate(props, AppHostUsingProperty(), WorkflowReadingProperty())
       .ShouldBeNull();
     return Task.CompletedTask;
   }
@@ -273,7 +301,7 @@ public class RepoAspireVersion_Given_
   public static Task UnparseableProperty_Should_NameTheValue()
   {
     const string props = "<AspireVersion>not-a-version</AspireVersion>";
-    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), WorkflowReadingProperty());
+    string? error = AspireVersionSources.Validate(props, AppHostUsingProperty(), WorkflowReadingProperty());
     error.ShouldNotBeNull();
     error.ShouldContain("not-a-version");
     return Task.CompletedTask;
@@ -286,7 +314,7 @@ public class RepoAspireVersion_Given_
       # The version is <AspireVersion> in Directory.Packages.props
       dotnet tool install --global Aspire.Cli
       """;
-    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), workflow);
+    string? error = AspireVersionSources.Validate(props, AppHostUsingProperty(), workflow);
     error.ShouldNotBeNull();
     error.ShouldContain("without --version");
     return Task.CompletedTask;
@@ -299,7 +327,7 @@ public class RepoAspireVersion_Given_
       # The version is <AspireVersion> in Directory.Packages.props
       dotnet tool install --global Aspire.Cli --version ${{ vars.ASPIRE_CLI }}
       """;
-    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), workflow);
+    string? error = AspireVersionSources.Validate(props, AppHostUsingProperty(), workflow);
     error.ShouldNotBeNull();
     error.ShouldContain("does not come from");
     return Task.CompletedTask;
@@ -309,7 +337,7 @@ public class RepoAspireVersion_Given_
   {
     const string props = "<AspireVersion>13.6.2</AspireVersion>";
     string workflow = WorkflowReadingProperty().Replace("--version \"$version\"", "--version \"$other\"", StringComparison.Ordinal);
-    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), workflow);
+    string? error = AspireVersionSources.Validate(props, AppHostUsingProperty(), workflow);
     error.ShouldNotBeNull();
     error.ShouldContain("does not come from");
     return Task.CompletedTask;
@@ -328,7 +356,10 @@ public class RepoAspireVersion_Given_
   }
 
   private static string AppHostUsingProperty() =>
-    "<Project Sdk=\"Microsoft.NET.Sdk\"><Sdk Name=\"Aspire.AppHost.Sdk\" Version=\"$(AspireVersion)\" /></Project>";
+    "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup>"
+    + "<PackageReference Include=\"Aspire.Hosting.AppHost\" />"
+    + "<PackageReference Include=\"Aspire.Hosting.Dotnet\" />"
+    + "</ItemGroup></Project>";
 
   private static string WorkflowReadingProperty() =>
     "version=$(sed -n 's/.*<AspireVersion>\\([^<]*\\)<\\/AspireVersion>.*/\\1/p' Directory.Packages.props)\n"

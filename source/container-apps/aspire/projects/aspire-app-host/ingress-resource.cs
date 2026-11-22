@@ -130,8 +130,8 @@ internal static class IngressResource
     // Kubernetes and ACA manifests stay on that image. DisableForwardedHeaders stops Aspire
     // injecting ASPNETCORE_FORWARDEDHEADERS_ENABLED, which trusts every peer and does not
     // honor X-Forwarded-Host.
-    IResourceBuilder<ProjectResource> yarpProject = builder
-      .AddProject<Projects.yarp>(YarpResourceName, options => options.LaunchProfileName = "Yarp")
+    IResourceBuilder<DotnetProjectResource> yarpProject = builder
+      .AddDotnetProject(YarpResourceName, YarpProjectPath, options => options.LaunchProfileName = "Yarp")
       .DisableForwardedHeaders();
 
     // The launch profile's applicationUrl also carries 63610/63620. Overwrite its ports with the

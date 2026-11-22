@@ -13,13 +13,14 @@
 //      pointing at its directory, so the facts inspect exactly the files CI uploads instead of their
 //      own in-proc publish. One run builds and starts the test host once instead of once per target.
 //      The rules live once, in the test suite; this runner only points it at the CLI output.
-//      Arguments (filter, --no-build) come from AspirePublishTargets.
+//      The filter comes from AspirePublishTargets; -c Release and --no-build are DotNet.Test() options.
 // helm lint is opportunistic: GitHub's ubuntu runners ship Helm, so CI always lints; a machine
 // without helm on PATH skips the lint with a notice rather than failing, because the safety suite
 // (not the linter) is the gate. It runs after the safety suite passes, as before task 367.
 // Runtime neutrality (task 277): `aspire publish` only writes files — no image build, no deploy —
 // and nothing here calls a container CLI or a cluster.
-// The Aspire CLI must be at least 13.6 (refused below that). A CLI older than <AspireVersion>
+// The Aspire CLI must be at least 17.0 (refused below that): since Aspire 17 (task 498) the AppHost
+// build takes DCP and the dashboard from the CLI bundle. A CLI older than <AspireVersion>
 // in Directory.Packages.props warns, with `dotnet tool update -g Aspire.Cli`, and publish continues.
 // PublishAndCheckAsync and PublishFilesAsync both check. dev deploy migrate skips the aspire
 // preflight, so PublishFilesAsync is the check on that path. dev deploy already warned in
@@ -35,7 +36,7 @@ namespace DevCli.Services;
 internal static class AspirePublish
 {
   internal const string SafetySuiteDirectory = "tests/container-apps/aspire/aspire-tests";
-  private static readonly Version MinimumCliVersion = new(13, 6);
+  private static readonly Version MinimumCliVersion = new(17, 0);
 
   /// <summary>
   /// Publishes every target, then checks them all in one safety-suite run. Returns the output
@@ -81,10 +82,16 @@ internal static class AspirePublish
 
     string names = string.Join(", ", targets.Select(target => target.Name));
     terminal.WriteLine($"\nChecking {names} output for production safety...");
-    ShellBuilder check = Shell.Builder("dotnet")
-      .WithArguments(AspirePublishTargets.SafetySuiteTestArguments(targets, noBuild))
+    DotNetTestBuilder check = DotNet.Test()
+      .WithConfiguration("Release")
+      .WithArguments(AspirePublishTargets.SafetySuiteFilterArguments(targets))
       .WithWorkingDirectory(Path.Combine(repoRoot, SafetySuiteDirectory))
       .WithNoValidation();
+    if (noBuild)
+    {
+      check = check.WithNoBuild().WithNoRestore();
+    }
+
     for (int index = 0; index < targets.Count; index++)
     {
       check = check.WithEnvironmentVariable(targets[index].OutputEnvironmentVariable, outputDirectories[index]);

@@ -3,7 +3,10 @@
 #endregion
 
 #region Design
-// Kept free of Amuru/Terminal so tests/tools/dev-cli-tests can Compile-include this file.
+// Kept free of Amuru/Terminal so tests/tools/dev-cli-tests can Compile-include this file. The
+// `dotnet build` / `dotnet test` verbs and their typed options (-c Release, --no-build,
+// --no-restore) are DotNet.Build() / DotNet.Test() calls in test-command.cs (AMURU0001); this file
+// holds only the arguments that follow them.
 // Task 370: `dev test` runs projects in parallel, and concurrent `dotnet test` builds would race on
 // the obj/ and bin/ folders of projects they share. So nothing builds inside `dotnet test`: a build
 // phase runs first, one build at a time, and every `dotnet test` gets --no-build --no-restore.
@@ -36,12 +39,9 @@ internal static class DotNetTestArguments
       .ToHashSet(StringComparer.Ordinal);
   }
 
-  /// <summary>Build arguments for one project the solution build does not cover (cwd = project directory).</summary>
-  internal static string[] Build() => ["build", "-c", "Release"];
-
   /// <summary>
   /// MTP code-coverage flags (Microsoft.Testing.Extensions.CodeCoverage, referenced by tests/Directory.Build.props).
-  /// The results directory is <see cref="CoverageRoot"/>; <see cref="Test"/> appends one folder per project.
+  /// The results directory is <see cref="CoverageRoot"/>; <see cref="PlatformArguments"/> appends one folder per project.
   /// </summary>
   internal const string CoverageFlags =
     "--results-directory artifacts/coverage --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml";
@@ -50,13 +50,14 @@ internal static class DotNetTestArguments
   internal const string CoverageRoot = "artifacts/coverage";
 
   /// <summary>
-  /// Test arguments: the build phase already built and restored every project. MTP coverage flags
-  /// follow <c>--</c>; <paramref name="resultsDirectory"/> replaces <see cref="CoverageRoot"/> so each
-  /// project writes its own Cobertura file (parallel projects never share one).
+  /// Arguments after the typed <c>dotnet test -c Release --no-build --no-restore</c> options (the
+  /// build phase already built and restored every project). MTP coverage flags follow <c>--</c>;
+  /// <paramref name="resultsDirectory"/> replaces <see cref="CoverageRoot"/> so each project writes
+  /// its own Cobertura file (parallel projects never share one).
   /// </summary>
-  internal static string[] Test(string resultsDirectory)
+  internal static string[] PlatformArguments(string resultsDirectory)
   {
-    List<string> arguments = ["test", "-c", "Release", "--no-build", "--no-restore", "--"];
+    List<string> arguments = ["--"];
     string[] flags = CoverageFlags.Split(' ');
     flags[1] = resultsDirectory;
     arguments.AddRange(flags);

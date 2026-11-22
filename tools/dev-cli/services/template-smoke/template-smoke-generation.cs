@@ -41,20 +41,14 @@ internal sealed class TemplateSmokeGeneration
     string outputDir = Path.Combine(workDir, name);
     Terminal.WriteLine($"\n── Generate {name} ──".Cyan());
 
-    List<string> args =
-    [
-      "new", templateShortName,
-      "-n", name,
-      "-o", outputDir,
-      "--force",
-    ];
-    args.AddRange(extraArgs);
-
-    ShellBuilder generateBuilder = Shell.Builder("dotnet")
-      .WithArguments([.. args])
+    DotNetNewBuilder generateBuilder = DotNet.New(templateShortName)
+      .WithName(name)
+      .WithOutput(outputDir)
+      .WithForce()
+      .WithTemplateArgs(extraArgs)
       .WithWorkingDirectory(RepoRoot)
       .WithNoValidation();
-    generateBuilder = ApplyShellEnvironment(generateBuilder, environment);
+    generateBuilder = ApplyCommandEnvironment(generateBuilder, environment);
 
     CommandOutput generate = await generateBuilder.CaptureAsync(ct);
 
@@ -143,19 +137,6 @@ internal sealed class TemplateSmokeGeneration
 
     Terminal.WriteLine($"{name} OK".Green());
     return true;
-  }
-
-  private static ShellBuilder ApplyShellEnvironment(
-    ShellBuilder builder,
-    IReadOnlyDictionary<string, string>? environment)
-  {
-    if (environment is null)
-      return builder;
-
-    foreach ((string key, string value) in environment)
-      builder = builder.WithEnvironmentVariable(key, value);
-
-    return builder;
   }
 
   private static TBuilder ApplyCommandEnvironment<TBuilder>(
