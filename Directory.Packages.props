@@ -7,11 +7,14 @@
   <!-- Central Package Management - add your package versions here -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <!-- One Aspire version. The AppHost SDK (Sdk Version="$(AspireVersion)"), every Aspire.*
-         package pin, and the CI Aspire.Cli install read this. The workflow assigns that value
-         on one line so the dev-cli check can see the property. Preview packages keep their own
-         build suffix after the property: $(AspireVersion)-preview… -->
-    <AspireVersion>13.6.5</AspireVersion>
+    <!-- One Aspire version. Every Aspire.* package pin (Aspire.Hosting.AppHost and
+         Aspire.Hosting.Dotnet included) and the CI Aspire.Cli install read this. The workflow
+         assigns that value on one line so the dev-cli check can see the property. Preview packages
+         keep their own build suffix after the property: $(AspireVersion)-preview…
+         Aspire 17 (task 498, 2026-11-22): the AppHost is Microsoft.NET.Sdk plus these packages,
+         AddDotnetProject replaces AddProject, and the AppHost takes DCP and the dashboard from the
+         Aspire CLI bundle (ASPIRE013), so the installed `aspire` CLI must be this version. -->
+    <AspireVersion>17.0.0</AspireVersion>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
     <!-- Nuru stays on the 4.0.0 betas: `ganda nuget outdated` treats stable 3.0.0 as current, but the
@@ -101,14 +104,17 @@
          Azure Database for PostgreSQL Flexible Server. Publish-only (Publish:Target=aca); run mode never declares them. -->
     <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="$(AspireVersion)" />
     <PackageVersion Include="Aspire.Hosting.Azure.PostgreSQL" Version="$(AspireVersion)" />
-    <!-- Preview: task 070-004 Kubernetes publish environment (AddKubernetesEnvironment → Helm chart). Publish-only.
-         The prefix is AspireVersion. The preview build suffix is this package's own build (no stable release of it). -->
-    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="$(AspireVersion)-preview.1.26559.7" />
+    <!-- Task 070-004 Kubernetes publish environment (AddKubernetesEnvironment → Helm chart). Publish-only.
+         Stable since Aspire 17.0.0 (task 498), so it follows the property with no preview suffix. -->
+    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="$(AspireVersion)" />
     <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same AspireVersion prefix; own preview build suffix. -->
-    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="$(AspireVersion)-preview.1.26559.7" />
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="$(AspireVersion)-preview.1.26567.5" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="11.0.1" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
-    <!-- Aspire AppHost -->
+    <!-- Aspire AppHost (Microsoft.NET.Sdk since Aspire 17, task 498): AppHost build targets and
+         AddDotnetProject. The obsolete Aspire.AppHost.Sdk supplied both before (ASPIRE012). -->
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(AspireVersion)" />
+    <PackageVersion Include="Aspire.Hosting.Dotnet" Version="$(AspireVersion)" />
     <!-- No first-party code calls MessagePack APIs directly; this pin only lifts StreamJsonRpc's
          transitive MessagePack dependency for flag-off graphs (no Yarp) where Aspire.Hosting.Yarp
          isn't present to do the lift itself (see aspire-app-host.csproj). Bumped 2.5.302 -> 3.1.8
