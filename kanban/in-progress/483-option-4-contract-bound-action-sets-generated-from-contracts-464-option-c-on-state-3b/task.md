@@ -152,7 +152,7 @@ pinned on master, so the 2026-11-07 blocker is gone. The pieces line up like thi
 
 ### Gates
 
-- `./bin/dev build`: GATE_BUILD
+- `./bin/dev build`: Build succeeded, 0 Warning(s), 0 Error(s) (after the last product edit).
 - `tests/analyzers/timewarp-architecture-sourcegenerator-tests/contract-state-source-generator-tests.cs` (new, with
   `contract-state-host-sources.cs`): not a standalone runfile (project test, no `JARIBU_MULTI` guard; CI runs it). Ran
   its project: `dotnet run --project tests/analyzers/timewarp-architecture-sourcegenerator-tests -c Release --no-build
@@ -171,7 +171,10 @@ pinned on master, so the 2026-11-07 blocker is gone. The pieces line up like thi
 - `./bin/dev template-smoke` (default variant): Template smoke SUCCEEDED (generated web Jaribu 464/464, api 9/9).
 - `./bin/dev lint-skills`: 9 skills linted, 9 passed.
 - `./bin/dev check-version`: source 2.0.0-beta.32 is one prerelease ahead of published 2.0.0-beta.31; no bump.
-- `ganda repo audit`: GATE_AUDIT
+- `ganda repo audit`: exit 0, "Repository passes — 2 advisory (non-blocking) warning(s)". Both warnings were there
+  before this task: `source-file-line-cap` (warning severity since 469-001) for three generated EF migration files and
+  the done task 238 research runfile, and `vscode-window-icon` for the git-ignored local `.vscode/settings.json`.
+  Neither is fixable on this id.
 
 ### How to validate
 
