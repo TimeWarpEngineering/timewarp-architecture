@@ -52,12 +52,19 @@ updating; do not work around it.
 - [ ] `ganda repo audit` exits 0 with `source-file-line-cap` PASS on the branch.
 - [ ] Temporarily grow one recorded file by a line and confirm the check fails, then revert.
       Record that proof in `## Results`.
-- [ ] `documentation/developer/guides/analyzer-package-split.md`: the Consumers section says
-      timewarp-state pins TimeWarp.Architecture.Analyzers 2.0.0-beta.31. State dropped that
-      reference on 2026-11-10 (state task 153, commit fb4ca031) and takes TWA0004 from
-      TimeWarp.SourceGenerators. Replace the sentence with the current fact: State does not
-      reference any TimeWarp.Architecture package; the only outside consumer is crunchit
-      (Analyzers, Generators, Attributes at 2.0.0-beta.9). (Steve, 2026-11-22.)
+- [ ] Retire `documentation/developer/guides/analyzer-package-split.md` (Steve, 2026-11-22:
+      "retire it"). documentation/ is retired; live rules live in a Design region or skill,
+      history lives in the kitchen (done task 486 holds the split record). Steps:
+      - Move the live rule into the header of
+        `source/analyzers/timewarp-architecture-convention-analyzers/AnalyzerReleases.Unshipped.md`,
+        replacing its `Spec: documentation/...` line: the split test (a rule that checks an
+        Architecture concept such as contracts, endpoints, aggregates, slices, Aspire, or the
+        template stays here; a rule that checks only C# file or name shape belongs in
+        TimeWarp.SourceGenerators), the next free TWA id, and "history: task 486". Drop the
+        stale State sentence there too: State no longer references any TimeWarp.Architecture
+        package (state task 153, 2026-11-10); do not list consumers.
+      - Repoint the AGENTS.md "Diagnostics TWA / TWE / SG" row from the guide to that header.
+      - Delete the guide. `grep -rn analyzer-package-split --exclude-dir=kanban .` returns nothing.
 - [ ] No product code changes. Template pack is unaffected (`.timewarp/` is not template
       content; confirm `.template.config` does not include it or add an exclude if it does).
 
