@@ -175,3 +175,12 @@ What would unblock this walk (Steve's call; no cross-repo task or PR was opened)
 ## Blocked
 
 2026-11-07: Steve to choose an unblock path (task 483 Notes, "Blocker"). Mediator 15.0.0-beta.5 throws NoHandlerException for any Action a sibling generator emits, because 3b only covers requests written in source. Options: (1) a Mediator change to declare generated requests, plus a State change for the manifest; (2) re-scope so a code fix writes the Action shells into source and this generator emits only Handlers and hooks; (3) move contract-bound states into a referenced [MediatorAssembly] project.
+
+2026-11-17: Steve chose option 1. Filed timewarp-mediator task 043 (declared generator-emitted
+requests: a pattern attribute so `Send` dispatches request types another generator emits) and
+timewarp-state task 160 (manifest, catalog, dispatch, and analyzers honor that declaration).
+This task resumes when both ship and `Directory.Packages.props` pins move to those versions.
+Re-verified before filing: Mediator master 678beec..e3e359a and State master 0aaa1f92..e52b5fd5
+changed only CI and pins, no discovery or emission logic, so the Blocker facts above still hold.
+The `[ContractState]` attribute here derives from Mediator 043's attribute; the spec's "the
+generator emits each Action" stands as written.

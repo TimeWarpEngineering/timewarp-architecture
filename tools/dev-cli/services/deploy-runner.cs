@@ -19,7 +19,7 @@
 //      the ingress URL through DeployBrowser, the same launcher as `dev open` (DeploySmokeRunner).
 //      --no-browser prints the URL and opens nothing. --yes does not change that.
 // `dev publish`, `dev deploy migrate`, and `dev open` stay the one-step verbs.
-// Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+ (refused below that; a CLI older
+// Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 17.0+ (refused below that; a CLI older
 // than Directory.Packages.props <AspireVersion> warns once, and the publish step does not repeat it);
 // for kubernetes, Helm 4.2+, a
 // current kubectl context whose API answers, which is printed — any context works, a local kind cluster

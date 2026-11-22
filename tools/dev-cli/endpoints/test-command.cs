@@ -170,8 +170,8 @@ internal sealed class TestCommand : ICommand<Unit>
       foreach (string project in projects.Where(p => !SolutionProjects.Contains(Path.GetFullPath(p))))
       {
         Terminal.WriteLine($"Building {Path.GetFileNameWithoutExtension(project)} (not in the solution)...");
-        CommandResult build = Shell.Builder("dotnet")
-          .WithArguments(DotNetTestArguments.Build())
+        CommandResult build = DotNet.Build()
+          .WithConfiguration("Release")
           .WithWorkingDirectory(ProjectDirectory(project))
           .WithNoValidation()
           .Build();
@@ -329,8 +329,11 @@ internal sealed class TestCommand : ICommand<Unit>
     /// </summary>
     private static CommandResult BuildTestCommand(string project, int portBase)
     {
-      return Shell.Builder("dotnet")
-        .WithArguments(DotNetTestArguments.Test(CoverageDirectory(project)))
+      return DotNet.Test()
+        .WithConfiguration("Release")
+        .WithNoBuild()
+        .WithNoRestore()
+        .WithArguments(DotNetTestArguments.PlatformArguments(CoverageDirectory(project)))
         .WithWorkingDirectory(ProjectDirectory(project))
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, portBase.ToString(CultureInfo.InvariantCulture))
         .WithNoValidation()

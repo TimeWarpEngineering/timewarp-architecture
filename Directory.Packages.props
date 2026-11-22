@@ -7,21 +7,24 @@
   <!-- Central Package Management - add your package versions here -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <!-- One Aspire version. The AppHost SDK (Sdk Version="$(AspireVersion)"), every Aspire.*
-         package pin, and the CI Aspire.Cli install read this. The workflow assigns that value
-         on one line so the dev-cli check can see the property. Preview packages keep their own
-         build suffix after the property: $(AspireVersion)-preview… -->
-    <AspireVersion>13.6.5</AspireVersion>
+    <!-- One Aspire version. Every Aspire.* package pin (Aspire.Hosting.AppHost and
+         Aspire.Hosting.Dotnet included) and the CI Aspire.Cli install read this. The workflow
+         assigns that value on one line so the dev-cli check can see the property. Preview packages
+         keep their own build suffix after the property: $(AspireVersion)-preview…
+         Aspire 17 (task 498, 2026-11-22): the AppHost is Microsoft.NET.Sdk plus these packages,
+         AddDotnetProject replaces AddProject, and the AppHost takes DCP and the dashboard from the
+         Aspire CLI bundle (ASPIRE013), so the installed `aspire` CLI must be this version. -->
+    <AspireVersion>17.0.0</AspireVersion>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
     <!-- Nuru stays on the 4.0.0 betas: `ganda nuget outdated` treats stable 3.0.0 as current, but the
          `ganda repo audit` nuru check requires the 4.0.0 line and blocks signing on 3.0.0 (task 389). -->
-    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.5" />
-    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.5" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.10" />
     <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.2" />
-    <!-- 2.0.1-beta.1, not stable 2.0.0: TimeWarp.Nuru 4.0.0-beta.15 depends on
+    <!-- 2.0.1-beta.1, not stable 2.0.0: TimeWarp.Nuru 4.0.0-beta.16 depends on
          TimeWarp.Build.Tasks >= 2.0.1-beta.1, so a 2.0.0 pin is NU1605 (downgrade) in the dev-cli
          runfile. Take the next stable when it is at least this version (task 492). -->
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.1-beta.1" />
@@ -57,7 +60,7 @@
          2.0.0-beta.30). Consumer pin only: check-version reads packable projects under source/,
          and this id is absent from msbuild/timewarp-platform-packages.props and from
          PlatformPinIncludeFragments. Leave the version on the contracts release line. -->
-    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.33" />
+    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.34" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
     <!-- Configuration.Abstractions, DependencyInjection.Abstractions, Hosting.Abstractions, and
@@ -65,11 +68,13 @@
          PackageReferences to them are NU1510, so those pins are gone. A co-located runfile must
          not take Options with a #:package directive either.
          Shared-framework Microsoft.* and System.* pins on this train are 11.0.0, matching SDK
-         11.0.100 (task 492). The EF family is 11.0.0 with the Npgsql provider (task 494). -->
+         11.0.100 (task 492). The Extensions telemetry, resilience, service-discovery, AI, and
+         diagnostics-testing family is 11.0.1 (task 498). The EF Core family is 11.0.0 with
+         the Npgsql provider (task 494). -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="11.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0" />
     <PackageVersion Include="System.Threading.RateLimiting" Version="11.0.0" />
   </ItemGroup>
@@ -99,14 +104,17 @@
          Azure Database for PostgreSQL Flexible Server. Publish-only (Publish:Target=aca); run mode never declares them. -->
     <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="$(AspireVersion)" />
     <PackageVersion Include="Aspire.Hosting.Azure.PostgreSQL" Version="$(AspireVersion)" />
-    <!-- Preview: task 070-004 Kubernetes publish environment (AddKubernetesEnvironment → Helm chart). Publish-only.
-         The prefix is AspireVersion. The preview build suffix is this package's own build (no stable release of it). -->
-    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="$(AspireVersion)-preview.1.26559.7" />
+    <!-- Task 070-004 Kubernetes publish environment (AddKubernetesEnvironment → Helm chart). Publish-only.
+         Stable since Aspire 17.0.0 (task 498), so it follows the property with no preview suffix. -->
+    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="$(AspireVersion)" />
     <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same AspireVersion prefix; own preview build suffix. -->
-    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="$(AspireVersion)-preview.1.26559.7" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="11.0.0" />
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="$(AspireVersion)-preview.1.26567.5" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="11.0.1" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
-    <!-- Aspire AppHost -->
+    <!-- Aspire AppHost (Microsoft.NET.Sdk since Aspire 17, task 498): AppHost build targets and
+         AddDotnetProject. The obsolete Aspire.AppHost.Sdk supplied both before (ASPIRE012). -->
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(AspireVersion)" />
+    <PackageVersion Include="Aspire.Hosting.Dotnet" Version="$(AspireVersion)" />
     <!-- No first-party code calls MessagePack APIs directly; this pin only lifts StreamJsonRpc's
          transitive MessagePack dependency for flag-off graphs (no Yarp) where Aspire.Hosting.Yarp
          isn't present to do the lift itself (see aspire-app-host.csproj). Bumped 2.5.302 -> 3.1.8
@@ -128,13 +136,13 @@
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0" />
     <!-- Roslyn lift for Microsoft.EntityFrameworkCore.Design (rc.3 and 11.0.0 GA both take
          Microsoft.CodeAnalysis.*.Workspaces 5.9.0, whose Common/CSharp deps are exact).
-         TimeWarp.SourceGenerators 1.0.0-beta.16 lifts Microsoft.CodeAnalysis.CSharp to 5.12.0 in
+         TimeWarp.SourceGenerators 1.0.0-beta.17 lifts Microsoft.CodeAnalysis.CSharp to 5.12.0 in
          the same graph, which is NU1608. Each project that references EF Design also references
          Microsoft.CodeAnalysis.CSharp.Workspaces (pinned under Test Packages) and this package
          with PrivateAssets="all", so the Workspaces family moves to 5.12.0 with it (task 492). -->
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="5.12.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.2" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.17.0" />
 
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="11.0.0" />
     <!-- Microsoft/MIT, BCL-adjacent (System.Formats.Cbor.dll ships in the ASP.NET Core shared
@@ -144,37 +152,43 @@
     <PackageVersion Include="System.Formats.Cbor" Version="11.0.0" />
     <!-- 15.0 reuses the id TimeWarp.Mediator for the contracts assembly and ships TWM001–TWM004
          inside that package. TimeWarp.Mediator.Contracts and TimeWarp.Mediator.Analyzers stop at
-         14.0.0. TimeWarp.Nuru 4.0.0-beta.15 depends on Mediator 15, so dev-cli and
-         agent-identity-cli handlers are IRequestHandler and return ValueTask (task 486). -->
-    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.9" />
-    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.9" />
+         14.0.0. TimeWarp.Nuru 4.0.0-beta.16 depends on Mediator 15, so dev-cli and
+         agent-identity-cli handlers are IRequestHandler and return ValueTask (task 486).
+         15.0.0-beta.10 adds GeneratedRequestPatternAttribute and TWM013. Additive; no
+         call site here declares a generated request (task 498). -->
+    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.10" />
     <!-- FastEndpoints 9.0.0 is the GA line for net11.0. FastEndpoints.OpenApi 9.0.0 (net11.0)
          depends on Microsoft.AspNetCore.OpenApi 11.0.0, which is the pin below, on the same
          11.0.0 train as ASP.NET Core. Microsoft.AspNetCore.OpenApi 11.0.0 depends on
-         Microsoft.OpenApi [3.11.0, 4.0.0), and 3.11.0 is the Microsoft.OpenApi pin. -->
+         Microsoft.OpenApi [3.11.0, 4.0.0), and 3.11.1 is inside that range (task 498). -->
     <PackageVersion Include="FastEndpoints" Version="9.0.0" />
     <PackageVersion Include="FastEndpoints.OpenApi" Version="9.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.OpenApi" Version="3.11.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.21.0" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="3.11.1" />
+    <!-- Scalar.AspNetCore 3.1.1 (task 498). 3.0.0 drops net8.0 and net9.0 and targets net10.0
+         and later. This repo is net11.0. WithTitle, AddDocument, SortTagsAlphabetically,
+         ExpandAllTags, and AddPreferredSecuritySchemes are unchanged, so MapScalarApiReference
+         stays. -->
+    <PackageVersion Include="Scalar.AspNetCore" Version="3.1.1" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.AI" Version="0.1.0-preview.1.26466.103" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.AI" Version="11.0.0" />
-    <!-- Chat completions against api.x.ai. Pinned beside Microsoft.Extensions.AI (11.0.0, task 492).
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="11.0.1" />
+    <!-- Chat completions against api.x.ai. Pinned beside Microsoft.Extensions.AI (11.0.1, task 498).
          Do not float onto the Responses API. TypeLoadExceptions on tool calls when OpenAI 2.14
          is resolved (GlobalMcpToolCallApprovalPolicy) were observed on adapter 10.10.0 and were
          not re-checked on 11.0.0. -->
-    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.Playwright" Version="1.64.1" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="11.0.1" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.65.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.1" />
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="5.0.1" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.1.0" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="5.1.0" />
     <!-- Task 201: take 7.0.1 (native tsc-go). web-spa.csproj runs SetTscExecutable +
          RunTscCompile before ResolveProjectStaticWebAssets; classic CheckFileSystemCaseSensitive
          is gone (MSB4057 if those v6 target names stay in PrepareForBuildDependsOn). -->
@@ -184,26 +198,28 @@
     <!-- Task 353: CommonMark parser for SafeMarkdown. Raw HTML is off and the SPA renders the AST
          itself, so no HTML string from Markdig reaches the DOM. -->
     <PackageVersion Include="Markdig" Version="1.6.0" />
-    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.17" />
-    <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.17" />
-    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.19" />
+    <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.19" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.19" />
     <!-- Task 335-001: State DevTools. Telemetry weaves the action-span behavior into web-spa's
          ClientPipeline; Export (web-server, Development) ships those spans to the inspector that
          DevTools.Hosting starts from the AppHost in run mode. Same version as the State pins. -->
-    <PackageVersion Include="TimeWarp.State.Telemetry" Version="12.0.0-beta.17" />
-    <PackageVersion Include="TimeWarp.State.DevTools.Export" Version="12.0.0-beta.17" />
-    <PackageVersion Include="TimeWarp.State.DevTools.Hosting" Version="12.0.0-beta.17" />
-    <!-- Task 335-002: browser (WASM) exporter. web-spa references it in Debug only. -->
-    <PackageVersion Include="TimeWarp.State.DevTools.Wasm" Version="12.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.State.Telemetry" Version="12.0.0-beta.19" />
+    <PackageVersion Include="TimeWarp.State.DevTools.Export" Version="12.0.0-beta.19" />
+    <PackageVersion Include="TimeWarp.State.DevTools.Hosting" Version="12.0.0-beta.19" />
+    <!-- Task 335-002: browser (WASM) exporter. web-spa references it in Debug only.
+         beta.19's breaking change is AddTimeWarpStateDevToolsProject's return type. This
+         AppHost calls AddTimeWarpStateDevTools, which the release note leaves unchanged. -->
+    <PackageVersion Include="TimeWarp.State.DevTools.Wasm" Version="12.0.0-beta.19" />
     <PackageVersion Include="timewarp-heroicons" Version="2.2.0" />
     <PackageVersion Include="timewarp-simple-icons" Version="16.37.0" />
   </ItemGroup>
 
   <ItemGroup Label="Aspire Packages">
-    <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="11.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="11.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="11.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="11.0.1" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.21.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.21.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.21.0" />
@@ -238,7 +254,7 @@
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="11.0.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
     <!-- Lifts Analyzer.Testing 1.1.4's transitive NuGet.Packaging dependency past
          GHSA-846f-f764-76mx / GHSA-2fmv-rv2c-59x7 (NU1902/NU1903). Task 389 takes 10.0.13,
@@ -248,10 +264,10 @@
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.12.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
-    <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.18" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
-    <PackageVersion Include="TimeWarp.Jaribu.TestingPlatform" Version="1.0.0-beta.16" />
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Jaribu.TestingPlatform" Version="1.0.0-beta.18" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.17" />
   </ItemGroup>
 </Project>
 

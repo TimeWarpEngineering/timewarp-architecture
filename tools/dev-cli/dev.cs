@@ -21,11 +21,15 @@
 #region Design
 // Thin wrapper around TimeWarp.Nuru to execute development commands.
 // Shared endpoints (clean, self-install, check-version) come from TimeWarp.Nuru.DevCli.
+// UseTelemetry is on so a CI job or a ganda walk that shells out to dev exports one
+// command span. ServiceName is the literal timewarp-architecture-dev. An unset
+// OTEL_EXPORTER_OTLP_ENDPOINT exports nothing.
 #endregion
 
 NuruApp app = NuruApp.CreateBuilder()
   .WithName("dev")
   .WithDescription("Development CLI for timewarp-architecture")
+  .UseTelemetry(options => options.ServiceName = "timewarp-architecture-dev")
   .ConfigureServices(services =>
   {
     services.AddSingleton<IRepoCleanService, RepoCleanService>();

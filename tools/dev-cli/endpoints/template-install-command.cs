@@ -103,17 +103,17 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine($"Installing template from {nupkg}...");
-      CommandOutput uninstall = await Shell.Builder("dotnet")
-        .WithArguments("new", "uninstall", TemplatePackageId)
+      CommandOutput uninstall = await DotNet.New()
         .WithWorkingDirectory(RepoRoot)
+        .Uninstall(TemplatePackageId)
         .WithNoValidation()
         .CaptureAsync(Ct)
         .ConfigureAwait(false);
       _ = uninstall;
 
-      int installExit = await Shell.Builder("dotnet")
-        .WithArguments("new", "install", nupkg)
+      int installExit = await DotNet.New()
         .WithWorkingDirectory(RepoRoot)
+        .Install(nupkg)
         .WithNoValidation()
         .RunAsync(Ct)
         .ConfigureAwait(false);

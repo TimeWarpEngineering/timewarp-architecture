@@ -248,10 +248,11 @@ jobs:
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
 
-      # `dev workflow --phase publish` runs `dev publish all` (compose, kubernetes, aca and aca-neon), which needs the Aspire CLI.
-      # The version is <AspireVersion> in Directory.Packages.props — the same property the AppHost SDK and Aspire packages use.
+      # Every group installs the Aspire CLI. Since Aspire 17 (task 498) the AppHost build takes DCP and
+      # the dashboard from the CLI bundle (ASPIRE013), and the test groups boot the AppHost through
+      # Aspire.Hosting.Testing. `dev workflow --phase publish` also runs `dev publish all`.
+      # The version is <AspireVersion> in Directory.Packages.props — the same property the Aspire packages use.
       - name: Install Aspire CLI
-        if: matrix.name == 'publish'
         run: |
           $ErrorActionPreference = 'Stop'
           # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
@@ -428,6 +429,23 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
         run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
 
+      # `dev workflow` builds the solution, which includes the AppHost. Since Aspire 17 (task 498) that
+      # build takes DCP and the dashboard from the Aspire CLI bundle. Same pinned install as the ci groups.
+      # Probe mode builds nothing, so it skips the install.
+      - name: Install Aspire CLI
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
+          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
+            exit 1
+          }
+          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
+          dotnet tool install --global Aspire.Cli --version $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Run CI Pipeline
         if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
         run: |
@@ -540,6 +558,21 @@ jobs:
       # not fail with UntrustedRoot on Linux runners. See https://aka.ms/dev-certs-trust.
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
+
+      # The generated app's AppHost build takes DCP and the dashboard from the Aspire CLI bundle
+      # (Aspire 17, task 498), and its aspire-tests boot that AppHost. Same pinned install as the ci groups.
+      - name: Install Aspire CLI
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
+          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
+            exit 1
+          }
+          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
+          dotnet tool install --global Aspire.Cli --version $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # Nightly: every flag-off variant plus each generated app's test projects (aspire-tests use the
       # runner's Docker). Everything else: SmokeDefault only (task 375).

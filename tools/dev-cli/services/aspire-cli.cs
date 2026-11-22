@@ -7,8 +7,7 @@
 // pure for dev-cli-tests. One `aspire --version` probe feeds the hard minimum and the comparison
 // against Directory.Packages.props <AspireVersion>. A missing property is a refusal: without it
 // the lag check would pass in silence. A value that is present but not a version is named.
-// Callers that do not enforce the hard minimum
-// (dev run without --launch-profile) still surface the lag warning.
+// A caller that does not enforce the hard minimum still surfaces the lag warning.
 #endregion
 
 namespace DevCli.Services;
