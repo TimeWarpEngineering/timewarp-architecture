@@ -121,6 +121,7 @@ pinned on master, so the 2026-11-07 blocker is gone. The pieces line up like thi
   12.0.0-beta.19 pinned). Built `ContractStateSourceGenerator`, `[ContractState]`, TWE015, the ActionRoster
   change, TWA0044–TWA0046 with `[NoMockResponse]`, the Roles migration, generator, analyzer and runtime
   tests, the tw-blazor section, and the 464 decision record. Found two State limits (Notes).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 379fa066-227d-4aec-8bb3-60d1e834df14, max-turns 500, Done — 2026-11-22T11:18:36Z
 
 ## Results
 
