@@ -83,6 +83,8 @@ so the full suite stays on CI.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a201da-2110-7482-b05c-bac4413ae3bc, max-turns 500, Blocked — 2026-11-22T06:30:29Z
 - Resume: 01a20295-b8c4-75c1-b9b3-ef2b848f7d1a (2026-11-22). Merged origin/master so the branch contains task 498. That cleared package-pin-currency, dev-cli-telemetry, and kanban-landed. The EF pins stayed at 11.0.0.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20295-b8c4-75c1-b9b3-ef2b848f7d1a, max-turns 500, Done — 2026-11-22T09:51:52Z
+- Review oracle: claude (claude-opus-5-5), effort 1, roster general, round 1, disposition clean — 2026-11-22
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 158374fe-ea8a-46c3-9d9a-143bce198d47, max-turns 80, artifacts general.md, merged.md, disposition.md — 2026-11-22T09:52:54Z
 
 ## Results
 
@@ -128,6 +130,18 @@ one prerelease ahead of NuGet `2.0.0-beta.31` and does not ask for a bump.
 - `./bin/dev check-version` — exit 0, source 2.0.0-beta.32 is one prerelease ahead of NuGet 2.0.0-beta.31
 - `ganda nuget outdated` — exit 0, all 134 packages up to date
 - `ganda repo audit` — exit 0, 41 passed, 3 skipped, 2 advisory warnings (source-file-line-cap, vscode-window-icon)
+
+### Review disposition
+
+- Rounds: 1. Effort 1, roster: general.
+- Final counts: bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix).
+- Disposition: **clean**. No findings were raised, and the goal restatement matches the task.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
