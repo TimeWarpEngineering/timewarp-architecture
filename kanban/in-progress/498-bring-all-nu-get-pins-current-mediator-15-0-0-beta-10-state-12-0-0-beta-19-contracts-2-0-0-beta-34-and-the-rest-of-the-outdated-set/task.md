@@ -71,6 +71,7 @@ Playwright suite on the new browser pin, and a clean `ganda repo audit`.
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-22)
 - 2026-11-22 implement oracle: pins moved; AMURU0001 and JARIBU1002 fixed at source; parked
   Blocked on the Aspire 17 move (see Blocker below).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e8fcd1ae-74e9-4b97-a2a5-2067a155e974, max-turns 500, Blocked — 2026-11-22T07:00:50Z
 
 ## Blocker: State 12.0.0-beta.19 needs Aspire 17
 
@@ -148,3 +149,7 @@ task takes it. Holding DevTools.Hosting at beta.17 is a backward pin and is not 
   pin currency and dev-cli telemetry; 494 (whose pins are already moved on its branch) resumes
   after this lands.
 - Unblocks task 483 (needs Mediator beta.10 and State beta.19 pinned).
+
+## Blocked
+
+2026-11-22: TimeWarp.State.DevTools.Hosting 12.0.0-beta.19 needs Aspire.Hosting 17.0.0. Aspire 13.6.5 → 17 is a migration: the AppHost must use the Aspire CLI bundle (ASPIRE013, which reverses the AspireUseCliBundle=false choice kept by tasks 201, 209, 232, 262 and 285), Aspire.AppHost.Sdk becomes Microsoft.NET.Sdk (ASPIRE012), and AddProject becomes AddDotnetProject, including the TWA0007 analyzer. Unblock: an Aspire 17 migration task lands first, or Steve decides task 498 takes it on.
