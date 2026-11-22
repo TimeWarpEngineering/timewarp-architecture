@@ -83,7 +83,9 @@ dev publish all                             # all four publishes, then one safet
 
 ## Aspire CLI version
 
-The installed `aspire` CLI must match `<AspireVersion>` in `Directory.Packages.props`. The AppHost SDK, the `Aspire.*` pins, and the CI `Aspire.Cli` install read it. `dev run`, `dev publish`, and `dev deploy` warn when the CLI is older and print `dotnet tool update -g Aspire.Cli`. A CLI below 13.6 is still refused. The same or a newer CLI is left alone.
+The installed `aspire` CLI must match `<AspireVersion>` in `Directory.Packages.props`. The `Aspire.*` pins (including `Aspire.Hosting.AppHost` and `Aspire.Hosting.Dotnet`) and the CI `Aspire.Cli` install read it. The AppHost is a `Microsoft.NET.Sdk` project that takes DCP and the dashboard from the Aspire CLI bundle, so the CLI is part of the build, not only of `dev run`. After installing or updating the CLI, run `aspire setup` once: the AppHost build stamps the bundle it finds, and a bundle an older install left in `~/.aspire/bundle` wins over a CLI whose bundle is not extracted yet. CI installs the pinned CLI in every job that builds the AppHost.
+
+`dev run`, `dev publish`, and `dev deploy` refuse a CLI below 17.0, because each builds the AppHost. `dev db nuke` refuses a CLI below 13.6. All of them warn when the CLI is older than `<AspireVersion>` and print `dotnet tool update -g Aspire.Cli`. The same or a newer CLI is left alone.
 
 ## Deploying
 
@@ -198,7 +200,7 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
   secrets, so `dev deploy` copies a user-secret value into the aspire environment when that
   variable is unset. Never commit a secret in `appsettings.json`.
 - **Preflight runs before `aspire` and reports every problem at once**, then exits non-zero with
-  nothing run: Aspire CLI ≥ 13.6, and a warning when that CLI is older than `<AspireVersion>`
+  nothing run: Aspire CLI ≥ 17.0, and a warning when that CLI is older than `<AspireVersion>`
   (see Aspire CLI version); for kubernetes, Helm ≥ 4.2, a current kubectl context (printed —
   check it) whose API answers (`kubectl get --raw /version`), every required parameter set (each
   missing one is listed with the command that sets it), and for a kind context (`kind-<cluster>`)

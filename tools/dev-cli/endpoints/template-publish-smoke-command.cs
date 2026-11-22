@@ -85,7 +85,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
   [Option("skip-wait", Description = "Skip flatcontainer availability wait (packages already known present)")]
   public bool SkipWait { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TemplatePublishSmokeCommand, Unit>
+  internal sealed class Handler : IRequestHandler<TemplatePublishSmokeCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private CancellationToken Ct;
@@ -103,7 +103,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(TemplatePublishSmokeCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TemplatePublishSmokeCommand command, CancellationToken ct)
     {
       Ct = ct;
 
@@ -343,11 +343,11 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       Terminal.WriteLine($"Installing published template {packageRef} (isolated hive)...");
 
       // Force reinstall so an older conflicting identity does not win.
-      CommandOutput uninstall = await Shell.Builder("dotnet")
-        .WithArguments("new", "uninstall", TemplatePackageId)
+      CommandOutput uninstall = await DotNet.New()
         .WithWorkingDirectory(RepoRoot)
         .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
         .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
+        .Uninstall(TemplatePackageId)
         .WithNoValidation()
         .CaptureAsync(Ct);
       _ = uninstall; // may fail if not installed
@@ -368,11 +368,11 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       {
         installAttempt++;
 
-        CommandOutput result = await Shell.Builder("dotnet")
-          .WithArguments("new", "install", packageRef)
+        CommandOutput result = await DotNet.New()
           .WithWorkingDirectory(RepoRoot)
           .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
           .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
+          .Install(packageRef)
           .WithNoValidation()
           .CaptureAsync(Ct);
 

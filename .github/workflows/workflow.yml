@@ -11,7 +11,8 @@ name: CI/CD
 #     mode nightly) runs `dev template-smoke --matrix --app-tests`: every flag-off variant plus
 #     each generated app's test projects (task 375). A flag costs nightly time, not PR time.
 # Path semantics from the former separate workflows are preserved via detect-paths
-# + job-level if conditions (not separate workflow files).
+# + job-level if conditions (not separate workflow files). On a pull request the ci gate is
+# PullRequestBuildClassifier (`dev workflow --phase classify`, task 493), not a regex here.
 #
 # Triggers (task 359): push and pull_request cover master and feature/** so stacked child PRs
 # (ganda task work-set merges each child onto its feature branch) get real checks. `edited` is
@@ -43,6 +44,9 @@ on:
     branches:
       - master
       - 'feature/**'
+    # Push keeps a paths filter (task 493): a kanban-only or docs-only merge must not rebuild,
+    # re-run the publish phase, or upload its artifacts. Required checks gate pull requests, not
+    # pushes, so nothing waits on a push run this filter skips.
     paths:
       - 'source/**'
       - 'tests/**'
@@ -60,6 +64,10 @@ on:
       - 'evals/**'
       - 'skills/**'
       - 'goldens/**'
+  # pull_request has no paths or paths-ignore filter (task 493, the one-workflow CI standard from
+  # timewarp-ganda 476/479/565/587, audited by ganda 655): every pull request reports `ci`. A pull
+  # request that changes only non-build paths skips build and test through
+  # PullRequestBuildClassifier (see detect-paths), and the skipped ci-group reports success.
   pull_request:
     types:
       - opened
@@ -68,23 +76,6 @@ on:
     branches:
       - master
       - 'feature/**'
-    paths:
-      - 'source/**'
-      - 'tests/**'
-      - 'timewarp-templates/**'
-      - '.template.config/**'
-      - 'tools/**'
-      - 'msbuild/**'
-      - '.github/workflows/**'
-      - 'Directory.Build.props'
-      - 'Directory.Packages.props'
-      - 'timewarp-architecture.slnx'
-      - '**/SKILL.md'
-      - '**/eval.yaml'
-      - '.vally.yaml'
-      - 'evals/**'
-      - 'skills/**'
-      - 'goldens/**'
   release:
     types: [published]
   schedule:
@@ -100,72 +91,107 @@ on:
           - nightly
         default: merge
 
+# ganda workflow-pwsh-shell: every run step is pwsh (timewarp-ganda task 508).
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   detect-paths:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
-      ci: ${{ steps.filter.outputs.ci }}
+      # Pull request: the classifier's answer; a classify step that wrote nothing means build.
+      # Push: the regex below (the push trigger's paths filter already dropped non-build pushes).
+      ci: ${{ github.event_name == 'pull_request' && (steps.classify.outputs.ci || 'true') || steps.filter.outputs.ci }}
       skill: ${{ steps.filter.outputs.skill }}
       template: ${{ steps.filter.outputs.template }}
     steps:
+      # A pull request checks out full history: the classifier diffs base...head and needs the
+      # merge base (a shallow checkout fails that diff, which builds). Push stays shallow (task 368).
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
+
+      - name: Setup .NET
+        if: github.event_name == 'pull_request'
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Read-only: this job restores only the dev CLI's packages, so it must not save the shared
+      # key before a ci-group job saves the full solution set.
+      - name: Restore NuGet package cache
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-ci-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+
+      # Task 493: the pull request build decision. Writes ci=true|false to GITHUB_OUTPUT. The rule
+      # lives in TimeWarp.Nuru.DevCli; this repo's additions are .timewarp/dev.jsonc pullRequestBuild.
+      - name: Classify pull request
+        id: classify
+        if: github.event_name == 'pull_request'
+        run: |
+          dotnet run tools/dev-cli/dev.cs -- workflow --phase classify
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Classify changed paths
         id: filter
         run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE="${{ github.event.pull_request.base.sha }}"
-            HEAD="${{ github.event.pull_request.head.sha }}"
-          else
-            BASE="${{ github.event.before }}"
-            HEAD="${{ github.sha }}"
-          fi
-          if [ -z "${BASE}" ] || [ "${BASE}" = "0000000000000000000000000000000000000000" ]; then
+          $ErrorActionPreference = 'Stop'
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            $base = '${{ github.event.pull_request.base.sha }}'
+            $head = '${{ github.event.pull_request.head.sha }}'
+          } else {
+            $base = '${{ github.event.before }}'
+            $head = '${{ github.sha }}'
+          }
+          if ([string]::IsNullOrEmpty($base) -or $base -eq '0000000000000000000000000000000000000000') {
             # New branch / unknown base — run all path-gated jobs that apply.
-            echo "ci=true" >> "$GITHUB_OUTPUT"
-            echo "skill=true" >> "$GITHUB_OUTPUT"
-            echo "template=true" >> "$GITHUB_OUTPUT"
-            echo "No usable base SHA — enabling all path-gated jobs."
+            'ci=true' >> $env:GITHUB_OUTPUT
+            'skill=true' >> $env:GITHUB_OUTPUT
+            'template=true' >> $env:GITHUB_OUTPUT
+            Write-Host 'No usable base SHA — enabling all path-gated jobs.'
             exit 0
-          fi
-          # Shallow checkout (task 368): fetch just the two commits to compare. `git diff` of two
-          # commits compares their trees, so no history between them is needed. A base that can no
-          # longer be fetched (force push) is treated like an unknown base.
-          if ! git fetch --no-tags --depth=1 origin "$BASE" "$HEAD"; then
-            echo "ci=true" >> "$GITHUB_OUTPUT"
-            echo "skill=true" >> "$GITHUB_OUTPUT"
-            echo "template=true" >> "$GITHUB_OUTPUT"
-            echo "Could not fetch base $BASE — enabling all path-gated jobs."
+          }
+          # Push checks out shallow (task 368): fetch just the two commits to compare. `git diff` of
+          # two commits compares their trees, so no history between them is needed. A pull request
+          # checked out full history above and already has both. A base that can no longer be
+          # fetched (force push) is treated like an unknown base.
+          $global:LASTEXITCODE = 0
+          if ('${{ github.event_name }}' -ne 'pull_request') {
+            git fetch --no-tags --depth=1 origin $base $head
+          }
+          if ($LASTEXITCODE -ne 0) {
+            'ci=true' >> $env:GITHUB_OUTPUT
+            'skill=true' >> $env:GITHUB_OUTPUT
+            'template=true' >> $env:GITHUB_OUTPUT
+            Write-Host "Could not fetch base $base — enabling all path-gated jobs."
             exit 0
-          fi
-          changed=$(git diff --name-only "$BASE" "$HEAD" || true)
-          echo "Changed files:"
-          echo "$changed"
+          }
+          $changedLines = @(git diff --name-only $base $head)
+          $global:LASTEXITCODE = 0
+          Write-Host 'Changed files:'
+          $changedLines | Write-Host
 
-          ci=false
-          skill=false
-          template=false
+          $ci = 'false'
+          $skill = 'false'
+          $template = 'false'
+          $ciPattern = '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props|goldens/)'
+          $skillPattern = '(^|/)SKILL\.md$|(^|/)eval\.yaml$|^\.vally\.yaml$|^evals/|^skills/|\.github/workflows/|^tools/dev-cli/'
+          $templatePattern = '^(source/|tests/|timewarp-templates/|\.template\.config/|msbuild/|Directory\.Build\.props|Directory\.Packages\.props|timewarp-architecture\.slnx|tools/dev-cli/|\.github/workflows/)'
+          if ($changedLines -match $ciPattern) { $ci = 'true' }
+          if ($changedLines -match $skillPattern) { $skill = 'true' }
+          if ($changedLines -match $templatePattern) { $template = 'true' }
 
-          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props|goldens/)'; then
-            ci=true
-          fi
-
-          if echo "$changed" | grep -Eq '(^|/)SKILL\.md$|(^|/)eval\.yaml$|^\.vally\.yaml$|^evals/|^skills/|\.github/workflows/|^tools/dev-cli/'; then
-            skill=true
-          fi
-
-          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|msbuild/|Directory\.Build\.props|Directory\.Packages\.props|timewarp-architecture\.slnx|tools/dev-cli/|\.github/workflows/)'; then
-            template=true
-          fi
-
-          echo "ci=$ci" >> "$GITHUB_OUTPUT"
-          echo "skill=$skill" >> "$GITHUB_OUTPUT"
-          echo "template=$template" >> "$GITHUB_OUTPUT"
-          echo "ci=$ci skill=$skill template=$template"
+          "ci=$ci" >> $env:GITHUB_OUTPUT
+          "skill=$skill" >> $env:GITHUB_OUTPUT
+          "template=$template" >> $env:GITHUB_OUTPUT
+          Write-Host "ci=$ci skill=$skill template=$template"
 
   ci-group:
     # Task 366: PR/merge CI as parallel jobs, one per `dev workflow` phase/group. Groups are defined
@@ -203,9 +229,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
-          dotnet-version: '11.0.x'
-          dotnet-quality: 'preview'
+          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
+          global-json-file: global.json
 
       # One key for every group: each job builds the whole solution, so they restore the same set.
       # The first group to finish saves it; the others skip the save.
@@ -223,25 +248,29 @@ jobs:
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
 
-      # `dev workflow --phase publish` runs `dev publish all` (compose, kubernetes, aca and aca-neon), which needs the Aspire CLI.
-      # The version is <AspireVersion> in Directory.Packages.props — the same property the AppHost SDK and Aspire packages use.
+      # Every group installs the Aspire CLI. Since Aspire 17 (task 498) the AppHost build takes DCP and
+      # the dashboard from the CLI bundle (ASPIRE013), and the test groups boot the AppHost through
+      # Aspire.Hosting.Testing. `dev workflow --phase publish` also runs `dev publish all`.
+      # The version is <AspireVersion> in Directory.Packages.props — the same property the Aspire packages use.
       - name: Install Aspire CLI
-        if: matrix.name == 'publish'
         run: |
-          set -euo pipefail
-          version=$(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props)
-          if [ -z "$version" ]; then
-            echo "Directory.Packages.props has no <AspireVersion>."
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
+          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
             exit 1
-          fi
-          echo "Installing Aspire.Cli $version from Directory.Packages.props"
-          dotnet tool install --global Aspire.Cli --version "$version"
+          }
+          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
+          dotnet tool install --global Aspire.Cli --version $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run CI Pipeline
         run: |
           # Make OpenSSL (the runner's HttpClient) honour the trusted dev cert (see Trust step above).
-          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
           dotnet run tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # Task 308: rewrite the checked-in ingress prefix golden from the two host builds, then fail
       # if that rewrite changed the tree. A hand-edited golden, or a contract change that skipped
@@ -249,14 +278,27 @@ jobs:
       - name: Regenerate ingress prefixes and fail on diff
         if: success() && matrix.name == 'fast'
         run: |
-          set -euo pipefail
+          $ErrorActionPreference = 'Stop'
           dotnet run tools/dev-cli/dev.cs -- regenerate-generated
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --exit-code -- goldens/ingress
-          if [ -n "$(git status --porcelain -- goldens/ingress)" ]; then
-            echo "goldens/ingress has unstaged or untracked changes after regenerate"
-            git status --porcelain -- goldens/ingress
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $porcelain = @(git status --porcelain -- goldens/ingress)
+          if ($porcelain.Count -gt 0) {
+            Write-Host 'goldens/ingress has unstaged or untracked changes after regenerate'
+            $porcelain | Write-Host
             exit 1
-          fi
+          }
+
+      # Task 487: `dev test` collects MTP code coverage, one Cobertura file per test project at
+      # artifacts/coverage/<project>/coverage.cobertura.xml. Each matrix job uploads its own group.
+      - name: coverage
+        if: success() && matrix.name != 'publish'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.name }}
+          path: artifacts/coverage
+          if-no-files-found: warn
 
       # Task 290: browser proof. The web-spa Playwright tests write screenshots and the prerendered
       # HTML to their test output, <test bin>/playwright-screenshots/<test class>/ (task 316).
@@ -329,15 +371,20 @@ jobs:
   ci:
     # Task 366: one stable check name over the ci-group matrix, so a branch-protection rule that
     # requires `ci` keeps working. Skipped groups (no ci paths changed) pass, as the single `ci`
-    # job's skip did before; a failed or cancelled group fails it.
-    needs: [ci-group]
+    # job's skip did before; a failed or cancelled group fails it. detect-paths is checked too
+    # (task 493): a failed classify step leaves no ci output, which skips ci-group, and that skip
+    # must not read as a pass.
+    needs: [detect-paths, ci-group]
     if: always() && (github.event_name == 'push' || github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     steps:
       - name: All CI groups passed
         run: |
-          echo "ci-group: ${{ needs.ci-group.result }}"
-          [ "${{ needs.ci-group.result }}" = "success" ] || [ "${{ needs.ci-group.result }}" = "skipped" ]
+          $detect = '${{ needs.detect-paths.result }}'
+          $result = '${{ needs.ci-group.result }}'
+          Write-Host "detect-paths: $detect ci-group: $result"
+          if ($detect -ne 'success') { exit 1 }
+          if ($result -ne 'success' -and $result -ne 'skipped') { exit 1 }
 
   release:
     # Release (`release: published`) and workflow_dispatch: one job, one `dev workflow` pass in
@@ -359,9 +406,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
-          dotnet-version: '11.0.x'
-          dotnet-quality: 'preview'
+          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
+          global-json-file: global.json
 
       # Read-only: the release run reuses the ci cache for the same CPM inputs but never saves one,
       # so nothing a release run restores or packs can seed a later run.
@@ -383,16 +429,34 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
         run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
 
+      # `dev workflow` builds the solution, which includes the AppHost. Since Aspire 17 (task 498) that
+      # build takes DCP and the dashboard from the Aspire CLI bundle. Same pinned install as the ci groups.
+      # Probe mode builds nothing, so it skips the install.
+      - name: Install Aspire CLI
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
+          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
+            exit 1
+          }
+          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
+          dotnet tool install --global Aspire.Cli --version $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Run CI Pipeline
         if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
         run: |
           # Unchanged from the single-job pipeline (no dev-cert trust step on release: the dir is absent).
-          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          if [ "${{ github.event_name }}" == "release" ]; then
+          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+          if ('${{ github.event_name }}' -eq 'release') {
             dotnet run tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          else
+          } else {
             dotnet run tools/dev-cli/dev.cs -- workflow
-          fi
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload Artifacts
         if: always()
@@ -429,9 +493,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
-          dotnet-version: '11.0.x'
-          dotnet-quality: 'preview'
+          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
+          global-json-file: global.json
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -442,14 +505,16 @@ jobs:
       # The version is tools/dev-cli/vally-cli.version — the same pin `dev lint-skills` requires.
       - name: Install vally CLI
         run: |
-          set -euo pipefail
-          version=$(tr -d '[:space:]' < tools/dev-cli/vally-cli.version)
-          if [ -z "$version" ]; then
-            echo "tools/dev-cli/vally-cli.version is missing or empty."
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads tools/dev-cli/vally-cli.version.
+          $version=(Get-Content -Raw tools/dev-cli/vally-cli.version) -replace '\s',''
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'tools/dev-cli/vally-cli.version is missing or empty.'
             exit 1
-          fi
-          echo "Installing @microsoft/vally-cli@$version from tools/dev-cli/vally-cli.version"
+          }
+          Write-Host "Installing @microsoft/vally-cli@$version from tools/dev-cli/vally-cli.version"
           npm install -g "@microsoft/vally-cli@$version"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lint skill specs
         run: dotnet run tools/dev-cli/dev.cs -- lint-skills
@@ -478,9 +543,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
-          dotnet-version: '11.0.x'
-          dotnet-quality: 'preview'
+          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
+          global-json-file: global.json
 
       # Own key: the smoke restores the generated app's set, not the monorepo solution's.
       - name: Cache NuGet packages
@@ -495,16 +559,32 @@ jobs:
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
 
+      # The generated app's AppHost build takes DCP and the dashboard from the Aspire CLI bundle
+      # (Aspire 17, task 498), and its aspire-tests boot that AppHost. Same pinned install as the ci groups.
+      - name: Install Aspire CLI
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
+          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
+            exit 1
+          }
+          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
+          dotnet tool install --global Aspire.Cli --version $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # Nightly: every flag-off variant plus each generated app's test projects (aspire-tests use the
       # runner's Docker). Everything else: SmokeDefault only (task 375).
       - name: Template smoke (pack → install → generate → build)
         run: |
-          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.mode }}" = "nightly" ]; then
+          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+          if ('${{ github.event_name }}' -eq 'schedule' -or '${{ inputs.mode }}' -eq 'nightly') {
             dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests
-          else
+          } else {
             dotnet run tools/dev-cli/dev.cs -- template-smoke
-          fi
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # The smoke packs this branch's platform packages as 2.0.0-smoke and restores them into
       # ~/.nuget/packages. Evict them before the cache post-step saves, so a cache never carries

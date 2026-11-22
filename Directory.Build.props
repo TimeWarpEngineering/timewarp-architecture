@@ -110,6 +110,8 @@
     <PackageReference Include="GlobalUsingsAnalyzer" PrivateAssets="all" />
     <!-- TW0001 kebab-case .cs basenames (TimeWarp.SourceGenerators; multi-dot partials since beta.9).
          TW0007 file-level usings (filename in .editorconfig; diagnostic stays package-default off).
+         TWA0004, TWA0023, and TWA0038 are the generic style rules in this package since 1.0.0-beta.13.
+         TWA0004 and TWA0038 warn and are enabled. TWA0023 warns and is disabled.
          Severity: .editorconfig dotnet_diagnostic.TW0001 — default off in the package. -->
     <PackageReference Include="TimeWarp.SourceGenerators" PrivateAssets="all" />
   </ItemGroup>
@@ -125,6 +127,11 @@
        The wiring sits here, not in an imported msbuild/ file, because the ganda cpm-consistency audit
        finds PackageReference items only in Directory.Build.props and *.csproj files.
        Rules that are off for a tree belong in that tree's props or in .editorconfig, not here. -->
+  <!-- Task 487: MTP code coverage extension for test projects (tests/Directory.Build.props sets
+       CollectTestCoverage). `dev test` turns collection on with the MTP coverage flag; the extension ships in the template. -->
+  <ItemGroup Label="Code Coverage" Condition="'$(CollectTestCoverage)' == 'true'">
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+  </ItemGroup>
   <ItemGroup Label="Convention Analyzers"
              Condition="'$(EnableConventionAnalyzers)' == 'true' and '$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"

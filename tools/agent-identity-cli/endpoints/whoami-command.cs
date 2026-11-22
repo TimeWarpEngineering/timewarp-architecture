@@ -17,7 +17,7 @@ internal sealed class WhoamiCommand : ICommand<Unit>
   [Option("key-file", "k", Description = "Path to the PKCS#8 PEM (used to locate the store sidecar)")]
   public string? KeyFile { get; set; }
 
-  internal sealed class Handler : ICommandHandler<WhoamiCommand, Unit>
+  internal sealed class Handler : IRequestHandler<WhoamiCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
@@ -32,7 +32,7 @@ internal sealed class WhoamiCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async Task<Unit> Handle(WhoamiCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(WhoamiCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;

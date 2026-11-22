@@ -13,17 +13,24 @@ internal class Constants
   // Aliases of ServiceNames.* — the apps' server-side named HttpClients use
   // https+http://{name} through Aspire service discovery, which Aspire keys by these resource names.
   // Const-to-const aliasing makes drift impossible; TWA0007 additionally guards any
-  // hand-written AddProject name. (Also matches the Docker/K8s YARP config.)
+  // hand-written AddDotnetProject name. (Also matches the Docker/K8s YARP config.)
   public const string ApiServerProjectResourceName = ServiceNames.ApiServiceName;
   public const string WebServerProjectResourceName = ServiceNames.WebServiceName;
   public const string GrpcServerProjectResourceName = ServiceNames.GrpcServiceName;
   public const string YarpProjectResourceName = ServiceNames.YarpServiceName;
   // Literal, not an alias: dev-cli reads this file as text. The value must equal
-  // ServiceNames.IngressServiceName so TWA0007 accepts AddProject(YarpResourceName).
+  // ServiceNames.IngressServiceName so TWA0007 accepts AddDotnetProject(YarpResourceName, …).
   public const string YarpResourceName = "ingress";
 
+  // Aspire 17 AddDotnetProject paths (task 498), relative to this AppHost's directory. They replace
+  // the AppHost ProjectReferences and generated Projects.* types AddProject<T> needed.
+  public const string ApiServerProjectPath = "../../../api/projects/api-server/api-server.csproj";
+  public const string GrpcServerProjectPath = "../../../grpc/projects/grpc-server/grpc-server.csproj";
+  public const string WebServerProjectPath = "../../../web/projects/web-server/web-server.csproj";
+  public const string YarpProjectPath = "../../../yarp/yarp.csproj";
+
   // Postgres resource names are intentionally NOT ServiceNames.* values: TWA0007 and service
-  // discovery govern AddProject resources only (server-side BaseAddress resolution), and Postgres
+  // discovery govern AddDotnetProject resources only (server-side BaseAddress resolution), and Postgres
   // is a container resource, not a project. The database resource name doubles as the
   // ConnectionStrings key Aspire injects (ConnectionStrings__postgres-db), which is why
   // PostgresDbModule reads the connection string by this same constant. This file is compile-linked
@@ -40,7 +47,7 @@ internal class Constants
   public const string PostgresDataVolumeTarget = "/var/lib/postgresql";
   public const string PostgresDataVolumeEnvironmentVariable = "POSTGRES_DATA_VOLUME";
 
-  // Task 147-007: Aspire AddEFMigrations resource name (not an AddProject — TWA0007 N/A; keep const
+  // Task 147-007: Aspire AddEFMigrations resource name (not an AddDotnetProject — TWA0007 N/A; keep const
   // alongside Postgres names so AppHost wiring cannot drift from docs/scripts).
   public const string WebMigrationsResourceName = "web-migrations";
 

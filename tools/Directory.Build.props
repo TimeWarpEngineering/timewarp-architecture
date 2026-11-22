@@ -2,9 +2,10 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <!-- #region Purpose
-       Wires the repo convention analyzers (TWA*) into the runfile tools under tools/ (dev-cli and
-       agent-identity-cli), so TWA0038 (500-line cap) and the other rules guard those sources
-       directly, not only the files tests/tools/dev-cli-tests compile-includes.
+       Wires the repo convention analyzers (Architecture TWA*) into the runfile tools under tools/
+       (dev-cli and agent-identity-cli), so those rules guard those sources directly, not only the
+       files tests/tools/dev-cli-tests compile-includes. TWA0038 (500-line cap) is the
+       TimeWarp.SourceGenerators rule of the same id. The root package reference applies it here too.
        #endregion
 
        #region Design

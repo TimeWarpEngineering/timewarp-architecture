@@ -7,6 +7,8 @@
 // (web-infrastructure + web-server startup). Not the Aspire web-migrations resource — that
 // path is `dev db update` / drop / reset / status. --dry-run prints the exact invocation.
 // Requires a C# identifier name; `dotnet tool restore` runs first so local `dotnet-ef` is present.
+// Both calls use the DotNet.Tool() builders (AMURU0001); `dotnet tool run
+// dotnet-ef` is the same local tool `dotnet ef` resolves.
 #endregion
 
 namespace DevCli.Commands;
@@ -22,7 +24,7 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
   [Option("dry-run", Description = "Print the dotnet ef invocation without running it")]
   public bool DryRun { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DbAddMigrationCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DbAddMigrationCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -31,7 +33,7 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DbAddMigrationCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DbAddMigrationCommand command, CancellationToken ct)
     {
       if (!DbEf.IsValidMigrationName(command.Name))
       {
@@ -63,14 +65,14 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
       string[] arguments = DbEf.BuildAddMigrationArguments(command.Name);
       if (command.DryRun)
       {
-        Terminal.WriteLine($"dotnet {string.Join(" ", arguments)}");
+        Terminal.WriteLine($"dotnet tool run {DbEf.EfToolCommand} {string.Join(" ", arguments)}");
         return Unit.Value;
       }
 
       Terminal.WriteLine("Restoring local tools (dotnet-ef)...");
-      CommandOutput restore = await Shell.Builder("dotnet")
-        .WithArguments("tool", "restore")
+      CommandOutput restore = await DotNet.Tool()
         .WithWorkingDirectory(root)
+        .Restore()
         .WithNoValidation()
         .CaptureAsync(ct)
         .ConfigureAwait(false);
@@ -84,9 +86,10 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
       }
 
       Terminal.WriteLine($"Scaffolding migration '{command.Name}'...");
-      int exitCode = await Shell.Builder("dotnet")
-        .WithArguments(arguments)
+      int exitCode = await DotNet.Tool()
         .WithWorkingDirectory(root)
+        .Run(DbEf.EfToolCommand)
+        .WithArguments(arguments)
         .WithNoValidation()
         .RunAsync(ct)
         .ConfigureAwait(false);

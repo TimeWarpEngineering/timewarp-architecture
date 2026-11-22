@@ -7,7 +7,7 @@
 // Thin wrapper over
 //   aspire destroy --apphost <csproj> --environment Production [--yes --non-interactive] -- --Publish:Target=<t> [--Parameters:<name>=<value> …]
 // (task 070-006), in this order:
-//   1. Preflight shared with `dev deploy` (Aspire CLI 13.6+; kubernetes: Helm 4.2+, the printed kubectl
+//   1. Preflight shared with `dev deploy` (Aspire CLI 17.0+; kubernetes: Helm 4.2+, the printed kubectl
 //      context answering and, for kind, its cluster existing; aca: `az login` and the printed
 //      subscription, so the operator sees what they are about to hit). Deploy parameters (task 286) are
 //      resolved best-effort the same way as `dev deploy` (Parameters__<name> env var, else AppHost user
@@ -45,7 +45,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
   [Option("yes", "y", Description = "Confirm without prompting and run aspire destroy --yes --non-interactive")]
   public bool Yes { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DeprovisionCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DeprovisionCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -54,7 +54,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(DeprovisionCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeprovisionCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
 

@@ -20,7 +20,7 @@ internal sealed class DemoCommand : ICommand<Unit>
   [Option("force", "f", Description = "Overwrite an existing key file")]
   public bool Force { get; set; }
 
-  internal sealed class Handler : ICommandHandler<DemoCommand, Unit>
+  internal sealed class Handler : IRequestHandler<DemoCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
@@ -35,7 +35,7 @@ internal sealed class DemoCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async Task<Unit> Handle(DemoCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DemoCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;

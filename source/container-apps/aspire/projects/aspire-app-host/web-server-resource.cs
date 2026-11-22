@@ -32,7 +32,7 @@ internal static class WebServerResource
   internal static IResourceBuilder<ExecutableResource>? Configure
   (
     IDistributedApplicationBuilder builder,
-    IResourceBuilder<ProjectResource> webServer
+    IResourceBuilder<DotnetProjectResource> webServer
   )
   {
     IResourceBuilder<ExecutableResource>? stateDevTools = AddRunModeTooling(builder, webServer);
@@ -44,7 +44,7 @@ internal static class WebServerResource
   private static IResourceBuilder<ExecutableResource>? AddRunModeTooling
   (
     IDistributedApplicationBuilder builder,
-    IResourceBuilder<ProjectResource> webServer
+    IResourceBuilder<DotnetProjectResource> webServer
   )
   {
     // External in run mode only (dashboard links straight to Web.Server). Published, the ingress is
@@ -67,7 +67,7 @@ internal static class WebServerResource
   private static void AddPublishedEntraSettings
   (
     IDistributedApplicationBuilder builder,
-    IResourceBuilder<ProjectResource> webServer
+    IResourceBuilder<DotnetProjectResource> webServer
   )
   {
     // Task 070-003: published Entra settings are parameters, never literals. Defaults keep Entra off.
@@ -82,6 +82,9 @@ internal static class WebServerResource
     // other targets' secret non-empty. With Entra enabled and this placeholder still set, sign-in
     // fails with AADSTS invalid_client. aspire deploy runs as Production and does not load user
     // secrets; dev deploy copies a set user secret into the process environment.
+    // entra-client-id and entra-public-origin are empty while Entra is off, and empty is a valid
+    // value for them. Aspire 17 rejects an empty value for a required parameter, so those two are
+    // AsOptional (task 498). The others always carry a value and stay required.
     if (!builder.ExecutionContext.IsPublishMode)
     {
       return;
@@ -99,15 +102,15 @@ internal static class WebServerResource
       // TenantId is the OIDC authority (organizations = any work/school tenant), not the trust list.
       // Acceptance is SiteSettings on /Admin/Authentication. A GUID here limits OIDC to that tenant.
       .WithEnvironment("Authentication__Entra__TenantId", builder.AddParameter(EntraTenantIdParameterName, "organizations", publishValueAsDefault: true))
-      .WithEnvironment("Authentication__Entra__ClientId", builder.AddParameter(EntraClientIdParameterName, "", publishValueAsDefault: true))
+      .WithEnvironment("Authentication__Entra__ClientId", builder.AddParameter(EntraClientIdParameterName, "", publishValueAsDefault: true).AsOptional())
       .WithEnvironment("Authentication__Entra__ClientSecret", builder.AddParameter(EntraClientSecretParameterName, entraClientSecret, secret: true))
-      .WithEnvironment("Authentication__Entra__PublicOrigin", builder.AddParameter(EntraPublicOriginParameterName, "", publishValueAsDefault: true));
+      .WithEnvironment("Authentication__Entra__PublicOrigin", builder.AddParameter(EntraPublicOriginParameterName, "", publishValueAsDefault: true).AsOptional());
   }
 
   private static void ForwardMockAuthenticationOptIn
   (
     IDistributedApplicationBuilder builder,
-    IResourceBuilder<ProjectResource> webServer
+    IResourceBuilder<DotnetProjectResource> webServer
   )
   {
     // Task 145-009 / dogfood: mock auth is OPT-IN only. Do not force Authentication:UseMock=true

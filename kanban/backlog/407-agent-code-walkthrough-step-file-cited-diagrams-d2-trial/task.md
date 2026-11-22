@@ -36,6 +36,7 @@ Owner: Architecture bot.
 - [ ] D2-only trial on one real module of this repo
 - [ ] Log every picture D2 draws badly (only evidence to reopen Flexbox)
 - [ ] Report trial results and the bad-render log
+- [ ] Floorplan comparison on the D2-trial module: run Floorplan 0.11.0 (haydenschmitty/floorplan, pinned at 94f81b4) once in Claude Code on the D2-trial module, without committing the generated map. Log what it gets right, gets wrong or misses across Mediator, YARP, gRPC and Blazor. Adopt its plain-English label and ordered request-trace fields (option C) only if they prove useful. Source: timewarp-intel evaluations/2026-11-20-floorplan.md (https://github.com/TimeWarpEngineering/timewarp-intel/pull/136).
 
 ## Session
 

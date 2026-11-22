@@ -24,7 +24,8 @@ public partial class KubernetesPublish_Given_
   private static List<YamlMappingNode> LoadDocuments(string path)
   {
     var yaml = new YamlStream();
-    yaml.Load(new StringReader(UnquotedTemplateExpression().Replace(File.ReadAllText(path), "0")));
+    string text = TplQuotedExpression().Replace(File.ReadAllText(path), "\"$1\"");
+    yaml.Load(new StringReader(UnquotedTemplateExpression().Replace(text, "0")));
     return [.. yaml.Documents.Select(document => document.RootNode).OfType<YamlMappingNode>()];
   }
 
@@ -180,6 +181,12 @@ public partial class KubernetesPublish_Given_
 
   private static string? Scalar(YamlMappingNode node, string key) =>
     node.Children.TryGetValue(new YamlScalarNode(key), out YamlNode? value) ? ((YamlScalarNode)value).Value : null;
+
+  // Aspire 17 (task 498) writes each ConfigMap/Secret value as `{{ tpl "<template>" . | quote }}`:
+  // Helm renders the inner template and quotes the result. Read it as the quoted inner template,
+  // the shape earlier Aspire wrote directly, so Resolve sees the same "{{ .Values.x }}" strings.
+  [GeneratedRegex(@"\{\{-?\s*tpl\s+""((?:[^""\\]|\\.)*)""\s+\.\s*\|\s*quote\s*-?\}\}")]
+  private static partial Regex TplQuotedExpression();
 
   // A whole unquoted scalar that is a Helm expression (e.g. `containerPort: {{ .Values.x | int }}`) —
   // invalid YAML until rendered. Expressions inside quoted strings are left alone.
