@@ -9,7 +9,8 @@
   Design: Task 206. Route /Admin/Roles/{RoleId} (read policy so viewers can see the bundle).
   GetRole stores the response. RoleEditForm copies UpdateRole.Command from it. Permission
   and agent-scope sets live on this page. Checkboxes mutate those sets. Save dispatches
-  the command built from the set. Checkboxes and Save require admin.roles.manage
+  the command built from the set that was saved and recopies only that set. The load
+  copies both. Checkboxes and Save require admin.roles.manage
   (CheckAuthorization). Protected-core Administrator admin.* grants are disabled when
   selected; last-admin lockout is SetPrincipalRoles (server), not this editor. Groups come
   from PermissionIds.GroupsByPrefix. Agent scopes on Member reach roleless human principals,
@@ -72,12 +73,27 @@
 
   private void CopyMembershipFromSnapshot()
   {
+    CopyPermissionsFromSnapshot();
+    CopyScopesFromSnapshot();
+  }
+
+  private void CopyPermissionsFromSnapshot()
+  {
     if (Role is not GetRole.Response role)
     {
       return;
     }
 
     PermissionDraft = new HashSet<string>(role.Permissions, StringComparer.Ordinal);
+  }
+
+  private void CopyScopesFromSnapshot()
+  {
+    if (Role is not GetRole.Response role)
+    {
+      return;
+    }
+
     ScopeDraft = new HashSet<string>(role.AgentScopes, StringComparer.Ordinal);
   }
 
@@ -93,7 +109,7 @@
       return;
     }
 
-    CopyMembershipFromSnapshot();
+    CopyPermissionsFromSnapshot();
   }
 
   private void OnScopeSelected(string scope, bool selected)
@@ -120,7 +136,7 @@
       return;
     }
 
-    CopyMembershipFromSnapshot();
+    CopyScopesFromSnapshot();
   }
 }
 

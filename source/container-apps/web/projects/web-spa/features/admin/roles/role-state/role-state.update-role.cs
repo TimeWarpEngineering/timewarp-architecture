@@ -7,6 +7,8 @@
 // RoleEditForm binds IRoleDetails (the Command) and submits via that method.
 // UserId is IAuthApiRequest mock-mode only; stamp it here so the form never sees it.
 // UpdateRole.Response is empty, so success builds a new GetRole.Response from the command.
+// Submitted is the command GetRequest built and sent. The form's command stays editable
+// while the request is in flight, so HandleSuccess reads the sent copy.
 // When the stored snapshot is that role, its permission and agent-scope lists are kept.
 // A different id starts those lists empty because this response does not carry them.
 #endregion
@@ -48,14 +50,15 @@ partial class RoleState
 
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
       {
-        Submitted = action.Command;
-        return Task.FromResult<Command?>(new Command
+        Command submitted = new()
         {
           UserId = Guid.NewGuid(),
           RoleId = action.Command.RoleId,
           Name = action.Command.Name,
           Description = action.Command.Description
-        });
+        };
+        Submitted = submitted;
+        return Task.FromResult<Command?>(submitted);
       }
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)

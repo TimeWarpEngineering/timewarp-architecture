@@ -8,9 +8,10 @@
 // (honest disable in markup). RoleId is generated onto the partial from the route token.
 // Protected-core UI lock uses PermissionIds.IsProtectedCoreLocked; server SetRolePermissions
 // still 409s a strip. Last-admin is SetPrincipalRoles, not this page.
-// GetRole stores the response. The page copies permission and agent-scope sets from it when
-// the route id is loaded and after a successful save. Those sets are not store fields.
-// Save sends the command built from the page set. A failed write does not copy again.
+// GetRole stores the response. The page copies both permission and agent-scope sets from it
+// when the route id is loaded. A successful permission save recopies permissions. A successful
+// agent-scope save recopies scopes. Those sets are not store fields. Save sends the command
+// built from the page set. A failed write does not copy again.
 // The name and description form is RoleEditForm when the caller can manage the role.
 // A read-only caller sees the description as one DefinitionList item when it is not blank.
 #endregion

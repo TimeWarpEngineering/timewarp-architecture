@@ -5,17 +5,22 @@
   Purpose: edit-role form — bind IRoleDetails, dispatch RoleState.UpdateRole.
 
   Design: Pair to RoleForm. EditForm binds the IRoleDetails interface. The model is
-  UpdateRole.Command built with UpdateRole.Command.From when the role id changes, on
-  Cancel, and after Save. It does not copy on every render. Blazilla FluentValidator
-  takes the same RoleDetailsValidator as create, so only Name and Description are validated.
-  RoleId is copied inside From (CopyBeyondDetails). UserId is stamped in the handler.
-  A failed save does not throw. Copying from the unchanged snapshot puts the form back.
+  UpdateRole.Command built with UpdateRole.Command.From when the loaded role's id, name,
+  or description differ from the values last copied, on Cancel, and after Save. It does
+  not copy on every render. A membership save keeps name and description, so an unsaved
+  name edit stays. Blazilla FluentValidator takes the same RoleDetailsValidator as create,
+  so only Name and Description are validated. RoleId is copied inside From (CopyBeyondDetails).
+  UserId is stamped in the handler. A failed save does not throw. Copying from the
+  unchanged snapshot puts the form back.
 *@
 
 @code {
   private static readonly RoleDetailsValidator RoleValidator = new();
 
+  private bool HasBoundCopy { get; set; }
   private Guid BoundRoleId { get; set; }
+  private string? BoundName { get; set; }
+  private string? BoundDescription { get; set; }
   private UpdateRole.Command Command { get; set; } = new();
   private IRoleDetails RoleDetails => Command;
 
@@ -26,7 +31,18 @@
 
   protected override void OnParametersSet()
   {
-    if (Role is not GetRole.Response role || role.RoleId == BoundRoleId)
+    if (Role is not GetRole.Response role)
+    {
+      return;
+    }
+
+    if
+    (
+      HasBoundCopy
+      && role.RoleId == BoundRoleId
+      && role.Name == BoundName
+      && role.Description == BoundDescription
+    )
     {
       return;
     }
@@ -36,7 +52,10 @@
 
   private void Bind(GetRole.Response role)
   {
+    HasBoundCopy = true;
     BoundRoleId = role.RoleId;
+    BoundName = role.Name;
+    BoundDescription = role.Description;
     Command = UpdateRole.Command.From(role);
   }
 
@@ -45,7 +64,7 @@
     await RoleState.UpdateRole(Command);
     if (RoleState.RoleSnapshot is GetRole.Response role && role.RoleId == BoundRoleId)
     {
-      Command = UpdateRole.Command.From(role);
+      Bind(role);
     }
   }
 
@@ -53,7 +72,7 @@
   {
     if (RoleState.RoleSnapshot is GetRole.Response role && role.RoleId == BoundRoleId)
     {
-      Command = UpdateRole.Command.From(role);
+      Bind(role);
     }
   }
 }

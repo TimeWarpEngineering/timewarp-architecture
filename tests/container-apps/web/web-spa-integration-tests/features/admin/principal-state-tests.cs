@@ -7,7 +7,9 @@
 // C-create in-proc ServiceProvider (same shape as feedback-admin-state-tests): a scripted
 // IWebServerApiService answers per request type; states are re-read from the Store after Send.
 // Covers SetSearch and SetSort landing on the fetch query, a failed fetch clearing the rows,
-// OpenPrincipal storing the detail, a save sending the page's role ids, and the non-revealing 404.
+// OpenPrincipal storing the detail, a save sending the page's role ids, a failed role save
+// leaving that detail in place, SetPrincipalAgentScopes sending the page's scopes, and the
+// non-revealing 404.
 #endregion
 
 namespace PrincipalState_;
@@ -18,6 +20,7 @@ using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Web.Spa;
 using TimeWarp.Foundation.Features;
+using TimeWarp.Identity;
 
 [TestTag("Integration")]
 public class PrincipalActions_Should_
@@ -136,6 +139,53 @@ public class PrincipalActions_Should_
     seen.UserId.ShouldNotBe(Guid.Empty);
     page.RoleIds.ShouldBe([RoleIds.Administrator]);
     scope.Store.GetState<PrincipalState>().LastSetPrincipalRolesSucceeded.ShouldBeTrue();
+  }
+
+  public static async Task SetRoles_Should_Leave_The_Open_Principal_When_The_Save_Fails()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    spa.Api.Answer<GetPrincipal.Query>(query => GetPrincipal.GetMockResponseFactory()(query));
+    await scope.Send(new PrincipalState.OpenPrincipalActionSet.Action(PrincipalId));
+
+    spa.Api.Problem<SetPrincipalRoles.Command>(new SharedProblemDetails { Status = 409, Title = "Rejected" });
+    await scope.Store.GetState<PrincipalState>().SetPrincipalRoles(new SetPrincipalRoles.Command
+    {
+      PrincipalId = PrincipalId,
+      RoleIds = [RoleIds.Administrator]
+    });
+
+    PrincipalState state = scope.Store.GetState<PrincipalState>();
+    state.LastSetPrincipalRolesSucceeded.ShouldBeFalse();
+    GetPrincipal.PrincipalDetailDto current = state.Current.ShouldNotBeNull();
+    current.RoleIds.ShouldBe([RoleIds.Member]);
+    current.AgentScopeGrants.ShouldBeEmpty();
+  }
+
+  public static async Task SetAgentScopes_Should_Send_The_Command_Scopes()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    SetPrincipalAgentScopes.Command? seen = null;
+    spa.Api.Answer<SetPrincipalAgentScopes.Command>(command =>
+    {
+      seen = command;
+      return new SetPrincipalAgentScopes.Response([.. command.Scopes]);
+    });
+
+    SetPrincipalAgentScopes.Command page = new()
+    {
+      PrincipalId = PrincipalId,
+      Scopes = [AgentScopes.FeedbackRead]
+    };
+    await scope.Store.GetState<PrincipalState>().SetPrincipalAgentScopes(page);
+
+    seen.ShouldNotBeNull();
+    seen.Scopes.ShouldBe([AgentScopes.FeedbackRead]);
+    seen.ShouldNotBeSameAs(page);
+    seen.UserId.ShouldNotBe(Guid.Empty);
+    page.Scopes.ShouldBe([AgentScopes.FeedbackRead]);
+    scope.Store.GetState<PrincipalState>().LastSetPrincipalAgentScopesSucceeded.ShouldBeTrue();
   }
 
   public static async Task Open_Of_A_Missing_Principal_Sets_A_Non_Revealing_Error()

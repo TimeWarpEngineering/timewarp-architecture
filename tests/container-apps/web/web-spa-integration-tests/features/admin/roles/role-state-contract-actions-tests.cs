@@ -8,7 +8,9 @@
 // The dispatch methods are called on the store's RoleState, the way a page calls them. Mediator never saw the
 // generated Actions as source, so a passing dispatch proves the [ContractState] declaration reached its Send arms.
 // The save case sends the page's lists. The store has no permission or agent-scope draft. The page's own
-// Command is not the instance that is sent. UpdateRole keeps the snapshot's permission and scope lists.
+// Command is not the instance that is sent. UpdateRole keeps the snapshot's permission and scope lists
+// and stores the name and description from the command that was sent. A failed SetRolePermissions or
+// SetRoleAgentScopes leaves the success flag false and leaves RoleSnapshot on the fetched lists.
 #endregion
 
 namespace RoleStateContractActions_;
@@ -91,6 +93,40 @@ public class RoleState_Contract_Actions_Should
     page.Name.ShouldBe("Copy editor");
   }
 
+  public static async Task UpdateRole_Should_Store_The_Name_That_Was_Sent()
+  {
+    ScriptedWebServer server = new();
+    using RoleSpa spa = new(server);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Store.GetState<RoleState>().GetRole(new GetRole.Query { RoleId = RoleId });
+
+    UpdateRole.Command page = UpdateRole.Command.From(scope.Store.GetState<RoleState>().RoleSnapshot!);
+    page.Name = "Copy editor";
+    page.Description = "Edits things.";
+    server.BeforeResponse = request =>
+    {
+      if (request is UpdateRole.Command)
+      {
+        page.Name = "typed while saving";
+        page.Description = "typed description";
+      }
+    };
+
+    await scope.Store.GetState<RoleState>().UpdateRole(page);
+
+    GetRole.Response stored = scope.Store.GetState<RoleState>().RoleSnapshot.ShouldNotBeNull();
+    stored.Name.ShouldBe("Copy editor");
+    stored.Description.ShouldBe("Edits things.");
+    stored.Permissions.ShouldBe([PermissionIds.AdminRolesRead]);
+    stored.AgentScopes.ShouldBe(["scope.read"]);
+    UpdateRole.Command sent = server.Requests.OfType<UpdateRole.Command>().ShouldHaveSingleItem();
+    sent.Name.ShouldBe("Copy editor");
+    sent.Description.ShouldBe("Edits things.");
+    sent.ShouldNotBeSameAs(page);
+    page.Name.ShouldBe("typed while saving");
+    page.Description.ShouldBe("typed description");
+  }
+
   public static async Task SetRolePermissions_Should_Send_The_Page_List()
   {
     ScriptedWebServer server = new();
@@ -142,10 +178,58 @@ public class RoleState_Contract_Actions_Should
     state.RoleSnapshot.Permissions.ShouldBe([PermissionIds.AdminRolesRead]);
   }
 
+  public static async Task SetRolePermissions_Should_Leave_The_Snapshot_When_The_Save_Fails()
+  {
+    ScriptedWebServer server = new();
+    server.Problems.Add(typeof(SetRolePermissions.Command));
+    using RoleSpa spa = new(server);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Store.GetState<RoleState>().GetRole(new GetRole.Query { RoleId = RoleId });
+
+    await scope.Store.GetState<RoleState>().SetRolePermissions(new SetRolePermissions.Command
+    {
+      RoleId = RoleId,
+      PermissionIds = [PermissionIds.AdminRolesManage]
+    });
+
+    RoleState state = scope.Store.GetState<RoleState>();
+    state.LastSetRolePermissionsSucceeded.ShouldBeFalse();
+    GetRole.Response stored = state.RoleSnapshot.ShouldNotBeNull();
+    stored.Permissions.ShouldBe([PermissionIds.AdminRolesRead]);
+    stored.AgentScopes.ShouldBe(["scope.read"]);
+    stored.Name.ShouldBe("Editor");
+  }
+
+  public static async Task SetRoleAgentScopes_Should_Leave_The_Snapshot_When_The_Save_Fails()
+  {
+    ScriptedWebServer server = new();
+    server.Problems.Add(typeof(SetRoleAgentScopes.Command));
+    using RoleSpa spa = new(server);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Store.GetState<RoleState>().GetRole(new GetRole.Query { RoleId = RoleId });
+
+    await scope.Store.GetState<RoleState>().SetRoleAgentScopes(new SetRoleAgentScopes.Command
+    {
+      RoleId = RoleId,
+      Scopes = ["scope.write"]
+    });
+
+    RoleState state = scope.Store.GetState<RoleState>();
+    state.LastSetRoleAgentScopesSucceeded.ShouldBeFalse();
+    GetRole.Response stored = state.RoleSnapshot.ShouldNotBeNull();
+    stored.AgentScopes.ShouldBe(["scope.read"]);
+    stored.Permissions.ShouldBe([PermissionIds.AdminRolesRead]);
+    stored.Name.ShouldBe("Editor");
+  }
+
   /// <summary>Answers the Roles contracts these tests send and records every request it receives.</summary>
   private sealed class ScriptedWebServer : IWebServerApiService
   {
     public List<IApiRequest> Requests { get; } = [];
+
+    public HashSet<Type> Problems { get; } = [];
+
+    public Action<IApiRequest>? BeforeResponse { get; set; }
 
     public Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
     (
@@ -155,6 +239,15 @@ public class RoleState_Contract_Actions_Should
     {
       cancellationToken.ThrowIfCancellationRequested();
       Requests.Add(request);
+      BeforeResponse?.Invoke(request);
+      if (Problems.Contains(request.GetType()))
+      {
+        return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>
+        (
+          new SharedProblemDetails { Status = 409, Title = "Rejected" }
+        );
+      }
+
       object response = request switch
       {
         GetRoles.Query => new GetRoles.Response

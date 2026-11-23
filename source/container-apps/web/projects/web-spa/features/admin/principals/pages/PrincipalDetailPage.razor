@@ -30,12 +30,27 @@
 
   private void CopyDrafts()
   {
+    CopyRoleDraft();
+    CopyScopeDraft();
+  }
+
+  private void CopyRoleDraft()
+  {
     if (PrincipalState.Current is not { } current || current.PrincipalId.Value != PrincipalId)
     {
       return;
     }
 
     RoleDraft = [.. current.RoleIds];
+  }
+
+  private void CopyScopeDraft()
+  {
+    if (PrincipalState.Current is not { } current || current.PrincipalId.Value != PrincipalId)
+    {
+      return;
+    }
+
     ScopeDraft = new HashSet<string>(current.AgentScopeGrants, StringComparer.Ordinal);
   }
 
@@ -64,7 +79,7 @@
     }
 
     await PrincipalState.OpenPrincipal(principalId);
-    CopyDrafts();
+    CopyRoleDraft();
   }
 
   private bool IsSavingAgentScopes =>
@@ -95,7 +110,7 @@
     }
 
     await PrincipalState.OpenPrincipal(principalId);
-    CopyDrafts();
+    CopyScopeDraft();
   }
 
   private static string OrDash(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
