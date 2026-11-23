@@ -34,6 +34,14 @@ entries or lower counts.
 Steve, 2026-11-22: the EF migrations belong in the baseline, and so does the research runfile
 since it lives in a kitchen.
 
+## Update (2026-11-23)
+
+ganda 1.0.0-beta.38+c8f6a9ca1 is installed. It reads the baseline (its failure text says to
+record each file as "path": lines) and it now counts Markdown too, so the audit reports five
+files, not four. The fifth is `skills/tw-web-api-contracts/analysis/contract-conventions-rfc.md`
+(553 lines). It is analysis history under a skill (not packed), so record it in the baseline
+with the other four. Everywhere this spec says "four", read five.
+
 ## Precondition
 
 The installed ganda must be a build that reads `.timewarp/line-cap-baseline.json`. The
@@ -44,7 +52,7 @@ updating; do not work around it.
 
 ## Checklist
 
-- [ ] Add `.timewarp/line-cap-baseline.json` recording the four paths at their current line
+- [ ] Add `.timewarp/line-cap-baseline.json` recording the five paths at their current line
       counts (wc -l at the time of the commit; the check counts logical lines, so confirm the
       recorded count is >= the audit's reported count).
 - [ ] In `.editorconfig` under `[ganda.audit]`, remove `source-file-line-cap.severity = warning`
