@@ -10,8 +10,9 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/update-xai-byok-mode/update-xai-byok-mode-tests.cs
 
 #region Purpose
-// Jaribu runfile: UpdateXaiByokMode validator (defined mode, version), JSON round-trip of the
-// string enum, and handler (mode write, 409, policy fields left untouched).
+// Jaribu runfile: UpdateXaiByokMode validator (defined mode, version), From copy of the mode
+// and Version, JSON round-trip of the string enum, and handler (mode write, 409, policy fields
+// left untouched).
 #endregion
 
 //-:cnd:noEmit
@@ -92,6 +93,30 @@ namespace TimeWarp.Architecture.Features.Settings
       mock.XaiByokMode.ShouldBe(XaiByokMode.Allow);
       mock.Version.ShouldBe(1);
       return Task.CompletedTask;
+    }
+
+    public static Task From_Should_CopyMode_And_Version_From_GetSiteSettings()
+    {
+      GetSiteSettings.Response loaded = new(
+        entraSignInEnabled: true,
+        entraAllowBootstrap: false,
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        assistantName: "Nia",
+        version: 6,
+        xaiByokMode: XaiByokMode.Required);
+      Command command = Command.From(loaded);
+      command.XaiByokMode.ShouldBe(XaiByokMode.Required);
+      command.Version.ShouldBe(6);
+
+      Command plain = Command.From(new ModeOnly());
+      plain.XaiByokMode.ShouldBe(XaiByokMode.Off);
+      plain.Version.ShouldBe(0);
+      return Task.CompletedTask;
+    }
+
+    private sealed class ModeOnly : IXaiByokModeDetails
+    {
+      public XaiByokMode XaiByokMode { get; set; } = XaiByokMode.Off;
     }
   }
 

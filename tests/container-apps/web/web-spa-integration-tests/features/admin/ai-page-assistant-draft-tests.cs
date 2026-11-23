@@ -7,10 +7,12 @@
 // This host subclasses StaticHtmlRenderer and reports an interactive renderer, then renders
 // AiPage in the same scope that seeded the stale snapshot. The drafts are the form attributes
 // data-assistant-version and data-xai-byok-version, not SiteSettingsState.Version: the bug was
-// the form keeping the sign-in token after state could already have been refreshed. An agent
-// update of one field copies into an unedited draft. A cross-form save advances the other
-// draft's version and keeps that draft's edit when its own server field did not change.
-// An edited draft whose own server field also changed keeps the old version and the edit.
+// the form keeping the sign-in token after state could already have been refreshed. The page
+// copies Command.From(SiteSettings) after the fetch. A later SiteSettingsState arrives through
+// ShouldReRender, because OnParametersSet does not run for a state action. That call replaces
+// a command that still matches the response it was copied from. A command that differs keeps its edit. When
+// the stored field that edit changes is unchanged, the command takes the new version. When
+// that field changed too, the command keeps the old version. The render block does not assign.
 #endregion
 
 namespace AiPageAssistantDraft_;
