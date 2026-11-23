@@ -42,7 +42,7 @@ No product page uses Error or Lost today.
 - Update `design-system-parts.cs` (usage snippet), `status-badge-render-tests.cs`, and
   `design-system-page-contract-tests.cs` (expects "Lost").
 
-### 3. Light theme app frame (evidence, awaiting decision)
+### 3. Light theme app frame (approved, Steve 2026-11-23)
 
 `assets/03-light-shell.png` (light) next to `assets/03-dark-shell-compare.png` (dark). Files:
 `components/TimeWarpPage.razor`, `components/NavMenu.razor(.css)`.
@@ -50,6 +50,10 @@ No product page uses Error or Lost today.
 - The "Member" label in the app bar is white text on a white app bar (`rgb(255,255,255)` on
   `rgb(255,255,255)`). It is there but cannot be seen.
 - Every nav item (`a.fluent-navitem`) has a gray fill `rgb(240,240,240)`. Dark items have none.
+- Decision (2026-11-23): the Member label uses the app bar's foreground token so it reads in both
+  themes. Nav items rest with no fill in both themes: remove the light `rgb(240,240,240)` resting
+  fill rather than add one to dark. FluentUI nav items rest transparent, and a fill on every item
+  flattens the active-item highlight; hover and active keep their fills.
 - Dropped from the first review: the gray pill on the theme button was the mouse hover left by the
   click, not a defect.
 
@@ -74,7 +78,7 @@ No product page uses Error or Lost today.
   `getComputedStyle` or listed from `wwwroot/css/tokens.css`) so a developer can match the mockup.
 - Consider swatches for the status tokens (positive, warning, info) the badges use.
 
-### 6. Detail page keeps the old scroll position (evidence, awaiting decision)
+### 6. Detail page keeps the old scroll position (approved, Steve 2026-11-23)
 
 `assets/06-detail-scroll-before.png`, then `assets/06-detail-scroll-after.png`.
 
@@ -84,7 +88,7 @@ parts list. The URL becomes `/DesignSystem/status-badges` but the scroll contain
 the card heading are above the window. Fix: reset the content scroll container to the top when the
 part changes.
 
-### 7. Parts list cut off at page top (evidence, awaiting decision)
+### 7. Parts list cut off at page top (approved, Steve 2026-11-23)
 
 `assets/07-catalog-clipped.png`. File: `features/design-system/components/DesignSystemCatalog.razor(.css)`.
 
@@ -94,19 +98,21 @@ cards, Permission grid) is still hidden under the footer. It only fits after the
 scrolls and the sticky list moves up. Fix: size the list to the space left in the viewport
 (for example `max-height: calc(100dvh - <top offset>)`), not a fixed height.
 
-## Scope (groom 2026-11-23)
+## Scope
 
-Items 1, 2, 4, and 5 are approved and are this task. Items 3, 6, and 7 wait on a decision from Steven; they stay listed below and are not in the walk. Screenshots 06-detail-scroll-before/after and 07-catalog-clipped are referenced but missing from assets/; recapture them only if items 6 and 7 are approved.
+All seven items are approved (items 3, 6, 7 by Steve, 2026-11-23: "make the decision you think is
+best for the ones that are missing; let's get these done"). Screenshots 06-detail-scroll-before/after
+and 07-catalog-clipped are referenced but missing from assets/; capture them in the after-pass.
 
 ## Checklist
 
 - [ ] 1. Message bar: tinted fills, info looks like info, actions inline
 - [ ] 2. Status badges: drop Lost pill, optional Error with a real label, update snippet and tests
-- [ ] 3. Light app frame: Member label color, nav item fill (pending Steven)
+- [ ] 3. Light app frame: Member label color, nav item fill
 - [ ] 4. Type Scale: rows match real weight, case, spacing; one eyebrow style
 - [ ] 5. Color Tokens: visible Background/Paper chips, show values
-- [ ] 6. Reset scroll on part change (pending Steven)
-- [ ] 7. Parts list fits the viewport (pending Steven)
+- [ ] 6. Reset scroll on part change
+- [ ] 7. Parts list fits the viewport
 - [ ] Recapture `assets/` after the fix, light and dark
 
 ## Session
