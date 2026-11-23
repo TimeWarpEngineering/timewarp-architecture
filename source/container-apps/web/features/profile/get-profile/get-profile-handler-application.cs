@@ -6,9 +6,13 @@
 // Task 148:
 //   - Anonymous (no current principal): contract mock so demo works without sign-in (D3).
 //   - Authenticated: IProfileStore Find; create-if-missing with ProfileId.From(principal Guid) and
-//     defaults Member / en-US / US / system / Notifications=false (D1). Concurrent create races
-//     throw on unique PK / TryAdd → re-find. Application never takes PostgresDbContext (D4).
-//   - Response: DisplayName ← profile.DisplayName; Email optional; Language/Region/Theme/Notifications from aggregate.
+//     ProfilePreferenceDefaults (Member / en-US / US / system, Notifications=false) (D1).
+//     Concurrent create races throw on unique PK / TryAdd → re-find. Application never takes
+//     PostgresDbContext (D4).
+//   - Response: DisplayName ← profile.DisplayName; Email optional; Notifications from the aggregate.
+//     Language/Region/Theme come from the aggregate, and a null or whitespace value is replaced
+//     with ProfilePreferenceDefaults so the response the form copies always carries them.
+//     That replacement is not written back.
 // Task 149: Avatar is local TimeWarp.Multiavatar (MultiavatarGenerator.Generate), seeded by
 // user id — no network, no HttpClient, no fallback SVG path. Not domain/EF.
 // Task 150: identity comes from ICurrentPrincipalAccessor, not ICurrentUserService. The
@@ -33,11 +37,6 @@ public sealed class GetProfile
 {
   public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
-    private const string DefaultDisplayName = "Member";
-    private const string DefaultLanguage = "en-US";
-    private const string DefaultRegion = "US";
-    private const string DefaultTheme = "system";
-
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IProfileStore ProfileStore;
 
@@ -67,10 +66,10 @@ public sealed class GetProfile
       {
         profile = Profile.Create(
           profileId,
-          DefaultDisplayName,
-          DefaultLanguage,
-          DefaultRegion,
-          DefaultTheme);
+          ProfilePreferenceDefaults.DisplayName,
+          ProfilePreferenceDefaults.Language,
+          ProfilePreferenceDefaults.Region,
+          ProfilePreferenceDefaults.Theme);
 
         try
         {
@@ -93,9 +92,9 @@ public sealed class GetProfile
       return new Response(
         displayName: profile.DisplayName,
         email: profile.Email,
-        language: profile.Language,
-        region: profile.Region,
-        theme: profile.Theme,
+        language: ProfilePreferenceDefaults.OrLanguage(profile.Language),
+        region: ProfilePreferenceDefaults.OrRegion(profile.Region),
+        theme: ProfilePreferenceDefaults.OrTheme(profile.Theme),
         notifications: profile.Notifications,
         avatar: avatar);
     }

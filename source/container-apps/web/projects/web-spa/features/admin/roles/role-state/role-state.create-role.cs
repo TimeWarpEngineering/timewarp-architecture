@@ -7,7 +7,7 @@
 // RoleForm binds IRoleDetails (the Command) and submits via that method,
 // not Mediator.Send of a page-owned Action.
 // UserId is IAuthApiRequest mock-mode only; stamp it here so the form never sees it
-// (same as FetchRoles GetRequest).
+// (the generated GetRoles handler stamps it the same way).
 // LastCreatedRoleId is recorded on success so a page can confirm the create round-trip.
 #endregion
 

@@ -168,10 +168,12 @@ public partial class AcaNeonPublish_Given_
     await Task.CompletedTask;
   }
 
-  public static async Task Publish_Should_AllowTheIngressHostForPasskeys()
-  {
+  // Exists only with web and yarp: without them there is no web-server or ingress host to check
+  // (Jaribu JARIBU1002 refuses a test that reaches no assertion).
 #if web
 #if yarp
+  public static async Task Publish_Should_AllowTheIngressHostForPasskeys()
+  {
     string webServer = ModuleContaining("name: 'web-server'");
     webServer.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
     webServer.ShouldContain("ingress.${aca_env_outputs_azure_container_apps_environment_default_domain}");
@@ -185,10 +187,10 @@ public partial class AcaNeonPublish_Given_
     value.Contains("entra", StringComparison.OrdinalIgnoreCase).ShouldBeTrue(value);
     webServer.ShouldNotContain("SignInOptions__Methods__0");
     webServer.ShouldNotContain("SignInOptions__Methods__1");
-#endif
-#endif
     await Task.CompletedTask;
   }
+#endif
+#endif
 
   public static async Task RunMode_Should_CarryNoAzureWiring()
   {

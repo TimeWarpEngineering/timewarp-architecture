@@ -5,6 +5,7 @@
 #region Design
 // I*Details so the Settings Authentication section binds one shape. Version is not on this
 // interface — it is the concurrency token on Command/Response, not a form field the user types.
+// UpdateSiteSettings.Command implements the generated CopyBeyondDetails hook to copy Version.
 // PasskeyPromptMode and EntraTenantAcceptanceMode use TimeWarp.Identity enums
 // (JsonStringEnumConverter). Validator: both enums must be defined. Accepted tenants call
 // EntraTenantIds.TryNormalize, the same check SiteSettings uses, so an empty Guid, a bad

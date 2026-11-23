@@ -220,7 +220,7 @@ public class ContractAgreementAnalyzer : DiagnosticAnalyzer
       }
 
       bool covered = false;
-      foreach (INamedTypeSymbol details in operation.Request.AllInterfaces.Where(IsDetailsInterface))
+      foreach (INamedTypeSymbol details in operation.Request.AllInterfaces.Where(DetailsCopyClassification.IsDetailsInterface))
       {
         covered = true;
         if (checkedInterfaces.Add(details.ToDisplayString()))
@@ -380,12 +380,6 @@ public class ContractAgreementAnalyzer : DiagnosticAnalyzer
     (list, element) = lists[0];
     return true;
   }
-
-  private static bool IsDetailsInterface(INamedTypeSymbol type) =>
-    type.TypeKind == TypeKind.Interface
-    && type.Name.Length > "IDetails".Length
-    && type.Name[0] == 'I'
-    && type.Name.EndsWith("Details", StringComparison.Ordinal);
 
   private static bool IsAggregateRoot(INamedTypeSymbol type, INamedTypeSymbol aggregateRoot) =>
     type.TypeKind == TypeKind.Class

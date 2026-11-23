@@ -30,7 +30,7 @@
 // concerns that wire across them; its members exist only under the same flags.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
 // Container images (task 070-002): there are no hand-written Dockerfiles. `aspire publish` builds each
-// AddProject resource's image with the .NET SDK container build (Microsoft.NET.Sdk.Web enables it by
+// AddDotnetProject resource's image with the .NET SDK container build (Microsoft.NET.Sdk.Web enables it by
 // default). Run mode (task 305) hosts the yarp project so the trusted-proxy middleware is the process
 // behind the pinned http port. Publish mode keeps the AddYarp container image. No ContainerRepository /
 // ContainerFamily / ContainerBaseImage properties are set: Aspire supplies the repository and tag per
@@ -52,17 +52,17 @@ internal class Program
     // Declare project resources based on template flags
 #if api
     // API Server is included in the template
-    IResourceBuilder<ProjectResource> apiServer = builder
-      .AddProject<Projects.api_server>(ApiServerProjectResourceName, options => options.LaunchProfileName = "Api.Server")
+    IResourceBuilder<DotnetProjectResource> apiServer = builder
+      .AddDotnetProject(ApiServerProjectResourceName, ApiServerProjectPath, options => options.LaunchProfileName = "Api.Server")
       .WithScalar();
 #endif
 #if grpc
     // gRPC Server is included in the template
-    IResourceBuilder<ProjectResource> grpcServer = builder.AddProject<Projects.grpc_server>(GrpcServerProjectResourceName, options => options.LaunchProfileName = "Grpc.Server");
+    IResourceBuilder<DotnetProjectResource> grpcServer = builder.AddDotnetProject(GrpcServerProjectResourceName, GrpcServerProjectPath, options => options.LaunchProfileName = "Grpc.Server");
 #endif
 #if web
     // Web Server is included in the template
-    IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.web_server>(WebServerProjectResourceName, options => options.LaunchProfileName = "Web.Server");
+    IResourceBuilder<DotnetProjectResource> webServer = builder.AddDotnetProject(WebServerProjectResourceName, WebServerProjectPath, options => options.LaunchProfileName = "Web.Server");
     IResourceBuilder<ExecutableResource>? stateDevTools = WebServerResource.Configure(builder, webServer);
 
     // Add references to other services if they exist

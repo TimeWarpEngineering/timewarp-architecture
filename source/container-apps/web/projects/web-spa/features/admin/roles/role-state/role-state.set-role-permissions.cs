@@ -1,12 +1,15 @@
 #region Purpose
-// SetRolePermissions action: persists draft permission multi-select for one role.
+// SetRolePermissions: the local permission toggle and the hooks of the generated save action.
 #endregion
 
 #region Design
-// Task 182-004 / 206: mirrors PrincipalState.SetPrincipalRoles — draft toggles are pure state
-// (RoleDetailPage grouped editor); Save posts SetRolePermissions. HandleSuccess does not
-// fetch; LastSetRolePermissionsSucceeded is set false in GetRequest and true in HandleSuccess
-// so RoleDetailPage sequences FetchRoles only after a successful write (failed 409 keeps drafts).
+// Task 182-004 / 206: mirrors PrincipalState.SetPrincipalRoles. Draft toggles are pure state
+// (RoleDetailPage grouped editor), so SetPermissionSelectedActionSet stays hand-written. The save,
+// SetRolePermissionsActionSet and RoleState.SetRolePermissions(Command), is generated from
+// [ContractState] (task 483), with SetRolePermissions in DraftRequests. So BuildSetRolePermissionsRequest
+// is required: it fills PermissionIds from the draft for the RoleId the page set. It also resets
+// LastSetRolePermissionsSucceeded, and OnSetRolePermissionsSucceeded sets it, so RoleDetailPage
+// sequences GetRoles only after a successful write (a failed 409 keeps the drafts). Success does not fetch.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -56,49 +59,11 @@ partial class RoleState
     }
   }
 
-  public static class SetRolePermissionsActionSet
+  private partial void BuildSetRolePermissionsRequest(Command request)
   {
-    [TrackAction]
-    public sealed class Action : IBaseAction
-    {
-      public Guid RoleId { get; }
-
-      public Action(Guid roleId)
-      {
-        RoleId = roleId;
-      }
-    }
-
-    internal class Handler : DefaultApiHandler<Action, Command, Response>
-    {
-      public Handler(
-        IStore store,
-        IWebServerApiService webServerApiService,
-        ILogger<Handler> logger,
-      IPublisher<ClientPipeline> publisher)
-        : base(store, webServerApiService, logger, publisher)
-      {
-      }
-
-      protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
-      {
-        RoleState.LastSetRolePermissionsSucceeded = false;
-        IReadOnlyCollection<string> draft = RoleState.GetDraftPermissionIds(action.RoleId);
-        return Task.FromResult<Command?>(new Command
-        {
-          UserId = Guid.NewGuid(),
-          RoleId = action.RoleId,
-          PermissionIds = [.. draft]
-        });
-      }
-
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
-      {
-        _ = response;
-        _ = cancellationToken;
-        RoleState.LastSetRolePermissionsSucceeded = true;
-        return Task.CompletedTask;
-      }
-    }
+    LastSetRolePermissionsSucceeded = false;
+    request.PermissionIds = [.. GetDraftPermissionIds(request.RoleId)];
   }
+
+  partial void OnSetRolePermissionsSucceeded(Response response) => LastSetRolePermissionsSucceeded = true;
 }

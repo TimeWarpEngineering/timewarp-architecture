@@ -7,22 +7,22 @@ namespace AspirePublishTargets_;
 
 using System.Text.RegularExpressions;
 
-public partial class SafetySuiteTestArguments_Given_
+public partial class SafetySuiteFilterArguments_Given_
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<SafetySuiteTestArguments_Given_>();
+  internal static void Register() => RegisterTests<SafetySuiteFilterArguments_Given_>();
 
-  public static Task SingleTarget_Should_FilterOnItsOwnClassAndBuild()
+  public static Task SingleTarget_Should_FilterOnItsOwnClass()
   {
-    AspirePublishTargets.SafetySuiteTestArguments([AspirePublishTargets.Kubernetes], noBuild: false)
-      .ShouldBe(["test", "-c", "Release", "--", "--filter-class", "KubernetesPublish_Given_"]);
+    AspirePublishTargets.SafetySuiteFilterArguments([AspirePublishTargets.Kubernetes])
+      .ShouldBe(["--", "--filter-class", "KubernetesPublish_Given_"]);
     return Task.CompletedTask;
   }
 
-  public static Task AllTargetsNoBuild_Should_RunOnceWithoutBuildOrRestore()
+  public static Task AllTargets_Should_RunOnceOnTheSharedSuffix()
   {
-    AspirePublishTargets.SafetySuiteTestArguments(AspirePublishTargets.All, noBuild: true)
-      .ShouldBe(["test", "-c", "Release", "--no-build", "--no-restore", "--", "--filter-class", "Publish_Given_"]);
+    AspirePublishTargets.SafetySuiteFilterArguments(AspirePublishTargets.All)
+      .ShouldBe(["--", "--filter-class", "Publish_Given_"]);
     return Task.CompletedTask;
   }
 

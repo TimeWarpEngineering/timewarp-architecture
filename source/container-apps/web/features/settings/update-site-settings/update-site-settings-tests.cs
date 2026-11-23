@@ -12,6 +12,7 @@
 #region Purpose
 // Jaribu runfile: UpdateSiteSettings validator (passkey mode, accepted tenants),
 // emptied store re-seeds at Version 0, 409, successful update. A policy save leaves the assistant name.
+// From copies Version through CopyBeyondDetails, and Clone does not share the tenant list.
 #endregion
 
 //-:cnd:noEmit
@@ -120,6 +121,44 @@ namespace TimeWarp.Architecture.Features.Settings
       command.EntraTenantAcceptanceMode = (EntraTenantAcceptanceMode)99;
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
+      return Task.CompletedTask;
+    }
+
+    public static Task From_Should_CopyVersion_And_NotShareTenants()
+    {
+      Guid tenantId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+      List<EntraAcceptedTenant> tenants = [new EntraAcceptedTenant(tenantId, "example.com")];
+      GetSiteSettings.Response loaded = new(
+        entraSignInEnabled: true,
+        entraAllowBootstrap: false,
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        assistantName: "Ada",
+        version: 7,
+        entraAcceptedTenants: tenants);
+
+      GetSiteSettings.Response clone = (GetSiteSettings.Response)((System.ICloneable)loaded).Clone();
+      clone.Version.ShouldBe(7);
+      clone.AssistantName.ShouldBe("Ada");
+      clone.EntraAcceptedTenants.ShouldNotBeSameAs(loaded.EntraAcceptedTenants);
+      clone.EntraAcceptedTenants.Count.ShouldBe(1);
+      clone.EntraAcceptedTenants[0].ShouldBe(tenants[0]);
+
+      Command command = Command.From(loaded);
+      command.Version.ShouldBe(7);
+      command.EntraSignInEnabled.ShouldBeTrue();
+      command.EntraAcceptedTenants.ShouldNotBeSameAs(loaded.EntraAcceptedTenants);
+      command.EntraAcceptedTenants[0].TenantId.ShouldBe(tenantId);
+
+      Response saved = new(
+        entraSignInEnabled: false,
+        entraAllowBootstrap: true,
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        assistantName: "Ada",
+        version: 8,
+        entraAcceptedTenants: tenants);
+      Command again = Command.From(saved);
+      again.Version.ShouldBe(8);
+      again.EntraAllowBootstrap.ShouldBeTrue();
       return Task.CompletedTask;
     }
 

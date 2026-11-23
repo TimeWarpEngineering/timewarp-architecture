@@ -1,5 +1,5 @@
 #region Purpose
-// Tests for TWA0007: AddProject resource names must be ServiceNames constant values.
+// Tests for TWA0007: AddDotnetProject resource names must be ServiceNames constant values.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -31,7 +31,7 @@ public class Should_Enforce_Aspire_Resource_Names
     {
       public class Builder
       {
-        public void AddProject<T>(string name) { }
+        public void AddDotnetProject(string name, string path) { }
       }
     }
     """;
@@ -50,8 +50,8 @@ public class Should_Enforce_Aspire_Resource_Names
       {
         public static void Configure(Aspire.Builder builder)
         {
-          builder.AddProject<object>("web-server");
-          builder.AddProject<object>(TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName);
+          builder.AddDotnetProject("web-server", "../app/app.csproj");
+          builder.AddDotnetProject(TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName, "../app/app.csproj");
         }
       }
       """;
@@ -73,7 +73,7 @@ public class Should_Enforce_Aspire_Resource_Names
 
         public static void Configure(Aspire.Builder builder)
         {
-          builder.AddProject<object>(WebName);
+          builder.AddDotnetProject(WebName, "../app/app.csproj");
         }
       }
       """;
@@ -92,7 +92,7 @@ public class Should_Enforce_Aspire_Resource_Names
       {
         public static void Configure(Aspire.Builder builder)
         {
-          builder.AddProject<object>({|TWA0007:"webserver"|});
+          builder.AddDotnetProject({|TWA0007:"webserver"|}, "../app/app.csproj");
         }
       }
       """;
@@ -111,7 +111,7 @@ public class Should_Enforce_Aspire_Resource_Names
       {
         public static void Configure(Aspire.Builder builder, string dynamicName)
         {
-          builder.AddProject<object>(dynamicName);
+          builder.AddDotnetProject(dynamicName, "../app/app.csproj");
         }
       }
       """;
@@ -130,14 +130,14 @@ public class Should_Enforce_Aspire_Resource_Names
       {
         public class Builder
         {
-          public void AddProject<T>(string name) { }
+          public void AddDotnetProject(string name, string path) { }
         }
       }
       public static class AppHost
       {
         public static void Configure(Aspire2.Builder builder)
         {
-          builder.AddProject<object>("anything-goes");
+          builder.AddDotnetProject("anything-goes", "../app/app.csproj");
         }
       }
       """;

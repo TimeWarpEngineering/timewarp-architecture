@@ -5,7 +5,8 @@
 #region Design
 // Action ctor takes UpdateProfile.Command so the generator emits ProfileState.UpdateProfile(Command).
 // ProfilePage binds IProfileDetails (the Command) and submits via that method (TWA0022).
-// On success the submitted fields are copied into state; Avatar is unchanged (GetProfile-only).
+// On success the stored snapshot becomes a GetProfile.Response. UpdateProfile.Response has no
+// avatar, so the previous snapshot's avatar is kept. With no snapshot, FallbackAvatar is used.
 // 401 (empty cookie challenge or unsigned-in Save): toast via DefaultApiHandler then
 // /Login?returnUrl=/Profile — GET AllowAnonymous must not hide that Save needs a session.
 // 403 stays a toast only (insufficient permission is not "sign in again").
@@ -51,12 +52,15 @@ partial class ProfileState
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        ProfileState.DisplayName = response.DisplayName;
-        ProfileState.Email = response.Email;
-        ProfileState.Language = response.Language;
-        ProfileState.Region = response.Region;
-        ProfileState.Theme = response.Theme;
-        ProfileState.Notifications = response.Notifications;
+        string avatar = ProfileState.Profile?.Avatar ?? ProfileState.FallbackAvatar;
+        ProfileState.Profile = new GetProfile.Response(
+          response.DisplayName,
+          response.Email,
+          response.Language,
+          response.Region,
+          response.Theme,
+          response.Notifications,
+          avatar);
         return Task.CompletedTask;
       }
 

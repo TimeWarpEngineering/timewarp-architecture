@@ -20,6 +20,8 @@ global using Microsoft.Extensions.Hosting;
 global using Aspire.Hosting.Yarp;
 global using Aspire.Hosting.Yarp.Transforms;
 #endif
+// Aspire 17 (task 498): DotnetProjectResource, the AddDotnetProject resource type, in every combination.
+global using Aspire.Hosting.Dotnet;
 // Task 070-004: KubernetesEnvironmentResource (the Helm publish target) is referenced in every flag combination.
 global using Aspire.Hosting.Kubernetes;
 // Task 070-007: AzureContainerAppEnvironmentResource (the aca publish target), likewise in every combination.

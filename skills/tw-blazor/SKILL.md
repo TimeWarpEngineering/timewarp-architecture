@@ -1,6 +1,6 @@
 ---
 name: tw-blazor
-description: "Razor file authoring — one @code at the top, markup, optional <style> last. Use when creating or editing .razor files, @code blocks, component event handlers (they only dispatch TimeWarp.State actions), or in-file <style> tags. CSS placement: tw-blazor-css-strategy. App shell: tw-blazor-layout."
+description: "Razor file authoring — one @code at the top, markup, optional <style> last. Use when creating or editing .razor files, @code blocks, component event handlers (they only dispatch TimeWarp.State actions), contract-bound action sets ([ContractState] and its hooks), or in-file <style> tags. CSS placement: tw-blazor-css-strategy. App shell: tw-blazor-layout."
 ---
 
 # `.razor` file order
@@ -230,6 +230,41 @@ Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpA
 Reference: `source/container-apps/web/projects/web-spa/features/design-system/samples/SectionSample.razor`
 (Section card). Applied on PrincipalsPage, RolesListPage, RoleDetailPage, and the other
 former `Loading…` pages.
+
+# Contract-bound action sets (`[ContractState]`)
+
+A server-bound action set that only sends one contract is generated, not written. Name the
+contracts on the state:
+
+```csharp
+[ContractState(typeof(GetRoles), typeof(SetRolePermissions), DraftRequests = [typeof(SetRolePermissions)])]
+public sealed partial class RoleState : State<RoleState>
+```
+
+Per contract the generator emits `<Contract>ActionSet` (an `Action` carrying the contract request,
+`[TrackAction]`, and a `DefaultApiHandler`), the dispatch method `RoleState.<Contract>(request)`
+(a Query's request is optional: `RoleState.GetRoles()`), and the hooks. You write the hooks on the
+state:
+
+| Hook | When | Kind |
+|------|------|------|
+| `private partial void On<C>Loaded(Response)` | every Query | required: store the snapshot and seed any draft |
+| `private partial void Build<C>Request(TRequest)` | a contract in `DraftRequests` | required: fill the request from the draft |
+| `private partial Task<bool> Confirm<C>Async(TRequest, IConfirmationService, CancellationToken)` | a `[Destructive]` request | required: ask before sending |
+| `partial void On<C>Succeeded(Response)` | every Command | optional |
+| `partial void OnBuilding<C>Request(TRequest)` | a contract not in `DraftRequests` | optional |
+
+A missing required hook is CS8795, so a fetch that forgets to seed its draft does not compile.
+Keep a hand-written action set when the action is an agent tool with typed parameters
+(`[CatalogAction(Visibility = Agent)]`), takes input that is not the contract request, or is local
+state only. A state property named after a `Get<X>` contract trips CA1721 beside the generated
+`Get<X>` method; name the snapshot `<X>List`. The generator's rules are in
+`ContractStateSourceGenerator`'s Design region. Example: `features/admin/roles/role-state/`.
+
+Hand-written handlers that send a contract are checked against it: TWA0044 (`[Destructive]` and
+`ConfirmAsync` agree), TWA0045 (`[CatalogAction]` Permissions include the contract's
+`[EndpointAuthorize]` Policy), TWA0046 (a web-server contract has `GetMockResponseFactory()` or
+`[NoMockResponse("reason")]`).
 
 # Rendered dates
 

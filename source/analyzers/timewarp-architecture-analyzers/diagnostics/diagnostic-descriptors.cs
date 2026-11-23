@@ -25,7 +25,11 @@
 // with pre-filled arguments; it was replaced by typed availability flags on the read contracts and
 // page-scoped actions, so no generator reports them. Reusing an ID would give old build logs and
 // suppressions a different meaning.
-// Severity: generation-contract violations (TWE002/003/007/008/009/010/011, TWE005/006) are Errors so a broken
+// TWE015 is the [ContractState] contract (task 483): a contract the generator cannot turn into an ActionSet (no single
+// Query/Command plus Response, no public parameterless request constructor, a name a hand-written member already
+// uses), a DraftRequests type that is not a listed contract, or missing web-spa infrastructure (IBaseAction,
+// DefaultApiHandler, the API service, IConfirmationService for a [Destructive] contract). Fail-closed per contract.
+// Severity: generation-contract violations (TWE002/003/007/008/009/010/011/015, TWE005/006) are Errors so a broken
 // endpoint/page/id fails the build; SG* are Warnings (resilience / missing deps / log).
 #endregion
 
@@ -87,6 +91,15 @@ internal static class DiagnosticDescriptors
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "Fail-closed: one [Page] per page, with the primary route first and additional routes as further string-literal arguments; a route token shared with an earlier route keeps that route's type.");
+
+  public static readonly DiagnosticDescriptor ContractStateInvalid = new(
+    id: "TWE015",
+    title: "[ContractState] cannot generate an action set",
+    messageFormat: "[ContractState] on '{0}': {1}",
+    category: "ContractState",
+    DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Each [ContractState] contract needs one nested Query or Command with a public parameterless constructor and a nested Response, and no hand-written member of the same name on the state. DraftRequests lists only contracts of the attribute.");
 
   public static readonly DiagnosticDescriptor TypedIdInvalidShape = new(
     id: "TWE006",

@@ -27,6 +27,9 @@ internal static class DbEf
 
   internal const string MigrationsNamespace = "TimeWarp.Architecture.Persistence.Migrations";
 
+  /// <summary>The local tool command `dotnet tool run` resolves (the dotnet-tools.json manifest name).</summary>
+  internal const string EfToolCommand = "dotnet-ef";
+
   internal static bool IsValidMigrationName(string name)
   {
     if (string.IsNullOrWhiteSpace(name))
@@ -52,9 +55,9 @@ internal static class DbEf
     return true;
   }
 
+  /// <summary>Arguments after the tool name: <c>dotnet tool run dotnet-ef</c> + these.</summary>
   internal static string[] BuildAddMigrationArguments(string migrationName) =>
   [
-    "ef",
     "migrations",
     "add",
     migrationName,

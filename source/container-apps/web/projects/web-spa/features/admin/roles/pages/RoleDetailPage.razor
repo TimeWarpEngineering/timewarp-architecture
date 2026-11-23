@@ -8,7 +8,7 @@
 
   Design: Task 206. Route /Admin/Roles/{RoleId} (read policy so viewers can see the bundle).
   Checkboxes and Save require admin.roles.manage (CheckAuthorization). Membership edits stay
-  RoleState.SetPermissionSelected / SetRolePermissions — no new store. Protected-core
+  RoleState.SetPermissionSelected / SetRolePermissions (generated from [ContractState]) — no new store. Protected-core
   Administrator admin.* grants are disabled when selected; last-admin lockout is
   SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.
   Agent scopes on Member reach roleless human principals, including a human who holds an
@@ -34,34 +34,34 @@
     IsAnyActive(typeof(RoleState.SetRoleAgentScopesActionSet.Action));
 
   private GetRoles.RoleDto? Role =>
-    RoleState.Roles?.FirstOrDefault(role => role.RoleId == RoleId);
+    RoleState.RoleList?.FirstOrDefault(role => role.RoleId == RoleId);
 
   protected override async Task OnInitializedAsync()
   {
     CanManage = await CheckAuthorization(PermissionIds.AdminRolesManage);
-    await RoleState.FetchRoles();
+    await RoleState.GetRoles();
   }
 
   private async Task OnSave()
   {
-    await RoleState.SetRolePermissions(RoleId);
+    await RoleState.SetRolePermissions(new SetRolePermissions.Command { RoleId = RoleId });
     if (!RoleState.LastSetRolePermissionsSucceeded)
     {
       return;
     }
 
-    await RoleState.FetchRoles();
+    await RoleState.GetRoles();
   }
 
   private async Task OnSaveAgentScopes()
   {
-    await RoleState.SetRoleAgentScopes(RoleId);
+    await RoleState.SetRoleAgentScopes(new SetRoleAgentScopes.Command { RoleId = RoleId });
     if (!RoleState.LastSetRoleAgentScopesSucceeded)
     {
       return;
     }
 
-    await RoleState.FetchRoles();
+    await RoleState.GetRoles();
   }
 }
 
@@ -72,7 +72,7 @@
       (<code>admin.*</code>, <code>developer.*</code>, …). Administrator core admin
       permissions cannot be stripped (protected-core); the server also rejects that write (409).
     </p>
-    <Section Title="@(Role?.Name ?? "Role")" LoadingActionType="typeof(RoleState.FetchRolesActionSet.Action)">
+    <Section Title="@(Role?.Name ?? "Role")" LoadingActionType="typeof(RoleState.GetRolesActionSet.Action)">
       @if (Role is null)
       {
         <p data-qa="RoleNotFound">Role not found.</p>
@@ -100,7 +100,7 @@
         }
       }
     </Section>
-    <Section Title="Agent scopes" LoadingActionType="typeof(RoleState.FetchRolesActionSet.Action)">
+    <Section Title="Agent scopes" LoadingActionType="typeof(RoleState.GetRolesActionSet.Action)">
       @if (Role is not null)
       {
         <div class="twe-stack">

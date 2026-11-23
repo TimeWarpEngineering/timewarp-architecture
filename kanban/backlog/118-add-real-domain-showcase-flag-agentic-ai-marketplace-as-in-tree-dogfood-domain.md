@@ -97,6 +97,22 @@ golden path with **Orleans** for aggregates that earn actor hosting; the fleet l
   cross-cutting concerns land — x402 metering is a pipeline behavior; same
   replace-the-sample-with-real pattern as the web-server sample-options note above.
 
+## Fleet layer and actor hosts (2026-11-17)
+
+Steven approved adding these notes (via Amina, 2026-11-17, 8:45 PM BKK).
+
+Source:
+[evaluations/2026-11-17-xstate-v6-actors-vs-ramani.md](https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-17-xstate-v6-actors-vs-ramani.md)
+([timewarp-intel PR #131](https://github.com/TimeWarpEngineering/timewarp-intel/pull/131)).
+Busara verdicts: A/B/D.
+
+1. **Akka.NET stays reserved** for this task's fleet supervision and streams. Re-check
+   that reservation against the fleet spec when the fleet layer starts, because the
+   113-002 spike was single-process and Sharding and remoting were never tested.
+2. **Step one of the fleet layer:** model the device machines (idle→setup→running→fault)
+   in Ramani, as the spec any host implements.
+3. **XState stays off the marketplace layer;** the task 113 path stands.
+
 ## Add-on slots (agent attention), stage after V1 loop closes (Steven, 2026-11-09)
 
 Steven's vision (exact, 2026-11-09): an agent-first services marketplace like Alibaba.

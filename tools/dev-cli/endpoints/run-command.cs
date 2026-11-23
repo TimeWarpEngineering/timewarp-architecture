@@ -8,15 +8,15 @@
 // explicitly with --apphost so discovery is deterministic. Handler stores Ct and RepoRoot as
 // fields so private methods are zero-parameter.
 //
-// --launch-profile / -lp forwards to `aspire run --launch-profile` (Aspire CLI 13.6+). Argument
-// building, profile validation and the version guard live in services/aspire-run.cs (the
-// `aspire --version` probe in services/aspire-cli.cs, shared with dev db nuke) so
-// dev-cli-tests gate them without launching Aspire. With the option, dev run reads the
-// AppHost's launchSettings.json and rejects an unknown name with the declared list, then
-// refuses a pre-13.6 CLI with the update command (never drops the option silently). Every
-// dev run, with or without the option, warns when the installed CLI is older than
-// <AspireVersion> in Directory.Packages.props and prints `dotnet tool update -g Aspire.Cli`.
-// A CLI below 13.6 is still allowed when --launch-profile is absent.
+// --launch-profile / -lp forwards to `aspire run --launch-profile`. Argument building, profile
+// validation and the version guard live in services/aspire-run.cs (the `aspire --version` probe
+// in services/aspire-cli.cs, shared with dev db nuke) so dev-cli-tests gate them without
+// launching Aspire. With the option, dev run reads the AppHost's launchSettings.json and rejects
+// an unknown name with the declared list. Every dev run refuses a CLI below
+// AspireRun.MinimumRunVersion (17.0) with the update command: since Aspire 17 (task 498) the
+// AppHost takes DCP and the dashboard from the Aspire CLI bundle (ASPIRE013). Every dev run also
+// warns when the installed CLI is older than <AspireVersion> in Directory.Packages.props and
+// prints `dotnet tool update -g Aspire.Cli`.
 //
 // Environment precedence: dev run still sets ASPNETCORE_ENVIRONMENT=Development on the aspire
 // process (legacy Run.ps1 parity), but the selected launch profile's `environmentVariables`
@@ -36,7 +36,7 @@ namespace DevCli.Commands;
 [NuruRoute("run", Description = "Run the Aspire AppHost (Development environment)")]
 internal sealed class RunCommand : ICommand<Unit>
 {
-  [Option("launch-profile", "lp", Description = "AppHost launch profile from launchSettings.json (e.g. https, http; default: first profile). Requires Aspire CLI 13.6+")]
+  [Option("launch-profile", "lp", Description = "AppHost launch profile from launchSettings.json (e.g. https, http; default: first profile). Requires Aspire CLI 17.0+")]
   public string? LaunchProfile { get; set; }
 
   internal sealed class Handler : IRequestHandler<RunCommand, Unit>
@@ -96,8 +96,8 @@ internal sealed class RunCommand : ICommand<Unit>
     private async Task<bool> CheckCliVersionAsync()
     {
       AspireCli.AspireCliVersionReport report = await AspireCli.ValidateVersionAsync(
-        RepoRoot, AspireRun.MinimumLaunchProfileVersion, "--launch-profile", Ct);
-      string? error = report.BlockingError(LaunchProfile is not null);
+        RepoRoot, AspireRun.MinimumRunVersion, AspireRun.RunRequirement, Ct);
+      string? error = report.BlockingError(enforceMinimum: true);
       if (error is not null)
       {
         return Fail($"Error: {error}");
@@ -118,18 +118,24 @@ internal sealed class RunCommand : ICommand<Unit>
       return false;
     }
 
+    // DotNetUserSecretsListBuilder has no WithTimeout, so a linked token bounds the list. Its
+    // cancellation is the timeout warning unless dev run itself was cancelled.
+    private static readonly TimeSpan UserSecretsListTimeout = TimeSpan.FromSeconds(20);
+
     private async Task WarnIfXaiKeyMissingAsync()
     {
       try
       {
         string? environmentValue = Environment.GetEnvironmentVariable(XaiPreflight.EnvironmentVariable);
         string project = Path.Combine(RepoRoot, XaiPreflight.WebServerProject);
-        CommandOutput list = await Shell.Builder("dotnet")
-          .WithArguments("user-secrets", "list", "--project", project)
+        using var listTimeout = CancellationTokenSource.CreateLinkedTokenSource(Ct);
+        listTimeout.CancelAfter(UserSecretsListTimeout);
+        CommandOutput list = await DotNet.UserSecrets()
+          .WithProject(project)
           .WithWorkingDirectory(RepoRoot)
-          .WithTimeout(TimeSpan.FromSeconds(20))
+          .List()
           .WithNoValidation()
-          .CaptureAsync(Ct);
+          .CaptureAsync(listTimeout.Token);
 
         if (XaiPreflight.HasKey(environmentValue, list.Success ? list.Stdout : null))
         {
@@ -139,7 +145,7 @@ internal sealed class RunCommand : ICommand<Unit>
         Terminal.WriteLine(XaiPreflight.WarningLead(list.Success).Yellow());
         Terminal.WriteLine(XaiPreflight.SetupCommand.Yellow());
       }
-      catch (Exception exception) when (exception is not OperationCanceledException)
+      catch (Exception exception) when (exception is not OperationCanceledException || !Ct.IsCancellationRequested)
       {
         Terminal.WriteLine($"{XaiPreflight.UnreadableSecretsLead} ({exception.Message})".Yellow());
         Terminal.WriteLine(XaiPreflight.SetupCommand.Yellow());

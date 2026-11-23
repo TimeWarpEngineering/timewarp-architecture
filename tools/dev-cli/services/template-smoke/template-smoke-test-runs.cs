@@ -130,8 +130,8 @@ internal sealed class TemplateSmokeTestRuns
 
       Terminal.WriteLine($"Running generated co-located test standalone: {relativePath}...");
 
-      CommandOutput result = await Shell.Builder("dotnet")
-        .WithArguments("run", generatedPath)
+      CommandOutput result = await DotNet.Run()
+        .WithFile(generatedPath)
         .WithWorkingDirectory(outputDir)
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, TemplateSmokeInProcTestPortBase(outputDir))
         .WithNoValidation()
@@ -207,8 +207,8 @@ internal sealed class TemplateSmokeTestRuns
       Terminal.WriteLine(
         $"Running generated Jaribu aggregator (MTP bare dotnet test): {relativeProjectDir}...");
 
-      CommandOutput result = await Shell.Builder("dotnet")
-        .WithArguments("test", "-c", "Release")
+      CommandOutput result = await DotNet.Test()
+        .WithConfiguration("Release")
         .WithWorkingDirectory(projectDir)
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, TemplateSmokeInProcTestPortBase(outputDir))
         .WithNoValidation()
@@ -284,8 +284,8 @@ internal sealed class TemplateSmokeTestRuns
       Terminal.WriteLine($"Running generated test project (MTP bare dotnet test): {relativeProjectDir}...");
 
       var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-      CommandOutput result = await Shell.Builder("dotnet")
-        .WithArguments("test", "-c", "Release")
+      CommandOutput result = await DotNet.Test()
+        .WithConfiguration("Release")
         .WithWorkingDirectory(projectDir)
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, TemplateSmokeInProcTestPortBase(outputDir))
         .WithNoValidation()

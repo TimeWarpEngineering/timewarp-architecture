@@ -52,6 +52,14 @@
 // green.
 // program.cs calls AddTo inside the web block with the postgres flag nested in it, so this file is
 // excluded from a generated app unless both flags are on (template.json).
+// Aspire 17 (task 498): EnvironmentCallbackAnnotation caches its first evaluation per instance
+// (EvaluateOnceAsync). Aspire.Hosting.EntityFrameworkCore 17.0.0-preview.1.26567.5 snapshots
+// web-server's environment onto ef-tool-web-migrations by appending web-server's own annotation
+// instances, and RunDatabaseUpdateOnStart evaluates them for the tool before web-server starts. web-server
+// then reused the tool's result and started with none of its environment (Production, Kestrel's default
+// http://localhost:5000), so the ingress never became healthy. UnshareEnvironmentCallbacks gives the tool
+// its own annotation over each same callback, so each resource evaluates its own copy. Drop it when the
+// EF package copies annotations instead of sharing them.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -67,7 +75,7 @@ internal static class PostgresResources
   (
     IDistributedApplicationBuilder builder,
     PublishTarget publishTarget,
-    IResourceBuilder<ProjectResource> webServer
+    IResourceBuilder<DotnetProjectResource> webServer
   )
   {
     // Postgres is declared HERE, inside the web block, because Web.Server is its only consumer
@@ -210,7 +218,7 @@ internal static class PostgresResources
   (
     IDistributedApplicationBuilder builder,
     PublishTarget publishTarget,
-    IResourceBuilder<ProjectResource> webServer,
+    IResourceBuilder<DotnetProjectResource> webServer,
     IResourceBuilder<IResourceWithConnectionString> postgresDb,
     IResourceBuilder<IResourceWithConnectionString>? neonDirect
   )
@@ -221,14 +229,16 @@ internal static class PostgresResources
     string webInfrastructureProject = Path.GetFullPath(
       Path.Combine(builder.AppHostDirectory, "../../../web/projects/web-infrastructure/web-infrastructure.csproj"));
     IResourceBuilder<IResourceWithConnectionString> migrationConnection = neonDirect ?? postgresDb;
+    IResource? migrationTool = null;
     IResourceBuilder<global::Aspire.Hosting.EntityFrameworkCore.EFMigrationResource> webMigrations = webServer
-      .AddEFMigrations(WebMigrationsResourceName, "TimeWarp.Architecture.Persistence.PostgresDbContext")
+      .AddEFMigrations(WebMigrationsResourceName, "TimeWarp.Architecture.Persistence.PostgresDbContext", tool => migrationTool = tool.Resource)
       .WithMigrationsProject(webInfrastructureProject)
       .WithMigrationOutputDirectory("../../platform/postgres/migrations")
       .WithMigrationNamespace("TimeWarp.Architecture.Persistence.Migrations")
       .WithReference(migrationConnection, PostgresDatabaseResourceName)
       .RunDatabaseUpdateOnStart()
       .PublishAsMigrationScript();
+    UnshareEnvironmentCallbacks(webServer.Resource, migrationTool);
 
     if (neonDirect is null)
     {
@@ -259,5 +269,27 @@ internal static class PostgresResources
     // MSBuild item graph for about 90s before it migrates), so a first run or a new migration
     // logs no Error.
     // Re-run on demand via the ef-database-update dashboard command on the web-migrations resource.
+  }
+
+  /// <summary>
+  /// Replaces each environment callback annotation <paramref name="tool"/> shares with
+  /// <paramref name="startup"/> by a new annotation over the same callback (see the Design region).
+  /// </summary>
+  private static void UnshareEnvironmentCallbacks(DotnetProjectResource startup, IResource? tool)
+  {
+    if (tool is null)
+    {
+      throw new InvalidOperationException($"AddEFMigrations did not create the {WebMigrationsResourceName} tool resource.");
+    }
+
+    HashSet<EnvironmentCallbackAnnotation> shared = [.. startup.Annotations.OfType<EnvironmentCallbackAnnotation>()];
+    ResourceAnnotationCollection annotations = tool.Annotations;
+    for (int index = 0; index < annotations.Count; index++)
+    {
+      if (annotations[index] is EnvironmentCallbackAnnotation callback && shared.Contains(callback))
+      {
+        annotations[index] = new EnvironmentCallbackAnnotation(callback.Callback);
+      }
+    }
   }
 }
