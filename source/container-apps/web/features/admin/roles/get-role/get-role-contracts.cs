@@ -50,7 +50,7 @@ public static partial class GetRole
     }
   }
 
-  public sealed class Response : IRoleDetails
+  public sealed partial class Response : IRoleDetails
   {
     public Guid RoleId { get; }
     public string Name { get; set; }

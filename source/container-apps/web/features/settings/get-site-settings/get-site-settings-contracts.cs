@@ -30,7 +30,7 @@ public static partial class GetSiteSettings
 
   public sealed class Validator : AbstractValidator<Query>;
 
-  public sealed class Response : ISiteSettingsDetails
+  public sealed partial class Response : ISiteSettingsDetails
   {
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
