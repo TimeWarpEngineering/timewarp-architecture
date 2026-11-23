@@ -49,12 +49,12 @@ public class BuildAddMigrationArguments_Given_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<BuildAddMigrationArguments_Given_>();
 
-  public static Task Name_Should_BeFourthArgumentAfterEfMigrationsAdd()
+  public static Task Name_Should_BeThirdArgumentAfterMigrationsAdd()
   {
+    DbEf.EfToolCommand.ShouldBe("dotnet-ef");
     string[] arguments = DbEf.BuildAddMigrationArguments("AddOrders");
     arguments.ShouldBe(
     [
-      "ef",
       "migrations",
       "add",
       "AddOrders",

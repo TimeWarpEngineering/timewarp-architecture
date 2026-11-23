@@ -6,7 +6,7 @@ Research only, small and time-boxed. Run a pinned exact npm version of `npx impe
 
 Source: [Impeccable eval](https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-11-impeccable.md) ([timewarp-intel PR #121](https://github.com/TimeWarpEngineering/timewarp-intel/pull/121)). Busara verdict: REWORK (med). C is GREEN and folds in B, K and L. The assumption most likely to fail is that FluentUI shadow DOM or tokens flood the scan with false positives.
 
-Filed 2026-11-11 at Steven's request ("Yes, create the Impeccable detector trial task in timewarp-architecture."). Not launched.
+Filed 2026-11-11 at Steven's request ("Yes, create the Impeccable detector trial task in timewarp-architecture.").
 
 ## Requirements
 
@@ -49,4 +49,3 @@ Also out of scope: adding a CI detect step or editing `tw-blazor-css-strategy` i
 - Detector: https://github.com/pbakaus/impeccable (Apache-2.0)
 - Eval: https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-11-impeccable.md
 - Intel PR: https://github.com/TimeWarpEngineering/timewarp-intel/pull/121
-- Filed only; not launched. Do not start until Steven says so.
