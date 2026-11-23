@@ -8,6 +8,7 @@ column survives git.
 Task ids are allocated by the tooling (`ganda kanban` where available). Never hand-number a task
 file or invent its name. Keep the task's checklist and `## Session` current, and commit board
 changes with the work. `kanban/task-template.md` is the task body shape.
+`kanban/readme.md` is how an instance records which upstream tasks it ports.
 
 ## Definition of Ready
 

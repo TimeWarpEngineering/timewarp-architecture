@@ -7,6 +7,12 @@
 
 [Provide a brief description of the task, outlining its purpose and goals]
 
+## Propagation
+
+required | likely | template-only
+
+Pick one word and delete the other two. `required`: every instance should port this (security, analyzer, build, infra). `likely`: most instances will want it; check. `template-only`: sample, demo, or template scaffolding; an instance can skip it. Why this field exists: [Upstream sync ledger](readme.md).
+
 ## Parent (optional)
 <Parent task id>
 
