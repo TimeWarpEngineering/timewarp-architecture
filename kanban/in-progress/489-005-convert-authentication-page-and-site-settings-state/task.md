@@ -63,11 +63,25 @@ Gates:
 - Covering page renders, not edited: `--filter-class AssistantSettingsPlacement_Should_` — passed, 2 tests. `--filter-class AuthenticationPage_Should_` — passed, 3 tests.
 - `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing). `analyzer-suppressions` passed: 843 suppressions, none above the baseline.
 
+### Review disposition
+
+- Rounds: 1. Effort 3 (by-diff budget, 1301 lines). Roster: general.
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). Open: 0.
+- Disposition: **accepted-exceptions**. M1 (nit): the agent-facts JSON is built in two steps and writes `[]` tenants with no snapshot. Closed wontfix because the behavior meets acceptance and `hasSnapshot: false` disambiguates; it can ride along with the next edit to `site-settings-state.agent-page-facts.cs`.
+- Gates were not re-run in review. The recorded build, filtered test runs, and audit above cover the change.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Implementation: Grok 4.7, 2026-11-23. The store holds the fetched response. The authentication page copies it with `From`, reconciles a later response in `ShouldReRender`, and applies lookup results to the command. Cancel restores the snapshot.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20904-d9f3-7000-ab92-51bfd4a49d31, max-turns 500, Done — 2026-11-23T15:53:52Z
+- Review oracle: Claude Opus 5.5 (claude-opus-5-5), headless `ganda task work` review node, effort 3, roster general, turn cap 200. Round 1: 0 bugs, 0 suggestions, 1 nit (wontfix). Disposition accepted-exceptions — 2026-11-23.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d397954f-7753-45c4-b6fe-81c2e69cb29c, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-23T15:56:53Z
 
 ## Parent
 
 - 489
+
+## Review
+
+- Round 1: Done
