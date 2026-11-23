@@ -6,7 +6,7 @@
 // HtmlRenderer's static host reports IsInteractive false, so it never runs the page's fetch.
 // This host subclasses StaticHtmlRenderer and reports an interactive renderer, then renders
 // AiPage in the same scope that seeded the stale snapshot. The drafts are the form attributes
-// data-assistant-version and data-xai-byok-version, not SiteSettingsState.Version: the bug was
+// data-assistant-version and data-xai-byok-version, not SiteSettings.Version: the bug was
 // the form keeping the sign-in token after state could already have been refreshed. The page
 // copies Command.From(SiteSettings) after the fetch. A later SiteSettingsState arrives through
 // ShouldReRender, because OnParametersSet does not run for a state action. That call replaces
@@ -54,12 +54,12 @@ public class AiPage_Should_
     using SpaTestScope scope = SpaTestScope.Create(spa);
 
     await scope.Send(new SiteSettingsState.FetchSiteSettingsActionSet.Action());
-    scope.Store.GetState<SiteSettingsState>().Version.ShouldBe(1);
+    scope.Store.GetState<SiteSettingsState>().SiteSettings.ShouldNotBeNull().Version.ShouldBe(1);
 
     server.Settings = Settings("Zawadi", version: 7, mode: XaiByokMode.Required);
     string html = await RenderAsync(scope);
 
-    scope.Store.GetState<SiteSettingsState>().Version.ShouldBe(7);
+    scope.Store.GetState<SiteSettingsState>().SiteSettings.ShouldNotBeNull().Version.ShouldBe(7);
     html.ShouldContain("data-assistant-version=\"7\"");
     html.ShouldContain("data-assistant-name=\"Zawadi\"");
     html.ShouldNotContain("data-assistant-version=\"1\"");

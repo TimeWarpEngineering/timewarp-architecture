@@ -41,7 +41,7 @@
     ShowNicknameForm && CredentialsState.PendingNicknameOwnedByPrompt && CredentialsState.PendingNicknameCredentialId is not null;
   private bool CanSaveNickname =>
     !IsRenaming && NicknameDraft.Trim().Length is >= 1 and <= TimeWarp.Identity.Credential.MaxNicknameLength;
-  private bool IsRequired => SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required;
+  private bool IsRequired => SiteSettingsState.SiteSettings?.PasskeyPromptMode == PasskeyPromptMode.Required;
   private string PromptBody => IsRequired
     ? "You signed in with Microsoft 365. Add a passkey to continue using this app."
     : "You signed in with Microsoft 365. Add a passkey for this site so you can sign in without Entra next time.";

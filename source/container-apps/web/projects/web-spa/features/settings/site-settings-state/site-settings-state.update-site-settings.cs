@@ -53,17 +53,9 @@ partial class SiteSettingsState
 
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        SiteSettingsState.EntraSignInEnabled = response.EntraSignInEnabled;
-        SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
-        SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
-        SiteSettingsState.AssistantName = response.AssistantName;
-        SiteSettingsState.EntraTenantAcceptanceMode = response.EntraTenantAcceptanceMode;
-        SiteSettingsState.XaiByokMode = response.XaiByokMode;
-        SiteSettingsState.EntraAcceptedTenants = response.EntraAcceptedTenants.ToArray();
-        SiteSettingsState.DraftAcceptedTenants = response.EntraAcceptedTenants.ToArray();
-        SiteSettingsState.AcceptedTenantsMessage = null;
-        SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveFailed = false;
+        SiteSettingsState.ResolvedTenant = null;
+        SiteSettingsState.AcceptedTenantsMessage = null;
         SiteSettingsState.ReviseSiteSettings
         (
           assistantName: response.AssistantName,

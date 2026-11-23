@@ -7,24 +7,23 @@
   Purpose: Admin authentication policy editor — Entra offer/bootstrap, accepted tenants, passkey prompt, concurrency version.
 
   Design: web-api-contracts — EditForm binds ISiteSettingsDetails; UpdateSiteSettings.Command
-  is the model (no view model). Version is the concurrency token, not a typed field.
-  Accepted tenants are a list on SiteSettingsState.DraftAcceptedTenants. Look up, Add, and
-  Remove are state actions. A domain lookup asks the server for the tenant id and stores
-  the domain with it. A pasted GUID is stored with no domain. The page copies the draft
-  onto Command.EntraAcceptedTenants after each edit because OnParametersSet does not run
-  for a state action. Any-tenant mode keeps the list and disables the editors.
+  is the model (no view model). Command.From(SiteSettings) copies the policy fields and, through
+  CopyBeyondDetails, Version. It runs on load, on Cancel, and after a successful save. It does
+  not run on every render. A later SiteSettingsState action reconciles the command in
+  ShouldReRender: an unedited command is replaced; an edited command stays and takes the new
+  Version when the policy fields are unchanged. AssistantName, XaiByokMode, and Configuration*
+  stay on the stored response. Accepted tenants are Command.EntraAcceptedTenants. Add and
+  Remove edit that list. ResolveEntraTenant records a tenant or an error; this page applies
+  the result. Any-tenant mode keeps the list and disables the editors.
   Blazilla FluentValidator takes SiteSettingsDetailsValidator. Submit is
   SiteSettingsState.UpdateSiteSettings(Command). Tenant line and Microsoft365 / AllowBootstrap
-  drift banner stay outside the form (read-only / host config, not bindable policy).
-  Save is FluentButton submit Primary (RoleForm pattern), disabled while busy. Save outcomes
-  (409 concurrency included) are painted by the shell's MessageBars region — no page-local
-  error bar; SaveFailed only decides whether to reload the draft. The drift banner is static
+  drift banner stay outside the form and read the stored response. Save outcomes (409
+  concurrency included) are painted by the shell's MessageBars region — no page-local error
+  bar; SaveFailed only decides whether to reload the command. The drift banner is static
   Warning guidance and stays inline (task 247).
   Layout is FormSection / FormGrid / FormField / FormActions. Passkey prompt is
-  FluentSelect (no native select, no page-local CSS). Tenant line and drift banner
-  stay outside the EditForm. FormActions sits after FormSection (hairline above
-  Save), matching Profile / RoleForm. No Cancel — draft reload is SyncDraftFromState
-  after a successful save; there is no cheap unused reset on the command.
+  FluentSelect (no native select, no page-local CSS). FormActions sits after FormSection
+  (hairline above Cancel and Save), matching Profile / RoleForm.
   The assistant name is not on this page. Admin → AI owns it through UpdateAssistantName, so this
   save does not round-trip the name. Whose xAI key Ask uses is UpdateXaiByokMode on that same
   page, so this save does not round-trip the mode either.
@@ -36,12 +35,14 @@
 
   private static readonly SiteSettingsDetailsValidator SiteSettingsValidator = new();
 
-  private UpdateSiteSettings.Command Command { get; } = new();
+  private UpdateSiteSettings.Command Command { get; set; } = new();
   private ISiteSettingsDetails Details => Command;
+  private GetSiteSettings.Response? PolicySource { get; set; }
+  private int AppliedTenantLookupCount;
 
-  private bool DraftLoaded;
   private string DomainDraft { get; set; } = "";
   private string GuidDraft { get; set; } = "";
+  private string? TenantsMessage { get; set; }
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -54,6 +55,81 @@
     ArgumentNullException.ThrowIfNull(tenant);
     string id = tenant.TenantId.ToString("D");
     return tenant.Domain is null ? id : $"{tenant.Domain} ({id})";
+  }
+
+  /// <summary>
+  /// Merges a looked-up tenant into the working list. A tenant id that already has a domain
+  /// stays, and <paramref name="message"/> says so. A matching row with no domain takes the
+  /// looked-up domain through <see cref="EntraTenantIds.TryNormalize"/>.
+  /// </summary>
+  public static bool TryApplyLookedUpTenant
+  (
+    IReadOnlyList<EntraAcceptedTenant> current,
+    EntraAcceptedTenant lookedUp,
+    out List<EntraAcceptedTenant> next,
+    out string? message
+  )
+  {
+    ArgumentNullException.ThrowIfNull(current);
+    ArgumentNullException.ThrowIfNull(lookedUp);
+    foreach (EntraAcceptedTenant entry in current)
+    {
+      if (entry.TenantId != lookedUp.TenantId || entry.Domain is null)
+      {
+        continue;
+      }
+
+      next = [.. current];
+      message = $"Tenant {entry.TenantId:D} is already listed under {entry.Domain}.";
+      return false;
+    }
+
+    List<EntraAcceptedTenant> appended = [.. current, lookedUp];
+    if (!EntraTenantIds.TryNormalize(appended, out IReadOnlyList<EntraAcceptedTenant> normalized, out string? error))
+    {
+      next = [.. current];
+      message = error;
+      return false;
+    }
+
+    next = [.. normalized];
+    message = null;
+    return true;
+  }
+
+  /// <summary>Appends a pasted tenant id with no domain. An unparsable or duplicate id sets <paramref name="message"/>.</summary>
+  public static bool TryAddTenantId
+  (
+    IReadOnlyList<EntraAcceptedTenant> current,
+    string? tenantIdText,
+    out List<EntraAcceptedTenant> next,
+    out string? message
+  )
+  {
+    ArgumentNullException.ThrowIfNull(current);
+    string shown = tenantIdText?.Trim() ?? "";
+    if (!Guid.TryParse(shown, out Guid tenantId))
+    {
+      next = [.. current];
+      message = $"'{shown}' is not a tenant id.";
+      return false;
+    }
+
+    List<EntraAcceptedTenant> appended =
+    [
+      .. current,
+      EntraAcceptedTenant.IdOnly(tenantId),
+    ];
+    if (!EntraTenantIds.TryNormalize(appended, out IReadOnlyList<EntraAcceptedTenant> normalized, out string? error))
+    {
+      next = [.. current];
+      message = error;
+      return false;
+    }
+
+    next = [.. normalized];
+    message = null;
+    return true;
   }
 
   private static readonly PasskeyPromptMode[] PasskeyPromptModes =
@@ -78,13 +154,32 @@
       ? "Any Entra tenant"
       : "Only these tenant ids";
 
+  private static bool SameTenants
+  (
+    IReadOnlyList<EntraAcceptedTenant> left,
+    IReadOnlyList<EntraAcceptedTenant> right
+  ) => left.SequenceEqual(right);
+
+  private static bool SamePolicyFields(GetSiteSettings.Response left, GetSiteSettings.Response right) =>
+    left.EntraSignInEnabled == right.EntraSignInEnabled
+    && left.EntraAllowBootstrap == right.EntraAllowBootstrap
+    && left.PasskeyPromptMode == right.PasskeyPromptMode
+    && left.EntraTenantAcceptanceMode == right.EntraTenantAcceptanceMode
+    && SameTenants(left.EntraAcceptedTenants, right.EntraAcceptedTenants);
+
+  private static List<EntraAcceptedTenant> WithoutTenant
+  (
+    IReadOnlyList<EntraAcceptedTenant> current,
+    Guid tenantId
+  ) => current.Where(tenant => tenant.TenantId != tenantId).ToList();
+
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
     if (RendererInfo.IsInteractive)
     {
       await NoSubSiteSettingsState.FetchSiteSettings();
-      SyncDraftFromState();
+      AcceptFromStore(force: true);
     }
   }
 
@@ -94,62 +189,155 @@
     if (firstRender && RendererInfo.IsInteractive && !SiteSettingsState.HasSnapshot)
     {
       await NoSubSiteSettingsState.FetchSiteSettings();
-      SyncDraftFromState();
+      AcceptFromStore(force: true);
       await InvokeAsync(StateHasChanged);
     }
   }
 
-  private void SyncDraftFromState()
+  // OnParametersSet does not run when a state action re-renders this page.
+  public override bool ShouldReRender(Type stateType)
   {
-    if (!SiteSettingsState.HasSnapshot)
+    bool render = base.ShouldReRender(stateType);
+    if (render && stateType == typeof(SiteSettingsState))
+    {
+      AcceptFromStore(force: false);
+    }
+
+    return render;
+  }
+
+  private void AcceptFromStore(bool force)
+  {
+    if (NoSubSiteSettingsState.SiteSettings is not { } stored)
     {
       return;
     }
 
-    Command.EntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true;
-    Command.EntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
-    Command.PasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
-    Command.EntraTenantAcceptanceMode = SiteSettingsState.EntraTenantAcceptanceMode;
-    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
+    AcceptPolicy(stored, force);
+  }
+
+  private void AcceptPolicy(GetSiteSettings.Response stored, bool force)
+  {
+    if (!force && SamePolicySnapshot(stored))
+    {
+      ApplyLookup();
+      return;
+    }
+
+    bool dirty = !force && PolicySource is not null && PolicyDiffers(PolicySource);
+    if (!dirty)
+    {
+      Command = UpdateSiteSettings.Command.From(stored);
+      PolicySource = stored;
+      if (force)
+      {
+        ClearEntryDrafts();
+      }
+
+      ApplyLookup();
+      return;
+    }
+
+    if (PolicySource is not null && SamePolicyFields(PolicySource, stored))
+    {
+      Command.Version = stored.Version;
+      PolicySource = stored;
+    }
+
+    ApplyLookup();
+  }
+
+  private void ClearEntryDrafts()
+  {
     DomainDraft = "";
     GuidDraft = "";
-    Command.Version = SiteSettingsState.Version;
-    DraftLoaded = true;
+    TenantsMessage = null;
+    AppliedTenantLookupCount = NoSubSiteSettingsState.TenantLookupCount;
+  }
+
+  private bool SamePolicySnapshot(GetSiteSettings.Response stored) =>
+    PolicySource is { } source
+    && SamePolicyFields(source, stored)
+    && source.Version == stored.Version;
+
+  private bool PolicyDiffers(GetSiteSettings.Response source) =>
+    Command.EntraSignInEnabled != source.EntraSignInEnabled
+    || Command.EntraAllowBootstrap != source.EntraAllowBootstrap
+    || Command.PasskeyPromptMode != source.PasskeyPromptMode
+    || Command.EntraTenantAcceptanceMode != source.EntraTenantAcceptanceMode
+    || !SameTenants(Command.EntraAcceptedTenants, source.EntraAcceptedTenants)
+    || Command.Version != source.Version;
+
+  private void ApplyLookup()
+  {
+    int count = NoSubSiteSettingsState.TenantLookupCount;
+    if (count == AppliedTenantLookupCount)
+    {
+      return;
+    }
+
+    AppliedTenantLookupCount = count;
+    if (NoSubSiteSettingsState.ResolvedTenant is { } lookedUp)
+    {
+      if
+      (
+        TryApplyLookedUpTenant
+        (
+          Command.EntraAcceptedTenants,
+          lookedUp,
+          out List<EntraAcceptedTenant> next,
+          out string? message
+        )
+      )
+      {
+        Command.EntraAcceptedTenants = next;
+        TenantsMessage = null;
+        return;
+      }
+
+      TenantsMessage = message;
+      return;
+    }
+
+    TenantsMessage = NoSubSiteSettingsState.AcceptedTenantsMessage;
   }
 
   private async Task LookUpAsync()
   {
     await NoSubSiteSettingsState.ResolveEntraTenant(DomainDraft);
-    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
-    if (SiteSettingsState.AcceptedTenantsMessage is null)
+    if (TenantsMessage is null)
     {
       DomainDraft = "";
     }
   }
 
-  private async Task AddAsync()
+  private void AddTenant()
   {
-    await NoSubSiteSettingsState.AddAcceptedTenant(GuidDraft);
-    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
-    if (SiteSettingsState.AcceptedTenantsMessage is null)
+    if (!TryAddTenantId(Command.EntraAcceptedTenants, GuidDraft, out List<EntraAcceptedTenant> next, out string? message))
     {
-      GuidDraft = "";
+      TenantsMessage = message;
+      return;
     }
+
+    Command.EntraAcceptedTenants = next;
+    TenantsMessage = null;
+    GuidDraft = "";
   }
 
-  private async Task RemoveAsync(Guid tenantId)
+  private void RemoveTenant(Guid tenantId)
   {
-    await NoSubSiteSettingsState.RemoveAcceptedTenant(tenantId);
-    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
+    Command.EntraAcceptedTenants = WithoutTenant(Command.EntraAcceptedTenants, tenantId);
+    TenantsMessage = null;
   }
+
+  private void HandleCancel() => AcceptFromStore(force: true);
 
   private async Task HandleValidSubmit()
   {
-    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
     await NoSubSiteSettingsState.UpdateSiteSettings(Command);
     if (!SiteSettingsState.SaveFailed)
     {
-      SyncDraftFromState();
+      AcceptFromStore(force: true);
     }
   }
 }
@@ -168,13 +356,18 @@
                 data-qa="ConfigurationPolicyDrift" />
   }
 
-  @if (DraftLoaded)
+  @if (PolicySource is not null)
   {
     <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="AuthenticationForm" novalidate>
       <FluentValidator Validator="@SiteSettingsValidator" />
       <FormSection Title="Microsoft 365 sign-in policy"
                    Description="Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it."
-                   data-qa="AuthenticationSettings">
+                   data-qa="AuthenticationSettings"
+                   data-policy-version="@Command.Version"
+                   data-entra-sign-in-enabled="@(Command.EntraSignInEnabled ? "true" : "false")"
+                   data-entra-allow-bootstrap="@(Command.EntraAllowBootstrap ? "true" : "false")"
+                   data-passkey-prompt="@Command.PasskeyPromptMode"
+                   data-tenant-mode="@Command.EntraTenantAcceptanceMode">
         <FormGrid>
           <FormField Label="Offer Microsoft 365 sign-in">
             <FluentCheckbox @bind-Value=Details.EntraSignInEnabled
@@ -220,28 +413,28 @@
             <FluentButton Type=ButtonType.Button
                           Appearance=ButtonAppearance.Outline
                           Disabled=@TenantEditorsDisabled
-                          OnClick=AddAsync
+                          OnClick=AddTenant
                           data-qa="AcceptedTenantAdd">
               Add tenant id
             </FluentButton>
             <ul data-qa="AcceptedTenants">
-              @foreach (EntraAcceptedTenant tenant in SiteSettingsState.DraftAcceptedTenants)
+              @foreach (EntraAcceptedTenant tenant in Command.EntraAcceptedTenants)
               {
                 <li data-qa="AcceptedTenant">
                   <span>@FormatAcceptedTenant(tenant)</span>
                   <FluentButton Type=ButtonType.Button
                                 Appearance=ButtonAppearance.Subtle
                                 Disabled=@TenantEditorsDisabled
-                                OnClick="@(() => RemoveAsync(tenant.TenantId))"
+                                OnClick="@(() => RemoveTenant(tenant.TenantId))"
                                 data-qa="AcceptedTenantRemove">
                     Remove
                   </FluentButton>
                 </li>
               }
             </ul>
-            @if (SiteSettingsState.AcceptedTenantsMessage is not null)
+            @if (TenantsMessage is not null)
             {
-              <span data-qa="AcceptedTenantsError">@SiteSettingsState.AcceptedTenantsMessage</span>
+              <span data-qa="AcceptedTenantsError">@TenantsMessage</span>
             }
             <p data-qa="TenantAcceptanceHelp">
               Look up the customer's primary domain. The server stores that domain with the tenant id.
@@ -263,6 +456,13 @@
         </FormGrid>
       </FormSection>
       <FormActions>
+        <FluentButton Type=ButtonType.Button
+                      Appearance=ButtonAppearance.Subtle
+                      Disabled=@IsBusy
+                      OnClick=HandleCancel
+                      data-qa="AuthenticationCancel">
+          Cancel
+        </FluentButton>
         <FluentButton Type=ButtonType.Submit
                       Appearance=ButtonAppearance.Primary
                       Disabled=@IsBusy
