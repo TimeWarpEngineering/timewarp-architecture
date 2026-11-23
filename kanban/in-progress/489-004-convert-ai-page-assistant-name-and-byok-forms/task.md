@@ -60,6 +60,7 @@ Gates:
 ## Session
 
 - Implementation: Grok 4.7, 2026-11-23. The assistant-name and key-policy forms copy `GetSiteSettings.Response` with `From`. A state action reconciles the open drafts in `ShouldReRender`, because `OnParametersSet` does not run for that re-render. An edit stays, and takes the new version when its own stored field is unchanged.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a208c8-fc85-7d03-8ddf-af336c82e51b, max-turns 500, Done — 2026-11-23T14:51:10Z
 
 ## Parent
 
