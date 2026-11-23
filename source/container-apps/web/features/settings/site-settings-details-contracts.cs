@@ -14,8 +14,9 @@
 // policy. Task 401: each entry is a tenant id plus an optional domain.
 // AssistantName is not on this shape. UpdateAssistantName owns the name so an authentication
 // save does not round-trip it. XaiByokMode is not on this shape either. UpdateXaiByokMode owns
-// the mode so an authentication save cannot overwrite it. GetSiteSettings.Response and
-// UpdateSiteSettings.Response still echo the stored name and the stored mode.
+// the mode so an authentication save cannot overwrite it. GetSiteSettings.Response implements
+// IAssistantNameDetails and IXaiByokModeDetails so those commands copy from the whole response.
+// UpdateSiteSettings.Response still echoes the stored name and the stored mode.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;

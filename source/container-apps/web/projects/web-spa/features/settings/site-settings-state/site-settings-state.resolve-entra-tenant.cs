@@ -1,15 +1,15 @@
 #region Purpose
-// ResolveEntraTenant: ask the server for a tenant id and append it to the draft list.
+// ResolveEntraTenant: ask the server for a tenant id and record it for the page to apply.
 #endregion
 
 #region Design
-// The server resolves the id. This handler never parses an issuer. An invalid domain skips
-// the HTTP call and sets AcceptedTenantsMessage. A problem is both the shell notification
-// and that same message. A tenant id already on the draft with a domain is reported as
-// already listed under that domain, and the list is left as it is. A matching row with no
-// domain is replaced by the looked-up {id, domain}. TryNormalize keeps a non-null domain
-// over a null one, so appending the lookup result is that replacement. A new id is appended
-// the same way. No success toast: the new row is the confirmation.
+// The server resolves the id. This handler never parses an issuer and never edits the
+// authentication command. An invalid domain skips the HTTP call and sets
+// AcceptedTenantsMessage. A problem is both the shell notification and that same message.
+// Success stores ResolvedTenant and clears the message. TenantLookupCount advances on every
+// completed attempt, including a skipped call, so the page can tell a new result from the
+// previous one. The page merges the tenant into Command.EntraAcceptedTenants. No success
+// toast: the new row is the confirmation.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -55,9 +55,13 @@ partial class SiteSettingsState
         if (!EntraTenantIds.TryNormalizeDomain(action.Domain, out string? domain) || domain is null)
         {
           string shown = action.Domain?.Trim() ?? "";
-          SiteSettingsState.AcceptedTenantsMessage = shown.Length == 0
-            ? "Enter a domain name."
-            : $"'{shown}' is not a domain name.";
+          RecordLookup
+          (
+            tenant: null,
+            message: shown.Length == 0
+              ? "Enter a domain name."
+              : $"'{shown}' is not a domain name."
+          );
           return Task.FromResult<Query?>(null);
         }
 
@@ -66,40 +70,24 @@ partial class SiteSettingsState
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        foreach (EntraAcceptedTenant entry in SiteSettingsState.DraftAcceptedTenants)
-        {
-          if (entry.TenantId != response.TenantId || entry.Domain is null)
-          {
-            continue;
-          }
-
-          SiteSettingsState.AcceptedTenantsMessage =
-            $"Tenant {entry.TenantId:D} is already listed under {entry.Domain}.";
-          return Task.CompletedTask;
-        }
-
-        List<EntraAcceptedTenant> next =
-        [
-          .. SiteSettingsState.DraftAcceptedTenants,
-          new EntraAcceptedTenant(response.TenantId, response.Domain),
-        ];
-        if (!EntraTenantIds.TryNormalize(next, out IReadOnlyList<EntraAcceptedTenant> normalized, out string? error))
-        {
-          SiteSettingsState.AcceptedTenantsMessage = error;
-          return Task.CompletedTask;
-        }
-
-        SiteSettingsState.DraftAcceptedTenants = normalized;
-        SiteSettingsState.AcceptedTenantsMessage = null;
+        RecordLookup(new EntraAcceptedTenant(response.TenantId, response.Domain), message: null);
         return Task.CompletedTask;
       }
 
       protected override Task HandleError(SharedProblemDetails problem, CancellationToken cancellationToken)
       {
-        SiteSettingsState.AcceptedTenantsMessage = string.IsNullOrWhiteSpace(problem.Detail)
+        string? message = string.IsNullOrWhiteSpace(problem.Detail)
           ? problem.Title
           : $"{problem.Title}. {problem.Detail}";
+        RecordLookup(tenant: null, message);
         return base.HandleError(problem, cancellationToken);
+      }
+
+      private void RecordLookup(EntraAcceptedTenant? tenant, string? message)
+      {
+        SiteSettingsState.ResolvedTenant = tenant;
+        SiteSettingsState.AcceptedTenantsMessage = message;
+        SiteSettingsState.TenantLookupCount++;
       }
     }
   }

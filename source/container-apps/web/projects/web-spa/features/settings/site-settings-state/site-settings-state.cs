@@ -1,23 +1,19 @@
 #region Purpose
-// SPA cache of the site-settings singleton for Admin Authentication, Link Microsoft 365, and Required passkey gate.
+// SPA cache of the site-settings singleton for Admin Authentication, Link Microsoft 365, and the required passkey gate.
 #endregion
 
 #region Design
-// TimeWarp.State: HTTP goes through ActionSets. Null snapshot until first fetch. Version is the
-// concurrency token round-tripped on Update. PasskeyPromptMode drives AddPasskeyPrompt Later vs
-// block. Slice Features.Settings; SettingsPage (Applications), AuthenticationPage (Admin.SiteSettings),
-// and AuthenticationStateListener (Identity) take CrossSliceReference. Configuration* is the
-// bound Entra section from GetSiteSettings, used for the Admin app-registration tenant line.
-// Task 306: EntraTenantAcceptanceMode and EntraAcceptedTenants are the admin trust policy.
-// Task 401: each entry is a tenant id plus an optional domain. DraftAcceptedTenants is the
-// unsaved list the Authentication page edits. AcceptedTenantsMessage is the lookup or
-// edit failure for that list. The saved snapshot stays on EntraAcceptedTenants.
-// Microsoft365 list / AllowBootstrap drift is still on this snapshot for the seeder/admin copy.
-// AssistantName is the Admin AI form's copy of the stored name. Labels read
-// AgentSurfaceState.AssistantName from the public query. UpdateAssistantName writes the name;
-// AssistantNameSaveFailed keeps that draft when the rename fails. UpdateXaiByokMode writes
-// whose key Ask uses; XaiByokModeSaveFailed keeps that draft when the write fails. SaveFailed
-// belongs to the authentication policy save.
+// The store holds the fetched GetSiteSettings.Response, not a flattened copy of its fields.
+// Fetch assigns it. UpdateSiteSettings, UpdateAssistantName, and UpdateXaiByokMode replace it
+// with a new response, because Version is get-only and a page that already holds the previous
+// instance must see the change. Configuration* stay on that response: they are the bound Entra
+// section, not fields the authentication command edits. AssistantName and XaiByokMode stay on
+// it for the same reason. The unsaved authentication form, including accepted tenants, lives on
+// the page's UpdateSiteSettings.Command. ResolveEntraTenant records ResolvedTenant or
+// AcceptedTenantsMessage; the page applies that result to its command. TenantLookupCount
+// advances once per completed lookup so the page applies each result once. SaveFailed,
+// AssistantNameSaveFailed, and XaiByokModeSaveFailed are the page-facing flags for those writes.
+// Labels read AgentSurfaceState.AssistantName from the public query, not this snapshot.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -27,61 +23,88 @@ using TimeWarp.Identity;
 [StateAccess]
 public sealed partial class SiteSettingsState : State<SiteSettingsState>
 {
-  public bool? EntraSignInEnabled { get; private set; }
-  public bool? EntraAllowBootstrap { get; private set; }
-  public PasskeyPromptMode PasskeyPromptMode { get; private set; } = PasskeyPromptMode.Soft;
-  public string AssistantName { get; private set; } = AssistantNameRules.Default;
-  public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; private set; }
-  public XaiByokMode XaiByokMode { get; private set; } = XaiByokMode.Allow;
-  public IReadOnlyList<EntraAcceptedTenant> EntraAcceptedTenants { get; private set; } = [];
-  public IReadOnlyList<EntraAcceptedTenant> DraftAcceptedTenants { get; private set; } = [];
-  public string? AcceptedTenantsMessage { get; private set; }
-  public long Version { get; private set; }
+  public GetSiteSettings.Response? SiteSettings { get; private set; }
+
   /// <summary>True when the last UpdateSiteSettings failed; the problem itself is on NotificationState.</summary>
   public bool SaveFailed { get; private set; }
+
   /// <summary>True when the last UpdateAssistantName failed; the problem itself is on NotificationState.</summary>
   public bool AssistantNameSaveFailed { get; private set; }
+
   /// <summary>True when the last UpdateXaiByokMode failed; the problem itself is on NotificationState.</summary>
   public bool XaiByokModeSaveFailed { get; private set; }
-  public string? ConfigurationTenantId { get; private set; }
-  public string? ConfigurationTenantDisplayName { get; private set; }
-  public string? ConfigurationTenantDomain { get; private set; }
-  public bool ConfigurationEnabled { get; private set; }
-  public bool ConfigurationAllowBootstrap { get; private set; }
 
-  public bool HasSnapshot => EntraSignInEnabled is not null;
+  /// <summary>The last successful domain lookup. The page merges it into its command.</summary>
+  public EntraAcceptedTenant? ResolvedTenant { get; private set; }
+
+  /// <summary>Lookup failure text. Null after a tenant is resolved.</summary>
+  public string? AcceptedTenantsMessage { get; private set; }
+
+  /// <summary>Completed lookup attempts. The page applies a result when this changes.</summary>
+  public int TenantLookupCount { get; private set; }
+
+  public bool HasSnapshot => SiteSettings is not null;
 
   public bool ConfigurationEnabledDiffers =>
-    HasSnapshot && ConfigurationEnabled != EntraSignInEnabled;
+    SiteSettings is { } settings && settings.ConfigurationEnabled != settings.EntraSignInEnabled;
 
   public bool ConfigurationAllowBootstrapDiffers =>
-    HasSnapshot && ConfigurationAllowBootstrap != EntraAllowBootstrap;
+    SiteSettings is { } settings && settings.ConfigurationAllowBootstrap != settings.EntraAllowBootstrap;
 
   public string ConfigurationTenantLabel =>
-    SiteSettingsConfigurationDrift.FormatTenantLabel(
-      ConfigurationTenantDisplayName,
-      ConfigurationTenantDomain,
-      ConfigurationTenantId);
+    SiteSettings is { } settings
+      ? SiteSettingsConfigurationDrift.FormatTenantLabel(
+        settings.ConfigurationTenantDisplayName,
+        settings.ConfigurationTenantDomain,
+        settings.ConfigurationTenantId)
+      : SiteSettingsConfigurationDrift.FormatTenantLabel(null, null, null);
 
   public override void Initialize()
   {
-    EntraSignInEnabled = null;
-    EntraAllowBootstrap = null;
-    PasskeyPromptMode = PasskeyPromptMode.Soft;
-    AssistantName = AssistantNameRules.Default;
-    EntraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted;
-    XaiByokMode = XaiByokMode.Allow;
-    EntraAcceptedTenants = [];
-    DraftAcceptedTenants = [];
-    AcceptedTenantsMessage = null;
-    Version = 0;
+    SiteSettings = null;
     SaveFailed = false;
     AssistantNameSaveFailed = false;
     XaiByokModeSaveFailed = false;
-    ConfigurationTenantId = null;
-    ConfigurationTenantDisplayName = null;
-    ConfigurationTenantDomain = null;
-    ConfigurationEnabled = false;
-    ConfigurationAllowBootstrap = false;
+    ResolvedTenant = null;
+    AcceptedTenantsMessage = null;
+    TenantLookupCount = 0;
+  }
+
+  private void ReviseSiteSettings
+  (
+    string? assistantName = null,
+    long? version = null,
+    XaiByokMode? xaiByokMode = null,
+    bool? entraSignInEnabled = null,
+    bool? entraAllowBootstrap = null,
+    PasskeyPromptMode? passkeyPromptMode = null,
+    EntraTenantAcceptanceMode? entraTenantAcceptanceMode = null,
+    IReadOnlyList<EntraAcceptedTenant>? entraAcceptedTenants = null
+  )
+  {
+    if (SiteSettings is not { } current)
+    {
+      return;
+    }
+
+    List<EntraAcceptedTenant> tenants = entraAcceptedTenants is null
+      ? current.EntraAcceptedTenants
+      : [.. entraAcceptedTenants];
+    SiteSettings = new GetSiteSettings.Response
+    (
+      entraSignInEnabled ?? current.EntraSignInEnabled,
+      entraAllowBootstrap ?? current.EntraAllowBootstrap,
+      passkeyPromptMode ?? current.PasskeyPromptMode,
+      assistantName ?? current.AssistantName,
+      version ?? current.Version,
+      current.ConfigurationTenantId,
+      current.ConfigurationTenantDisplayName,
+      current.ConfigurationTenantDomain,
+      current.ConfigurationEnabled,
+      current.ConfigurationAllowBootstrap,
+      entraTenantAcceptanceMode ?? current.EntraTenantAcceptanceMode,
+      tenants,
+      xaiByokMode ?? current.XaiByokMode
+    );
   }
 }

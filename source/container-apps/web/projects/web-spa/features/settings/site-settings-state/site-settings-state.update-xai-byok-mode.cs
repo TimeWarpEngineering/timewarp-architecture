@@ -1,5 +1,5 @@
 #region Purpose
-// UpdateXaiByokMode: persists whose xAI key Ask uses and refreshes the cached mode and version.
+// UpdateXaiByokMode: persists whose xAI key Ask uses and replaces the mode on the stored response.
 #endregion
 
 #region Design
@@ -54,9 +54,8 @@ partial class SiteSettingsState
 
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        SiteSettingsState.XaiByokMode = response.XaiByokMode;
-        SiteSettingsState.Version = response.Version;
         SiteSettingsState.XaiByokModeSaveFailed = false;
+        SiteSettingsState.ReviseSiteSettings(xaiByokMode: response.XaiByokMode, version: response.Version);
         await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "xAI key policy saved."),
