@@ -19,12 +19,12 @@
   <ItemGroup Label="TimeWarp Packages">
     <!-- Nuru stays on the 4.0.0 betas: `ganda nuget outdated` treats stable 3.0.0 as current, but the
          `ganda repo audit` nuru check requires the 4.0.0 line and blocks signing on 3.0.0 (task 389). -->
-    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.16" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.17" />
     <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.10" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.10" />
     <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.2" />
-    <!-- 2.0.1-beta.1, not stable 2.0.0: TimeWarp.Nuru 4.0.0-beta.16 depends on
+    <!-- 2.0.1-beta.1, not stable 2.0.0: TimeWarp.Nuru 4.0.0-beta.17 depends on
          TimeWarp.Build.Tasks >= 2.0.1-beta.1, so a 2.0.0 pin is NU1605 (downgrade) in the dev-cli
          runfile. Take the next stable when it is at least this version (task 492). -->
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.1-beta.1" />
@@ -152,7 +152,7 @@
     <PackageVersion Include="System.Formats.Cbor" Version="11.0.0" />
     <!-- 15.0 reuses the id TimeWarp.Mediator for the contracts assembly and ships TWM001–TWM004
          inside that package. TimeWarp.Mediator.Contracts and TimeWarp.Mediator.Analyzers stop at
-         14.0.0. TimeWarp.Nuru 4.0.0-beta.16 depends on Mediator 15, so dev-cli and
+         14.0.0. TimeWarp.Nuru 4.0.0-beta.17 depends on Mediator 15, so dev-cli and
          agent-identity-cli handlers are IRequestHandler and return ValueTask (task 486).
          15.0.0-beta.10 adds GeneratedRequestPatternAttribute and TWM013. Additive; no
          call site here declares a generated request (task 498). -->
