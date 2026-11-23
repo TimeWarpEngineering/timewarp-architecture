@@ -64,11 +64,25 @@ Gates:
 - `tests/container-apps/web/web-spa-playwright-tests/profile-edit-playwright-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`). CI runs the project. `dotnet run --project tests/container-apps/web/web-spa-playwright-tests -c Release --no-build -- --filter-class ProfileEdit_Given_Wasm` — passed, 1 test (save and cancel).
 - `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing). `analyzer-suppressions` passed: 843 suppressions, none above the baseline.
 
+### Review disposition
+
+- Rounds: 1. Effort 2 (by-diff, 669 lines), roster: general.
+- Final counts: bug 0, suggestion 0, nit 0. Open 0, fixed 0, wontfix 0.
+- Disposition: **clean**. No findings were raised. The goal restatement matches the task, so there is no misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Gates were not re-run in review. The recorded `## Results` gates cover the change.
+
 ## Session
 
 - Implementation: Grok 4.7, 2026-11-23. The profile store keeps one `GetProfile.Response`. The page copies it with `UpdateProfile.Command.From` on load, Cancel, and after Save. Blank language, region, and theme are filled when the server builds the response.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2085f-f489-7141-ac5e-da7d0fb7708e, max-turns 500, Done — 2026-11-23T13:10:05Z
+- Review oracle: Claude Opus 5.5 (claude-opus-5-5), 2026-11-23, effort 2, roster general, turn cap 120. Round 1 raised no findings. Disposition clean.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f706f2a0-62dd-43f7-bfb2-83699315fcc0, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-23T13:12:03Z
 
 ## Parent
 
 - 489
+
+## Review
+
+- Round 1: Done
