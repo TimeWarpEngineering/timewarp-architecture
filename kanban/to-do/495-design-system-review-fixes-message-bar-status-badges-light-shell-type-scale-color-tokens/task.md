@@ -94,6 +94,10 @@ cards, Permission grid) is still hidden under the footer. It only fits after the
 scrolls and the sticky list moves up. Fix: size the list to the space left in the viewport
 (for example `max-height: calc(100dvh - <top offset>)`), not a fixed height.
 
+## Scope (groom 2026-11-23)
+
+Items 1, 2, 4, and 5 are approved and are this task. Items 3, 6, and 7 wait on a decision from Steven; they stay listed below and are not in the walk. Screenshots 06-detail-scroll-before/after and 07-catalog-clipped are referenced but missing from assets/; recapture them only if items 6 and 7 are approved.
+
 ## Checklist
 
 - [ ] 1. Message bar: tinted fills, info looks like info, actions inline
