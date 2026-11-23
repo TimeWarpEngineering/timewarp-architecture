@@ -9,8 +9,9 @@
   component-local text (not a stored demo choice). Immediate delivers each
   keystroke. Wall A: the native filter div anchors ::deep to fluent-text-input.
   Each group name is an h2, and the nested part list is labelled by that heading,
-  so the grouping is in the accessibility tree. The heading class keeps the
-  eyebrow look.
+  so the grouping is in the accessibility tree. The heading uses the shared
+  eyebrow role. The list height is the space left in the viewport at page top,
+  and the list scrolls inside that box.
 *@
 
 @code {
@@ -97,7 +98,7 @@
     @foreach ((DesignSystemParts.Group group, DesignSystemParts.Part[] parts) in VisibleGroups())
     {
       <li class="ds-catalog__group">
-        <h2 class="ds-catalog__heading" id="@GroupHeadingId(group)">@group</h2>
+        <h2 class="ds-catalog__heading twe-type-eyebrow" id="@GroupHeadingId(group)">@group</h2>
         <ul class="ds-catalog__parts" aria-labelledby="@GroupHeadingId(group)">
           @foreach (DesignSystemParts.Part part in parts)
           {

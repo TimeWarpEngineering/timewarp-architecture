@@ -143,7 +143,7 @@ public partial class DesignSystemPage_Should_
       "In progress",
       "data-qa=\"ConfirmSample\"",
       "data-qa=\"DangerOutline\"",
-      "Lost",
+      "Churned",
       "data-qa=\"DesignSystemRoleBadges\"",
       "data-qa=\"DesignSystemPermissionGrid\"",
       "View assigned work",

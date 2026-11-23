@@ -36,11 +36,7 @@
   box-sizing: border-box;
 }
 
-.twe-form-field__hint {
-  margin: 0;
-  font-size: var(--twe-text-helper);
-  color: var(--twe-muted);
-}
+.twe-form-field__hint { margin: 0; }
 
 .twe-form-field--span-1 { grid-column: span 1; }
 .twe-form-field--span-2 { grid-column: span 2; }

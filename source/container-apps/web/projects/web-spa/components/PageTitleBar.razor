@@ -5,7 +5,7 @@
 
   Design: IsPageHeading defaults to true and renders an h1. TimeWarpPage passes true, so
   the shell page has one h1. False renders a div with the same class, so a sample is not
-  a second h1. A blank Title omits that heading only. Description and Actions still render
+  a second h1. The title uses twe-type-page-title and the description uses twe-type-body. A blank Title omits that heading only. Description and Actions still render
   inside twe-page__header. When both slots are unset, only the heading renders and the
   header wrapper is omitted. A blank Title with both slots unset renders nothing.
   Description is a div with the shell margin. The document title stays on TimeWarpPage.
@@ -25,11 +25,11 @@
     {
       @if (IsPageHeading)
       {
-        <h1 class="twe-page__title">@Title</h1>
+        <h1 class="twe-page__title twe-type-page-title">@Title</h1>
       }
       else
       {
-        <div class="twe-page__title">@Title</div>
+        <div class="twe-page__title twe-type-page-title">@Title</div>
       }
     }
   </text>;
@@ -48,7 +48,7 @@
         @Heading
         @if (Description is not null)
         {
-          <div class="twe-page__description">@Description</div>
+          <div class="twe-page__description twe-type-body">@Description</div>
         }
       </div>
       @if (Actions is not null)

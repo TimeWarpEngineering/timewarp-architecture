@@ -1,9 +1,5 @@
 .twe-page__title {
   margin: 0 0 var(--twe-space-2);
-  font-size: var(--twe-text-page-title);
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--twe-ink);
 }
 
 .twe-page__title:focus { outline: none; }
@@ -24,8 +20,6 @@
   max-width: 40rem;
   margin: 0 0 var(--twe-space-2);
   color: var(--twe-muted);
-  font-size: var(--twe-text-body);
-  line-height: 1.55;
 }
 
 .twe-page__actions {

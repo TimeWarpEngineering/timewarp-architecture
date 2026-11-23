@@ -17,6 +17,8 @@
 // is labelled by that heading. Within a group, entries follow
 // DesignSystemParts.PageOrder, which is also the All view order.
 // A usage snippet is hand-written and shown only on the single-part view.
+// Changing part resets the shell content scroller to the top. The offset lives on
+// Fluent's content item, which this page does not own, so the reset is presentational JS.
 // The page itself has no header actions. The Page header part shows where page-wide
 // actions go. Confirmations dispatch DesignSystemState.ConfirmSample. The sample drawer
 // follows ApplicationState.

@@ -75,7 +75,7 @@ internal static class DesignSystemParts
       "Type Scale",
       Group.Foundations,
       """
-      <div class="ds-type__row" data-token="twe-text-page-title">28 — Page title</div>
+      <div class="ds-type__row twe-type-page-title">28 — Page title</div>
       """,
       typeof(TypeScaleSample)
     ),
@@ -390,7 +390,7 @@ internal static class DesignSystemParts
       Group.Feedback,
       """
       <StatusBadge Status="BadgeStatus.Active" />
-      <StatusBadge Status="BadgeStatus.Error" Label="Lost" />
+      <StatusBadge Status="BadgeStatus.Error" Label="Churned" />
       """,
       typeof(StatusBadgesSample)
     ),

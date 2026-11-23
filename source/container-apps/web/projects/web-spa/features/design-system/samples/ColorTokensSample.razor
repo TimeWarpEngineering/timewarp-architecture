@@ -1,8 +1,11 @@
 @namespace TimeWarp.Architecture.Features.DesignSystem
+@implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
+@attribute [DirectComponentSideEffect("Reads each token's computed color and watches body data-theme so the printed value matches the theme on screen. The chips themselves stay CSS variables.")]
 
 @code {
-  // The label is the custom property, not a hex copy: tokens.css is the one source, and its dark
-  // block (task 465) paints different values for the neutrals.
+  // The label is the custom property. The value line is the computed color for the
+  // current theme, filled after the interactive render. A static render leaves it blank.
   private static readonly (string Name, string Token)[] ColorTokens =
   [
     ("Purple (primary)", "twe-purple"),
@@ -13,7 +16,122 @@
     ("Background", "twe-background"),
     ("Paper", "twe-paper"),
     ("Danger", "twe-danger"),
+    ("Positive", "twe-positive"),
+    ("Warning", "twe-warning"),
+    ("Info", "twe-info"),
   ];
+
+  private readonly Dictionary<string, string> Resolved = [];
+  private IJSObjectReference? Module;
+  private DotNetObjectReference<ColorTokensSample>? Host;
+  private bool Disposed;
+
+  private string ValueFor(string token) =>
+    Resolved.TryGetValue(token, out string? value) ? value : "";
+
+  private static string[] TokenNames()
+  {
+    string[] names = new string[ColorTokens.Length];
+    for (int index = 0; index < ColorTokens.Length; index++)
+    {
+      names[index] = ColorTokens[index].Token;
+    }
+
+    return names;
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (!firstRender || !RendererInfo.IsInteractive || Module is not null || Disposed)
+    {
+      return;
+    }
+
+    IJSObjectReference? module = await DesignSystemPageJsModule.TryImportAsync(JsRuntime);
+    if (module is null || Disposed)
+    {
+      if (module is not null)
+      {
+        await DesignSystemPageJsModule.ReleaseAsync(module);
+      }
+
+      return;
+    }
+
+    Module = module;
+    await PaintAsync();
+    if (Disposed || Module is null)
+    {
+      return;
+    }
+
+    Host = DotNetObjectReference.Create(this);
+    await DesignSystemPageJsModule.WatchThemeAsync(Module, Host);
+  }
+
+  [JSInvokable]
+  public Task OnThemeChanged() => PaintAsync();
+
+  private async Task PaintAsync()
+  {
+    if (Disposed || Module is null)
+    {
+      return;
+    }
+
+    string[] names = TokenNames();
+    string[]? values = await DesignSystemPageJsModule.ReadTokenColorsAsync(Module, names);
+    if (values is null || values.Length != names.Length || Disposed || Same(names, values))
+    {
+      return;
+    }
+
+    Resolved.Clear();
+    for (int index = 0; index < names.Length; index++)
+    {
+      Resolved[names[index]] = values[index];
+    }
+
+    StateHasChanged();
+  }
+
+  private bool Same(string[] names, string[] values)
+  {
+    if (Resolved.Count != names.Length)
+    {
+      return false;
+    }
+
+    for (int index = 0; index < names.Length; index++)
+    {
+      if (!Resolved.TryGetValue(names[index], out string? current) || current != values[index])
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    if (Disposed)
+    {
+      return;
+    }
+
+    Disposed = true;
+    IJSObjectReference? module = Module;
+    Module = null;
+    if (module is not null)
+    {
+      await DesignSystemPageJsModule.StopThemeWatchAsync(module);
+      await DesignSystemPageJsModule.ReleaseAsync(module);
+    }
+
+    Host?.Dispose();
+    Host = null;
+  }
 }
 
 <Card Title="Color Tokens">
@@ -24,6 +142,7 @@
         <div class="ds-swatch__chip" data-token="@token"></div>
         <div class="ds-swatch__name">@name</div>
         <div class="ds-swatch__token">--@token</div>
+        <div class="ds-swatch__value" data-qa="ColorTokenValue">@ValueFor(token)</div>
       </div>
     }
   </div>

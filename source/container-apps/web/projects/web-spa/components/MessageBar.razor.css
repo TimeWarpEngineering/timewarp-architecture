@@ -1,0 +1,33 @@
+/* Native anchor for the Fluent message bar (Wall A). display: contents adds no box.
+   The bar's shadow styles read these custom properties, so the fills follow the status
+   tints instead of Fluent's saturated status backgrounds. Info has no intent fill of its
+   own; it otherwise paints the neutral surface with a gray icon. */
+.twe-message-bar { display: contents; }
+
+.twe-message-bar ::deep fluent-message-bar[intent="success"] {
+  --colorPaletteGreenBackground1: var(--twe-positive-tint);
+  --colorPaletteGreenBorder1: var(--twe-positive);
+  --colorNeutralForeground3: var(--twe-on-positive);
+  --success: var(--twe-positive);
+}
+
+.twe-message-bar ::deep fluent-message-bar[intent="warning"] {
+  --colorPaletteDarkOrangeBackground1: var(--twe-warning-tint);
+  --colorPaletteDarkOrangeBorder1: var(--twe-warning);
+  --colorNeutralForeground3: var(--twe-on-warning);
+  --warning: var(--twe-warning);
+}
+
+.twe-message-bar ::deep fluent-message-bar[intent="error"] {
+  --colorPaletteRedBackground1: var(--twe-danger-tint);
+  --colorPaletteRedBorder1: var(--twe-danger);
+  --colorNeutralForeground3: var(--twe-danger);
+  --error: var(--twe-danger);
+}
+
+.twe-message-bar ::deep fluent-message-bar[intent="info"] {
+  --colorNeutralBackground3: var(--twe-info-tint);
+  --colorNeutralStroke1: var(--twe-info);
+  --colorNeutralForeground3: var(--twe-on-info);
+  --info: var(--twe-info);
+}

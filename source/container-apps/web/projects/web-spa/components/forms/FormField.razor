@@ -11,7 +11,8 @@
   fluent-field). Multi-line text uses TextArea.razor, which sizes itself.
   Avatar and checkbox hosts are left to intrinsic size. Pages still pass Width="100%" on text/select/combobox controls.
   A labelled field is pickable by Ask's Tag (task 346) as AskTagMark's Field kind. The visible
-  text is the label and hint; input values are never read. Unmatched attributes win.
+  text is the label and hint; input values are never read. The hint uses twe-type-helper.
+  Unmatched attributes win.
 *@
 
 @code {
@@ -54,6 +55,6 @@
   </div>
   @if (!string.IsNullOrWhiteSpace(Hint))
   {
-    <p class="twe-form-field__hint">@Hint</p>
+    <p class="twe-form-field__hint twe-type-helper">@Hint</p>
   }
 </div>

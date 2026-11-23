@@ -36,9 +36,9 @@
 <section class="twe-card @Class" @attributes="RootAttributes">
   @if (!string.IsNullOrWhiteSpace(Title))
   {
-    <h2 class="twe-card__title" data-qa="@TitleDataQa">@Title</h2>
+    <h2 class="twe-card__title twe-type-section-title" data-qa="@TitleDataQa">@Title</h2>
   }
-  <div class="twe-card__body">
+  <div class="twe-card__body twe-type-body">
     @ChildContent
   </div>
 </section>

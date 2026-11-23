@@ -5,7 +5,8 @@
 
   Design: Native div root so CSS isolation stamps the scope attribute. Unmatched attributes
   splat onto that root, as Card does. Subtitle is text. Aside is a RenderFragment (a hint or
-  an action the caller owns). This component wires no events. Isolated CSS uses --twe-* tokens.
+  an action the caller owns). This component wires no events. The title uses
+  twe-type-section-title and the subtitle uses twe-type-helper. Isolated CSS uses --twe-* tokens.
   There is no FluentUI child here, so the stylesheet needs no ::deep.
 *@
 
@@ -18,10 +19,10 @@
 
 <div class="twe-section-header" @attributes="AdditionalAttributes">
   <div class="twe-section-header__text">
-    <h2 class="twe-section-header__title">@Title</h2>
+    <h2 class="twe-section-header__title twe-type-section-title">@Title</h2>
     @if (!string.IsNullOrWhiteSpace(Subtitle))
     {
-      <p class="twe-section-header__subtitle">@Subtitle</p>
+      <p class="twe-section-header__subtitle twe-type-helper">@Subtitle</p>
     }
   </div>
   @if (Aside is not null)

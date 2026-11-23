@@ -1,6 +1,13 @@
 .ds-swatches { display: flex; flex-wrap: wrap; gap: 16px; }
-.ds-swatch { width: 132px; }
-.ds-swatch__chip { height: 64px; border-radius: 10px; border: 1px solid var(--twe-rule); }
+.ds-swatch { width: 148px; }
+/* Ink mix and an outer ring, so Paper and Background stay visible on a paper card.
+   --twe-rule is 12% white in dark and disappears on paper. */
+.ds-swatch__chip {
+  height: 64px;
+  border-radius: 10px;
+  border: 2px solid color-mix(in srgb, var(--twe-ink) 55%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--twe-ink) 14%, var(--twe-background));
+}
 .ds-swatch__chip[data-token="twe-purple"] { background: var(--twe-purple); }
 .ds-swatch__chip[data-token="twe-blue"] { background: var(--twe-blue); }
 .ds-swatch__chip[data-token="twe-green"] { background: var(--twe-green); }
@@ -9,5 +16,15 @@
 .ds-swatch__chip[data-token="twe-background"] { background: var(--twe-background); }
 .ds-swatch__chip[data-token="twe-paper"] { background: var(--twe-paper); }
 .ds-swatch__chip[data-token="twe-danger"] { background: var(--twe-danger); }
+.ds-swatch__chip[data-token="twe-positive"] { background: var(--twe-positive); }
+.ds-swatch__chip[data-token="twe-warning"] { background: var(--twe-warning); }
+.ds-swatch__chip[data-token="twe-info"] { background: var(--twe-info); }
 .ds-swatch__name { font-size: var(--twe-text-body); font-weight: 600; margin-top: 8px; color: var(--twe-ink); }
 .ds-swatch__token { font-family: var(--twe-font-mono); font-size: var(--twe-text-helper); color: var(--twe-muted); }
+.ds-swatch__value {
+  min-height: 1.4em;
+  font-family: var(--twe-font-mono);
+  font-size: var(--twe-text-helper);
+  font-weight: 400;
+  color: var(--twe-ink-2);
+}

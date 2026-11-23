@@ -8,9 +8,9 @@
   // below the header/breadcrumb and above the first card, and is the ONLY place a message bar
   // with Error/Success intent may render (TWA0025). Pages report through NotificationState;
   // they never paint their own outcome bars.
-  // Shape: each row is the shared MessageBar control (Title + optional Body; Notification
-  // layout when there is no body, MultiLine when there is). Dismiss dispatches DismissMessage
-  // so the row stays gone across re-renders.
+  // Shape: each row is the shared MessageBar control (Title + optional Body) in SingleLine
+  // layout, so Copy and Dismiss sit on the title row. Dismiss dispatches DismissMessage so
+  // the row stays gone across re-renders.
   // Cap: NotificationState.VisibleMessages is the newest MaxVisible; "+N more" toggles the
   // full list (ShowAll is view-only state, reset per page because this host is re-created).
   // Lifetime: after each render the host schedules ExpireMessages for NotificationState

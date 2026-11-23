@@ -1,9 +1,12 @@
 @namespace TimeWarp.Architecture.Features.DesignSystem
 @inherits BaseComponent
+@inject IJSRuntime JsRuntime
 
 @code {
   public static Icon? NavIcon => new Icons.Regular.Size20.Color();
   public static string Title => "Design System";
+
+  private string? ScrolledPart;
 
   private DesignSystemParts.Selection Current => DesignSystemParts.Resolve(Part);
 
@@ -23,6 +26,25 @@
 
       return null;
     }
+  }
+
+  [DirectComponentSideEffect("Resets the shell content scroller when the design-system part changes. The offset is DOM state on the layout content area.")]
+  protected override Task OnAfterRenderAsync(bool firstRender)
+  {
+    _ = firstRender;
+    if (!RendererInfo.IsInteractive)
+    {
+      return Task.CompletedTask;
+    }
+
+    string key = Part ?? "";
+    if (string.Equals(key, ScrolledPart, StringComparison.Ordinal))
+    {
+      return Task.CompletedTask;
+    }
+
+    ScrolledPart = key;
+    return DesignSystemPageJsModule.ScrollContentToTopAsync(JsRuntime);
   }
 
 }
