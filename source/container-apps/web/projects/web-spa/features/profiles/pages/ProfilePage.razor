@@ -13,8 +13,10 @@
   not applied as UI culture. Fluent UI Blazor v5 Combobox Initialize writes closed text from
   Value is TOption then GetOptionText — so Language/Region use TOption == TValue == string with
   OptionText → LabelFor. Theme FluentSelect already shows labels without that combobox path.
-  Layout is FormSection / FormGrid / FormField / FormActions (full-width controls). Cancel
-  reloads the draft from ProfileState (SyncCommandFromState) — no extra action-set.
+  Layout is FormSection / FormGrid / FormField / FormActions (full-width controls). The form
+  binds a page-local UpdateProfile.Command. Command.From(Profile) runs when the page loads
+  and when Cancel is clicked, and again after Save so a trimmed email replaces the draft.
+  It does not run on every render. Language, region, and theme come from the response.
   The xAI key section is a second form after the profile form. It renders only when
   UserXaiApiKeyState.Visible is true (site mode is not Off). The draft key is page-local,
   a password field, and is cleared after a successful save. State never stores it.
@@ -26,7 +28,7 @@
 
   private static readonly ProfileDetailsValidator ProfileValidator = new();
 
-  private UpdateProfile.Command Command { get; } = new();
+  private UpdateProfile.Command Command { get; set; } = new();
   private IProfileDetails Details => Command;
 
   private static readonly SetUserXaiApiKey.Validator KeyValidator = new();
@@ -63,26 +65,26 @@
 
     await ProfileState.FetchProfileData();
     await NoSubUserXaiApiKeyState.FetchUserXaiApiKeyStatus();
-    SyncCommandFromState();
+    CopyCommandFromProfile();
   }
 
-  private void SyncCommandFromState()
+  private void CopyCommandFromProfile()
   {
-    Command.DisplayName = ProfileState.DisplayName ?? "";
-    Command.Email = ProfileState.Email;
-    Command.Language = ProfileState.Language ?? "en-US";
-    Command.Region = ProfileState.Region ?? "US";
-    Command.Theme = ProfileState.Theme ?? "system";
-    Command.Notifications = ProfileState.Notifications == true;
+    if (ProfileState.Profile is not GetProfile.Response profile)
+    {
+      return;
+    }
+
+    Command = UpdateProfile.Command.From(profile);
   }
 
   private async Task HandleValidSubmit()
   {
     await ProfileState.UpdateProfile(Command);
-    SyncCommandFromState();
+    CopyCommandFromProfile();
   }
 
-  private void HandleCancel() => SyncCommandFromState();
+  private void HandleCancel() => CopyCommandFromProfile();
 
   private async Task SaveKeyAsync()
   {
@@ -105,8 +107,8 @@
         <FormGrid>
           <FormField>
             <FluentAvatar
-              Image=@ProfileState.Avatar
-              Name=@ProfileState.DisplayName
+              Image=@(ProfileState.Profile?.Avatar ?? ProfileState.FallbackAvatar)
+              Name=@ProfileState.Profile?.DisplayName
               Size="AvatarSize.Size56" />
           </FormField>
           <FormField Label="Display name">
