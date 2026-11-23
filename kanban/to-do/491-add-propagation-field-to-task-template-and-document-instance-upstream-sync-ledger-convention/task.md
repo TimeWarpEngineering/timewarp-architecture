@@ -9,7 +9,7 @@ need it (port it as an instance task) or not (n/a)?
 Each instance keeps that record in **its own** repo. The template never tracks instance
 status. This task adds the template side:
 
-1. A `Propagation:` field in `kanban/task-template.md` so authors classify a task up front:
+1. A `## Propagation` section (heading, matching the checklist) in `kanban/task-template.md` so authors classify a task up front:
    - `required`: every instance should port this (security, analyzer, build, infra fixes)
    - `likely`: most instances will want it; check
    - `template-only`: sample/demo/template-scaffolding only; instances can skip
@@ -18,9 +18,8 @@ status. This task adds the template side:
 ## Checklist
 
 - [ ] Add `## Propagation` (required | likely | template-only) to `kanban/task-template.md`
-- [ ] Write the convention doc (location to decide, e.g. `documentation/` or a skill reference)
+- [ ] Write the convention as a reference under the skill that owns kanban conventions (tw-kanban in timewarp-flow is cross-repo, so here it is a `skills/` reference page if one owns kanban; otherwise a `kanban/readme.md` section). documentation/ is retired and is not an option (groom 2026-11-23).
 - [ ] Link the doc from the template so authors know why the field exists
-- [ ] Optional: ask whether the field should be required before done
 
 ## Session
 
