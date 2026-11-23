@@ -5,7 +5,8 @@
 #region Design
 // The generation bump tells the panel to mint a new credential and rebuild on a new, empty
 // AskConversationThread; AskConversationThreads drops the previous transcript.
-// Privacy dismissal is a shell preference and is left as the person set it.
+// Privacy dismissal is a shell preference and is left as the person set it. A live microphone is
+// stopped. Idle does not import ask-ai.js.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -18,11 +19,13 @@ partial class AgentSurfaceState
 
     internal sealed class Handler
     (
-      IStore store
+      IStore store,
+      IJSRuntime jsRuntime
     ) : BaseHandler<Action>(store)
     {
-      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
+        await AgentSurfaceState.ReleaseVoiceCaptureAsync(jsRuntime);
         AgentSurfaceState.EditMode = AgentEditMode.AskBeforeEditing;
         AgentSurfaceState.ConversationId = null;
         AgentSurfaceState.ConversationPrincipalId = null;
@@ -30,7 +33,6 @@ partial class AgentSurfaceState
         AgentSurfaceState.ConversationExpiresAt = null;
         AgentSurfaceState.ConversationDisplayName = null;
         AgentSurfaceState.ConversationGeneration++;
-        return default;
       }
     }
   }

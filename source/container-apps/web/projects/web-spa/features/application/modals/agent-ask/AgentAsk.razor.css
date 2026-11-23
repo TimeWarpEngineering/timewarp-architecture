@@ -405,6 +405,27 @@
   color: var(--twe-ink-2);
 }
 
+.twe-agent-ask__voice {
+  display: flex;
+  align-items: center;
+  gap: var(--twe-space-2);
+  min-width: 0;
+}
+
+.twe-agent-ask__voice--recording ::deep fluent-button {
+  color: var(--twe-danger);
+  border-color: var(--twe-danger);
+}
+
+.twe-agent-ask__voice-status {
+  min-width: 0;
+  color: var(--twe-ink-2);
+}
+
+.twe-agent-ask__voice--error .twe-agent-ask__voice-status {
+  color: var(--twe-danger);
+}
+
 .twe-agent-ask__trail {
   grid-area: trail;
   display: flex;

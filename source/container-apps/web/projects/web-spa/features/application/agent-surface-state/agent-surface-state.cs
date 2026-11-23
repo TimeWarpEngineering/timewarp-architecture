@@ -35,6 +35,9 @@
 // AssistantIdentityRefreshHandler reloads them after a successful UpdateAssistantName and after
 // ResetStore, whose Store.Reset puts them back to those defaults.
 // XaiApiKeyRefreshHandler reloads chat configuration after a successful admin set or clear.
+// VoicePhase (task 453) is the composer's microphone. CloseAskPanel and NewConversation release
+// a live capture. The clip itself stays on private fields so a failed transcription can be sent
+// again without another recording. The elapsed clock is the panel's, read from VoiceStartedAt.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -124,6 +127,21 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
   /// <summary>The normalized route PageSurfaceJson was read on, or null with no summary.</summary>
   public string? PageSurfacePath { get; private set; }
 
+  /// <summary>Idle, recording, transcribing, or a failed dictation.</summary>
+  public AskVoicePhase VoicePhase { get; private set; }
+
+  /// <summary>The sentence shown when <see cref="VoicePhase"/> is <see cref="AskVoicePhase.Error"/>.</summary>
+  public string? VoiceError { get; private set; }
+
+  /// <summary>When the current recording started. The panel formats the elapsed time.</summary>
+  public DateTimeOffset? VoiceStartedAt { get; private set; }
+
+  private string? VoiceMediaType;
+
+  private string? VoiceData;
+
+  private bool VoiceBusy;
+
   /// <summary>The current conversation credential, or null when the session has not minted one.</summary>
   public AgentConversationCredential? Conversation
   {
@@ -177,5 +195,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     AssistantAvatar = null;
     PageSurfaceJson = null;
     PageSurfacePath = null;
+    ClearVoice();
+    VoiceBusy = false;
   }
 }

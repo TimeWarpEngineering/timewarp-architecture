@@ -1,6 +1,7 @@
 // #region Purpose
 // Inserts an @ resource token into the Ask textarea, says whether an @ starts a word, refocuses
-// the textarea, copies the last answer's text, and sets the assistant avatar for the turns.
+// the textarea, copies the last answer's text, sets the assistant avatar for the turns, and
+// records a dictated prompt into the same textarea.
 // #endregion
 //
 // #region Design
@@ -33,6 +34,11 @@
 // attributes are banned (strict CSP), but the CSSOM is not. Only a base64 SVG data URI is
 // accepted, so the value cannot break out of url(); anything else removes the property and the
 // turns fall back to the brand gradient.
+// StartVoiceCapture / StopVoiceCapture / CancelVoiceCapture (task 453) own the microphone.
+// The clip stays in the browser until stop, which returns base64. The page posts that to the
+// server; this file never sees an API key. InsertComposerText splices at the caret the way
+// InsertReference does, without stripping a leading @, adds a space when the neighbor is a
+// word, dispatches input, and focuses the textarea. It does not send.
 // #endregion
 
 import { FocusReturnClaimEvent, type FocusReturnClaim } from "./focus-return-claim.js";
@@ -170,4 +176,194 @@ export function SetAssistantAvatar(dataUri: string | null): void {
   }
 
   root.setProperty("--twe-assistant-avatar", `url("${AvatarPrefix}${body}")`);
+}
+
+type VoiceCapture = {
+  error: string | null;
+  mediaType: string | null;
+  data: string | null;
+};
+
+let voiceStream: MediaStream | null = null;
+let voiceRecorder: MediaRecorder | null = null;
+let voiceChunks: Blob[] = [];
+let voiceMime = "audio/webm";
+
+function voiceCapture(error: string | null, mediaType: string | null, data: string | null): VoiceCapture {
+  return { error, mediaType, data };
+}
+
+function releaseVoiceTracks(): void {
+  if (voiceStream !== null) {
+    for (const track of voiceStream.getTracks()) {
+      track.stop();
+    }
+  }
+
+  voiceStream = null;
+}
+
+function preferredVoiceMime(): string {
+  if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") {
+    return "";
+  }
+
+  const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+  for (const candidate of candidates) {
+    if (MediaRecorder.isTypeSupported(candidate)) {
+      return candidate;
+    }
+  }
+
+  return "";
+}
+
+export async function StartVoiceCapture(): Promise<VoiceCapture> {
+  try {
+    await CancelVoiceCapture();
+    if (
+      typeof navigator === "undefined" ||
+      navigator.mediaDevices?.getUserMedia === undefined ||
+      typeof MediaRecorder === "undefined"
+    ) {
+      return voiceCapture("unavailable", null, null);
+    }
+
+    voiceMime = preferredVoiceMime();
+    try {
+      voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      const name = error instanceof DOMException ? error.name : "";
+      releaseVoiceTracks();
+      if (name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError") {
+        return voiceCapture("denied", null, null);
+      }
+
+      return voiceCapture("unavailable", null, null);
+    }
+
+    voiceChunks = [];
+    voiceRecorder =
+      voiceMime.length > 0
+        ? new MediaRecorder(voiceStream, { mimeType: voiceMime })
+        : new MediaRecorder(voiceStream);
+    voiceRecorder.addEventListener("dataavailable", (event: BlobEvent) => {
+      if (event.data.size > 0) {
+        voiceChunks.push(event.data);
+      }
+    });
+    voiceRecorder.start();
+    const mediaType =
+      voiceRecorder.mimeType.length > 0
+        ? voiceRecorder.mimeType
+        : voiceMime.length > 0
+          ? voiceMime
+          : "audio/webm";
+    return voiceCapture(null, mediaType, null);
+  } catch {
+    await CancelVoiceCapture();
+    return voiceCapture("failed", null, null);
+  }
+}
+
+export function StopVoiceCapture(): Promise<VoiceCapture> {
+  const recorder = voiceRecorder;
+  if (recorder === null || recorder.state === "inactive") {
+    voiceRecorder = null;
+    voiceChunks = [];
+    releaseVoiceTracks();
+    return Promise.resolve(voiceCapture("empty", null, null));
+  }
+
+  const mediaType =
+    recorder.mimeType.length > 0 ? recorder.mimeType : voiceMime.length > 0 ? voiceMime : "audio/webm";
+  return new Promise((resolve) => {
+    recorder.addEventListener(
+      "stop",
+      () => {
+        const blob = new Blob(voiceChunks, { type: mediaType });
+        voiceChunks = [];
+        voiceRecorder = null;
+        releaseVoiceTracks();
+        if (blob.size === 0) {
+          resolve(voiceCapture("empty", null, null));
+          return;
+        }
+
+        void blob
+          .arrayBuffer()
+          .then((buffer) => {
+            resolve(voiceCapture(null, mediaType, bytesToBase64(new Uint8Array(buffer))));
+          })
+          .catch(() => {
+            resolve(voiceCapture("empty", null, null));
+          });
+      },
+      { once: true },
+    );
+    recorder.stop();
+  });
+}
+
+export async function CancelVoiceCapture(): Promise<void> {
+  const recorder = voiceRecorder;
+  voiceChunks = [];
+  if (recorder !== null && recorder.state !== "inactive") {
+    await new Promise<void>((resolve) => {
+      recorder.addEventListener("stop", () => resolve(), { once: true });
+      try {
+        recorder.stop();
+      } catch {
+        resolve();
+      }
+    });
+  }
+
+  voiceRecorder = null;
+  voiceChunks = [];
+  releaseVoiceTracks();
+}
+
+export function InsertComposerText(text: string): boolean {
+  const area = document.querySelector<HTMLTextAreaElement>(ComposerSelector);
+  if (area === null || text.length === 0) {
+    return false;
+  }
+
+  const start = area.selectionStart ?? area.value.length;
+  const end = area.selectionEnd ?? start;
+  const before = area.value.slice(0, start);
+  const after = area.value.slice(end);
+  let inserted = text;
+  if (before.length > 0 && !/\s/.test(before[before.length - 1] ?? "")) {
+    inserted = " " + inserted;
+  }
+
+  if (after.length > 0 && !/^\s/.test(after)) {
+    inserted = inserted + " ";
+  }
+
+  area.value = before + inserted + after;
+  const caret = before.length + inserted.length;
+  area.selectionStart = caret;
+  area.selectionEnd = caret;
+  area.dispatchEvent(new Event("input", { bubbles: true }));
+  area.focus();
+  return true;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  const size = 0x8000;
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += size) {
+    const slice = bytes.subarray(index, Math.min(index + size, bytes.length));
+    const chunk: number[] = [];
+    for (let offset = 0; offset < slice.length; offset++) {
+      chunk.push(slice[offset] ?? 0);
+    }
+
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+
+  return btoa(binary);
 }

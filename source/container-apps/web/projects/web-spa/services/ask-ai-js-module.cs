@@ -1,7 +1,7 @@
 #region Purpose
 // On-demand import of ask-ai.js: insert an @ token, check an @ starts a word, refocus the
-// composer, keep and restore the panel's opener, copy answer text, and set the assistant avatar the
-// turns show.
+// composer, keep and restore the panel's opener, copy answer text, set the assistant avatar the
+// turns show, and capture or insert a dictated prompt.
 #endregion
 
 #region Design
@@ -93,6 +93,128 @@ internal static class AskAiJsModule
     ArgumentNullException.ThrowIfNull(jsRuntime);
     return InvokeAsync(jsRuntime, "SetAssistantAvatar", dataUri);
   }
+
+  /// <summary>Starts the microphone. Error is denied, unavailable, or failed. No audio yet.</summary>
+  internal static Task<AskVoiceCaptureResult> StartVoiceCaptureAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeCaptureAsync(jsRuntime, "StartVoiceCapture");
+  }
+
+  /// <summary>Stops the microphone and returns base64 audio, or an empty error.</summary>
+  internal static Task<AskVoiceCaptureResult> StopVoiceCaptureAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeCaptureAsync(jsRuntime, "StopVoiceCapture");
+  }
+
+  /// <summary>Drops a live capture. Safe when nothing is recording.</summary>
+  internal static async Task CancelVoiceCaptureAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    try
+    {
+      await using IJSObjectReference? module = await ImportAsync(jsRuntime);
+      if (module is null)
+      {
+        return;
+      }
+
+      await module.InvokeVoidAsync("CancelVoiceCapture");
+    }
+    catch (JSException)
+    {
+    }
+    catch (JSDisconnectedException)
+    {
+    }
+    catch (InvalidOperationException)
+    {
+    }
+  }
+
+  /// <summary>Inserts text at the composer caret and focuses it. False when the composer is gone.</summary>
+  internal static async Task<bool> InsertComposerTextAsync(IJSRuntime jsRuntime, string text)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    ArgumentNullException.ThrowIfNull(text);
+    try
+    {
+      await using IJSObjectReference? module = await ImportAsync(jsRuntime);
+      if (module is null)
+      {
+        return false;
+      }
+
+      return await module.InvokeAsync<bool>("InsertComposerText", text);
+    }
+    catch (JSException)
+    {
+      return false;
+    }
+    catch (JSDisconnectedException)
+    {
+      return false;
+    }
+    catch (InvalidOperationException)
+    {
+      return false;
+    }
+  }
+
+  private static async Task<AskVoiceCaptureResult> InvokeCaptureAsync(IJSRuntime jsRuntime, string export)
+  {
+    try
+    {
+      await using IJSObjectReference? module = await ImportAsync(jsRuntime);
+      if (module is null)
+      {
+        return Unavailable();
+      }
+
+      AskVoiceCaptureResult? result = await module.InvokeAsync<AskVoiceCaptureResult>(export);
+      return result ?? Unavailable();
+    }
+    catch (JSException)
+    {
+      return new AskVoiceCaptureResult { Error = "failed" };
+    }
+    catch (JSDisconnectedException)
+    {
+      return Unavailable();
+    }
+    catch (InvalidOperationException)
+    {
+      return Unavailable();
+    }
+  }
+
+  private static async Task<IJSObjectReference?> ImportAsync(IJSRuntime jsRuntime)
+  {
+    try
+    {
+      return await jsRuntime.InvokeAsync<IJSObjectReference>
+      (
+        "import",
+        CancellationToken.None,
+        Specifier
+      );
+    }
+    catch (JSDisconnectedException)
+    {
+      return null;
+    }
+    catch (InvalidOperationException)
+    {
+      return null;
+    }
+    catch (JSException)
+    {
+      return null;
+    }
+  }
+
+  private static AskVoiceCaptureResult Unavailable() => new() { Error = "unavailable" };
 
   private static async Task InvokeAsync(IJSRuntime jsRuntime, string export, params object?[] arguments)
   {

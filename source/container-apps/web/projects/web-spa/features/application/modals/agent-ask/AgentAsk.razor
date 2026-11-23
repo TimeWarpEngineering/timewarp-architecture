@@ -91,6 +91,15 @@
   in front of the orbs; and each assistant turn shows it through --twe-assistant-avatar, which
   ApplyAvatarAsync sets on the document root because the library renders the turns and inline
   styles are banned.
+  Voice (task 453): the microphone in the lead slot dispatches AgentSurfaceState.Dictate. The
+  browser records in ask-ai.ts. The server sends the clip to xAI speech-to-text. The transcript
+  is inserted at the caret and is not sent. Recording shows a stop icon and the elapsed time.
+  Transcribing and a failure (microphone refused, or the request failed) replace that. Retry
+  sends the same clip again when the failure was the request. The button waits while a turn
+  streams or an approval card is up, except to stop a recording already going. The status
+  callback re-renders this panel for those states so the disabled binding reaches the button.
+  A one-second timer in this panel only calls StateHasChanged so the elapsed label moves; it does not touch
+  the microphone. Close and New conversation release a live capture.
   Screenshot (task 303-001): the camera button in the lead slot dispatches
   ScreenshotState.CaptureForAsk, which draws the page body (the page behind this panel, since the
   panel lives in the layout aside) and attaches that capture in the same handler.
@@ -203,6 +212,7 @@
     }
 
     await SettleComposerFocusAsync(previous);
+    SyncVoiceClock();
   }
 
   // The composer is on screen only when the render that just ran drew the agent that is still built.
@@ -480,14 +490,23 @@
 
   private void OnStatusChanged(Ai.ConversationStatus status)
   {
-    if (!Disposed && status == Ai.ConversationStatus.Streaming)
+    if (Disposed)
+    {
+      return;
+    }
+
+    if (status == Ai.ConversationStatus.Streaming)
     {
       SendFocusPending = true;
     }
 
-    if (!Disposed && status is Ai.ConversationStatus.Idle or Ai.ConversationStatus.Error)
+    // Streaming and AwaitingInput disable the microphone. Idle and Error resume a rebuild
+    // that waited out the turn. EnsureAgentAsync still refuses to replace the agent mid-turn.
+    if (status is Ai.ConversationStatus.Streaming
+      or Ai.ConversationStatus.AwaitingInput
+      or Ai.ConversationStatus.Idle
+      or Ai.ConversationStatus.Error)
     {
-      // A rebuild may have been deferred while the turn ran.
       _ = InvokeAsync(StateHasChanged);
     }
   }
@@ -536,6 +555,126 @@
   }
 
   private Task TagAsync() => AskTagState.StartPick(CurrentPath());
+
+  private Task DictateAsync() => AgentSurfaceState.Dictate();
+
+  private string VoiceLabel => AgentSurfaceState.VoicePhase switch
+  {
+    AskVoicePhase.Recording => AskVoiceCopy.Stop,
+    AskVoicePhase.Transcribing => AskVoiceCopy.Transcribing,
+    AskVoicePhase.Error => AskVoiceCopy.Retry,
+    _ => AskVoiceCopy.Dictate
+  };
+
+  private Icon VoiceIcon => AgentSurfaceState.VoicePhase == AskVoicePhase.Recording
+    ? new Icons.Regular.Size20.RecordStop()
+    : new Icons.Regular.Size20.Mic();
+
+  private bool VoiceInputDisabled =>
+    AgentSurfaceState.VoicePhase == AskVoicePhase.Transcribing
+    || (TurnInProgress && AgentSurfaceState.VoicePhase != AskVoicePhase.Recording);
+
+  private string VoiceClass
+  {
+    get
+    {
+      string name = "twe-agent-ask__voice";
+      if (AgentSurfaceState.VoicePhase == AskVoicePhase.Recording)
+      {
+        name += " twe-agent-ask__voice--recording";
+      }
+
+      if (AgentSurfaceState.VoicePhase == AskVoicePhase.Error)
+      {
+        name += " twe-agent-ask__voice--error";
+      }
+
+      return name;
+    }
+  }
+
+  private string? VoiceStatus => AgentSurfaceState.VoicePhase switch
+  {
+    AskVoicePhase.Transcribing => AskVoiceCopy.Transcribing,
+    AskVoicePhase.Error => AgentSurfaceState.VoiceError,
+    _ => null
+  };
+
+  private string VoiceElapsed
+  {
+    get
+    {
+      DateTimeOffset? started = AgentSurfaceState.VoiceStartedAt;
+      int total = started is null ? 0 : (int)(DateTimeOffset.UtcNow - started.Value).TotalSeconds;
+      if (total < 0)
+      {
+        total = 0;
+      }
+
+      int minutes = total / 60;
+      int seconds = total % 60;
+      return minutes.ToString(CultureInfo.InvariantCulture)
+        + ":"
+        + seconds.ToString("00", CultureInfo.InvariantCulture);
+    }
+  }
+
+  private PeriodicTimer? VoiceClock;
+  private CancellationTokenSource? VoiceClockStop;
+
+  private void SyncVoiceClock()
+  {
+    if (AgentSurfaceState.VoicePhase == AskVoicePhase.Recording)
+    {
+      if (VoiceClock is not null)
+      {
+        return;
+      }
+
+      VoiceClock = new PeriodicTimer(TimeSpan.FromSeconds(1));
+      VoiceClockStop = new CancellationTokenSource();
+      _ = RunVoiceClockAsync(VoiceClock, VoiceClockStop.Token);
+      return;
+    }
+
+    StopVoiceClock();
+  }
+
+  private async Task RunVoiceClockAsync(PeriodicTimer clock, CancellationToken cancellationToken)
+  {
+    try
+    {
+      while (await clock.WaitForNextTickAsync(cancellationToken))
+      {
+        if (Disposed)
+        {
+          break;
+        }
+
+        await InvokeAsync(StateHasChanged);
+      }
+    }
+    catch (OperationCanceledException)
+    {
+    }
+    catch (ObjectDisposedException)
+    {
+    }
+  }
+
+  private void StopVoiceClock()
+  {
+    if (VoiceClock is null && VoiceClockStop is null)
+    {
+      return;
+    }
+
+    VoiceClockStop?.Cancel();
+    VoiceClockStop?.Dispose();
+    VoiceClockStop = null;
+    VoiceClock?.Dispose();
+    VoiceClock = null;
+  }
 
   private bool Capturing;
 
@@ -591,6 +730,7 @@
   public override void Dispose()
   {
     Disposed = true;
+    StopVoiceClock();
     NavigationManager.LocationChanged -= OnLocationChanged;
     if (AskTagState.IsPickPending)
     {
@@ -808,6 +948,29 @@
                                 Disabled="Capturing"
                                 data-qa="AskCapture"
                                 OnClick="CaptureAsync" />
+                  <div class="@VoiceClass">
+                    <FluentButton Appearance="ButtonAppearance.Outline"
+                                  Size="ButtonSize.Small"
+                                  IconOnly="true"
+                                  IconStart="@VoiceIcon"
+                                  Title="@VoiceLabel"
+                                  Tooltip="@VoiceLabel"
+                                  aria-label="@VoiceLabel"
+                                  aria-pressed="@(AgentSurfaceState.VoicePhase == AskVoicePhase.Recording ? "true" : "false")"
+                                  aria-disabled="@(VoiceInputDisabled ? "true" : "false")"
+                                  Disabled="@VoiceInputDisabled"
+                                  Type="ButtonType.Button"
+                                  data-qa="AskVoiceInput"
+                                  OnClick="DictateAsync" />
+                    @if (AgentSurfaceState.VoicePhase == AskVoicePhase.Recording)
+                    {
+                      <span class="twe-agent-ask__voice-status" data-qa="AskVoiceElapsed" aria-live="polite">@VoiceElapsed</span>
+                    }
+                    else if (VoiceStatus is not null)
+                    {
+                      <span class="twe-agent-ask__voice-status" data-qa="AskVoiceStatus" role="status">@VoiceStatus</span>
+                    }
+                  </div>
                   <AskEditModePill RestoreFocus="EditModeFocusPending"
                                    Chose="EditModeChose"
                                    FocusRestored="EditModeFocusRestored" />
