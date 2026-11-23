@@ -41,22 +41,9 @@ partial class SiteSettingsState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         SiteSettingsState.SiteSettings = response;
-        SiteSettingsState.EntraSignInEnabled = response.EntraSignInEnabled;
-        SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
-        SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
-        SiteSettingsState.AssistantName = response.AssistantName;
-        SiteSettingsState.EntraTenantAcceptanceMode = response.EntraTenantAcceptanceMode;
-        SiteSettingsState.XaiByokMode = response.XaiByokMode;
-        SiteSettingsState.EntraAcceptedTenants = response.EntraAcceptedTenants.ToArray();
-        SiteSettingsState.DraftAcceptedTenants = response.EntraAcceptedTenants.ToArray();
-        SiteSettingsState.AcceptedTenantsMessage = null;
-        SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveFailed = false;
-        SiteSettingsState.ConfigurationTenantId = response.ConfigurationTenantId;
-        SiteSettingsState.ConfigurationTenantDisplayName = response.ConfigurationTenantDisplayName;
-        SiteSettingsState.ConfigurationTenantDomain = response.ConfigurationTenantDomain;
-        SiteSettingsState.ConfigurationEnabled = response.ConfigurationEnabled;
-        SiteSettingsState.ConfigurationAllowBootstrap = response.ConfigurationAllowBootstrap;
+        SiteSettingsState.ResolvedTenant = null;
+        SiteSettingsState.AcceptedTenantsMessage = null;
         return Task.CompletedTask;
       }
     }

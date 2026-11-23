@@ -10,7 +10,8 @@
 // is the Settings slice. The agent may run UpdateSiteSettings here (AgentActions).
 // The assistant name is Admin → AI (UpdateAssistantName), not this page.
 // Task 231: policy fields bind ISiteSettingsDetails via EditForm + FluentButton submit
-// (RoleForm pattern). Tenant line and drift banner stay outside the form.
+// (RoleForm pattern). The working copy is UpdateSiteSettings.Command, built with From.
+// Tenant line and drift banner stay outside the form and read the stored response.
 // Task 234: FormSection / FormGrid / FormField / FormActions; FluentSelect for
 // PasskeyPromptMode; no page-local twe-settings CSS.
 #endregion
