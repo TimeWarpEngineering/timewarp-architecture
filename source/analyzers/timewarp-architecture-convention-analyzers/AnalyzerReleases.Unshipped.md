@@ -4,10 +4,13 @@
 ; from the contract), TWA0029 TWA0030 TWA0031 (server-offers agreement; replaced by typed
 ; availability flags and page-scoped actions).
 ;
-; Generic style rules are not reported here (task 486). TimeWarp.SourceGenerators 1.0.0-beta.13
-; reports them with the same IDs: TWA0004, TWA0023, and TWA0038. Do not reuse those IDs here.
-; Style-only consumers (timewarp-state, for TWA0004) drop TimeWarp.Architecture.Analyzers
-; (timewarp-state task 153). Spec: documentation/developer/guides/analyzer-package-split.md.
+; Split test: a rule that checks an Architecture concept (contracts, endpoints, aggregates,
+; slices, Aspire, the template, FluentUI page structure, a TimeWarp domain base type) stays
+; here. A rule that checks only C# file or name shape belongs in TimeWarp.SourceGenerators.
+; TimeWarp.SourceGenerators 1.0.0-beta.13 reports the generic style rules with the same IDs:
+; TWA0004, TWA0023, and TWA0038. Do not reuse those IDs here. IDs stay TWA*.
+; Next free id: TWA0047 (across this project and timewarp-architecture-analyzers).
+; History: task 486.
 
 ### New Rules
 
