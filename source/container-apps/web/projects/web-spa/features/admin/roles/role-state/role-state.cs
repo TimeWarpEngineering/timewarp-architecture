@@ -3,8 +3,13 @@
 #endregion
 
 #region Design
-// Roles null = no snapshot yet; empty array = loaded with zero rows.
-// In-flight fetch is [TrackAction] on FetchRoles — pages use IsAnyActive, not null.
+// RoleList null = no snapshot yet; empty array = loaded with zero rows. It is not named Roles: CA1721
+// reads Roles beside the generated GetRoles method as confusing.
+// [ContractState] (task 483) generates the GetRoles, SetRolePermissions and SetRoleAgentScopes action sets,
+// their handlers and RoleState.GetRoles() / SetRolePermissions(Command) / SetRoleAgentScopes(Command). The hooks
+// are in the matching partial files. CreateRole stays hand-written: it is the Role.CreateRole agent tool, and a
+// generated action's catalog entry cannot be an agent tool with a typed parameter (State 12.0.0-beta.19).
+// In-flight fetch is [TrackAction] on the generated GetRoles action — pages use IsAnyActive, not null.
 // LastCreatedRoleId remains for create-round-trip demos after RoleForm submit (navigates to
 // RoleDetailPage when set).
 // DraftPermissionIds (task 182-004 / 206): multi-select edits on RoleDetailPage before Save →
@@ -19,13 +24,20 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 using static GetRoles;
 
 [StateAccess]
+[ContractState
+(
+  typeof(GetRoles),
+  typeof(SetRolePermissions),
+  typeof(SetRoleAgentScopes),
+  DraftRequests = [typeof(SetRolePermissions), typeof(SetRoleAgentScopes)]
+)]
 public sealed partial class RoleState : State<RoleState>
 {
-  private List<RoleDto>? RolesList { get; set; }
+  private List<RoleDto>? RoleRows { get; set; }
   private Dictionary<Guid, HashSet<string>> DraftPermissionIds { get; set; } = [];
   private Dictionary<Guid, HashSet<string>> DraftAgentScopes { get; set; } = [];
 
-  public IReadOnlyList<RoleDto>? Roles => RolesList?.AsReadOnly();
+  public IReadOnlyList<RoleDto>? RoleList => RoleRows?.AsReadOnly();
 
   // Id of the most recently created role (demo: lets a page confirm the create round-trip).
   public Guid? LastCreatedRoleId { get; private set; }
@@ -35,7 +47,7 @@ public sealed partial class RoleState : State<RoleState>
 
   public override void Initialize()
   {
-    RolesList = null;
+    RoleRows = null;
     LastCreatedRoleId = null;
     DraftPermissionIds = [];
     DraftAgentScopes = [];

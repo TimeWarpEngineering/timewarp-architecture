@@ -6,6 +6,8 @@
 // DELETE is safe to retry: a second call leaves the row gone. IIdempotentCommand. The site mode
 // Off refuses the clear so a hidden section cannot be cleared by a stale client. profile.write.
 // No agent-token scheme.
+// [Destructive] (task 483): the SPA asks before it sends this (ConfirmAsync), so the transports carry the
+// same destructive hint; TWA0044 keeps the two in agreement.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -24,6 +26,7 @@ public static partial class ClearUserXaiApiKey
   /// <summary>No body. The caller is the authenticated user.</summary>
   [ApiRoute("api/Users/Current/xai-api-key", HttpVerb.Delete)]
   [NotAggregate("Grouped under profile for hosts; the key is a protected secret row (UserXaiApiKey), not Profile state.")]
+  [Destructive]
   [Operation("user-xai-api-key.clear", Description = "Clear the current user's xAI API key.", Group = "profile")]
   public sealed partial class Command : IApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>;
 

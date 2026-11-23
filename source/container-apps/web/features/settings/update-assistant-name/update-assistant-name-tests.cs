@@ -10,8 +10,8 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/update-assistant-name/update-assistant-name-tests.cs
 
 #region Purpose
-// Jaribu runfile: UpdateAssistantName validator (plain-text name, version) and handler
-// (trimmed rename, 409, policy fields left untouched).
+// Jaribu runfile: UpdateAssistantName validator (plain-text name, version), From copy of the
+// name and Version, and handler (trimmed rename, 409, policy fields left untouched).
 #endregion
 
 //-:cnd:noEmit
@@ -98,7 +98,31 @@ namespace TimeWarp.Architecture.Features.Settings
       return Task.CompletedTask;
     }
 
+    public static Task From_Should_CopyName_And_Version_From_GetSiteSettings()
+    {
+      GetSiteSettings.Response loaded = new(
+        entraSignInEnabled: true,
+        entraAllowBootstrap: false,
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        assistantName: "Nia",
+        version: 4,
+        xaiByokMode: XaiByokMode.Off);
+      Command command = Command.From(loaded);
+      command.AssistantName.ShouldBe("Nia");
+      command.Version.ShouldBe(4);
+
+      Command plain = Command.From(new NameOnly());
+      plain.AssistantName.ShouldBe("Nia");
+      plain.Version.ShouldBe(0);
+      return Task.CompletedTask;
+    }
+
     private static string LoneSurrogateName() => "Ak" + (char)0xD800 + "ili";
+
+    private sealed class NameOnly : IAssistantNameDetails
+    {
+      public string AssistantName { get; set; } = "Nia";
+    }
   }
 
   [TestTag("Application")]

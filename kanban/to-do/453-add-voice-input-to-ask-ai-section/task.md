@@ -34,5 +34,5 @@ Scope is Ask AI only (`source/container-apps/web/projects/web-spa/features/appli
 
 - Ask panel: `source/container-apps/web/projects/web-spa/features/application/modals/agent-ask/AgentAsk.razor` (composer `MessageInput` with lead `Tag` / `Camera` / `AskEditModePill`, trail `AskSettingsMenu`, `AskSendButton`).
 - JS: `source/container-apps/web/projects/web-spa/source/features/ask-ai.ts`, C# interop: `source/container-apps/web/projects/web-spa/services/ask-ai-js-module.cs`.
-- Icon intent: same mic glyph Grok uses for voice input; pick the matching FluentUI icon (`Icons.Regular.Size*` mic) unless Grok's exact asset is vendored.
-- Backend will call Grok Voice API — confirm endpoint/auth/config (`XAI:*` pattern per `CatalogAgentAvailability`) during implementation.
+- Icon: FluentUI `Icons.Regular.Size20.Mic`. No vendored asset.
+- Precondition: before any code, confirm the xAI speech-to-text endpoint exists in the current xAI API docs and record the endpoint, auth header, and request shape in Notes. If xAI has no speech-to-text endpoint, stop and report; do not substitute another provider. Config follows the `XAI:*` pattern per `CatalogAgentAvailability`.

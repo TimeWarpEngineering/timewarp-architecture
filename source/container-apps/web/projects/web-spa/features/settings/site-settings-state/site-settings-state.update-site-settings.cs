@@ -64,6 +64,17 @@ partial class SiteSettingsState
         SiteSettingsState.AcceptedTenantsMessage = null;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveFailed = false;
+        SiteSettingsState.ReviseSiteSettings
+        (
+          assistantName: response.AssistantName,
+          version: response.Version,
+          xaiByokMode: response.XaiByokMode,
+          entraSignInEnabled: response.EntraSignInEnabled,
+          entraAllowBootstrap: response.EntraAllowBootstrap,
+          passkeyPromptMode: response.PasskeyPromptMode,
+          entraTenantAcceptanceMode: response.EntraTenantAcceptanceMode,
+          entraAcceptedTenants: response.EntraAcceptedTenants
+        );
         await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "Authentication settings saved."),

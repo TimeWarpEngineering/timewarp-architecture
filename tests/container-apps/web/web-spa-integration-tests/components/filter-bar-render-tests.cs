@@ -284,7 +284,7 @@ public class FilterBar_Should_
 
   private static async Task<string> RenderAsync(Dictionary<string, object?> parameters)
   {
-    await using ServiceProvider provider = Services(TimeProvider.System);
+    await using ServiceProvider provider = Services(System.TimeProvider.System);
     await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
     string html = await renderer.Dispatcher.InvokeAsync(async () =>
       (await renderer.RenderComponentAsync<FilterBar>(ParameterView.FromDictionary(parameters))).ToHtmlString());
@@ -295,7 +295,7 @@ public class FilterBar_Should_
     Dictionary<string, object?> parameters,
     TimeProvider? clock = null)
   {
-    ServiceProvider provider = Services(clock ?? TimeProvider.System);
+    ServiceProvider provider = Services(clock ?? System.TimeProvider.System);
     HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
     FilterBar? bar = null;
     Dictionary<string, object?> attributes = new(parameters)

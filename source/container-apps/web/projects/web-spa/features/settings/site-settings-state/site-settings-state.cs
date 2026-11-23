@@ -13,11 +13,14 @@
 // unsaved list the Authentication page edits. AcceptedTenantsMessage is the lookup or
 // edit failure for that list. The saved snapshot stays on EntraAcceptedTenants.
 // Microsoft365 list / AllowBootstrap drift is still on this snapshot for the seeder/admin copy.
-// AssistantName is the Admin AI form's copy of the stored name. Labels read
-// AgentSurfaceState.AssistantName from the public query. UpdateAssistantName writes the name;
-// AssistantNameSaveFailed keeps that draft when the rename fails. UpdateXaiByokMode writes
-// whose key Ask uses; XaiByokModeSaveFailed keeps that draft when the write fails. SaveFailed
-// belongs to the authentication policy save.
+// SiteSettings is the fetched GetSiteSettings.Response. The Admin AI forms copy a command from
+// that object. Flattened fields remain for the other readers. Fetch assigns the response.
+// UpdateAssistantName, UpdateXaiByokMode, and UpdateSiteSettings replace it with a new response
+// so a page that already holds the previous instance can see the change. AssistantName on the
+// flattened fields is the stored name. Labels read AgentSurfaceState.AssistantName from the
+// public query. AssistantNameSaveFailed keeps the AI draft when the rename fails.
+// XaiByokModeSaveFailed keeps that draft when the key-policy write fails. SaveFailed belongs
+// to the authentication policy save.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -27,6 +30,7 @@ using TimeWarp.Identity;
 [StateAccess]
 public sealed partial class SiteSettingsState : State<SiteSettingsState>
 {
+  public GetSiteSettings.Response? SiteSettings { get; private set; }
   public bool? EntraSignInEnabled { get; private set; }
   public bool? EntraAllowBootstrap { get; private set; }
   public PasskeyPromptMode PasskeyPromptMode { get; private set; } = PasskeyPromptMode.Soft;
@@ -83,5 +87,44 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
     ConfigurationTenantDomain = null;
     ConfigurationEnabled = false;
     ConfigurationAllowBootstrap = false;
+    SiteSettings = null;
+  }
+
+  private void ReviseSiteSettings
+  (
+    string? assistantName = null,
+    long? version = null,
+    XaiByokMode? xaiByokMode = null,
+    bool? entraSignInEnabled = null,
+    bool? entraAllowBootstrap = null,
+    PasskeyPromptMode? passkeyPromptMode = null,
+    EntraTenantAcceptanceMode? entraTenantAcceptanceMode = null,
+    IReadOnlyList<EntraAcceptedTenant>? entraAcceptedTenants = null
+  )
+  {
+    if (SiteSettings is not { } current)
+    {
+      return;
+    }
+
+    List<EntraAcceptedTenant> tenants = entraAcceptedTenants is null
+      ? current.EntraAcceptedTenants
+      : [.. entraAcceptedTenants];
+    SiteSettings = new GetSiteSettings.Response
+    (
+      entraSignInEnabled ?? current.EntraSignInEnabled,
+      entraAllowBootstrap ?? current.EntraAllowBootstrap,
+      passkeyPromptMode ?? current.PasskeyPromptMode,
+      assistantName ?? current.AssistantName,
+      version ?? current.Version,
+      current.ConfigurationTenantId,
+      current.ConfigurationTenantDisplayName,
+      current.ConfigurationTenantDomain,
+      current.ConfigurationEnabled,
+      current.ConfigurationAllowBootstrap,
+      entraTenantAcceptanceMode ?? current.EntraTenantAcceptanceMode,
+      tenants,
+      xaiByokMode ?? current.XaiByokMode
+    );
   }
 }

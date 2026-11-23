@@ -4,10 +4,13 @@
 ; from the contract), TWA0029 TWA0030 TWA0031 (server-offers agreement; replaced by typed
 ; availability flags and page-scoped actions).
 ;
-; Generic style rules are not reported here (task 486). TimeWarp.SourceGenerators 1.0.0-beta.13
-; reports them with the same IDs: TWA0004, TWA0023, and TWA0038. Do not reuse those IDs here.
-; Style-only consumers (timewarp-state, for TWA0004) drop TimeWarp.Architecture.Analyzers
-; (timewarp-state task 153). Spec: documentation/developer/guides/analyzer-package-split.md.
+; Split test: a rule that checks an Architecture concept (contracts, endpoints, aggregates,
+; slices, Aspire, the template, FluentUI page structure, a TimeWarp domain base type) stays
+; here. A rule that checks only C# file or name shape belongs in TimeWarp.SourceGenerators.
+; TimeWarp.SourceGenerators 1.0.0-beta.13 reports the generic style rules with the same IDs:
+; TWA0004, TWA0023, and TWA0038. Do not reuse those IDs here. IDs stay TWA*.
+; Next free id: TWA0050 (across this project and timewarp-architecture-analyzers).
+; History: task 486. Task 489-001 took TWA0047–TWA0049.
 
 ### New Rules
 
@@ -45,3 +48,9 @@ TWA0040 | Design | Error | ContractAgreementAnalyzer: Set<Name> command with one
 TWA0041 | Design | Error | ContractAgreementAnalyzer: query response member does not project from an aggregate root member (exact name, compatible type) and is not [Computed]; child classes and a projection wrapped in a response's one non-computed member are walked too; a response may widen a root T to T?
 TWA0042 | Design | Warning | ContractAgreementAnalyzer: command in a rooted operation group matches no agreement check and has no [NotAggregate] reason
 TWA0043 | Design | Warning | ContractAgreementAnalyzer: operation group has operations in the slice namespace of more than one aggregate root
+TWA0044 | Design | Warning | ContractSpaAgreementAnalyzer: [Destructive] request and the SPA handler's ConfirmAsync override disagree (either direction)
+TWA0045 | Design | Warning | ContractSpaAgreementAnalyzer: [CatalogAction] Permissions lack the sent contract's [EndpointAuthorize] Policy
+TWA0046 | Design | Warning | ContractSpaAgreementAnalyzer: SPA handler on IWebServerApiService (or [ContractState]) sends a contract with no GetMockResponseFactory() and no [NoMockResponse(reason)]
+TWA0047 | Design | Error | DetailsCopyAnalyzer: mutable I*Details response Clone returns this, so a TimeWarp.State snapshot shares the instance
+TWA0048 | Design | Error | DetailsCopyAnalyzer: I*Details command or mutable response (or a containing type) is not partial, so From or Clone cannot be generated
+TWA0049 | Design | Error | DetailsCopyAnalyzer: partial I*Details command has no parameterless constructor, so From is not generated

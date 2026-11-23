@@ -1,0 +1,9 @@
+{
+  "files": {
+    "kanban/done/238-evaluate-jev-for-ctrl-k-and-webmcp-action-catalog/research/run-rank-experiment.cs": 784,
+    "skills/tw-web-api-contracts/analysis/contract-conventions-rfc.md": 553,
+    "source/container-apps/web/platform/postgres/migrations/20261102105501_AddAgentScopeGrants.Designer.cs": 521,
+    "source/container-apps/web/platform/postgres/migrations/20261104193441_AddRoles.Designer.cs": 556,
+    "source/container-apps/web/platform/postgres/migrations/PostgresDbContextModelSnapshot.cs": 558
+  }
+}

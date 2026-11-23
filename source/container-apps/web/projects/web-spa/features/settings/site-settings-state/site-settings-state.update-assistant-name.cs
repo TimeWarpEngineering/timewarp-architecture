@@ -58,6 +58,7 @@ partial class SiteSettingsState
         SiteSettingsState.AssistantName = response.AssistantName;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.AssistantNameSaveFailed = false;
+        SiteSettingsState.ReviseSiteSettings(assistantName: response.AssistantName, version: response.Version);
         await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "Assistant name saved."),

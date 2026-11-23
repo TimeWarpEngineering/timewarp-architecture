@@ -7,9 +7,11 @@
 // (UpdateProfile, profile.write) — never a register/session gate. Data loads only once
 // interactive (RendererInfo.IsInteractive; server prerender has no WASM HttpClient
 // BaseAddress). Fetch and save go through ProfileState (TWA0022). Loading is
-// FetchProfileData [TrackAction], not DisplayName is null. Layout is FormSection
-// (Profile + Preferences) with FormField full-width controls and FormActions
-// (Cancel reloads the draft from state; Save submits).
+// FetchProfileData [TrackAction]. The form edits UpdateProfile.Command, built with
+// Command.From(Profile) when the page loads and when Cancel is clicked, not on every
+// render. Save dispatches that command and copies again so the form matches the stored
+// response. Layout is FormSection (Profile + Preferences) with FormField full-width
+// controls and FormActions.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;

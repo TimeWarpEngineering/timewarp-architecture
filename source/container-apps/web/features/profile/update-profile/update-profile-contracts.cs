@@ -42,7 +42,7 @@ public static partial class UpdateProfile
     }
   }
 
-  public sealed class Response : IProfileDetails
+  public sealed partial class Response : IProfileDetails
   {
     public string DisplayName { get; set; }
     public string? Email { get; set; }

@@ -1,5 +1,5 @@
 #region Purpose
-// Enforces that Aspire AddProject resource names are ServiceNames constant values (TWA0007).
+// Enforces that Aspire AddDotnetProject resource names are ServiceNames constant values (TWA0007).
 #endregion
 
 #region Design
@@ -11,16 +11,18 @@
 // references (including aliases of ServiceNames itself) are all covered; non-constant names are
 // skipped (nothing to verify at compile time). ServiceNames is resolved by its full metadata name
 // — foundation-contracts ships as a package to generated apps, so the namespace is stable.
-// Compilations that cannot see ServiceNames are silent (only the AppHost calls AddProject).
-// AddYarp/AddPostgres/etc. are deliberately out of scope: only AddProject resources back the
-// service-discovery names the apps resolve.
+// Compilations that cannot see ServiceNames are silent (only the AppHost calls AddDotnetProject).
+// AddYarp/AddPostgres/etc. are deliberately out of scope: only AddDotnetProject resources back the
+// service-discovery names the apps resolve. Aspire 17 made AddProject obsolete (CS0618, an error
+// here), so the AppHost declares projects with AddDotnetProject only and that is the name matched
+// (task 498).
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
 
 using System.Collections.Generic;
 
-/// <summary>Roslyn analyzer for TWA0007: Aspire AddProject resource names must be ServiceNames constant values.</summary>
+/// <summary>Roslyn analyzer for TWA0007: Aspire AddDotnetProject resource names must be ServiceNames constant values.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AspireResourceNameAnalyzer : DiagnosticAnalyzer
 {
@@ -38,7 +40,7 @@ public class AspireResourceNameAnalyzer : DiagnosticAnalyzer
       category: "Design",
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
-      description: "AppHost AddProject resource names must equal the ServiceNames constants the applications use to resolve service URIs."
+      description: "AppHost AddDotnetProject resource names must equal the ServiceNames constants the applications use to resolve service URIs."
     );
 
   /// <summary>Diagnostics this analyzer reports.</summary>
@@ -74,7 +76,7 @@ public class AspireResourceNameAnalyzer : DiagnosticAnalyzer
   {
     var invocation = (InvocationExpressionSyntax)context.Node;
 
-    if (MethodName(invocation.Expression) != "AddProject") return;
+    if (MethodName(invocation.Expression) != "AddDotnetProject") return;
     if (!invocation.ArgumentList.Arguments.Any()) return;
 
     ExpressionSyntax nameArgument = invocation.ArgumentList.Arguments[0].Expression;
