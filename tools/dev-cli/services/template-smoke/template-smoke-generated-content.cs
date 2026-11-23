@@ -4,8 +4,8 @@
 #region Design
 // AssertSkillsShipped: generated apps must contain the nine skills/*/SKILL.md files and must not
 // contain any analysis/ directory under skills/ (pack exclude).
-// Task 318: AssertKanbanSkeletonShipped - generated apps get the empty board skeleton (five column
-// .gitkeep files, overview.md, task-template.md) and nothing else under kanban/.
+// Task 318 / 491: AssertKanbanSkeletonShipped - generated apps get the empty board skeleton
+// (five column .gitkeep files, overview.md, task-template.md, readme.md) and nothing else under kanban/.
 // Task 288: AssertDeployParametersUseAppKebabName is the loud failure for an invalid kebab name.
 // TemplateSmokeGeneration.GenerateAsync is the generate-only half used for names that only need that
 // cheap assert (template-smoke's Contoso.Shop).
@@ -86,9 +86,9 @@ internal sealed class TemplateSmokeGeneratedContent
   }
 
   /// <summary>
-  /// Task 318: generated apps get an empty board — kanban/{backlog,to-do,in-progress,done,archived}/
-  /// each with a .gitkeep, plus kanban/overview.md and kanban/task-template.md — and no task
-  /// folders, task files or journals from this repo's board.
+  /// Task 318 / 491: generated apps get an empty board — kanban/{backlog,to-do,in-progress,done,archived}/
+  /// each with a .gitkeep, plus kanban/overview.md, kanban/task-template.md, and kanban/readme.md —
+  /// and no task folders, task files or journals from this repo's board.
   /// </summary>
   public bool AssertKanbanSkeletonShipped(string outputDir)
   {
@@ -104,6 +104,7 @@ internal sealed class TemplateSmokeGeneratedContent
     [
       .. columns.Select(column => $"{column}/.gitkeep"),
       "overview.md",
+      "readme.md",
       "task-template.md",
     ];
 
@@ -140,7 +141,7 @@ internal sealed class TemplateSmokeGeneratedContent
     }
 
     if (ok)
-      Terminal.WriteLine("Generated app contains the empty kanban/ skeleton (five columns, overview, task template).");
+      Terminal.WriteLine("Generated app contains the empty kanban/ skeleton (five columns, overview, readme, task template).");
 
     return ok;
   }
