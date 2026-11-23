@@ -4,7 +4,8 @@
 
 #region Design
 // SettingsWrite — granted to the bootstrap Administrator role, not self-service. Version is the
-// concurrency token from GetSiteSettings; mismatch is 409. Validator composes
+// concurrency token from GetSiteSettings; mismatch is 409. CopyBeyondDetails copies it from
+// GetSiteSettings.Response or this Response. Validator composes
 // SiteSettingsDetailsValidator. PUT of the same ISiteSettingsDetails shape the Get response
 // implements so the Authentication form binds once. Task 306: EntraTenantAcceptanceMode and
 // EntraAcceptedTenants are the trust policy on this command (id plus optional domain).
@@ -34,6 +35,19 @@ public static partial class UpdateSiteSettings
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
     public long Version { get; set; }
+
+    static partial void CopyBeyondDetails(Command command, ISiteSettingsDetails source)
+    {
+      switch (source)
+      {
+        case GetSiteSettings.Response loaded:
+          command.Version = loaded.Version;
+          break;
+        case Response saved:
+          command.Version = saved.Version;
+          break;
+      }
+    }
   }
 
   public sealed class Validator : AbstractValidator<Command>
@@ -45,7 +59,7 @@ public static partial class UpdateSiteSettings
     }
   }
 
-  public sealed class Response : ISiteSettingsDetails
+  public sealed partial class Response : ISiteSettingsDetails
   {
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
