@@ -40,6 +40,27 @@ public class DetailsCopyAnalyzer_Tests
     await Test(source).RunAsync();
   }
 
+  public static async Task Explicit_Identity_Clone_Flags_TWA0047()
+  {
+    const string source =
+      """
+      namespace App
+      {
+        public interface IProfileDetails { string Name { get; set; } }
+        public static partial class GetWidget
+        {
+          public sealed partial class Response : IProfileDetails, System.ICloneable
+          {
+            public string Name { get; set; } = "";
+            object System.ICloneable.{|TWA0047:Clone|}() => this;
+          }
+        }
+      }
+      """;
+
+    await Test(source).RunAsync();
+  }
+
   public static async Task Cast_Identity_Clone_Flags_TWA0047()
   {
     const string source =

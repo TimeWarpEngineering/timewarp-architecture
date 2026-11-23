@@ -5,8 +5,9 @@
 #region Design
 // The generator lives in foundation-contracts-generators because only that analyzer reference
 // can add members to web-contracts. Convention analyzers report TWA0047–TWA0049; this generator
-// stays silent when the type is not partial, already has From or Clone, or has no parameterless
-// constructor.
+// stays silent when the type is not partial, already has From or Clone (including an explicit
+// ICloneable.Clone), or has no parameterless constructor. Those answers come from
+// DetailsCopyClassification.
 // Version and other non-interface members stay off I*Details. From ends by calling the classic
 // partial method CopyBeyondDetails(Command command, I*Details source). No access modifier, so a
 // missing implementation is erased. UpdateSiteSettings.Command implements it for Version.

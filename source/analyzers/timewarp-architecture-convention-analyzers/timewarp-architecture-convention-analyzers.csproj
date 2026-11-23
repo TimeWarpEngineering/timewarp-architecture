@@ -23,6 +23,7 @@
          (no ProjectReference between them). -->
     <Compile Include="..\shared\hosted-route-discovery.cs" Link="shared\hosted-route-discovery.cs" />
     <Compile Include="..\shared\referenceable-resource-shape.cs" Link="shared\referenceable-resource-shape.cs" />
+    <Compile Include="..\shared\details-copy-classification.cs" Link="shared\details-copy-classification.cs" />
   </ItemGroup>
 
   <!-- Feature filename grammar SSOT: JSON → committed .g.cs + per-family msbuild .g.props (regenerate on change).

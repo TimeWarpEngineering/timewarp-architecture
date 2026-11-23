@@ -16,24 +16,21 @@ Parent: see parent kitchen for the pattern.
 
 ## Goal (implementer restatement)
 
-Edit forms need a command built from the fetched response, and TimeWarp.State needs a real copy of a mutable response so a rollback does not share that instance. This task adds that copy machinery to the contract assemblies. It does not change pages or state stores.
+An edit form needs a command filled from the response it just loaded, and TimeWarp.State needs its own copy of a mutable response so a rollback does not keep the same object. The foundation contracts generator emits `From` on a partial `Command` and a real `Clone` on a partial mutable `Response` for any interface whose name is longer than `IDetails`, starts with `I`, and ends with `Details`. Lists, arrays, sets, and dictionaries are new collections. `Version` stays off `ISiteSettingsDetails`; `UpdateSiteSettings.Command` copies it through `CopyBeyondDetails`. TWA0047 flags a mutable details response whose `Clone` returns `this`. TWA0048 flags a command or mutable response that is not partial. TWA0049 flags a partial command with no parameterless constructor. Pages and state stores stay unchanged, and `tw-web-api-contracts` is not edited here.
 
-A source generator in the foundation contracts generators, already attached to web-contracts, emits two members from any interface whose name starts with `I` and ends with `Details`:
+This pass closes the three open review findings:
 
-- On a partial class named `Command`, `static Command From(I*Details source)` copies every interface property. `List<T>`, arrays, sets, dictionaries, and the matching collection interfaces are new collections. Elements are shared unless the element type is a reference type that implements `ICloneable` (strings stay shared).
-- On a partial class named `Response` whose details interface has a non-init setter, `ICloneable.Clone()` does a memberwise copy and then replaces those collections so the snapshot does not share them. Get-only and `[Computed]` auto-properties, including `GetProfile.Response.Avatar`, survive because memberwise clone copies their backing fields. Get-only collection auto-properties are rewritten through `UnsafeAccessor` on `<Name>k__BackingField`.
-
-Members that are not on the interface stay off it. `Version` is a concurrency token, not a form field, so `ISiteSettingsDetails` is not widened. The generator declares `static partial void CopyBeyondDetails(Command command, I*Details source)` with no access modifier. `UpdateSiteSettings.Command` implements that hook and copies `Version` from `GetSiteSettings.Response` or `UpdateSiteSettings.Response`. Route ids, `EmailCopy`, and `AttachmentIds` are not copied unless a later hook says so.
-
-A convention analyzer reports three errors: TWA0047 when a mutable details response's `Clone` returns `this`, TWA0048 when the command or mutable response (or a containing type) is not partial, and TWA0049 when a partial command has no parameterless instance constructor. Immutable `Clone() => this` on a type that does not implement a setter-bearing details interface stays legal.
+- The living-contract checks run inside co-located runfiles that `web-jaribu-tests` already compiles: `get-profile-tests.cs`, `update-site-settings-tests.cs`, and the GetRole clone check on `create-role-tests.cs`. A new `get-role-tests.cs` would add a `CA1707` suppression for Jaribu's underscore names, and that rise is refused. The stray `tests/analyzers/details-copy-contracts-tests.cs` is deleted.
+- An explicit `object ICloneable.Clone()` counts as `Clone`. TWA0047 reports it when the body returns `this`. The generator does not emit a second public `Clone` beside it, because interface dispatch would keep calling the explicit method.
+- The `I*Details`, mutable, partial-chain, `From`, `Clone`, and parameterless-constructor predicates live in one linked file under `source/analyzers/shared/`. The details-copy analyzer, `ContractAgreementAnalyzer`, and the foundation contracts generator all call that file.
 
 Acceptance:
 
-- The five mutable details responses (`GetProfile`, `UpdateProfile`, `GetRole`, `GetSiteSettings`, `UpdateSiteSettings`) are partial, and the generator supplies `Clone`.
-- `From` exists on `CreateRole.Command`, `UpdateRole.Command`, `UpdateProfile.Command`, `UpdateSiteSettings.Command`, and `SubmitFeedback.Command`.
-- Tests show list copies are not the same reference, `Avatar` and get-only lists survive `Clone`, and `Version` round-trips through the hook.
-- `documentation/developer/` explains the edit-form pattern, the State cloner behavior (pinned package is 12.0.0-beta.19; beta.17 uses the same `ICloneable` short-circuit), and the `Version` decision.
-- The flow skill `tw-web-api-contracts` is not edited here.
+- `GetProfile.Response.Clone` keeps `Avatar` and does not share `DisplayName`. `UpdateProfile.Command.From` copies the details fields.
+- `GetRole.Response.Clone` keeps `RoleId` and copies `Permissions` and `AgentScopes`. That check is on `create-role-tests.cs`.
+- `UpdateSiteSettings.Command.From` copies `Version` 7 from the get response and 8 from the update response, and the tenant list is a new list.
+- An analyzer test covers the explicit identity clone. A generator test shows that form is not given a second `Clone`.
+- The five mutable responses stay partial with generated `Clone`, the five commands keep `From`, and the developer guide stays.
 
 ## Checklist
 
@@ -42,6 +39,7 @@ Acceptance:
 - [x] Generator + diagnostics (e.g. mutable `I*Details` Response with `ICloneable => this`)
 - [x] Unit tests for generated `From` and `Clone`
 - [x] Short developer doc for the edit-form pattern under `documentation/developer/`
+- [x] Review round 1: co-located living checks, explicit `ICloneable.Clone` counts as `Clone`, one shared classification file
 
 ## Results
 
@@ -53,19 +51,38 @@ TimeWarp.State is pinned at 12.0.0-beta.19. The 12.0.0-beta.17 generator has the
 
 Guide: `documentation/developer/guides/edit-form-details-copy.md`.
 
+Review round 1 is implemented. `DetailsCopyClassification` in `source/analyzers/shared/details-copy-classification.cs` is the one copy of the `I*Details`, mutable, partial-chain, `From`, `Clone`, and parameterless-constructor predicates. The convention analyzer, `ContractAgreementAnalyzer`, and the foundation contracts generator all call it. `Clone` includes an explicit `object ICloneable.Clone()`. TWA0047 reports that form when the body returns `this`. When the type already has that method, the generator does not emit a second public `Clone`, because interface dispatch would keep calling the explicit method.
+
+The stray `tests/analyzers/details-copy-contracts-tests.cs` is deleted. `web-jaribu-tests` compiles `get-profile-tests.cs`, `create-role-tests.cs` (the GetRole clone check), and `update-site-settings-tests.cs`. A separate `get-role-tests.cs` was not added: Jaribu's underscore names need a `CA1707` suppression, and a new runfile's `NoWarn` is above `.timewarp/suppression-baseline.json`. `create-role-tests.cs` already carries that suppression and already sits on the aggregator glob.
+
 ### How to validate
 
-Smoke: `dotnet run --file tests/analyzers/details-copy-contracts-tests.cs`
+Smoke:
 
-Expect: three tests pass. `GetProfile.Response.Clone` keeps `Avatar` and does not share `DisplayName`. `GetRole.Response.Clone` keeps `RoleId` and copies `Permissions`. `UpdateSiteSettings.Command.From` copies `Version` 7 from the get response and 8 from the update response, and the tenant list is a new list.
+- `dotnet run --file source/container-apps/web/features/profile/get-profile/get-profile-tests.cs`
+- `dotnet run --file source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs`
+- `dotnet run --file source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs`
+
+Expect: `GetProfile.Response.Clone` keeps `Avatar` and does not share `DisplayName`, and `UpdateProfile.Command.From` copies the details fields. `GetRole.Response.Clone` keeps `RoleId` and copies `Permissions` and `AgentScopes`. `UpdateSiteSettings.Command.From` copies `Version` 7 from the get response and 8 from the update response, and the tenant list is a new list.
 
 Gates:
 
-- `./bin/dev build` — succeeded, 0 warnings, 0 errors.
-- `dotnet run --file tests/analyzers/details-copy-contracts-tests.cs` — passed, 3 tests.
-- `tests/analyzers/timewarp-architecture-analyzers-tests/details-copy-analyzer-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`). `./bin/dev test` does not take a file. CI runs the project. Verified from that project directory: `dotnet test -c Release -- --filter-class DetailsCopyAnalyzer_Tests` — passed, 10 tests.
-- `tests/analyzers/timewarp-architecture-sourcegenerator-tests/details-copy-generator-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`). CI runs the project. Verified from that project directory: `dotnet test -c Release -- --filter-class DetailsCopyGenerator_Tests` — passed, 1 test.
-- `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is gitignored local state, pre-existing). The contracts runfile adds no `NoWarn`.
+- `./bin/dev build` — succeeded, 0 warnings, 0 errors. This is the solution build of the analyzer and generator edits. The later create-role test move is not a solution project.
+- `dotnet run --file source/container-apps/web/features/profile/get-profile/get-profile-tests.cs` — passed, 15 tests.
+- `dotnet run --file source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs` — passed, 6 tests, including `Clone_Should_KeepRoleId_And_CopyLists`.
+- `dotnet run --file source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs` — passed, 12 tests, including `From_Should_CopyVersion_And_NotShareTenants`.
+- `tests/analyzers/timewarp-architecture-analyzers-tests/details-copy-analyzer-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`). `./bin/dev test` does not take a file. CI runs the project. Verified from that project directory, so its `global.json` selects the Microsoft.Testing.Platform runner: `dotnet test -c Release --no-build --no-restore -- --filter-class DetailsCopyAnalyzer_Tests` — passed, 11 tests, including `Explicit_Identity_Clone_Flags_TWA0047`.
+- `tests/analyzers/timewarp-architecture-sourcegenerator-tests/details-copy-generator-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`). CI runs the project. Same invocation from that project directory: `dotnet test -c Release --no-build --no-restore -- --filter-class DetailsCopyGenerator_Tests` — passed, 2 tests, including `Explicit_Identity_Clone_Is_Not_Replaced`.
+- `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing). `analyzer-suppressions` passed: 843 suppressions, none above the baseline.
+
+### Review
+
+- Round 1 (effort 3, roster: general): 3 open findings, 2 bug and 1 suggestion.
+  The fix pass implemented M1, M2, and M3. Disposition waits for review round 2.
+  - M1: CI never runs `tests/analyzers/details-copy-contracts-tests.cs`.
+  - M2: an explicit `ICloneable.Clone() => this` gets past TWA0047 and the generator.
+  - M3: the analyzer and the generator repeat the same predicates.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ## Parent
 
@@ -74,3 +91,12 @@ Gates:
 ## Session
 
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a207f0-ea12-7e12-9d95-5fbdbe3d9ac9, max-turns 500, Done — 2026-11-23T11:29:10Z
+- Review oracle round 1: Claude Opus 5.5 (claude-opus-5-5), effort 3, roster general, turn cap 200.
+  Result: Blocked, fix pass for M1, M2, and M3 — 2026-11-23
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4daa86a6-ea16-4380-8f58-fcd2f2a2708b, max-turns 200, artifacts general.md, merged.md — 2026-11-23T11:35:14Z
+- Fix pass (implement-fix-2): Grok 4.7, 2026-11-23. M1 living checks are on the three co-located runfiles above (GetRole on `create-role-tests.cs`). M2 explicit `ICloneable.Clone` counts as `Clone`. M3 predicates live in `source/analyzers/shared/details-copy-classification.cs`.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
+- Fix pass: M1, M2, and M3 implemented. Host runs review round 2.

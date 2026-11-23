@@ -5,7 +5,8 @@
 #region Design
 // The driver runs only DetailsCopyGenerator. Emit plus a collectible load proves UnsafeAccessor
 // can write a get-only auto-property backing field: Avatar, Permissions, and Badge survive, and
-// the copies are not the caller's instances. CopyBeyondDetails is the Version hook.
+// the copies are not the caller's instances. CopyBeyondDetails is the Version hook. An explicit
+// ICloneable.Clone is left in place: a generated public Clone would not be the interface method.
 #endregion
 
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
@@ -178,6 +179,51 @@ public class DetailsCopyGenerator_Tests
 
     Should.Throw<TargetInvocationException>(() => from.Invoke(null, [null!]))
       .InnerException.ShouldBeOfType<ArgumentNullException>();
+  }
+
+  public static Task Explicit_Identity_Clone_Is_Not_Replaced()
+  {
+    const string source =
+      """
+      namespace App
+      {
+        public interface IProfileDetails { string Name { get; set; } }
+        public static partial class GetWidget
+        {
+          public sealed partial class Response : IProfileDetails, System.ICloneable
+          {
+            public string Name { get; set; } = "";
+            object System.ICloneable.Clone() => this;
+          }
+        }
+      }
+      """;
+
+    CSharpParseOptions parse = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
+    CSharpCompilation compilation = CSharpCompilation.Create(
+      "DetailsCopy.ExplicitClone",
+      [CSharpSyntaxTree.ParseText(source, parse)],
+      References(),
+      new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        .WithNullableContextOptions(NullableContextOptions.Enable));
+
+    GeneratorDriver driver = CSharpGeneratorDriver.Create(
+      [new DetailsCopyGenerator().AsSourceGenerator()],
+      parseOptions: parse);
+    driver = driver.RunGeneratorsAndUpdateCompilation(
+      compilation,
+      out Compilation _,
+      out ImmutableArray<Diagnostic> generatorDiagnostics);
+    generatorDiagnostics.ShouldBeEmpty();
+
+    string generated = "";
+    foreach (GeneratedSourceResult sourceResult in driver.GetRunResult().Results[0].GeneratedSources)
+    {
+      generated += sourceResult.SourceText.ToString();
+    }
+
+    generated.ShouldNotContain("object Clone()");
+    return Task.CompletedTask;
   }
 
   private static MetadataReference[] References()

@@ -133,4 +133,32 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     }
   }
 
+  [TestTag("Contracts")]
+  public class GetRoleResponse_Given_
+  {
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<GetRoleResponse_Given_>();
+
+    public static Task Clone_Should_KeepRoleId_And_CopyLists()
+    {
+      // Declared apart from the initializer so the type is not apparent (IDE0007).
+      System.Guid roleId;
+      roleId = System.Guid.Parse("11111111-1111-1111-1111-111111111111");
+      List<string> permissions = ["read"];
+      List<string> scopes = ["scope"];
+      GetRole.Response response = new(roleId, "Admin", "desc", permissions, scopes);
+
+      GetRole.Response clone;
+      clone = (GetRole.Response)((System.ICloneable)response).Clone();
+      clone.RoleId.ShouldBe(roleId);
+      clone.Name.ShouldBe("Admin");
+      clone.Permissions.ShouldNotBeSameAs(permissions);
+      clone.AgentScopes.ShouldNotBeSameAs(scopes);
+      clone.Permissions.ShouldBe(["read"]);
+      permissions.Add("write");
+      clone.Permissions.Count.ShouldBe(1);
+      return Task.CompletedTask;
+    }
+  }
+
 } // namespace TimeWarp.Architecture.Features.Admin.Roles

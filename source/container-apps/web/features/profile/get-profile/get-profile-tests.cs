@@ -98,6 +98,31 @@ namespace TimeWarp.Architecture.Features.Profiles
         JsonSerializer.Deserialize<Response>(json, ContractSerializationDefaults.Options));
       return Task.CompletedTask;
     }
+
+    public static Task Clone_Should_KeepAvatar_And_NotShareTheInstance()
+    {
+      Response response = new(
+        displayName: "Ada",
+        email: "ada@example.com",
+        language: "en-US",
+        region: "US",
+        theme: "system",
+        notifications: true,
+        avatar: "data:image/svg");
+
+      Response clone = (Response)((System.ICloneable)response).Clone();
+      clone.Avatar.ShouldBe("data:image/svg");
+      clone.DisplayName.ShouldBe("Ada");
+      clone.Email.ShouldBe("ada@example.com");
+      clone.DisplayName = "Bea";
+      response.DisplayName.ShouldBe("Ada");
+
+      UpdateProfile.Command command = UpdateProfile.Command.From(response);
+      command.DisplayName.ShouldBe("Ada");
+      command.Language.ShouldBe("en-US");
+      command.Notifications.ShouldBeTrue();
+      return Task.CompletedTask;
+    }
   }
 
   [TestTag("Store")]

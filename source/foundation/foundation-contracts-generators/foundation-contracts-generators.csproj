@@ -22,4 +22,10 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Same linked-source pattern as the convention analyzers. The classification must not be
+         copied into this project: an explicit ICloneable.Clone was missed in both copies. -->
+    <Compile Include="..\..\analyzers\shared\details-copy-classification.cs" Link="shared\details-copy-classification.cs" />
+  </ItemGroup>
+
 </Project>

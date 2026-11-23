@@ -4,12 +4,14 @@
 #endregion
 
 #region Design
-// I*Details matches ContractAgreementAnalyzer.IsDetailsInterface (longer than "IDetails", leading I,
-// trailing Details). Identity Clone is only an error on a Response whose details interface has a
-// non-init setter. Immutable Clone() => this stays legal. TWA0048 names each non-partial type in
-// the nesting chain. TWA0049 is the parameterless-constructor gap, and only after the chain is
-// already partial. Generated Clone is not re-analyzed (GeneratedCodeAnalysisFlags.None); a real
-// MemberwiseClone body does not return this, so it stays quiet.
+// I*Details, mutability, the partial chain, From, Clone, and the parameterless constructor are
+// DetailsCopyClassification, shared with the generator and ContractAgreementAnalyzer. Identity
+// Clone is only an error on a Response whose details interface has a non-init setter. An explicit
+// ICloneable.Clone is that Clone. Immutable Clone() => this stays legal. TWA0048 names each
+// non-partial type in the nesting chain. TWA0049 is the parameterless-constructor gap, and only
+// after the chain is already partial. Generated Clone is not re-analyzed
+// (GeneratedCodeAnalysisFlags.None); a real MemberwiseClone body does not return this, so it
+// stays quiet.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -85,7 +87,7 @@ public sealed class DetailsCopyAnalyzer : DiagnosticAnalyzer
       return;
     }
 
-    List<INamedTypeSymbol> details = DetailsInterfaces(type);
+    List<INamedTypeSymbol> details = DetailsCopyClassification.DetailsInterfaces(type);
     if (details.Count == 0)
     {
       return;
@@ -107,7 +109,7 @@ public sealed class DetailsCopyAnalyzer : DiagnosticAnalyzer
     List<INamedTypeSymbol> missing = [];
     foreach (INamedTypeSymbol iface in details)
     {
-      if (!HasFrom(type, iface))
+      if (!DetailsCopyClassification.HasFrom(type, iface))
       {
         missing.Add(iface);
       }
@@ -118,13 +120,13 @@ public sealed class DetailsCopyAnalyzer : DiagnosticAnalyzer
       return;
     }
 
-    if (!IsPartialChain(type, context.CancellationToken))
+    if (!DetailsCopyClassification.IsPartialChain(type, context.CancellationToken))
     {
       ReportNonPartial(context, type, "From");
       return;
     }
 
-    if (!HasParameterlessConstructor(type))
+    if (!DetailsCopyClassification.HasParameterlessConstructor(type))
     {
       string names = string.Join(", ", missing.Select(static iface => iface.Name));
       Location location = type.Locations.FirstOrDefault() ?? Location.None;
@@ -137,7 +139,7 @@ public sealed class DetailsCopyAnalyzer : DiagnosticAnalyzer
     INamedTypeSymbol? mutable = null;
     foreach (INamedTypeSymbol iface in details)
     {
-      if (IsMutable(iface))
+      if (DetailsCopyClassification.IsMutable(iface))
       {
         mutable = iface;
         break;
@@ -158,7 +160,8 @@ public sealed class DetailsCopyAnalyzer : DiagnosticAnalyzer
       }
     }
 
-    if (!IsPartialChain(type, context.CancellationToken) && (!HasClone(type) || identity))
+    if (!DetailsCopyClassification.IsPartialChain(type, context.CancellationToken)
+      && (!DetailsCopyClassification.HasClone(type) || identity))
     {
       ReportNonPartial(context, type, "Clone");
     }
@@ -192,13 +195,8 @@ public sealed class DetailsCopyAnalyzer : DiagnosticAnalyzer
 
   private static bool CloneReturnsThis(INamedTypeSymbol type, CancellationToken cancellationToken)
   {
-    foreach (ISymbol member in type.GetMembers("Clone"))
+    foreach (IMethodSymbol method in DetailsCopyClassification.CloneMethods(type))
     {
-      if (member is not IMethodSymbol { IsStatic: false } method || method.Parameters.Length != 0)
-      {
-        continue;
-      }
-
       foreach (SyntaxReference reference in method.DeclaringSyntaxReferences)
       {
         if (reference.GetSyntax(cancellationToken) is MethodDeclarationSyntax syntax && ReturnsThis(syntax))
@@ -213,13 +211,8 @@ public sealed class DetailsCopyAnalyzer : DiagnosticAnalyzer
 
   private static IEnumerable<Location> IdentityCloneLocations(INamedTypeSymbol type, CancellationToken cancellationToken)
   {
-    foreach (ISymbol member in type.GetMembers("Clone"))
+    foreach (IMethodSymbol method in DetailsCopyClassification.CloneMethods(type))
     {
-      if (member is not IMethodSymbol { IsStatic: false } method || method.Parameters.Length != 0)
-      {
-        continue;
-      }
-
       foreach (SyntaxReference reference in method.DeclaringSyntaxReferences)
       {
         if (reference.GetSyntax(cancellationToken) is MethodDeclarationSyntax syntax && ReturnsThis(syntax))
@@ -283,127 +276,5 @@ public sealed class DetailsCopyAnalyzer : DiagnosticAnalyzer
       BinaryExpressionSyntax { RawKind: (int)SyntaxKind.AsExpression } binary => IsThis(binary.Left),
       _ => false
     };
-  }
-
-  private static bool IsPartialChain(INamedTypeSymbol type, CancellationToken cancellationToken)
-  {
-    for (INamedTypeSymbol? current = type; current is not null; current = current.ContainingType)
-    {
-      if (current.DeclaringSyntaxReferences.Length == 0)
-      {
-        return false;
-      }
-
-      foreach (SyntaxReference reference in current.DeclaringSyntaxReferences)
-      {
-        if (reference.GetSyntax(cancellationToken) is not TypeDeclarationSyntax declaration
-          || !declaration.Modifiers.Any(static token => token.IsKind(SyntaxKind.PartialKeyword)))
-        {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  private static bool HasFrom(INamedTypeSymbol type, INamedTypeSymbol details)
-  {
-    foreach (ISymbol member in type.GetMembers("From"))
-    {
-      if (member is IMethodSymbol { IsStatic: true } method
-        && method.Parameters.Length == 1
-        && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, details))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool HasClone(INamedTypeSymbol type)
-  {
-    foreach (ISymbol member in type.GetMembers("Clone"))
-    {
-      if (member is IMethodSymbol { IsStatic: false } method && method.Parameters.Length == 0)
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool HasParameterlessConstructor(INamedTypeSymbol type)
-  {
-    foreach (IMethodSymbol constructor in type.InstanceConstructors)
-    {
-      if (constructor.Parameters.Length == 0)
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool IsMutable(INamedTypeSymbol details)
-  {
-    foreach (IPropertySymbol property in InterfaceProperties(details))
-    {
-      if (property.SetMethod is { IsInitOnly: false })
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static List<INamedTypeSymbol> DetailsInterfaces(INamedTypeSymbol type)
-  {
-    List<INamedTypeSymbol> interfaces = [];
-    foreach (INamedTypeSymbol iface in type.AllInterfaces)
-    {
-      if (iface.TypeKind == TypeKind.Interface
-        && iface.Name.Length > "IDetails".Length
-        && iface.Name[0] == 'I'
-        && iface.Name.EndsWith("Details", StringComparison.Ordinal))
-      {
-        interfaces.Add(iface);
-      }
-    }
-
-    return interfaces;
-  }
-
-  private static List<IPropertySymbol> InterfaceProperties(INamedTypeSymbol details)
-  {
-    List<IPropertySymbol> properties = [];
-    HashSet<INamedTypeSymbol> seen = new(SymbolEqualityComparer.Default);
-    Collect(details, properties, seen);
-    return properties;
-  }
-
-  private static void Collect(INamedTypeSymbol details, List<IPropertySymbol> properties, HashSet<INamedTypeSymbol> seen)
-  {
-    if (!seen.Add(details))
-    {
-      return;
-    }
-
-    foreach (ISymbol member in details.GetMembers())
-    {
-      if (member is IPropertySymbol { IsStatic: false, IsIndexer: false } property)
-      {
-        properties.Add(property);
-      }
-    }
-
-    foreach (INamedTypeSymbol parent in details.Interfaces)
-    {
-      Collect(parent, properties, seen);
-    }
   }
 }

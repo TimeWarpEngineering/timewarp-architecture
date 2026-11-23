@@ -3,15 +3,14 @@
 #endregion
 
 #region Design
-// I*Details matches ContractAgreementAnalyzer.IsDetailsInterface. Collection kinds are the ones
-// From and Clone can construct. Other collection types stay scalars and are shared.
+// Collection kinds are the ones From and Clone can construct. Other collection types stay
+// scalars and are shared. I*Details, mutability, the partial chain, From, Clone, and the
+// parameterless constructor live in DetailsCopyClassification so the analyzer uses the same answers.
 #endregion
 
 namespace TimeWarp.Foundation.Contracts.Generators;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 internal static class DetailsCopySymbols
 {
@@ -186,112 +185,6 @@ internal static class DetailsCopySymbols
     type.NullableAnnotation == NullableAnnotation.Annotated
     || type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T };
 
-  internal static bool IsMutable(INamedTypeSymbol details)
-  {
-    foreach (IPropertySymbol property in InterfaceProperties(details))
-    {
-      if (property.SetMethod is { IsInitOnly: false })
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  internal static List<INamedTypeSymbol> DetailsInterfaces(INamedTypeSymbol type)
-  {
-    List<INamedTypeSymbol> interfaces = [];
-    foreach (INamedTypeSymbol iface in type.AllInterfaces)
-    {
-      if (IsDetailsInterface(iface))
-      {
-        interfaces.Add(iface);
-      }
-    }
-
-    return interfaces;
-  }
-
-  internal static bool IsDetailsInterface(INamedTypeSymbol type) =>
-    type.TypeKind == TypeKind.Interface
-    && type.Name.Length > "IDetails".Length
-    && type.Name[0] == 'I'
-    && type.Name.EndsWith("Details", StringComparison.Ordinal);
-
-  internal static List<IPropertySymbol> InterfaceProperties(INamedTypeSymbol details)
-  {
-    List<IPropertySymbol> properties = [];
-    HashSet<INamedTypeSymbol> seen = new(SymbolEqualityComparer.Default);
-    CollectProperties(details, properties, seen);
-    return properties;
-  }
-
-  internal static void CollectProperties(
-    INamedTypeSymbol details,
-    List<IPropertySymbol> properties,
-    HashSet<INamedTypeSymbol> seen)
-  {
-    if (!seen.Add(details))
-    {
-      return;
-    }
-
-    foreach (ISymbol member in details.GetMembers())
-    {
-      if (member is IPropertySymbol { IsStatic: false, IsIndexer: false } property)
-      {
-        properties.Add(property);
-      }
-    }
-
-    foreach (INamedTypeSymbol parent in details.Interfaces)
-    {
-      CollectProperties(parent, properties, seen);
-    }
-  }
-
-  internal static bool HasFrom(INamedTypeSymbol type, INamedTypeSymbol details)
-  {
-    foreach (ISymbol member in type.GetMembers("From"))
-    {
-      if (member is IMethodSymbol { IsStatic: true } method
-        && method.Parameters.Length == 1
-        && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, details))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  internal static bool HasClone(INamedTypeSymbol type)
-  {
-    foreach (ISymbol member in type.GetMembers("Clone"))
-    {
-      if (member is IMethodSymbol { IsStatic: false } method && method.Parameters.Length == 0)
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  internal static bool HasParameterlessConstructor(INamedTypeSymbol type)
-  {
-    foreach (IMethodSymbol constructor in type.InstanceConstructors)
-    {
-      if (constructor.Parameters.Length == 0)
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   internal static bool HasGenericContainer(INamedTypeSymbol type)
   {
     for (INamedTypeSymbol? current = type.ContainingType; current is not null; current = current.ContainingType)
@@ -303,32 +196,6 @@ internal static class DetailsCopySymbols
     }
 
     return false;
-  }
-
-  internal static bool IsPartialChain(INamedTypeSymbol type, CancellationToken cancellationToken)
-  {
-    for (INamedTypeSymbol? current = type; current is not null; current = current.ContainingType)
-    {
-      if (current.DeclaringSyntaxReferences.Length == 0)
-      {
-        return false;
-      }
-
-      foreach (SyntaxReference reference in current.DeclaringSyntaxReferences)
-      {
-        if (reference.GetSyntax(cancellationToken) is not TypeDeclarationSyntax declaration)
-        {
-          return false;
-        }
-
-        if (!declaration.Modifiers.Any(static token => token.IsKind(SyntaxKind.PartialKeyword)))
-        {
-          return false;
-        }
-      }
-    }
-
-    return true;
   }
 
   internal static bool DeclaredOn(INamedTypeSymbol type, INamedTypeSymbol containing)

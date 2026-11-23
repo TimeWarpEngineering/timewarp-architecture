@@ -3,16 +3,18 @@
 #endregion
 
 #region Design
-// I*Details matches ContractAgreementAnalyzer.IsDetailsInterface: an interface whose name is longer
-// than "IDetails", starts with I, and ends with Details. Commands get one From per such interface.
-// Responses get Clone only when one of those interfaces has a non-init setter. Unknown collection
-// types are left as scalars (shared). Explicit init-only implementations are skipped because an
-// object initializer cannot name them and a later assignment cannot call init.
+// I*Details, mutability, the partial chain, From, Clone, and the parameterless constructor come
+// from DetailsCopyClassification. Commands get one From per details interface. Responses get
+// Clone only when one of those interfaces has a non-init setter and the type has no Clone of its
+// own, including an explicit ICloneable.Clone. Unknown collection types are left as scalars
+// (shared). Explicit init-only implementations are skipped because an object initializer cannot
+// name them and a later assignment cannot call init.
 #endregion
 
 namespace TimeWarp.Foundation.Contracts.Generators;
 
 using Microsoft.CodeAnalysis;
+using TimeWarp.Architecture.Analyzers;
 
 internal static class DetailsCopyReader
 {
@@ -28,12 +30,12 @@ internal static class DetailsCopyReader
       return null;
     }
 
-    if (DetailsCopySymbols.HasGenericContainer(type) || !DetailsCopySymbols.IsPartialChain(type, cancellationToken))
+    if (DetailsCopySymbols.HasGenericContainer(type) || !DetailsCopyClassification.IsPartialChain(type, cancellationToken))
     {
       return null;
     }
 
-    List<INamedTypeSymbol> details = DetailsCopySymbols.DetailsInterfaces(type);
+    List<INamedTypeSymbol> details = DetailsCopyClassification.DetailsInterfaces(type);
     if (details.Count == 0)
     {
       return null;
@@ -54,18 +56,18 @@ internal static class DetailsCopyReader
 
     plan.Containers.Reverse();
 
-    if (type.Name == "Command" && DetailsCopySymbols.HasParameterlessConstructor(type))
+    if (type.Name == "Command" && DetailsCopyClassification.HasParameterlessConstructor(type))
     {
       foreach (INamedTypeSymbol iface in details)
       {
-        if (DetailsCopySymbols.HasFrom(type, iface))
+        if (DetailsCopyClassification.HasFrom(type, iface))
         {
           continue;
         }
 
         DetailsFromPart part = new() { InterfaceDisplay = DetailsCopySymbols.Display(iface) };
         HashSet<string> names = [];
-        foreach (IPropertySymbol property in DetailsCopySymbols.InterfaceProperties(iface))
+        foreach (IPropertySymbol property in DetailsCopyClassification.InterfaceProperties(iface))
         {
           if (!names.Add(property.Name))
           {
@@ -83,7 +85,7 @@ internal static class DetailsCopyReader
       }
     }
 
-    if (type.Name == "Response" && details.Exists(DetailsCopySymbols.IsMutable) && !DetailsCopySymbols.HasClone(type))
+    if (type.Name == "Response" && details.Exists(DetailsCopyClassification.IsMutable) && !DetailsCopyClassification.HasClone(type))
     {
       plan.EmitClone = true;
       plan.AddCloneable = !DetailsCopySymbols.ImplementsCloneable(type);
