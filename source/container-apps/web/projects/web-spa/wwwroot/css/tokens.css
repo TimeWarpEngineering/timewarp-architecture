@@ -55,7 +55,10 @@
   --twe-on-info: var(--twe-blue-deep);
 
   /* Status tints: badge and message-bar fills under the on-* text above.
-     Danger has no separate light hex. 12% into paper is the error badge fill. */
+     Danger has no separate light hex. 12% into paper is the error badge fill.
+     The dark block re-declares every tint, including --twe-danger-tint.
+     color-mix resolves var() on the element that declares the property, so a
+     tint left only on :root stays this light pink in dark mode. */
   --twe-positive-tint: #e5f7ec;
   --twe-warning-tint: #fef3c7;
   --twe-info-tint: #e6f4fa;
@@ -238,6 +241,8 @@ body[data-theme="dark"] {
   --twe-positive-tint: color-mix(in srgb, var(--twe-positive) 18%, var(--twe-paper));
   --twe-warning-tint: color-mix(in srgb, var(--twe-warning) 18%, var(--twe-paper));
   --twe-info-tint: color-mix(in srgb, var(--twe-blue) 24%, var(--twe-paper));
+  /* 12%, not 18%: the error text is --twe-danger itself, and 18% falls under 4.5:1. */
+  --twe-danger-tint: color-mix(in srgb, var(--twe-danger) 12%, var(--twe-paper));
 
   --twe-link: var(--twe-blue-bright);
   --twe-link-hover: var(--twe-blue-bright);
