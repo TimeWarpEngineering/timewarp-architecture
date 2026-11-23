@@ -9,7 +9,8 @@
 // Run standalone:  dotnet run source/container-apps/web/features/admin/roles/update-role/update-role-validator-tests.cs
 
 #region Purpose
-// Jaribu runfile proving UpdateRole.Validator rejects empty RoleId, Name, Description, and UserId.
+// Jaribu runfile proving UpdateRole.Validator rejects empty RoleId, Name, Description, and UserId,
+// and that Command.From copies a GetRole response including RoleId.
 #endregion
 
 //-:cnd:noEmit
@@ -110,6 +111,25 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       ValidationResult result = new UpdateRole.Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
       result.Errors.ShouldContain(error => error.PropertyName == nameof(UpdateRole.Command.UserId));
+      return Task.CompletedTask;
+    }
+
+    public static Task From_GetRole_Should_Copy_Name_Description_And_RoleId()
+    {
+      GetRole.Response role = new(
+        roleId: RoleIds.Administrator,
+        name: "Administrator",
+        description: "Built-in administrator.",
+        permissions: [PermissionIds.AdminRolesRead],
+        agentScopes: ["scope.read"]);
+      // Declared apart from the initializer so the type is not apparent (IDE0007).
+      UpdateRole.Command command;
+      command = UpdateRole.Command.From(role);
+      command.RoleId.ShouldBe(RoleIds.Administrator);
+      command.Name.ShouldBe("Administrator");
+      command.Description.ShouldBe("Built-in administrator.");
+      command.Name = "draft";
+      role.Name.ShouldBe("Administrator");
       return Task.CompletedTask;
     }
   }

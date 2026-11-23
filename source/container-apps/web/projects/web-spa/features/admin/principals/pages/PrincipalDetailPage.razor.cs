@@ -7,6 +7,7 @@
 // page; the profile card sits inside an AuthorizeView on admin.profiles.read (the server also
 // returns a null profile without it), and the role editor inside one on admin.principals.manage
 // (SetPrincipalRoles enforces the same policy). This page is the single role-editing surface.
+// Role and agent-scope checkbox sets live on the page. Save sends the commands built from them.
 // Status and profile facts are a DefinitionList. The value can be text or a code element.
 // Display name and email hooks sit on a span inside the value, so the hook text is the value.
 // A blank term would be omitted; these terms are fixed words.
