@@ -2,21 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 507
-- Effort: 2
+- Lines changed: 198
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
-
-# Review framework — task 489-004
-
-**Date:** 2026-11-23
-**Host task:** kanban/in-progress/489-004-convert-ai-page-assistant-name-and-byok-forms/
-**Diff scope:** branch `task/489-004-convert-ai-page-assistant-name-and-byok-forms`, implementation commit 6da30734e (product paths), against the merge of `origin/feature/edit-forms-whole-object` (795812789)
-**Plan / brief:** task.md `## Goal (implementer restatement)` and `## Description`. The AiPage assistant-name and xAI key-policy forms copy `Command.From(GetSiteSettings.Response)`, and the `Sync*` and `Synced*` shadow tracking is removed.
-**Effort:** 2 (by-diff budget), roster axis general
-**Reviewer roster:** general
-**Session IDs:** review oracle Claude Opus 5.5 (claude-opus-5-5), headless ganda task work
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 

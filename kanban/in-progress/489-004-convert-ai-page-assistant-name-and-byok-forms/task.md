@@ -63,10 +63,13 @@ Gates (fix pass, review round 1):
 
 ### Review
 
-- Round 1, effort 2, roster: general. Counts at merge: 0 bug, 1 suggestion, 1 nit. Fix pass addressed both. Round 2 has not run.
-- M1: `AiPage_Should_` edits a field and invokes `SaveAssistantAsync` / `SaveByokAsync`. The saved form shows the saved value and version. The other form keeps its unsaved edit.
-- M2: `AssistantDraftLoaded` and `ByokDraftLoaded` are gone. The markup renders each form when its source response is set.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 1, effort 2, roster: general. Counts at merge: 0 bug, 1 suggestion, 1 nit.
+- M1 (suggestion, fixed): `AiPage_Should_` edits a field and invokes `SaveAssistantAsync` / `SaveByokAsync`. The saved form shows the saved value and version. The other form keeps its unsaved edit.
+- M2 (nit, fixed): `AssistantDraftLoaded` and `ByokDraftLoaded` are gone. The markup renders each form when its source response is set.
+- Round 2, effort 1, roster: general. Re-checked fix delta 44a850b72. M1 and M2 are fixed. No new findings.
+- Final counts: bug 0, suggestion 1 fixed, nit 1 fixed, 0 open, 0 wontfix.
+- Disposition: **clean** (2 rounds, final open count 0).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Session
 
@@ -75,6 +78,7 @@ Gates (fix pass, review round 1):
 - Review oracle round 1: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, turn cap 120, 2026-11-23. 2 open findings (M1 suggestion, M2 nit), fix pass requested.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0c375f0b-0f7f-4d7b-be31-ab10bf662f28, max-turns 120, artifacts general.md, merged.md — 2026-11-23T14:53:33Z
 - Fix pass: Grok 4.7, 2026-11-23. The forms render from the copied source. The page save tests invoke `SaveAssistantAsync` and `SaveByokAsync`, so a deleted force accept fails on the saved version.
+- Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), effort 1, roster general, turn cap 80, 2026-11-23. Fix delta checked, M1 and M2 fixed, no new findings. Disposition clean.
 
 ## Parent
 
@@ -82,4 +86,5 @@ Gates (fix pass, review round 1):
 
 ## Review
 
-- Round 1: fix pass addressed M1 and M2. Round 2 has not run.
+- Round 1: fix pass addressed M1 and M2.
+- Round 2: Done
