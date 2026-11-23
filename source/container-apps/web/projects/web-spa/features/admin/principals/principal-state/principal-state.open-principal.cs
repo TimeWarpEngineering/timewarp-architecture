@@ -7,9 +7,8 @@
 // principal's profile and role editor never show under the new id while it loads or after it
 // fails. A 404 clears Current and sets a non-revealing LoadError; any other failure with no
 // principal loaded sets a generic LoadError, so the page never renders an empty Status section.
-// Both still publish the problem. On success the role draft for that principal is seeded from the detail's effective
-// RoleIds (replacing any unsaved edits, which is the intent after a save or a reload).
-// The agent-scope draft is seeded from the principal's own grants, not the effective set.
+// Both still publish the problem. Success stores the detail and does not keep role or
+// agent-scope drafts. PrincipalDetailPage copies those sets from the detail.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -54,9 +53,6 @@ partial class PrincipalState
       {
         PrincipalState.Current = response.Principal;
         PrincipalState.LoadError = null;
-        PrincipalState.DraftRoleIds[response.Principal.PrincipalId.Value] = [.. response.Principal.RoleIds];
-        PrincipalState.DraftAgentScopes[response.Principal.PrincipalId.Value] =
-          new HashSet<string>(response.Principal.AgentScopeGrants, StringComparer.Ordinal);
         return Task.CompletedTask;
       }
 

@@ -9,11 +9,17 @@
 // spike). Duplicates the round-trip coverage of tests/container-apps/web/web-contracts-tests
 // (role-contracts-serialization-tests.cs) for CreateRole, plus a Validator Name-rejection
 // exercise, using ContractSerializationDefaults (the same seam options the SPA/server use).
+// Also checks GetRole.Response.Clone: RoleId stays, and Permissions and AgentScopes are copied.
 // Run standalone:  dotnet run source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs
 
 #region Purpose
-// Jaribu runfile proving a co-located, standalone-runnable contract round-trip test for
-// CreateRole (task 135; task 134 spike requirement 1).
+// Jaribu runfile: CreateRole contract round-trip and validator, plus GetRole.Response.Clone
+// (task 135; task 134 spike requirement 1; task 489-001).
+#endregion
+
+#region Design
+// GetRole.Response.Clone sits in this runfile. A new get-role-tests.cs would add a CA1707
+// NoWarn above the per-file .timewarp/suppression-baseline.json. This file already carries it.
 #endregion
 
 //-:cnd:noEmit
@@ -129,6 +135,34 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       ValidationResult result = new CreateRole.Validator().Validate(command);
 
       result.IsValid.ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+  }
+
+  [TestTag("Contracts")]
+  public class GetRoleResponse_Given_
+  {
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<GetRoleResponse_Given_>();
+
+    public static Task Clone_Should_KeepRoleId_And_CopyLists()
+    {
+      // Declared apart from the initializer so the type is not apparent (IDE0007).
+      System.Guid roleId;
+      roleId = System.Guid.Parse("11111111-1111-1111-1111-111111111111");
+      List<string> permissions = ["read"];
+      List<string> scopes = ["scope"];
+      GetRole.Response response = new(roleId, "Admin", "desc", permissions, scopes);
+
+      GetRole.Response clone;
+      clone = (GetRole.Response)((System.ICloneable)response).Clone();
+      clone.RoleId.ShouldBe(roleId);
+      clone.Name.ShouldBe("Admin");
+      clone.Permissions.ShouldNotBeSameAs(permissions);
+      clone.AgentScopes.ShouldNotBeSameAs(scopes);
+      clone.Permissions.ShouldBe(["read"]);
+      permissions.Add("write");
+      clone.Permissions.Count.ShouldBe(1);
       return Task.CompletedTask;
     }
   }

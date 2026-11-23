@@ -11,6 +11,10 @@
 // and Admin/Authentication (policy editor + app-registration tenant line) both call this
 // contract (other assembly, free). Configuration* fields are the bound Entra section, not
 // persisted policy — they are not on ISiteSettingsDetails and are not sent on Update.
+// Response also implements IAssistantNameDetails and IXaiByokModeDetails. Those commands'
+// generated From copies the one field from this whole response, and CopyBeyondDetails copies
+// Version. The name and the mode stay off ISiteSettingsDetails so an authentication save
+// cannot round-trip them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -30,7 +34,7 @@ public static partial class GetSiteSettings
 
   public sealed class Validator : AbstractValidator<Query>;
 
-  public sealed class Response : ISiteSettingsDetails
+  public sealed partial class Response : ISiteSettingsDetails, IAssistantNameDetails, IXaiByokModeDetails
   {
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }

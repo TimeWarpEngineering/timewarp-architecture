@@ -1,12 +1,12 @@
 #region Purpose
-// SetPrincipalAgentScopes action: persists the principal's own agent-scope grants.
+// SetPrincipalAgentScopes action: persists the agent-scope list the page built.
 #endregion
 
 #region Design
-// Task 466: draft toggles stay in state; Save posts SetPrincipalAgentScopes. Success does
+// The page owns the checkbox working copy and passes Scopes on the command. Success does
 // not notify the session — agent scopes are not human permission claims. The page reopens
 // the principal only after LastSetPrincipalAgentScopesSucceeded so a failed write keeps
-// the draft.
+// the page's set.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -15,57 +15,16 @@ using static SetPrincipalAgentScopes;
 
 partial class PrincipalState
 {
-  public static class SetAgentScopeSelectedActionSet
-  {
-    [TrackAction]
-    public sealed class Action : IBaseAction
-    {
-      public Guid PrincipalId { get; }
-      public string Scope { get; }
-      public bool Selected { get; }
-
-      public Action(Guid principalId, string scope, bool selected)
-      {
-        PrincipalId = principalId;
-        Scope = scope;
-        Selected = selected;
-      }
-    }
-
-    internal class Handler(IStore store) : BaseHandler<Action>(store)
-    {
-      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
-      {
-        if (!PrincipalState.DraftAgentScopes.TryGetValue(action.PrincipalId, out HashSet<string>? set))
-        {
-          set = [with(StringComparer.Ordinal)];
-          PrincipalState.DraftAgentScopes[action.PrincipalId] = set;
-        }
-
-        if (action.Selected)
-        {
-          set.Add(action.Scope);
-        }
-        else
-        {
-          set.Remove(action.Scope);
-        }
-
-        return default;
-      }
-    }
-  }
-
   public static class SetPrincipalAgentScopesActionSet
   {
     [TrackAction]
     public sealed class Action : IBaseAction
     {
-      public Guid PrincipalId { get; }
+      public Command Command { get; }
 
-      public Action(Guid principalId)
+      public Action(Command command)
       {
-        PrincipalId = principalId;
+        Command = command;
       }
     }
 
@@ -83,12 +42,11 @@ partial class PrincipalState
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
       {
         PrincipalState.LastSetPrincipalAgentScopesSucceeded = false;
-        IReadOnlyCollection<string> draft = PrincipalState.GetDraftAgentScopes(action.PrincipalId);
         return Task.FromResult<Command?>(new Command
         {
           UserId = Guid.NewGuid(),
-          PrincipalId = action.PrincipalId,
-          Scopes = [.. draft]
+          PrincipalId = action.Command.PrincipalId,
+          Scopes = [.. action.Command.Scopes]
         });
       }
 

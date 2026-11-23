@@ -6,10 +6,11 @@
 // The name is a SiteSettings column, but it is an AI concern. A dedicated command keeps the AI
 // page from round-tripping Entra policy, the passkey prompt, and the accepted-tenant list.
 // SettingsWrite, the same policy as UpdateSiteSettings. Version is the concurrency token from
-// GetSiteSettings; mismatch is 409. The validator calls AssistantNameRules, the same check
-// SiteSettings.RenameAssistant runs. PUT api/settings/assistant sits beside the anonymous GET
-// of the name and avatar. ICommand, not IIdempotentCommand: a successful write advances Version,
-// so a retry of the same body conflicts. [Operation] publishes the name to CLI and MCP.
+// GetSiteSettings; mismatch is 409. Command implements IAssistantNameDetails. CopyBeyondDetails
+// copies Version from GetSiteSettings.Response. The validator composes AssistantNameDetailsValidator.
+// PUT api/settings/assistant sits beside the anonymous GET of the name and avatar. ICommand, not
+// IIdempotentCommand: a successful write advances Version, so a retry of the same body conflicts.
+// [Operation] publishes the name to CLI and MCP.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -32,27 +33,25 @@ public static partial class UpdateAssistantName
     Group = "admin.ai",
     Title = "Update assistant name"
   )]
-  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, IAssistantNameDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string AssistantName { get; set; } = null!;
     public long Version { get; set; }
+
+    static partial void CopyBeyondDetails(Command command, IAssistantNameDetails source)
+    {
+      if (source is GetSiteSettings.Response loaded)
+      {
+        command.Version = loaded.Version;
+      }
+    }
   }
 
   public sealed class Validator : AbstractValidator<Command>
   {
     public Validator()
     {
-      RuleFor(command => command.AssistantName)
-        .NotEmpty()
-        .WithMessage("Assistant name is required.");
-      RuleFor(command => command.AssistantName)
-        .Must(AssistantNameRules.IsValid)
-        .When(static command => !string.IsNullOrWhiteSpace(command.AssistantName))
-        .WithMessage
-        (
-          $"Assistant name must be 1-{AssistantNameRules.MaxLength} characters of plain text, "
-          + "without markup, control, format or line-separator characters."
-        );
+      RuleFor(command => command).SetValidator(new AssistantNameDetailsValidator());
       RuleFor(command => command.Version).GreaterThanOrEqualTo(0);
     }
   }

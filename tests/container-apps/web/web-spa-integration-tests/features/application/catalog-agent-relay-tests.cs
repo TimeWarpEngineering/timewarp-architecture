@@ -46,24 +46,34 @@ public partial class CatalogAgent_Should
       profileRecord.TryGetProperty(field, out _).ShouldBeTrue(field);
     }
 
+    GetSiteSettings.Response? stored = scope.Store.GetState<SiteSettingsState>().SiteSettings;
     using JsonDocument settings = JsonDocument.Parse(PageAgentContext.Describe(scope.Store, "/Admin/Authentication"));
-    JsonElement settingsRecord = settings.RootElement.GetProperty("siteSettings");
-    settingsRecord.GetProperty("version").GetInt64().ShouldBe(scope.Store.GetState<SiteSettingsState>().Version);
-    settingsRecord.GetProperty("passkeyPromptMode").GetString()
-      .ShouldBe(scope.Store.GetState<SiteSettingsState>().PasskeyPromptMode.ToString());
-    settingsRecord.TryGetProperty("entraSignInEnabled", out _).ShouldBeTrue();
-    settingsRecord.GetProperty("entraTenantAcceptanceMode").GetString()
-      .ShouldBe(scope.Store.GetState<SiteSettingsState>().EntraTenantAcceptanceMode.ToString());
-    settingsRecord.TryGetProperty("entraAcceptedTenants", out _).ShouldBeTrue();
+    AssertSiteSettingsFacts(settings.RootElement.GetProperty("siteSettings"), stored);
 
     using JsonDocument ai = JsonDocument.Parse(PageAgentContext.Describe(scope.Store, "/Admin/AI"));
-    JsonElement aiRecord = ai.RootElement.GetProperty("siteSettings");
-    aiRecord.GetProperty("assistantName").GetString()
-      .ShouldBe(scope.Store.GetState<SiteSettingsState>().AssistantName);
-    aiRecord.GetProperty("xaiByokMode").GetString()
-      .ShouldBe(scope.Store.GetState<SiteSettingsState>().XaiByokMode.ToString());
-    aiRecord.GetProperty("version").GetInt64().ShouldBe(scope.Store.GetState<SiteSettingsState>().Version);
+    AssertSiteSettingsFacts(ai.RootElement.GetProperty("siteSettings"), stored);
     return Task.CompletedTask;
+  }
+
+  private static void AssertSiteSettingsFacts(JsonElement record, GetSiteSettings.Response? stored)
+  {
+    record.TryGetProperty("entraSignInEnabled", out _).ShouldBeTrue();
+    record.TryGetProperty("entraAcceptedTenants", out _).ShouldBeTrue();
+    if (stored is null)
+    {
+      record.GetProperty("version").ValueKind.ShouldBe(JsonValueKind.Null);
+      record.GetProperty("passkeyPromptMode").ValueKind.ShouldBe(JsonValueKind.Null);
+      record.GetProperty("entraTenantAcceptanceMode").ValueKind.ShouldBe(JsonValueKind.Null);
+      record.GetProperty("assistantName").ValueKind.ShouldBe(JsonValueKind.Null);
+      record.GetProperty("xaiByokMode").ValueKind.ShouldBe(JsonValueKind.Null);
+      return;
+    }
+
+    record.GetProperty("version").GetInt64().ShouldBe(stored.Version);
+    record.GetProperty("passkeyPromptMode").GetString().ShouldBe(stored.PasskeyPromptMode.ToString());
+    record.GetProperty("entraTenantAcceptanceMode").GetString().ShouldBe(stored.EntraTenantAcceptanceMode.ToString());
+    record.GetProperty("assistantName").GetString().ShouldBe(stored.AssistantName);
+    record.GetProperty("xaiByokMode").GetString().ShouldBe(stored.XaiByokMode.ToString());
   }
 
   public static Task Arguments_Render_As_Json_And_Empty_Payloads_Are_Omitted()

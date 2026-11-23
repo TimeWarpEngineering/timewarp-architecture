@@ -1,17 +1,19 @@
 #region Purpose
-// The Authentication look-up action adds the server's tenant id and domain to the draft list.
+// ResolveEntraTenant records the server tenant. The page merges that tenant into its command.
 #endregion
 
 #region Design
 // In-proc SPA container, same mediator and state registrations as StaticRenderHost, with a
 // scripted IWebServerApiService. The action is sent as its concrete type. The scripted
 // response is the only tenant id the client stores: this test never calls Microsoft.
-// A second domain for a tenant that already has one leaves the list unchanged.
-// A row with no domain takes the looked-up domain.
+// The action does not edit a draft list. TryApplyLookedUpTenant and TryAddTenantId own the
+// merge: a second domain for a tenant that already has one leaves the list unchanged, and a
+// row with no domain takes the looked-up domain.
 #endregion
 
 namespace AuthenticationTenantLookup_;
 
+using TimeWarp.Architecture.Features.Admin.SiteSettings;
 using TimeWarp.Architecture.Features.Settings;
 using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
@@ -24,67 +26,72 @@ public class ResolveEntraTenant_Action_Should_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<ResolveEntraTenant_Action_Should_>();
 
-  public static async Task Add_The_Server_Tenant_And_Domain_To_The_Draft_List()
+  public static async Task Store_The_Server_Tenant_Without_A_Draft_List()
   {
-    var server = new ScriptedWebServer(
-      new ResolveEntraTenant.Response(TenantId, "contoso.com"));
+    ScriptedWebServer server = new(new ResolveEntraTenant.Response(TenantId, "contoso.com"));
     await using ServiceProvider provider = Host(server);
     using SpaTestScope scope = SpaTestScope.Create(new ScopeHost(provider));
 
     await scope.Send(new SiteSettingsState.ResolveEntraTenantActionSet.Action("contoso.com"));
 
     SiteSettingsState state = scope.Store.GetState<SiteSettingsState>();
-    state.DraftAcceptedTenants.ShouldBe([new EntraAcceptedTenant(TenantId, "contoso.com")]);
+    state.ResolvedTenant.ShouldBe(new EntraAcceptedTenant(TenantId, "contoso.com"));
     state.AcceptedTenantsMessage.ShouldBeNull();
+    state.TenantLookupCount.ShouldBe(1);
+    state.SiteSettings.ShouldBeNull();
     server.Calls.ShouldBe(1);
   }
 
   public static async Task Skip_The_Server_When_The_Domain_Is_Invalid()
   {
-    var server = new ScriptedWebServer(
-      new ResolveEntraTenant.Response(TenantId, "contoso.com"));
+    ScriptedWebServer server = new(new ResolveEntraTenant.Response(TenantId, "contoso.com"));
     await using ServiceProvider provider = Host(server);
     using SpaTestScope scope = SpaTestScope.Create(new ScopeHost(provider));
 
     await scope.Send(new SiteSettingsState.ResolveEntraTenantActionSet.Action("not a domain"));
 
     SiteSettingsState state = scope.Store.GetState<SiteSettingsState>();
-    state.DraftAcceptedTenants.ShouldBeEmpty();
+    state.ResolvedTenant.ShouldBeNull();
     state.AcceptedTenantsMessage.ShouldBe("'not a domain' is not a domain name.");
+    state.TenantLookupCount.ShouldBe(1);
     server.Calls.ShouldBe(0);
   }
 
-  public static async Task Leave_The_List_When_The_Tenant_Is_Already_Listed()
+  public static Task Leave_The_List_When_The_Tenant_Is_Already_Listed()
   {
-    var server = new ScriptedWebServer(
-      new ResolveEntraTenant.Response(TenantId, "contoso.com"),
-      new ResolveEntraTenant.Response(TenantId, "fabrikam.com"));
-    await using ServiceProvider provider = Host(server);
-    using SpaTestScope scope = SpaTestScope.Create(new ScopeHost(provider));
+    EntraAcceptedTenant listed = new(TenantId, "contoso.com");
+    bool applied = AuthenticationPage.TryApplyLookedUpTenant(
+      [listed],
+      new EntraAcceptedTenant(TenantId, "fabrikam.com"),
+      out List<EntraAcceptedTenant> next,
+      out string? message);
 
-    await scope.Send(new SiteSettingsState.ResolveEntraTenantActionSet.Action("contoso.com"));
-    await scope.Send(new SiteSettingsState.ResolveEntraTenantActionSet.Action("fabrikam.com"));
-
-    SiteSettingsState state = scope.Store.GetState<SiteSettingsState>();
-    state.DraftAcceptedTenants.ShouldBe([new EntraAcceptedTenant(TenantId, "contoso.com")]);
-    state.AcceptedTenantsMessage.ShouldBe($"Tenant {TenantId:D} is already listed under contoso.com.");
-    server.Calls.ShouldBe(2);
+    applied.ShouldBeFalse();
+    next.ShouldBe([listed]);
+    message.ShouldBe($"Tenant {TenantId:D} is already listed under contoso.com.");
+    return Task.CompletedTask;
   }
 
-  public static async Task Fill_The_Domain_Of_A_Guid_Only_Row()
+  public static Task Fill_The_Domain_Of_A_Guid_Only_Row()
   {
-    var server = new ScriptedWebServer(
-      new ResolveEntraTenant.Response(TenantId, "contoso.com"));
-    await using ServiceProvider provider = Host(server);
-    using SpaTestScope scope = SpaTestScope.Create(new ScopeHost(provider));
+    bool added = AuthenticationPage.TryAddTenantId(
+      [],
+      TenantId.ToString("D"),
+      out List<EntraAcceptedTenant> idOnly,
+      out string? addMessage);
+    added.ShouldBeTrue();
+    addMessage.ShouldBeNull();
 
-    await scope.Send(new SiteSettingsState.AddAcceptedTenantActionSet.Action(TenantId.ToString("D")));
-    await scope.Send(new SiteSettingsState.ResolveEntraTenantActionSet.Action("contoso.com"));
+    bool applied = AuthenticationPage.TryApplyLookedUpTenant(
+      idOnly,
+      new EntraAcceptedTenant(TenantId, "contoso.com"),
+      out List<EntraAcceptedTenant> next,
+      out string? message);
 
-    SiteSettingsState state = scope.Store.GetState<SiteSettingsState>();
-    state.DraftAcceptedTenants.ShouldBe([new EntraAcceptedTenant(TenantId, "contoso.com")]);
-    state.AcceptedTenantsMessage.ShouldBeNull();
-    server.Calls.ShouldBe(1);
+    applied.ShouldBeTrue();
+    message.ShouldBeNull();
+    next.ShouldBe([new EntraAcceptedTenant(TenantId, "contoso.com")]);
+    return Task.CompletedTask;
   }
 
   private static ServiceProvider Host(ScriptedWebServer server)

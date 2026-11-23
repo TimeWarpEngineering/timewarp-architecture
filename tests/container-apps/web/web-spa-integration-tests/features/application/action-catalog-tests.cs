@@ -40,6 +40,7 @@ public class ActionCatalog_Should
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",
+    "Role.UpdateRole",
     "Screenshot.CaptureScreenshot",
     "SiteSettings.ResolveEntraTenant",
     "SiteSettings.UpdateAssistantName",

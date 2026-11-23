@@ -4,7 +4,7 @@
 
 #region Design
 // UpdateProfile replaces the whole record, so the agent must echo the current values of every
-// field it does not change. hasSnapshot is false until the profile has loaded (DisplayName is null).
+// field it does not change. hasSnapshot is false until fetch has stored a GetProfile.Response.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
@@ -18,15 +18,16 @@ partial class ProfileState : IAgentPageFacts
   public void AddAgentPageFacts(JsonObject document, string path)
   {
     ArgumentNullException.ThrowIfNull(document);
-    document["hasSnapshot"] = DisplayName is not null;
+    GetProfile.Response? profile = Profile;
+    document["hasSnapshot"] = profile is not null;
     document["profile"] = new JsonObject
     {
-      ["displayName"] = DisplayName,
-      ["email"] = Email,
-      ["language"] = Language,
-      ["region"] = Region,
-      ["theme"] = Theme,
-      ["notifications"] = Notifications,
+      ["displayName"] = profile?.DisplayName,
+      ["email"] = profile?.Email,
+      ["language"] = profile?.Language,
+      ["region"] = profile?.Region,
+      ["theme"] = profile?.Theme,
+      ["notifications"] = profile?.Notifications,
     };
   }
 }

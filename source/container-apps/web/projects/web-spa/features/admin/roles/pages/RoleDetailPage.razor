@@ -4,21 +4,22 @@
 @inherits BaseComponent
 
 @*
-  Purpose: Role detail/edit — grouped permission membership editor for one role.
+  Purpose: Role detail/edit — name, description, and grouped permission membership for one role.
 
   Design: Task 206. Route /Admin/Roles/{RoleId} (read policy so viewers can see the bundle).
-  Checkboxes and Save require admin.roles.manage (CheckAuthorization). Membership edits stay
-  RoleState.SetPermissionSelected / SetRolePermissions (generated from [ContractState]) — no new store. Protected-core
-  Administrator admin.* grants are disabled when selected; last-admin lockout is
-  SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.
-  Agent scopes on Member reach roleless human principals, including a human who holds an
-  agent key. A self-registered agent has no effective role, so those scopes do not apply
-  to it. That sentence is shown only on the Member role.
+  GetRole stores the response. RoleEditForm copies UpdateRole.Command from it. Permission
+  and agent-scope sets live on this page. Checkboxes mutate those sets. Save dispatches
+  the command built from the set that was saved and recopies only that set. The load
+  copies both. Checkboxes and Save require admin.roles.manage
+  (CheckAuthorization). Protected-core Administrator admin.* grants are disabled when
+  selected; last-admin lockout is SetPrincipalRoles (server), not this editor. Groups come
+  from PermissionIds.GroupsByPrefix. Agent scopes on Member reach roleless human principals,
+  including a human who holds an agent key. A self-registered agent has no effective role,
+  so those scopes do not apply to it. That sentence is shown only on the Member role.
   The shell location breadcrumb is Home / Roles / this role's name (Title, once loaded).
   No per-page Back button. Document title comes from TimeWarpPage Title via TwPageTitle.
-  The description is a DefinitionList item when it is not blank. A blank description
-  is omitted. The list and the permission editor sit in twe-stack, whose 16px gap
-  is the space under the description. The page does not own a fact-grid stylesheet.
+  A read-only description is a DefinitionList item when it is not blank. A blank description
+  is omitted. The list and the permission editor sit in twe-stack.
 *@
 
 @code {
@@ -26,6 +27,10 @@
   public static string Title => "Role";
 
   private bool CanManage { get; set; }
+  private bool ManageChecked { get; set; }
+  private Guid RequestedId { get; set; }
+  private HashSet<string> PermissionDraft { get; set; } = new(StringComparer.Ordinal);
+  private HashSet<string> ScopeDraft { get; set; } = new(StringComparer.Ordinal);
 
   private bool IsSaving =>
     IsAnyActive(typeof(RoleState.SetRolePermissionsActionSet.Action));
@@ -33,35 +38,105 @@
   private bool IsSavingAgentScopes =>
     IsAnyActive(typeof(RoleState.SetRoleAgentScopesActionSet.Action));
 
-  private GetRoles.RoleDto? Role =>
-    RoleState.RoleList?.FirstOrDefault(role => role.RoleId == RoleId);
+  private GetRole.Response? Role =>
+    RoleState.RoleSnapshot is { } snapshot && snapshot.RoleId == RoleId
+      ? snapshot
+      : null;
 
-  protected override async Task OnInitializedAsync()
+  protected override async Task OnParametersSetAsync()
   {
-    CanManage = await CheckAuthorization(PermissionIds.AdminRolesManage);
-    await RoleState.GetRoles();
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    if (RoleId == Guid.Empty)
+    {
+      return;
+    }
+
+    if (!ManageChecked)
+    {
+      CanManage = await CheckAuthorization(PermissionIds.AdminRolesManage);
+      ManageChecked = true;
+    }
+
+    if (RoleId == RequestedId && Role is not null)
+    {
+      return;
+    }
+
+    RequestedId = RoleId;
+    await RoleState.GetRole(new GetRole.Query { RoleId = RoleId });
+    CopyMembershipFromSnapshot();
+  }
+
+  private void CopyMembershipFromSnapshot()
+  {
+    CopyPermissionsFromSnapshot();
+    CopyScopesFromSnapshot();
+  }
+
+  private void CopyPermissionsFromSnapshot()
+  {
+    if (Role is not GetRole.Response role)
+    {
+      return;
+    }
+
+    PermissionDraft = new HashSet<string>(role.Permissions, StringComparer.Ordinal);
+  }
+
+  private void CopyScopesFromSnapshot()
+  {
+    if (Role is not GetRole.Response role)
+    {
+      return;
+    }
+
+    ScopeDraft = new HashSet<string>(role.AgentScopes, StringComparer.Ordinal);
   }
 
   private async Task OnSave()
   {
-    await RoleState.SetRolePermissions(new SetRolePermissions.Command { RoleId = RoleId });
+    await RoleState.SetRolePermissions(new SetRolePermissions.Command
+    {
+      RoleId = RoleId,
+      PermissionIds = [.. PermissionDraft]
+    });
     if (!RoleState.LastSetRolePermissionsSucceeded)
     {
       return;
     }
 
-    await RoleState.GetRoles();
+    CopyPermissionsFromSnapshot();
+  }
+
+  private void OnScopeSelected(string scope, bool selected)
+  {
+    if (selected)
+    {
+      ScopeDraft.Add(scope);
+    }
+    else
+    {
+      ScopeDraft.Remove(scope);
+    }
   }
 
   private async Task OnSaveAgentScopes()
   {
-    await RoleState.SetRoleAgentScopes(new SetRoleAgentScopes.Command { RoleId = RoleId });
+    await RoleState.SetRoleAgentScopes(new SetRoleAgentScopes.Command
+    {
+      RoleId = RoleId,
+      Scopes = [.. ScopeDraft]
+    });
     if (!RoleState.LastSetRoleAgentScopesSucceeded)
     {
       return;
     }
 
-    await RoleState.GetRoles();
+    CopyScopesFromSnapshot();
   }
 }
 
@@ -72,7 +147,7 @@
       (<code>admin.*</code>, <code>developer.*</code>, …). Administrator core admin
       permissions cannot be stripped (protected-core); the server also rejects that write (409).
     </p>
-    <Section Title="@(Role?.Name ?? "Role")" LoadingActionType="typeof(RoleState.GetRolesActionSet.Action)">
+    <Section Title="@(Role?.Name ?? "Role")" LoadingActionType="typeof(RoleState.GetRoleActionSet.Action)">
       @if (Role is null)
       {
         <p data-qa="RoleNotFound">Role not found.</p>
@@ -80,13 +155,17 @@
       else
       {
         <div class="twe-stack">
-          @if (!string.IsNullOrWhiteSpace(Role.Description))
+          @if (CanManage)
+          {
+            <RoleEditForm Role="Role" />
+          }
+          else if (!string.IsNullOrWhiteSpace(Role.Description))
           {
             <DefinitionList data-qa="RoleFacts">
               <DefinitionItem Term="Description">@Role.Description</DefinitionItem>
             </DefinitionList>
           }
-          <RolePermissionEditor RoleId="RoleId" CanManage="CanManage" />
+          <RolePermissionEditor RoleId="RoleId" CanManage="CanManage" SelectedIds="PermissionDraft" />
         </div>
         @if (CanManage)
         {
@@ -100,7 +179,7 @@
         }
       }
     </Section>
-    <Section Title="Agent scopes" LoadingActionType="typeof(RoleState.GetRolesActionSet.Action)">
+    <Section Title="Agent scopes" LoadingActionType="typeof(RoleState.GetRoleActionSet.Action)">
       @if (Role is not null)
       {
         <div class="twe-stack">
@@ -123,8 +202,8 @@
                 <FluentCheckbox
                   Label="@scope"
                   Disabled="@(!CanManage)"
-                  Value="@RoleState.IsAgentScopeSelected(RoleId, scope)"
-                  ValueChanged="@(async (bool value) => await RoleState.SetAgentScopeSelected(RoleId, scope, value))" />
+                  Value="@ScopeDraft.Contains(scope)"
+                  ValueChanged="@(value => OnScopeSelected(scope, value))" />
               </div>
             }
           </FluentStack>

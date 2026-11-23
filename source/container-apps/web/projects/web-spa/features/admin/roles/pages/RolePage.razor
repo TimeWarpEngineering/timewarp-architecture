@@ -2,20 +2,52 @@
 @using TimeWarp.Architecture.Features.Admin.Roles
 @inherits BaseComponent
 
+@*
+  Purpose: New Role page — create form and edit form side by side.
+
+  Design: Both forms bind IRoleDetails and validate with RoleDetailsValidator.
+  Create is RoleForm. Edit is RoleEditForm over GetRole of the Administrator role,
+  copied with UpdateRole.Command.From. The two columns are PageSplit.
+*@
+
 @code {
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonAdd();
   public static string Title => "New Role";
+
+  private GetRole.Response? EditRole =>
+    RoleState.RoleSnapshot is { } snapshot && snapshot.RoleId == RoleIds.Administrator
+      ? snapshot
+      : null;
+
+  protected override async Task OnInitializedAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    await RoleState.GetRole(new GetRole.Query { RoleId = RoleIds.Administrator });
+  }
 }
 
 <TimeWarpPage Title="New Role">
   <div class="twe-stack">
     <p class="ds-subtitle">
-      Create a custom role. The form binds to <code>IRoleDetails</code> and validates with the
-      shared <code>RoleDetailsValidator</code>. On save you open the role page to assign
-      permissions (empty until you grant some).
+      Create a custom role, or edit the Administrator role. Both forms bind
+      <code>IRoleDetails</code> and validate with the shared <code>RoleDetailsValidator</code>.
+      On create you open the role page to assign permissions (empty until you grant some).
     </p>
-    <Card>
-      <RoleForm />
-    </Card>
+    <PageSplit>
+      <Primary>
+        <Card Title="Create">
+          <RoleForm />
+        </Card>
+      </Primary>
+      <Secondary>
+        <Section Title="Edit" LoadingActionType="typeof(RoleState.GetRoleActionSet.Action)">
+          <RoleEditForm Role="EditRole" />
+        </Section>
+      </Secondary>
+    </PageSplit>
   </div>
 </TimeWarpPage>

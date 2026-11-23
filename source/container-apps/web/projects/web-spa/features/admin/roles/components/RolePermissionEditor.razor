@@ -6,13 +6,13 @@
   Purpose: Grouped permission membership editor — prefix parent (tri-state) + atom checkboxes.
 
   Design: Task 206. Catalog is PermissionIds.GroupsByPrefix (derived from All, not a second
-  SSOT). Toggles dispatch RoleState.SetPermissionSelected; parent click selects/clears every
-  unlocked child. Parent FluentCheckbox is ThreeState for mixed display (CheckStateFor) with
-  ShowIndeterminate=false and ThreeStateOrderUncheckToIntermediate=true so clicks are
-  mixed→checked, checked→unchecked, unchecked→checked (FluentUI v5). Protected-core
-  (Administrator + selected admin.*) is disabled so the SPA cannot uncheck a grant the
-  server would 409. Missing cores stay enabled so a damaged bundle can be repaired.
-  CanManage=false disables the whole tree (read policy viewers).
+  SSOT). SelectedIds is the page's working copy, not a store field. Toggles add or remove
+  ids in that set. Parent click selects or clears every unlocked child. Parent FluentCheckbox
+  is ThreeState for mixed display (CheckStateFor) with ShowIndeterminate=false and
+  ThreeStateOrderUncheckToIntermediate=true so clicks are mixed→checked, checked→unchecked,
+  unchecked→checked (FluentUI v5). Protected-core (Administrator + selected admin.*) is
+  disabled so the SPA cannot uncheck a grant the server would 409. Missing cores stay
+  enabled so a damaged bundle can be repaired. CanManage=false disables the whole tree.
 *@
 
 @code {
@@ -22,14 +22,15 @@
   [Parameter]
   public bool CanManage { get; set; }
 
-  private IReadOnlyCollection<string> Selected => RoleState.GetDraftPermissionIds(RoleId);
+  [Parameter, EditorRequired]
+  public HashSet<string> SelectedIds { get; set; } = new(StringComparer.Ordinal);
 
   private bool IsPermissionDisabled(string permissionId) =>
     !CanManage
     || PermissionIds.IsProtectedCoreLocked(
       RoleId,
       permissionId,
-      RoleState.IsPermissionSelected(RoleId, permissionId));
+      SelectedIds.Contains(permissionId));
 
   private bool IsGroupDisabled(PermissionIds.PermissionGroup group)
   {
@@ -49,18 +50,25 @@
     return true;
   }
 
-  private async Task OnPermissionSelected(string permissionId, bool selected)
+  private void OnPermissionSelected(string permissionId, bool selected)
   {
-    if (PermissionIds.IsProtectedCoreLocked(RoleId, permissionId, RoleState.IsPermissionSelected(RoleId, permissionId))
+    if (PermissionIds.IsProtectedCoreLocked(RoleId, permissionId, SelectedIds.Contains(permissionId))
       && !selected)
     {
       return;
     }
 
-    await RoleState.SetPermissionSelected(RoleId, permissionId, selected);
+    if (selected)
+    {
+      SelectedIds.Add(permissionId);
+    }
+    else
+    {
+      SelectedIds.Remove(permissionId);
+    }
   }
 
-  private async Task OnGroupCheckStateChanged(PermissionIds.PermissionGroup group, bool? checkState)
+  private void OnGroupCheckStateChanged(PermissionIds.PermissionGroup group, bool? checkState)
   {
     bool selected = checkState == true;
     foreach (string permissionId in group.PermissionIds)
@@ -70,7 +78,7 @@
         continue;
       }
 
-      await RoleState.SetPermissionSelected(RoleId, permissionId, selected);
+      OnPermissionSelected(permissionId, selected);
     }
   }
 }
@@ -84,16 +92,16 @@
         ShowIndeterminate="false"
         ThreeStateOrderUncheckToIntermediate="true"
         Label="@($"{group.Prefix}.*")"
-        CheckState="@group.CheckStateFor(Selected)"
-        CheckStateChanged="@(async (bool? value) => await OnGroupCheckStateChanged(group, value))"
+        CheckState="@group.CheckStateFor(SelectedIds)"
+        CheckStateChanged="@(value => OnGroupCheckStateChanged(group, value))"
         Disabled="@IsGroupDisabled(group)" />
       <div class="twe-permission-group__children">
         @foreach (string permissionId in group.PermissionIds)
         {
           <FluentCheckbox
             Label="@permissionId"
-            Value="@RoleState.IsPermissionSelected(RoleId, permissionId)"
-            ValueChanged="@(async (bool value) => await OnPermissionSelected(permissionId, value))"
+            Value="@SelectedIds.Contains(permissionId)"
+            ValueChanged="@(value => OnPermissionSelected(permissionId, value))"
             Disabled="@IsPermissionDisabled(permissionId)"
             data-qa="@($"Permission-{permissionId}")" />
         }

@@ -1,5 +1,5 @@
 #region Purpose
-// UpdateAssistantName: persists the assistant name and refreshes the cached name and version.
+// UpdateAssistantName: persists the assistant name and replaces it on the stored response.
 #endregion
 
 #region Design
@@ -55,9 +55,8 @@ partial class SiteSettingsState
 
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        SiteSettingsState.AssistantName = response.AssistantName;
-        SiteSettingsState.Version = response.Version;
         SiteSettingsState.AssistantNameSaveFailed = false;
+        SiteSettingsState.ReviseSiteSettings(assistantName: response.AssistantName, version: response.Version);
         await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "Assistant name saved."),

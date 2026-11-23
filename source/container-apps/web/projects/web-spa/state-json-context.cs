@@ -73,8 +73,11 @@ using TimeWarp.Architecture.Features.WeatherForecasts;
 [JsonSerializable(typeof(WeatherForecastsState))]
 #endif
 [JsonSerializable(typeof(XaiApiKeyState))]
-// Feedback contracts nest same-named types (Response, Item) that the states expose. Each one gets its
+// Contracts nest same-named types (Response, Item) that the states expose. Each one gets its
 // own TypeInfoPropertyName, or source generation keeps only the first (SYSLIB1031).
+[JsonSerializable(typeof(GetProfile.Response), TypeInfoPropertyName = "GetProfileResponse")]
+[JsonSerializable(typeof(GetRole.Response), TypeInfoPropertyName = "GetRoleResponse")]
+[JsonSerializable(typeof(GetSiteSettings.Response), TypeInfoPropertyName = "GetSiteSettingsResponse")]
 [JsonSerializable(typeof(GetFeedback.Response), TypeInfoPropertyName = "GetFeedbackResponse")]
 [JsonSerializable(typeof(SubmitFeedback.Response), TypeInfoPropertyName = "SubmitFeedbackResponse")]
 [JsonSerializable(typeof(ListFeedback.Item), TypeInfoPropertyName = "ListFeedbackItem")]
