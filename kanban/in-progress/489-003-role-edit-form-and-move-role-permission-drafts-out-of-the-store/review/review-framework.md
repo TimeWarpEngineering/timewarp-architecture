@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1164
-- Effort: 3
+- Lines changed: 482
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Round 1 scope
 
@@ -17,6 +17,13 @@ commit `efb40c8e1` against the merge of `origin/feature/edit-forms-whole-object`
 24 files under `source/` and `tests/`.
 **Plan / brief:** task.md `## Goal (implementer restatement)` and `## Description`.
 **Effort:** 3 (by-diff budget). Roster axis: general only.
+**Reviewer roster:** general (Claude Opus 5.5, review oracle session)
+
+## Round 2 scope
+
+**Date:** 2026-11-23
+**Diff scope:** fix commit `3df4d6fab` against `efb40c8e1`, 7 files under `source/` and `tests/`.
+**Effort:** 2 (by-diff budget, 482 lines). Roster axis: general only.
 **Reviewer roster:** general (Claude Opus 5.5, review oracle session)
 
 ## Ground rules

@@ -65,8 +65,11 @@ Gates (fix pass):
 
 ### Review
 
-- Round 1 (effort 3, general reviewer). Findings: 0 bugs, 4 suggestions (M1 to M4) implemented in this fix pass, 1 nit wontfix (M5). Round 2 has not run.
-- Review files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 1 (effort 3, general reviewer). Findings: 0 bugs, 4 suggestions (M1 to M4) implemented in this fix pass, 1 nit wontfix (M5).
+- Round 2 (effort 2, general reviewer) re-verified the fix commit `3df4d6fab`. M1 to M4 are fixed. No new findings.
+- Final counts: bug 0; suggestion 4 fixed; nit 1 wontfix; 0 open.
+- Disposition: accepted-exceptions. M5 (nit) is wontfix: a failed UpdateRole resets the form, the same as the 489-002 `ProfilePage` form. A change belongs to parent 489 for both forms.
+- Review files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Session
 
@@ -77,6 +80,9 @@ Gates (fix pass):
   The restatement matches the task, so there is no misread.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 58166031-ebf7-4142-9083-ff9357a85ea1, max-turns 200, artifacts general.md, merged.md — 2026-11-23T13:57:26Z
 - Fix pass: Grok 4.7, 2026-11-23. A successful save recopies only the list that was saved. `UpdateRole` stores the command that was sent. The edit form rebinds when the snapshot name or description changes. Failed membership saves and `SetPrincipalAgentScopes` are covered by the state tests. M5 stays wontfix.
+- Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, turn cap 120, 2026-11-23.
+  M1 to M4 fixed, no new findings, disposition accepted-exceptions (M5 wontfix).
+  The restatement now includes the fix-pass behavior. That refines the task and is not a misread.
 
 ## Parent
 
@@ -84,4 +90,5 @@ Gates (fix pass):
 
 ## Review
 
-- Round 1: M1, M2, M3, and M4 implemented in the fix pass. M5 stays wontfix. Round 2 has not run.
+- Round 1: M1, M2, M3, and M4 implemented in the fix pass. M5 stays wontfix.
+- Round 2: Done
