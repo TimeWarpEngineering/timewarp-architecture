@@ -65,6 +65,7 @@ Acceptance for this pass:
 - Review oracle round 1: claude (claude-opus-5-5), effort 3, roster general, 2026-11-24. 5 open (1 bug, 3 suggestion, 1 nit). Fix pass requested.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b7af8303-96a8-46f0-bf64-9707456fb5ae, max-turns 200, artifacts general.md, merged.md — 2026-11-23T22:39:31Z
 - Fix pass for review round 1 (2026-11-24): a clip the server refuses for the audio itself is dropped, the browser stops at `TranscribeAgentAudio.MaxDataLength`, the elapsed span is `role="timer"`, stop stays usable while an answer streams, and New conversation during transcribing drops the late transcript. An insert failure keeps the transcript. `vscode-window-icon` stays the same pre-existing advisory.
+- Review oracle round 2: claude (claude-opus-5-5), effort 2, roster general, turn cap 120, 2026-11-24. Reviewed fix delta 9249b9240. M1–M5 fixed; one new pre-existing nit M6 accepted as wontfix. Disposition accepted-exceptions, 0 open.
 
 ## Results
 
@@ -96,13 +97,16 @@ Fix pass for review round 1:
 
 ### Review
 
-- Round 1 (2026-11-24): effort 3, reviewer roster general. M1–M5 are implemented on this branch. Ledger dispositions stay in `review/round-1/merged.md` for round 2.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger).
+- Round 1 (2026-11-24): effort 3, reviewer roster general. M1–M5 raised (1 bug, 3 suggestion, 1 nit).
+- Round 2 (2026-11-24): effort 2, reviewer roster general, scope fix delta 9249b9240. M1–M5 verified fixed. M6 (nit, new, pre-existing): `VoiceBusy` outlives Close / New conversation during transcribing, so one press during the stale request is ignored; wontfix, decided by the review oracle.
+- Final counts: bug 1 fixed; suggestion 3 fixed; nit 1 fixed, 1 wontfix; 0 open.
+- Disposition: **accepted-exceptions** (M6 wontfix, rationale in `review/disposition.md`).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md` (final ledger), `review/disposition.md`.
 
 ## Review
 
-- Round 1 findings M1–M5 are implemented on this branch. Round 2 has not run.
-
+- Two rounds. Disposition accepted-exceptions, 0 open. See `### Review` under Results.
+- Round 2: Done
 ## Notes
 
 - Ask panel: `source/container-apps/web/projects/web-spa/features/application/modals/agent-ask/AgentAsk.razor` (composer `MessageInput` with lead `Tag` / `Camera` / `AskEditModePill`, trail `AskSettingsMenu`, `AskSendButton`).

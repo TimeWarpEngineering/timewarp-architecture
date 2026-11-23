@@ -2,21 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2174
-- Effort: 3
+- Lines changed: 773
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
-
-# Review framework — task 453
-
-**Date:** 2026-11-24
-**Host task:** kanban/in-progress/453-add-voice-input-to-ask-ai-section/
-**Diff scope:** branch `task/453-add-voice-input-to-ask-ai-section` vs `master` (merge base), commits de962ada7, 157d6b379, 653a1e1c9
-**Plan / brief:** task.md Requirements and `## Goal (implementer restatement)`: Ask composer microphone, browser capture in `ask-ai.ts` / `AskAiJsModule`, server forwards the clip to xAI `POST /v1/stt`, transcript inserted at the caret without sending, idle / recording / transcribing / error-with-retry states, Playwright coverage.
-**Effort:** 3 (by-diff budget); roster axes: general
-**Reviewer roster:** general
-**Session IDs:** review oracle (claude, model claude-opus-5-5), ganda task work review node, round 1
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
