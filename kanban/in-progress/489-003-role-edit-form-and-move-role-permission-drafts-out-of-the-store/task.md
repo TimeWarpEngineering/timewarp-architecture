@@ -63,13 +63,19 @@ Gates (fix pass):
 - `tests/container-apps/web/web-spa-integration-tests/features/admin/principal-state-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`). CI runs the project. `dotnet run --project tests/container-apps/web/web-spa-integration-tests -c Release --no-build -- --filter-class PrincipalActions_Should_` — passed, 9 tests.
 - `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing). `analyzer-suppressions` passed: 843 suppressions, none above the baseline.
 
+CI fix after round 2:
+
+- `1807d3a06` merges `origin/feature/edit-forms-whole-object` (489-004 and 489-005). No conflicts, and no 489-003 file changed.
+- `0fde1227a` adds `Role.UpdateRole` to `ActionCatalog_Should.ExpectedNames`. This task tagged `UpdateRoleActionSet.Action` with `[CatalogAction]`, and `ci (integration)` on PR #659 failed without the name. Gate: CI `ci (integration)` on PR #659 head `0fde1227a` (pending when round 3 ran). No local run is recorded for `ActionCatalog_Should`.
+
 ### Review
 
 - Round 1 (effort 3, general reviewer). Findings: 0 bugs, 4 suggestions (M1 to M4) implemented in this fix pass, 1 nit wontfix (M5).
 - Round 2 (effort 2, general reviewer) re-verified the fix commit `3df4d6fab`. M1 to M4 are fixed. No new findings.
-- Final counts: bug 0; suggestion 4 fixed; nit 1 wontfix; 0 open.
+- Round 3 (effort 3, general reviewer) reviewed the merge `1807d3a06` and the catalog test fix `0fde1227a`. The fix is correct and does not weaken the test. One nit (M6: Results did not record these commits) was fixed in this section by the review.
+- Final counts: bug 0; suggestion 4 fixed; nit 1 fixed, 1 wontfix; 0 open.
 - Disposition: accepted-exceptions. M5 (nit) is wontfix: a failed UpdateRole resets the form, the same as the 489-002 `ProfilePage` form. A change belongs to parent 489 for both forms.
-- Review files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Review files: `review/review-framework.md`, `review/round-1/`, `review/round-2/`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Session
 
@@ -83,6 +89,11 @@ Gates (fix pass):
 - Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, turn cap 120, 2026-11-23.
   M1 to M4 fixed, no new findings, disposition accepted-exceptions (M5 wontfix).
   The restatement now includes the fix-pass behavior. That refines the task and is not a misread.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2093b-8b93-7793-af98-b3faf6eb700e, max-turns 500, Done — 2026-11-23T16:29:36Z
+- Review oracle round 3: Claude Opus 5.5 (claude-opus-5-5), effort 3, roster general, turn cap 200, 2026-11-23.
+  Reviewed the feature-branch merge and the `Role.UpdateRole` catalog test fix. No bugs. M6 (nit, Results record) fixed in the kitchen. Disposition accepted-exceptions (M5 wontfix).
+  The restatement is unchanged and matches the task, so there is no misread.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 946576b8-93e0-4c52-ac93-2805bf6ad515, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-23T16:31:30Z
 
 ## Parent
 
@@ -92,3 +103,4 @@ Gates (fix pass):
 
 - Round 1: M1, M2, M3, and M4 implemented in the fix pass. M5 stays wontfix.
 - Round 2: Done
+- Round 3: Done
