@@ -14,7 +14,7 @@ directly. Every effect stays an action.
 - If the working copy has unsaved edits, ask before applying.
 - Off-page: reuse the existing `navigateTo` offer from `CatalogAgentToolSet`.
 - Approval: no server effect, so prompt only in "Ask before editing" mode (like `navigate`).
-- Mark agent-filled fields visibly (design TBD).
+- Mark agent-filled fields visibly. Implementer picks the marker from existing design-system tokens and components (tw-blazor-css-strategy; no new colors), records the choice in Results, and shows it on the /DesignSystem page (groom 2026-11-23).
 - Same tools available to in-app Ask and WebMCP (`web-mcp-publisher.cs`).
 
 Background (research 2026-11-14): vercel-labs/ui (UI SDK) lets agents drive widgets
