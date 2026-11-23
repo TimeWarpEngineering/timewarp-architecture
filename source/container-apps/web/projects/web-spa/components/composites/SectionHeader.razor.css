@@ -11,18 +11,8 @@
 
 .twe-section-header__text { min-width: 0; }
 
-.twe-section-header__title {
-  margin: 0;
-  font-size: var(--twe-text-section-title);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--twe-ink);
-}
+.twe-section-header__title { margin: 0; }
 
-.twe-section-header__subtitle {
-  margin: 2px 0 0;
-  font-size: var(--twe-text-helper);
-  color: var(--twe-muted);
-}
+.twe-section-header__subtitle { margin: 2px 0 0; }
 
 .twe-section-header__aside { flex: none; }

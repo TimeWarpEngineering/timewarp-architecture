@@ -54,10 +54,12 @@
   --twe-on-warning: #92400e;
   --twe-on-info: var(--twe-blue-deep);
 
-  /* Status tints: badge fills under the on-* text above. */
+  /* Status tints: badge and message-bar fills under the on-* text above.
+     Danger has no separate light hex. 12% into paper is the error badge fill. */
   --twe-positive-tint: #e5f7ec;
   --twe-warning-tint: #fef3c7;
   --twe-info-tint: #e6f4fa;
+  --twe-danger-tint: color-mix(in srgb, var(--twe-danger) 12%, var(--twe-paper));
 
   /* Role colors for text on paper. Each names the brand key it reads, so /brand.css still
      drives it. The dark block swaps each to a light brand step that reads on dark paper. */
@@ -92,6 +94,11 @@
   --twe-text-helper: 12px;
   --twe-text-eyebrow: 11px;
   --twe-text-kpi-value: 30px;
+
+  /* Shell nav item rest fill. FluentNav's default is colorNeutralBackground4, a gray
+     chip on every item. Transparent rest keeps hover and the active mark readable
+     in both themes. Hover stays Fluent's own fill unless a theme sets --nav-bg-color-hover. */
+  --nav-bg-color: transparent;
 
   /* Spacing — form rhythm (FormSection / FormField / FormGrid / FormActions).
      Map from the Tailwind UI stacked form (rhythm only; we do not use Tailwind):
@@ -134,6 +141,45 @@
   --twe-drawer-width: 36rem;
   --twe-drawer-width-wide: 48rem;
   --twe-scrim: color-mix(in srgb, var(--twe-ink) 48%, transparent);
+}
+
+/* Shared type roles. The design-system sample and the components it documents use these
+   classes, so a row cannot drift from the real weight, case, or spacing.
+   The one eyebrow is the KPI label: 11px, weight 600, 0.06em, uppercase, muted.
+   Catalog group headings use that same role. Body sets no color: card copy is ink-2
+   and a page description is muted. */
+.twe-type-page-title {
+  font-size: var(--twe-text-page-title);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--twe-ink);
+}
+
+.twe-type-section-title {
+  font-size: var(--twe-text-section-title);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--twe-ink);
+}
+
+.twe-type-body {
+  font-size: var(--twe-text-body);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.twe-type-helper {
+  font-size: var(--twe-text-helper);
+  font-weight: 400;
+  color: var(--twe-muted);
+}
+
+.twe-type-eyebrow {
+  font-size: var(--twe-text-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--twe-muted);
 }
 
 /* 1 when the nav column is the icon rail. Registered so style queries can read it.
@@ -206,10 +252,8 @@ body[data-theme="dark"] {
   --twe-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
   --twe-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 
-  /* FluentNav fills its items with colorNeutralBackground4, near black in dark mode. These are
-     FluentNav's own custom-property hooks; they keep items on the nav column fill. Light mode
-     keeps Fluent's default. */
-  --nav-bg-color: var(--twe-paper-2);
+  /* Rest fill stays the transparent token from :root. Hover is a light mix on the nav column
+     so a dark item still shows a fill without a resting chip. */
   --nav-bg-color-hover: color-mix(in srgb, var(--twe-ink) 8%, var(--twe-paper-2));
 }
 

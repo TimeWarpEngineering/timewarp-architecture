@@ -12,13 +12,7 @@
 .twe-kpi--positive { border-color: var(--twe-positive); }
 .twe-kpi--danger { border-color: var(--twe-danger); }
 
-.twe-kpi__label {
-  font-size: var(--twe-text-eyebrow);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--twe-muted);
-}
+.twe-kpi__label { margin: 0; }
 
 .twe-kpi__metrics {
   display: flex;
@@ -37,16 +31,6 @@
   color: var(--twe-ink);
 }
 
-.twe-kpi__unit {
-  font-size: var(--twe-text-eyebrow);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--twe-muted);
-}
+.twe-kpi__unit { margin: 0; }
 
-.twe-kpi__caption {
-  margin-top: var(--twe-space-2);
-  font-size: var(--twe-text-helper);
-  color: var(--twe-muted);
-}
+.twe-kpi__caption { margin-top: var(--twe-space-2); }

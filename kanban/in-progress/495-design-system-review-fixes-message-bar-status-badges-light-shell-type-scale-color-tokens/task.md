@@ -1,5 +1,21 @@
 # Design system review fixes: message bar, status badges, light shell, type scale, color tokens
 
+## Goal (implementer restatement)
+
+The Design System page is the reference for components the rest of the app uses, and seven
+approved defects there are wrong on the real shell too. Message bars should use the same soft
+status tints as the badges, info should read as info (blue, not a gray icon on a near-black
+fill), and Copy or Dismiss should sit on the same row as one line of text. The status sample
+should drop the Lost pill, because there is no Lost tone, and keep Error with a real label such
+as Churned. In the light shell, the Member name should use the app bar's foreground so it is
+readable on the white bar, and nav items should rest with no fill in both themes while hover and
+active keep theirs. The type-scale rows should use the same weight, case, and tracking as the
+real text, with one shared eyebrow style for the catalog headings and the KPI labels. Color
+chips should stay visible when the token matches the card, and each chip should show the value
+the current theme resolves. Changing design-system part should scroll the content pane back to
+the top. The parts list should be only as tall as the space left in the viewport, so the last
+group is not trapped under the footer.
+
 ## Description
 
 Design review of the developer-only Design System page (`/DesignSystem`,
@@ -106,18 +122,37 @@ and 07-catalog-clipped are referenced but missing from assets/; capture them in 
 
 ## Checklist
 
-- [ ] 1. Message bar: tinted fills, info looks like info, actions inline
-- [ ] 2. Status badges: drop Lost pill, optional Error with a real label, update snippet and tests
-- [ ] 3. Light app frame: Member label color, nav item fill
-- [ ] 4. Type Scale: rows match real weight, case, spacing; one eyebrow style
-- [ ] 5. Color Tokens: visible Background/Paper chips, show values
-- [ ] 6. Reset scroll on part change
-- [ ] 7. Parts list fits the viewport
-- [ ] Recapture `assets/` after the fix, light and dark
+- [x] 1. Message bar: tinted fills, info looks like info, actions inline
+- [x] 2. Status badges: drop Lost pill, optional Error with a real label, update snippet and tests
+- [x] 3. Light app frame: Member label color, nav item fill
+- [x] 4. Type Scale: rows match real weight, case, spacing; one eyebrow style
+- [x] 5. Color Tokens: visible Background/Paper chips, show values
+- [x] 6. Reset scroll on part change
+- [x] 7. Parts list fits the viewport
+- [x] Recapture `assets/` after the fix, light and dark
 
 ## Session
 
 - Created: ses_e1ad8b2d9ffezBxYfyQnvzq5g7 (2026-11-16)
+- Implementer: the seven review fixes are in the shared components, the app frame, and the design-system page (2026-11-24).
+
+## Results
+
+Message bars use the status tint tokens, info is the info blue, and Copy sits on the title row. The Lost sample is gone; the error sample is labeled Churned. The Member label uses the app-bar ink, and nav items rest transparent in both themes. Type-scale rows use the same role classes as the real components, and the eyebrow is the KPI style (11px, weight 600, 0.06em, uppercase). Color chips show the computed color for the current theme, with a stronger border so Background and Paper stay visible, plus positive, warning, and info swatches. Changing the design-system part resets the shell content scroller to the top. The parts list height is the space left in the viewport. After shots, light and dark, are in `assets/08-after-*.png`. The before shots stay.
+
+### How to validate
+
+Smoke: sign in as a developer and open `/DesignSystem` at 1440×816. Switch light and dark. Scroll the All page, then open Status Badges. Open Message bars, Type Scale, and Color Tokens.
+
+Expect: message bars are tinted, info is blue, and Copy is on the same row as the text. Status badges show Churned and do not show Lost. Member is readable on the app bar, and nav items have no resting fill. Type rows match the role (page title 700/28px, helper 400/12px, eyebrow 600/11px uppercase). Color chips print a resolved `rgb(...)` that changes with the theme, and Paper stays visible on the card. The content scroller is at the top after the part change. The parts list ends above the footer and scrolls on its own to Identity.
+
+Gates:
+
+- `./bin/dev build` — succeeded, 0 warnings, 0 errors (19.25s).
+- `tests/container-apps/web/web-spa-integration-tests/components/status-badge-render-tests.cs` — not a standalone Jaribu runfile (no `#if !JARIBU_MULTI`). `cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release --no-build --no-restore -- --filter-class StatusBadge_Should_` — passed 3/3.
+- `tests/container-apps/web/web-spa-integration-tests/features/design-system/design-system-page-contract-tests.cs` — not a standalone Jaribu runfile (no `#if !JARIBU_MULTI`). `cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release --no-build --no-restore -- --filter-class DesignSystemPage_Should_` — passed 6/6.
+- Browser, in-proc host, 1440×816, light and dark: catalog stays above the footer and Identity is reachable inside the list; content `scrollTop` returns to 0 on Status Badges; Churned badge; message-bar tints with inline Copy; type roles; color values including dark paper `rgb(48, 48, 48)`; Member ink on the app bar and transparent nav rest. The temporary Playwright method used for that pass was removed. CI runs the project suites.
+- `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing). `analyzer-suppressions` passed: 843 suppressions, none above the baseline.
 
 ## Notes
 

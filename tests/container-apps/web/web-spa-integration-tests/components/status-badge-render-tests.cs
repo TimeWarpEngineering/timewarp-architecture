@@ -49,12 +49,12 @@ public class StatusBadge_Should_
     string html = await RenderAsync(new Dictionary<string, object?>
     {
       ["Status"] = BadgeStatus.Error,
-      ["Label"] = "Lost",
+      ["Label"] = "Churned",
       ["Class"] = "caller-mark"
     });
 
     html.ShouldContain("twe-badge--error");
-    html.ShouldContain("Lost");
+    html.ShouldContain("Churned");
     html.ShouldContain("caller-mark");
     html.ShouldNotContain("Error", Case.Sensitive);
   }

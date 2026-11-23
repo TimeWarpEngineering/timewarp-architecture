@@ -7,6 +7,8 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  /* App bar foreground. The header slot's on-brand white would otherwise inherit onto this label. */
+  color: var(--twe-ink);
 }
 
 /* Task 152: the fluent-menu shadow stylesheet anchors the slotted popup at

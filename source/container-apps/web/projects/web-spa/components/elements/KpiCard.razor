@@ -8,7 +8,8 @@
   twe-kpi. Other unmatched attributes splat onto the root, as SectionHeader does. Callers pass
   pre-formatted strings; this tile formats nothing and has no delta or trend. Tone adds a border
   modifier (positive or danger) in this stylesheet; None adds no class. Blank optional strings
-  are omitted. This component wires no events. Isolated CSS uses --twe-* tokens. There is no
+  are omitted. The label and unit use twe-type-eyebrow. The caption uses twe-type-helper.
+  This component wires no events. Isolated CSS uses --twe-* tokens. There is no
   FluentUI child, so the stylesheet needs no ::deep.
 *@
 
@@ -32,13 +33,13 @@
 }
 
 <div class="twe-kpi @ToneClass @Class" @attributes="AdditionalAttributes">
-  <div class="twe-kpi__label">@Label</div>
+  <div class="twe-kpi__label twe-type-eyebrow">@Label</div>
   <div class="twe-kpi__metrics">
     <div class="twe-kpi__metric">
       <span class="twe-kpi__value">@Value</span>
       @if (!string.IsNullOrWhiteSpace(Unit))
       {
-        <span class="twe-kpi__unit">@Unit</span>
+        <span class="twe-kpi__unit twe-type-eyebrow">@Unit</span>
       }
     </div>
     @if (!string.IsNullOrWhiteSpace(SecondaryValue))
@@ -47,13 +48,13 @@
         <span class="twe-kpi__value">@SecondaryValue</span>
         @if (!string.IsNullOrWhiteSpace(SecondaryUnit))
         {
-          <span class="twe-kpi__unit">@SecondaryUnit</span>
+          <span class="twe-kpi__unit twe-type-eyebrow">@SecondaryUnit</span>
         }
       </div>
     }
   </div>
   @if (!string.IsNullOrWhiteSpace(Caption))
   {
-    <div class="twe-kpi__caption">@Caption</div>
+    <div class="twe-kpi__caption twe-type-helper">@Caption</div>
   }
 </div>

@@ -5,9 +5,9 @@ namespace TimeWarp.Architecture.Components;
 #endregion
 
 #region Design
-// Error is the red lost/error status. One value covers both words. The badge label
-// carries the word the page wants ("Error", "Lost", "Churned"). The other four
-// values stay the record statuses they already were.
+// Error is the red status. There is no Lost value. The badge label carries the word
+// the page wants ("Error", "Churned", "Auth error"). The other four values stay the
+// record statuses they already were.
 #endregion
 
 public enum BadgeStatus

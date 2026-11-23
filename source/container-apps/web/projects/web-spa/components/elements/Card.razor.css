@@ -6,10 +6,5 @@
   padding: 20px 24px;
   box-shadow: var(--twe-shadow-sm);
 }
-.twe-card__title {
-  font-size: var(--twe-text-section-title);
-  font-weight: 600;
-  margin: 0 0 16px;
-  color: var(--twe-ink);
-}
-.twe-card__body { color: var(--twe-ink-2); font-size: var(--twe-text-body); line-height: 1.55; }
+.twe-card__title { margin: 0 0 16px; }
+.twe-card__body { color: var(--twe-ink-2); }

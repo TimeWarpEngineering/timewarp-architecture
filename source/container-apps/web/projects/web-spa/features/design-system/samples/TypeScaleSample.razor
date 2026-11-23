@@ -1,21 +1,22 @@
 @namespace TimeWarp.Architecture.Features.DesignSystem
 
 @code {
-  private static readonly (string Token, string Label)[] TypeScale =
+  // Each row uses the shared role class the real component uses.
+  private static readonly (string Role, string Label)[] TypeScale =
   [
-    ("twe-text-page-title", "28 — Page title"),
-    ("twe-text-section-title", "18 — Section title"),
-    ("twe-text-body", "14 — Body, button"),
-    ("twe-text-helper", "12 — Helper text"),
-    ("twe-text-eyebrow", "11 — Section eyebrow"),
+    ("twe-type-page-title", "28 — Page title"),
+    ("twe-type-section-title", "18 — Section title"),
+    ("twe-type-body", "14 — Body, button"),
+    ("twe-type-helper", "12 — Helper text"),
+    ("twe-type-eyebrow", "11 — Section eyebrow"),
   ];
 }
 
 <Card Title="Type Scale">
   <div class="ds-type">
-    @foreach ((string token, string label) in TypeScale)
+    @foreach ((string role, string label) in TypeScale)
     {
-      <div class="ds-type__row" data-token="@token">@label</div>
+      <div class="ds-type__row @role">@label</div>
     }
   </div>
 </Card>
