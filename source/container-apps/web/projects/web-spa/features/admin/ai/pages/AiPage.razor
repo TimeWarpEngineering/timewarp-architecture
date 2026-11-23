@@ -7,22 +7,23 @@
 @*
   Purpose: Admin → AI. Rename the assistant, choose whose xAI key Ask uses, and set, replace, or clear the site xAI API key.
 
-  Design: The assistant section binds UpdateAssistantName.Command (name and Version). The copy,
-  data-qa="AssistantSettings", and AssistantNameRules validation match the section that used to
-  sit on Authentication. Interactive init always dispatches FetchSiteSettings, including when
-  sign-in already loaded a snapshot, then copies that snapshot into the draft. An agent rename
-  while this page is open advances SiteSettingsState.Version. The render copies that name and
-  version into the draft when the field is still the last synced value, so the form matches the
-  top bar and the next save is not a 409. A typed edit is left in place. Both drafts share that
-  version. When it advances and this draft's own server field still equals the last synced value,
-  the draft copies the version and keeps the edit, so saving the other form does not leave a
-  stale token. When that field changed on the server as well, the edited draft keeps its old
-  version.
+  Design: The assistant section binds UpdateAssistantName.Command. UpdateAssistantName.Command.From
+  copies IAssistantNameDetails and Version from SiteSettingsState.SiteSettings when the page
+  finishes its fetch and after a successful save. A newer SiteSettingsState arrives through
+  ShouldReRender, because OnParametersSet does not run for a state action. That call replaces a
+  command that still matches the response it was copied from. A command that differs is dirty:
+  the edit stays. When that response's AssistantName is unchanged, the command takes the new
+  Version. When AssistantName changed too, the command keeps its Version. Nothing assigns the
+  command from the render block. The section renders when AssistantSource is set.
+  data-qa="AssistantSettings" and AssistantNameRules validation match the
+  section that used to sit on Authentication. Interactive init always dispatches
+  FetchSiteSettings, including when sign-in already loaded a snapshot.
   Submit is SiteSettingsState.UpdateAssistantName. A successful save
   reloads the public identity from AssistantIdentityRefreshHandler, so the button, Ctrl-K row
   and panel update without a page reload. AssistantNameSaveFailed keeps the draft.
-  The Ask API key section binds UpdateXaiByokMode.Command the same way. It sits next to the
-  site key. XaiByokModeSaveFailed keeps that draft. When the host has set XAI:ApiKey the
+  The Ask API key section binds UpdateXaiByokMode.Command the same way, against XaiByokMode,
+  including the ShouldReRender reconcile. The section renders when ByokSource is set.
+  It sits next to the site key. XaiByokModeSaveFailed keeps that draft. When the host has set XAI:ApiKey the
   select is replaced by the saved label and the reason the policy has no effect.
   The draft key is page-local and is cleared after a successful save. State never
   receives it back. The input is a password field. The editable branch shows the connection
@@ -52,21 +53,13 @@
 
   private SetXaiApiKey.Command Command { get; } = new();
 
-  private UpdateAssistantName.Command AssistantCommand { get; } = new();
+  private UpdateAssistantName.Command AssistantCommand { get; set; } = new();
 
-  private UpdateXaiByokMode.Command ByokCommand { get; } = new();
+  private UpdateXaiByokMode.Command ByokCommand { get; set; } = new();
 
-  private bool AssistantDraftLoaded;
+  private GetSiteSettings.Response? AssistantSource;
 
-  private bool ByokDraftLoaded;
-
-  private string SyncedAssistantName = "";
-
-  private long SyncedAssistantVersion;
-
-  private XaiByokMode SyncedByokMode;
-
-  private long SyncedByokVersion;
+  private GetSiteSettings.Response? ByokSource;
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -145,109 +138,113 @@
       await NoSubSiteSettingsState.FetchSiteSettings();
     }
 
-    SyncAssistantDraft();
-    SyncByokDraft();
+    AcceptDrafts(force: true);
   }
 
-  private void SyncAssistantDraft()
+  // OnParametersSet does not run when a state action re-renders this page.
+  public override bool ShouldReRender(Type stateType)
   {
-    if (!NoSubSiteSettingsState.HasSnapshot)
+    bool render = base.ShouldReRender(stateType);
+    if (render && stateType == typeof(SiteSettingsState))
     {
-      return;
+      AcceptDrafts(force: false);
     }
 
-    AssistantCommand.AssistantName = NoSubSiteSettingsState.AssistantName;
-    AssistantCommand.Version = NoSubSiteSettingsState.Version;
-    SyncedAssistantName = AssistantCommand.AssistantName;
-    SyncedAssistantVersion = AssistantCommand.Version;
-    AssistantDraftLoaded = true;
+    return render;
   }
 
-  private void SyncUneditedAssistantDraft()
+  private void AcceptDrafts(bool force)
   {
-    if (!AssistantDraftLoaded || !SiteSettingsState.HasSnapshot)
+    GetSiteSettings.Response? stored = NoSubSiteSettingsState.SiteSettings;
+    if (stored is null)
     {
       return;
     }
 
-    if (SiteSettingsState.Version == SyncedAssistantVersion)
-    {
-      return;
-    }
-
-    if (string.Equals(SiteSettingsState.AssistantName, SyncedAssistantName, StringComparison.Ordinal))
-    {
-      AssistantCommand.Version = SiteSettingsState.Version;
-      SyncedAssistantVersion = SiteSettingsState.Version;
-      return;
-    }
-
-    if (AssistantCommand.AssistantName != SyncedAssistantName
-      || AssistantCommand.Version != SyncedAssistantVersion)
-    {
-      return;
-    }
-
-    SyncAssistantDraft();
+    AcceptAssistant(stored, force);
+    AcceptByok(stored, force);
   }
 
-  private void SyncByokDraft()
+  private void AcceptAssistant(GetSiteSettings.Response stored, bool force)
   {
-    if (!NoSubSiteSettingsState.HasSnapshot)
+    if (!force && SameAssistantSnapshot(stored))
     {
       return;
     }
 
-    ByokCommand.XaiByokMode = NoSubSiteSettingsState.XaiByokMode;
-    ByokCommand.Version = NoSubSiteSettingsState.Version;
-    SyncedByokMode = ByokCommand.XaiByokMode;
-    SyncedByokVersion = ByokCommand.Version;
-    ByokDraftLoaded = true;
+    bool dirty = !force && AssistantSource is not null && AssistantDiffers(AssistantSource);
+    if (!dirty)
+    {
+      AssistantCommand = UpdateAssistantName.Command.From(stored);
+      AssistantSource = stored;
+      return;
+    }
+
+    if (AssistantSource is not null
+      && string.Equals(AssistantSource.AssistantName, stored.AssistantName, StringComparison.Ordinal))
+    {
+      AssistantCommand.Version = stored.Version;
+      AssistantSource = stored;
+    }
   }
 
-  private void SyncUneditedByokDraft()
+  private void AcceptByok(GetSiteSettings.Response stored, bool force)
   {
-    if (!ByokDraftLoaded || !SiteSettingsState.HasSnapshot)
+    if (!force && SameByokSnapshot(stored))
     {
       return;
     }
 
-    if (SiteSettingsState.Version == SyncedByokVersion)
+    bool dirty = !force && ByokSource is not null && ByokDiffers(ByokSource);
+    if (!dirty)
     {
+      ByokCommand = UpdateXaiByokMode.Command.From(stored);
+      ByokSource = stored;
       return;
     }
 
-    if (SiteSettingsState.XaiByokMode == SyncedByokMode)
+    if (ByokSource is not null && ByokSource.XaiByokMode == stored.XaiByokMode)
     {
-      ByokCommand.Version = SiteSettingsState.Version;
-      SyncedByokVersion = SiteSettingsState.Version;
-      return;
+      ByokCommand.Version = stored.Version;
+      ByokSource = stored;
     }
-
-    if (ByokCommand.XaiByokMode != SyncedByokMode
-      || ByokCommand.Version != SyncedByokVersion)
-    {
-      return;
-    }
-
-    SyncByokDraft();
   }
+
+  private bool SameAssistantSnapshot(GetSiteSettings.Response stored) =>
+    AssistantSource is not null
+    && string.Equals(AssistantSource.AssistantName, stored.AssistantName, StringComparison.Ordinal)
+    && AssistantSource.Version == stored.Version;
+
+  private bool SameByokSnapshot(GetSiteSettings.Response stored) =>
+    ByokSource is not null
+    && ByokSource.XaiByokMode == stored.XaiByokMode
+    && ByokSource.Version == stored.Version;
+
+  private bool AssistantDiffers(GetSiteSettings.Response source) =>
+    !string.Equals(AssistantCommand.AssistantName, source.AssistantName, StringComparison.Ordinal)
+    || AssistantCommand.Version != source.Version;
+
+  private bool ByokDiffers(GetSiteSettings.Response source) =>
+    ByokCommand.XaiByokMode != source.XaiByokMode
+    || ByokCommand.Version != source.Version;
 
   private async Task SaveAssistantAsync()
   {
     await NoSubSiteSettingsState.UpdateAssistantName(AssistantCommand);
-    if (!SiteSettingsState.AssistantNameSaveFailed)
+    if (!SiteSettingsState.AssistantNameSaveFailed && SiteSettingsState.SiteSettings is { } stored)
     {
-      SyncAssistantDraft();
+      AcceptAssistant(stored, force: true);
+      AcceptByok(stored, force: false);
     }
   }
 
   private async Task SaveByokAsync()
   {
     await NoSubSiteSettingsState.UpdateXaiByokMode(ByokCommand);
-    if (!SiteSettingsState.XaiByokModeSaveFailed)
+    if (!SiteSettingsState.XaiByokModeSaveFailed && SiteSettingsState.SiteSettings is { } stored)
     {
-      SyncByokDraft();
+      AcceptByok(stored, force: true);
+      AcceptAssistant(stored, force: false);
     }
   }
 
@@ -263,13 +260,8 @@
   private Task ClearAsync() => NoSubXaiApiKeyState.ClearXaiApiKey();
 }
 
-@{
-  SyncUneditedAssistantDraft();
-  SyncUneditedByokDraft();
-}
-
 <TimeWarpPage Title="AI">
-  @if (AssistantDraftLoaded)
+  @if (AssistantSource is not null)
   {
     <EditForm Model="AssistantCommand" OnValidSubmit="SaveAssistantAsync" FormName="AssistantNameForm" novalidate>
       <FluentValidator Validator="@AssistantValidator" />
@@ -395,7 +387,7 @@
       <p data-qa="XaiByokModeHostReason">XAI:ApiKey is set in configuration, so this policy has no effect. The deployment key always wins.</p>
     </FormSection>
   }
-  else if (ByokDraftLoaded)
+  else if (ByokSource is not null)
   {
     <EditForm Model="ByokCommand" OnValidSubmit="SaveByokAsync" FormName="XaiByokModeForm" novalidate>
       <FluentValidator Validator="@ByokValidator" />

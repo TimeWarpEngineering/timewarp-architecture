@@ -7,6 +7,8 @@
 // AI page from round-tripping Entra policy, the passkey prompt, and the accepted-tenant list, and
 // keeps an authentication save from overwriting the mode. SettingsWrite, the same policy as
 // UpdateSiteSettings. Version is the concurrency token from GetSiteSettings; mismatch is 409.
+// Command implements IXaiByokModeDetails. CopyBeyondDetails copies Version from
+// GetSiteSettings.Response. The validator composes XaiByokModeDetailsValidator.
 // PUT api/settings/xai-byok sits beside the assistant rename. ICommand, not IIdempotentCommand:
 // a successful write advances Version, so a retry of the same body conflicts. [Operation]
 // publishes the mode to CLI and MCP. The host XAI:ApiKey still wins at resolve time; this
@@ -33,17 +35,25 @@ public static partial class UpdateXaiByokMode
     Group = "admin.ai",
     Title = "Update xAI key policy"
   )]
-  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, IXaiByokModeDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public XaiByokMode XaiByokMode { get; set; }
     public long Version { get; set; }
+
+    static partial void CopyBeyondDetails(Command command, IXaiByokModeDetails source)
+    {
+      if (source is GetSiteSettings.Response loaded)
+      {
+        command.Version = loaded.Version;
+      }
+    }
   }
 
   public sealed class Validator : AbstractValidator<Command>
   {
     public Validator()
     {
-      RuleFor(command => command.XaiByokMode).IsInEnum();
+      RuleFor(command => command).SetValidator(new XaiByokModeDetailsValidator());
       RuleFor(command => command.Version).GreaterThanOrEqualTo(0);
     }
   }

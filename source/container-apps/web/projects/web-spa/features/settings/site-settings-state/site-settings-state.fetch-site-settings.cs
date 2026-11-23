@@ -40,6 +40,7 @@ partial class SiteSettingsState
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
+        SiteSettingsState.SiteSettings = response;
         SiteSettingsState.EntraSignInEnabled = response.EntraSignInEnabled;
         SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
         SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;

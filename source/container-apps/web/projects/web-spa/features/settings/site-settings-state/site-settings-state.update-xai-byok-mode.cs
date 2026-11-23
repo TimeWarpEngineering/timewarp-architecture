@@ -57,6 +57,7 @@ partial class SiteSettingsState
         SiteSettingsState.XaiByokMode = response.XaiByokMode;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.XaiByokModeSaveFailed = false;
+        SiteSettingsState.ReviseSiteSettings(xaiByokMode: response.XaiByokMode, version: response.Version);
         await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "xAI key policy saved."),
