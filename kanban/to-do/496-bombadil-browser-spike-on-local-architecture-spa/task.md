@@ -6,7 +6,7 @@ Research only, size S, time-boxed. Pin the v0.7.10 tagged Linux binary of [antit
 
 Source: [Bombadil eval](https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-16-bombadil.md) ([timewarp-intel PR #130](https://github.com/TimeWarpEngineering/timewarp-intel/pull/130)). Busara verdict: option A GREEN; B/C/D/E/G/I KILL; F/H/J folded in.
 
-Filed 2026-11-17 at Steven's request (via Amina, 8:00 PM BKK). Not launched.
+Filed 2026-11-17 at Steven's request (via Amina, 8:00 PM BKK).
 
 ## Requirements
 
