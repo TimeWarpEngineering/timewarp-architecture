@@ -35,10 +35,13 @@
 // accepted, so the value cannot break out of url(); anything else removes the property and the
 // turns fall back to the brand gradient.
 // StartVoiceCapture / StopVoiceCapture / CancelVoiceCapture (task 453) own the microphone.
-// The clip stays in the browser until stop, which returns base64. The page posts that to the
-// server; this file never sees an API key. InsertComposerText splices at the caret the way
+// The clip stays in the browser until stop, which returns base64. Start receives the one server
+// limit (base64 character length). The recorder stops itself when the next chunk would pass that
+// limit and reports too-long, without the bytes. The page posts a shorter clip to the server;
+// this file never sees an API key. InsertComposerText splices at the caret the way
 // InsertReference does, without stripping a leading @, adds a space when the neighbor is a
-// word, dispatches input, and focuses the textarea. It does not send.
+// word, dispatches input, and focuses the textarea. It does not send. A mismatched insert epoch
+// (Close or New conversation) inserts nothing.
 // #endregion
 
 import { FocusReturnClaimEvent, type FocusReturnClaim } from "./focus-return-claim.js";
@@ -188,9 +191,48 @@ let voiceStream: MediaStream | null = null;
 let voiceRecorder: MediaRecorder | null = null;
 let voiceChunks: Blob[] = [];
 let voiceMime = "audio/webm";
+let voiceMaxBase64 = 0;
+let voiceByteCount = 0;
+let voiceTooLong = false;
+let voiceAccepting = false;
+let voiceInsertEpoch = 0;
 
 function voiceCapture(error: string | null, mediaType: string | null, data: string | null): VoiceCapture {
   return { error, mediaType, data };
+}
+
+function resetVoiceBudget(): void {
+  voiceChunks = [];
+  voiceByteCount = 0;
+  voiceTooLong = false;
+}
+
+function base64Length(bytes: number): number {
+  if (bytes <= 0) {
+    return 0;
+  }
+
+  return Math.ceil(bytes / 3) * 4;
+}
+
+function rememberVoiceChunk(chunk: Blob): void {
+  if (!voiceAccepting || chunk.size <= 0 || voiceTooLong) {
+    return;
+  }
+
+  voiceChunks.push(chunk);
+  voiceByteCount += chunk.size;
+  if (voiceMaxBase64 > 0 && base64Length(voiceByteCount) > voiceMaxBase64) {
+    voiceTooLong = true;
+    const recorder = voiceRecorder;
+    if (recorder !== null && recorder.state !== "inactive") {
+      try {
+        recorder.stop();
+      } catch {
+        // stop is already in progress
+      }
+    }
+  }
 }
 
 function releaseVoiceTracks(): void {
@@ -218,9 +260,18 @@ function preferredVoiceMime(): string {
   return "";
 }
 
-export async function StartVoiceCapture(): Promise<VoiceCapture> {
+export function SetVoiceInsertEpoch(epoch: number): void {
+  voiceInsertEpoch = epoch;
+}
+
+export function VoiceCaptureExceeded(): boolean {
+  return voiceTooLong;
+}
+
+export async function StartVoiceCapture(maxBase64Length: number): Promise<VoiceCapture> {
   try {
     await CancelVoiceCapture();
+    voiceMaxBase64 = Number.isFinite(maxBase64Length) && maxBase64Length > 0 ? maxBase64Length : 0;
     if (
       typeof navigator === "undefined" ||
       navigator.mediaDevices?.getUserMedia === undefined ||
@@ -242,17 +293,16 @@ export async function StartVoiceCapture(): Promise<VoiceCapture> {
       return voiceCapture("unavailable", null, null);
     }
 
-    voiceChunks = [];
+    resetVoiceBudget();
     voiceRecorder =
       voiceMime.length > 0
         ? new MediaRecorder(voiceStream, { mimeType: voiceMime })
         : new MediaRecorder(voiceStream);
     voiceRecorder.addEventListener("dataavailable", (event: BlobEvent) => {
-      if (event.data.size > 0) {
-        voiceChunks.push(event.data);
-      }
+      rememberVoiceChunk(event.data);
     });
-    voiceRecorder.start();
+    voiceAccepting = true;
+    voiceRecorder.start(1000);
     const mediaType =
       voiceRecorder.mimeType.length > 0
         ? voiceRecorder.mimeType
@@ -266,12 +316,32 @@ export async function StartVoiceCapture(): Promise<VoiceCapture> {
   }
 }
 
+function dropVoice(error: string): VoiceCapture {
+  voiceAccepting = false;
+  voiceRecorder = null;
+  resetVoiceBudget();
+  releaseVoiceTracks();
+  return voiceCapture(error, null, null);
+}
+
 export function StopVoiceCapture(): Promise<VoiceCapture> {
+  if (voiceTooLong) {
+    const recorder = voiceRecorder;
+    const result = dropVoice("too-long");
+    if (recorder !== null && recorder.state !== "inactive") {
+      try {
+        recorder.stop();
+      } catch {
+        // the recorder already stopped when the limit was crossed
+      }
+    }
+
+    return Promise.resolve(result);
+  }
+
   const recorder = voiceRecorder;
   if (recorder === null || recorder.state === "inactive") {
-    voiceRecorder = null;
-    voiceChunks = [];
-    releaseVoiceTracks();
+    dropVoice("empty");
     return Promise.resolve(voiceCapture("empty", null, null));
   }
 
@@ -281,9 +351,15 @@ export function StopVoiceCapture(): Promise<VoiceCapture> {
     recorder.addEventListener(
       "stop",
       () => {
+        if (voiceTooLong) {
+          resolve(dropVoice("too-long"));
+          return;
+        }
+
         const blob = new Blob(voiceChunks, { type: mediaType });
-        voiceChunks = [];
+        voiceAccepting = false;
         voiceRecorder = null;
+        resetVoiceBudget();
         releaseVoiceTracks();
         if (blob.size === 0) {
           resolve(voiceCapture("empty", null, null));
@@ -293,7 +369,13 @@ export function StopVoiceCapture(): Promise<VoiceCapture> {
         void blob
           .arrayBuffer()
           .then((buffer) => {
-            resolve(voiceCapture(null, mediaType, bytesToBase64(new Uint8Array(buffer))));
+            const data = bytesToBase64(new Uint8Array(buffer));
+            if (voiceMaxBase64 > 0 && data.length > voiceMaxBase64) {
+              resolve(voiceCapture("too-long", null, null));
+              return;
+            }
+
+            resolve(voiceCapture(null, mediaType, data));
           })
           .catch(() => {
             resolve(voiceCapture("empty", null, null));
@@ -301,13 +383,19 @@ export function StopVoiceCapture(): Promise<VoiceCapture> {
       },
       { once: true },
     );
-    recorder.stop();
+    try {
+      recorder.stop();
+    } catch {
+      resolve(dropVoice("empty"));
+    }
   });
 }
 
 export async function CancelVoiceCapture(): Promise<void> {
   const recorder = voiceRecorder;
-  voiceChunks = [];
+  voiceAccepting = false;
+  voiceRecorder = null;
+  resetVoiceBudget();
   if (recorder !== null && recorder.state !== "inactive") {
     await new Promise<void>((resolve) => {
       recorder.addEventListener("stop", () => resolve(), { once: true });
@@ -319,12 +407,14 @@ export async function CancelVoiceCapture(): Promise<void> {
     });
   }
 
-  voiceRecorder = null;
-  voiceChunks = [];
   releaseVoiceTracks();
 }
 
-export function InsertComposerText(text: string): boolean {
+export function InsertComposerText(text: string, epoch: number): boolean {
+  if (epoch !== voiceInsertEpoch) {
+    return false;
+  }
+
   const area = document.querySelector<HTMLTextAreaElement>(ComposerSelector);
   if (area === null || text.length === 0) {
     return false;

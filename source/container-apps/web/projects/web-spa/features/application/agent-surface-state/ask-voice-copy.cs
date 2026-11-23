@@ -5,7 +5,8 @@
 #region Design
 // The server problems stay short and never include a key or an upstream body. A 503 is replaced
 // with the key sentence so the composer does not paste the host setup command into the button.
-// Any other detail is shown only when it is already a short sentence.
+// Any other detail is shown only when it is already a short sentence. TooLong is the same
+// sentence the server uses for 413. The numeric limit stays TranscribeAgentAudio.MaxDataLength.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -45,4 +46,7 @@ public static class AskVoiceCopy
 
   /// <summary>The server has no xAI key.</summary>
   public const string NeedsKey = "Voice input needs an xAI key.";
+
+  /// <summary>The clip's base64 would pass <see cref="TimeWarp.Architecture.Features.AgentChats.TranscribeAgentAudio.MaxDataLength"/>.</summary>
+  public const string TooLong = "The recording is too long.";
 }

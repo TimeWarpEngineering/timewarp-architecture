@@ -9,7 +9,8 @@
 // chat control, so the insertion stays in the browser. Copy takes the text from C# (the last
 // answer the thumbs also use) and only writes it to the clipboard.
 // Callers opt out of TWA0026 with DirectComponentSideEffect. wwwroot/js is emitted by
-// TypeScript.MSBuild and is not committed.
+// TypeScript.MSBuild and is not committed. StartVoiceCapture takes the one base64 limit.
+// InsertComposerText takes the epoch Close publishes so a late transcript inserts nothing.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -94,11 +95,64 @@ internal static class AskAiJsModule
     return InvokeAsync(jsRuntime, "SetAssistantAvatar", dataUri);
   }
 
-  /// <summary>Starts the microphone. Error is denied, unavailable, or failed. No audio yet.</summary>
-  internal static Task<AskVoiceCaptureResult> StartVoiceCaptureAsync(IJSRuntime jsRuntime)
+  /// <summary>Starts the microphone. <paramref name="maxBase64Length"/> is the one server limit. Error is denied, unavailable, or failed. No audio yet.</summary>
+  internal static Task<AskVoiceCaptureResult> StartVoiceCaptureAsync(IJSRuntime jsRuntime, int maxBase64Length)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
-    return InvokeCaptureAsync(jsRuntime, "StartVoiceCapture");
+    return InvokeCaptureAsync(jsRuntime, "StartVoiceCapture", maxBase64Length);
+  }
+
+  /// <summary>True once the live capture has crossed the limit passed to start.</summary>
+  internal static async Task<bool> VoiceCaptureExceededAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    try
+    {
+      await using IJSObjectReference? module = await ImportAsync(jsRuntime);
+      if (module is null)
+      {
+        return false;
+      }
+
+      return await module.InvokeAsync<bool>("VoiceCaptureExceeded");
+    }
+    catch (JSException)
+    {
+      return false;
+    }
+    catch (JSDisconnectedException)
+    {
+      return false;
+    }
+    catch (InvalidOperationException)
+    {
+      return false;
+    }
+  }
+
+  /// <summary>Publishes the epoch a late insert must match. A mismatch inserts nothing.</summary>
+  internal static async Task SetVoiceInsertEpochAsync(IJSRuntime jsRuntime, int epoch)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    try
+    {
+      await using IJSObjectReference? module = await ImportAsync(jsRuntime);
+      if (module is null)
+      {
+        return;
+      }
+
+      await module.InvokeVoidAsync("SetVoiceInsertEpoch", epoch);
+    }
+    catch (JSException)
+    {
+    }
+    catch (JSDisconnectedException)
+    {
+    }
+    catch (InvalidOperationException)
+    {
+    }
   }
 
   /// <summary>Stops the microphone and returns base64 audio, or an empty error.</summary>
@@ -133,8 +187,8 @@ internal static class AskAiJsModule
     }
   }
 
-  /// <summary>Inserts text at the composer caret and focuses it. False when the composer is gone.</summary>
-  internal static async Task<bool> InsertComposerTextAsync(IJSRuntime jsRuntime, string text)
+  /// <summary>Inserts text at the composer caret and focuses it. False when the composer is gone or <paramref name="epoch"/> is stale.</summary>
+  internal static async Task<bool> InsertComposerTextAsync(IJSRuntime jsRuntime, string text, int epoch)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
     ArgumentNullException.ThrowIfNull(text);
@@ -146,7 +200,7 @@ internal static class AskAiJsModule
         return false;
       }
 
-      return await module.InvokeAsync<bool>("InsertComposerText", text);
+      return await module.InvokeAsync<bool>("InsertComposerText", text, epoch);
     }
     catch (JSException)
     {
@@ -162,7 +216,12 @@ internal static class AskAiJsModule
     }
   }
 
-  private static async Task<AskVoiceCaptureResult> InvokeCaptureAsync(IJSRuntime jsRuntime, string export)
+  private static async Task<AskVoiceCaptureResult> InvokeCaptureAsync
+  (
+    IJSRuntime jsRuntime,
+    string export,
+    params object?[] arguments
+  )
   {
     try
     {
@@ -172,7 +231,7 @@ internal static class AskAiJsModule
         return Unavailable();
       }
 
-      AskVoiceCaptureResult? result = await module.InvokeAsync<AskVoiceCaptureResult>(export);
+      AskVoiceCaptureResult? result = await module.InvokeAsync<AskVoiceCaptureResult>(export, arguments);
       return result ?? Unavailable();
     }
     catch (JSException)

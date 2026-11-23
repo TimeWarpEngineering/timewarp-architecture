@@ -36,8 +36,10 @@
 // ResetStore, whose Store.Reset puts them back to those defaults.
 // XaiApiKeyRefreshHandler reloads chat configuration after a successful admin set or clear.
 // VoicePhase (task 453) is the composer's microphone. CloseAskPanel and NewConversation release
-// a live capture. The clip itself stays on private fields so a failed transcription can be sent
-// again without another recording. The elapsed clock is the panel's, read from VoiceStartedAt.
+// a live capture and, while a transcription is in flight, publish VoiceEpoch so a late insert
+// does not land. VoiceData stays only when another try might succeed. VoiceTranscript stays when
+// the composer could not take the text, and the retry inserts it. The elapsed clock is the
+// panel's, read from VoiceStartedAt.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -139,6 +141,10 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
   private string? VoiceMediaType;
 
   private string? VoiceData;
+
+  private string? VoiceTranscript;
+
+  private int VoiceEpoch;
 
   private bool VoiceBusy;
 

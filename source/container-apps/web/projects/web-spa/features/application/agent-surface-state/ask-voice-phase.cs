@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// Recording keeps the stop control usable while a turn streams. Error keeps the last clip when
-// the failure was the transcription request, so retry does not ask for the microphone again.
-// A microphone failure clears the clip, so the next press records again.
+// Recording keeps the stop control usable while a turn streams or an approval card is waiting.
+// Error keeps the clip only when another send might succeed: a transport failure, 429, or 5xx.
+// A refusal of this clip clears it, so the next press records. An insert failure keeps the
+// transcript instead of the clip.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

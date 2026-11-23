@@ -92,12 +92,16 @@
   ApplyAvatarAsync sets on the document root because the library renders the turns and inline
   styles are banned.
   Voice (task 453): the microphone in the lead slot dispatches AgentSurfaceState.Dictate. The
-  browser records in ask-ai.ts. The server sends the clip to xAI speech-to-text. The transcript
-  is inserted at the caret and is not sent. Recording shows a stop icon and the elapsed time.
-  Transcribing and a failure (microphone refused, or the request failed) replace that. Retry
-  sends the same clip again when the failure was the request. The button waits while a turn
-  streams or an approval card is up, except to stop a recording already going. The status
-  callback re-renders this panel for those states so the disabled binding reaches the button.
+  browser records in ask-ai.ts and stops on its own when the base64 would pass
+  TranscribeAgentAudio.MaxDataLength, the only copy of that limit. The server sends a shorter
+  clip to xAI speech-to-text. The transcript is inserted at the caret and is not sent. Recording
+  shows a stop icon and the elapsed time. That time is a timer, not a live region, so it is not
+  announced every second. Transcribing and a failure replace it, and that sentence stays a status.
+  A refusal of this clip is dropped so the next press records. A transport failure, 429, or 5xx
+  keeps the clip and retry sends it. An insert failure keeps the transcript and retry inserts it.
+  The button waits while a turn streams or an approval card is up (one TurnInProgress check),
+  except to stop a recording already going. The status callback re-renders this panel for those
+  states so the disabled binding reaches the button.
   A one-second timer in this panel only calls StateHasChanged so the elapsed label moves; it does not touch
   the microphone. Close and New conversation release a live capture.
   Screenshot (task 303-001): the camera button in the lead slot dispatches
@@ -651,7 +655,28 @@
           break;
         }
 
-        await InvokeAsync(StateHasChanged);
+        bool stop = false;
+        await InvokeAsync(async () =>
+        {
+          if (Disposed)
+          {
+            return;
+          }
+
+          bool overLimit = await VoiceOverLimitAsync();
+          if (overLimit && AgentSurfaceState.VoicePhase == AskVoicePhase.Recording)
+          {
+            await AgentSurfaceState.Dictate();
+            stop = true;
+            return;
+          }
+
+          StateHasChanged();
+        });
+        if (stop)
+        {
+          break;
+        }
       }
     }
     catch (OperationCanceledException)
@@ -661,6 +686,9 @@
     {
     }
   }
+
+  [DirectComponentSideEffect("Once a second while recording, asks whether the clip already hit the transcription size limit. Stopping is still the Dictate action.")]
+  private Task<bool> VoiceOverLimitAsync() => AskAiJsModule.VoiceCaptureExceededAsync(JsRuntime);
 
   private void StopVoiceClock()
   {
@@ -964,7 +992,7 @@
                                   OnClick="DictateAsync" />
                     @if (AgentSurfaceState.VoicePhase == AskVoicePhase.Recording)
                     {
-                      <span class="twe-agent-ask__voice-status" data-qa="AskVoiceElapsed" aria-live="polite">@VoiceElapsed</span>
+                      <span class="twe-agent-ask__voice-status" data-qa="AskVoiceElapsed" role="timer">@VoiceElapsed</span>
                     }
                     else if (VoiceStatus is not null)
                     {
