@@ -37,6 +37,12 @@ Acceptance criteria:
 - Created: f5c3f33c-f934-403b-a23a-50b137ccf5f0 (2026-11-14)
 - Implementation: 01a209ce-1627-7432-b1f9-131c8f169dae (2026-11-24)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a209ce-1627-7432-b1f9-131c8f169dae, max-turns 500, Done — 2026-11-23T19:25:32Z
+- Review oracle: Claude Code (claude-opus-5-5), effort 2, roster general, turn cap 120, round 1, accepted-exceptions — 2026-11-24
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 93448e0f-db0b-4670-8f3c-f6008aceccc2, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-23T19:27:05Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -98,3 +104,11 @@ ganda repo audit
 - No test file was added or edited. `TemplateSmokeGeneratedContent` has no Jaribu runfile (no `#if !JARIBU_MULTI` file). `tests/tools/dev-cli-tests/template-smoke-content-assets-tests.cs` covers `TemplateSmokeContentAssets`, a different type, and was not run. CI runs that project inside `./bin/dev test`.
 - `dotnet run --file tools/dev-cli/dev.cs -- template-smoke` — succeeded. SmokeDefault OK. The skeleton line names overview, readme, and the task template.
 - `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning (`vscode-window-icon`: gitignored `.vscode/settings.json` is missing on this machine). The repository passes.
+
+### Review
+
+- Rounds: 1. Effort 2, roster general.
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). Open: 0.
+- Disposition: `accepted-exceptions`. M1 (nit): the shipped task template shows `## Propagation` to instance authors. The linked `kanban/readme.md` already scopes the field to tasks in this template, and a value on an instance task has no effect, so no fix pass.
+- No misread: the restatement matches the task. The added acceptance criterion (ship `kanban/readme.md` in the skeleton) is sound, because instances keep the ledger.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
