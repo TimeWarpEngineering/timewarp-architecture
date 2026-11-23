@@ -18,6 +18,7 @@
 // AgentNavigate.Offer and does not Execute. site_map and navigate are checked by name and call
 // AgentSiteMap.InvokeAsync and AgentNavigate.InvokeAsync; navigate is wrapped for approval in Ask
 // before editing like any edit (task 300). A catalog tool executes the re-selected entry.
+// A Prefill tool does not bind that entry: it validates the draft and executes the suggestion action.
 // The wrapper is chosen at Create from the edit mode then; each function remembers whether it was
 // wrapped. If the re-selected tool now requires approval (the person switched back to Ask before
 // editing mid-run) and this function was built unwrapped, it refuses with ApprovalRequiredError
@@ -187,6 +188,42 @@ public sealed class CatalogAgentFunctions : IDisposable
       if (current.Entry is null)
       {
         return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+      }
+
+      if (current.Prefill)
+      {
+        if (current.RequiresApproval && !Wrapped)
+        {
+          return new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError);
+        }
+
+        string? prefillDenial = AgentConversationAuthority.Denial(
+          store.GetState<AgentSurfaceState>().Conversation,
+          authentication.User,
+          current.Entry.Permissions);
+        if (prefillDenial is not null)
+        {
+          return new CatalogAgentCallResult(Tool.Name, Completed: false, prefillDenial);
+        }
+
+        EditFormSubmitAttribute? submit = current.Entry.ActionType.GetCustomAttribute<EditFormSubmitAttribute>();
+        if (submit is null)
+        {
+          return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+        }
+
+        if (!FormPrefill.TryNormalize(submit.CommandType, arguments, out string suggestionJson, out string? error, out IReadOnlyList<string> fields))
+        {
+          return new FormPrefill.Result(Drafted: false, error, fields);
+        }
+
+        return await FormPrefill.DispatchAsync(
+          catalog,
+          store,
+          current.Entry,
+          suggestionJson,
+          fields,
+          cancellationToken);
       }
 
       if (current.RequiresApproval && !Wrapped)

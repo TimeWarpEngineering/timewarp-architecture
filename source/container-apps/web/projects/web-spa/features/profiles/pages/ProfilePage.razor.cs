@@ -9,9 +9,11 @@
 // BaseAddress). Fetch and save go through ProfileState (TWA0022). Loading is
 // FetchProfileData [TrackAction]. The form edits UpdateProfile.Command, built with
 // Command.From(Profile) when the page loads and when Cancel is clicked, not on every
-// render. Save dispatches that command and copies again so the form matches the stored
-// response. Layout is FormSection (Profile + Preferences) with FormField full-width
-// controls and FormActions.
+// render. That copy sets WorkingCopyReady. OnAfterRenderAsync leaves a prefill in state
+// until the flag is set, so a draft that arrives during the fetch is not applied onto
+// the empty command and is not cleared. Save dispatches the command and copies again so
+// the form matches the stored response. Layout is FormSection (Profile + Preferences)
+// with FormField full-width controls and FormActions.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;

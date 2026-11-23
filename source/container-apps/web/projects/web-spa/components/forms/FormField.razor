@@ -12,7 +12,8 @@
   Avatar and checkbox hosts are left to intrinsic size. Pages still pass Width="100%" on text/select/combobox controls.
   A labelled field is pickable by Ask's Tag (task 346) as AskTagMark's Field kind. The visible
   text is the label and hint; input values are never read. The hint uses twe-type-helper.
-  Unmatched attributes win.
+  AgentFilled shows the Info status badge labeled Agent beside the label. The page passes
+  false once the person changes the value. Unmatched attributes win.
 *@
 
 @code {
@@ -21,6 +22,7 @@
   [Parameter] public int Span { get; set; } = 12;
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter] public string? Class { get; set; }
+  [Parameter] public bool AgentFilled { get; set; }
   [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
   private int ResolvedSpan => Span < 1 ? 1 : Span > 12 ? 12 : Span;
@@ -48,7 +50,13 @@
 <div class="twe-form-field twe-form-field--span-@ResolvedSpan @Class" @attributes="RootAttributes">
   @if (!string.IsNullOrWhiteSpace(Label))
   {
-    <div class="twe-form-field__label">@Label</div>
+    <div class="twe-form-field__label">
+      <span>@Label</span>
+      @if (AgentFilled)
+      {
+        <StatusBadge Status="BadgeStatus.Info" Label="Agent" data-qa="AgentFilled" />
+      }
+    </div>
   }
   <div class="twe-form-field__control">
     @ChildContent

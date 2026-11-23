@@ -7,6 +7,10 @@
 // facts. No Aspire host: the store is what these facts observe. The working copy is
 // UpdateProfile.Command.From on the stored response, and a DevTools snapshot of the populated
 // state goes through StateJsonContext. Re-read the store after Send (clone-on-dispatch).
+// A prefill stores JSON and an id. Confirm asks through IConfirmationService. The question
+// says the draft replaces unsaved changes on the form. Apply copies only the supplied
+// fields and does not move the baseline. An empty argument list and a set of unknown keys
+// are not a draft.
 #endregion
 
 namespace ProfileState_;
@@ -98,10 +102,143 @@ public class FetchAndUpdate_Should_
     stored.Avatar.ShouldBe(ProfileState.FallbackAvatar);
   }
 
+  public static async Task Suggestion_Should_StoreClearAndAsk()
+  {
+    using ProfileSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action("""{"displayName":"Ada"}"""));
+    ProfileState stored = scope.Store.GetState<ProfileState>();
+    stored.ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Ada");
+    string firstId = stored.ProfileSuggestionId.ShouldNotBeNull();
+    stored.ProfileSuggestionAccepted.ShouldBeFalse();
+    stored.Profile.ShouldBeNull();
+
+    spa.Confirmation.Answer = true;
+    await scope.Send(new ProfileState.ConfirmProfileSuggestionActionSet.Action());
+    stored = scope.Store.GetState<ProfileState>();
+    stored.ProfileSuggestionAccepted.ShouldBeTrue();
+    stored.ProfileSuggestionId.ShouldBe(firstId);
+    spa.Confirmation.Title.ShouldBe("Replace unsaved edits?");
+    spa.Confirmation.Message.ShouldBe(
+      "An agent drafted new profile values. Applying them replaces unsaved changes on this form.");
+    spa.Confirmation.ConfirmLabel.ShouldBe("Apply draft");
+    spa.Confirmation.CancelLabel.ShouldBe("Keep mine");
+
+    await scope.Send(new ProfileState.ClearProfileSuggestionActionSet.Action());
+    stored = scope.Store.GetState<ProfileState>();
+    stored.ProfileSuggestionJson.ShouldBeNull();
+    stored.ProfileSuggestionId.ShouldBeNull();
+    stored.ProfileSuggestionAccepted.ShouldBeFalse();
+
+    await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action("""{"displayName":"Grace"}"""));
+    spa.Confirmation.Answer = false;
+    await scope.Send(new ProfileState.ConfirmProfileSuggestionActionSet.Action());
+    stored = scope.Store.GetState<ProfileState>();
+    stored.ProfileSuggestionJson.ShouldBeNull();
+    stored.ProfileSuggestionAccepted.ShouldBeFalse();
+
+    await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action("""{"displayName":"Ada"}"""));
+    firstId = scope.Store.GetState<ProfileState>().ProfileSuggestionId.ShouldNotBeNull();
+    spa.Confirmation.Answer = true;
+    spa.Confirmation.During = async () =>
+      await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action("""{"displayName":"Grace"}"""));
+    await scope.Send(new ProfileState.ConfirmProfileSuggestionActionSet.Action());
+    stored = scope.Store.GetState<ProfileState>();
+    stored.ProfileSuggestionAccepted.ShouldBeFalse();
+    stored.ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Grace");
+    stored.ProfileSuggestionId.ShouldNotBe(firstId);
+
+    await scope.Send(new ProfileState.ClearProfileDataActionSet.Action());
+    stored = scope.Store.GetState<ProfileState>();
+    stored.Profile.ShouldBeNull();
+    stored.ProfileSuggestionJson.ShouldBeNull();
+    stored.ProfileSuggestionId.ShouldBeNull();
+  }
+
+  public static Task Apply_Should_CopyOnlySuppliedFields_And_LeaveTheBaseline()
+  {
+    UpdateProfile.Command command = new()
+    {
+      DisplayName = "Ada",
+      Email = "ada@example.com",
+      Language = "en-US",
+      Region = "US",
+      Theme = "system",
+      Notifications = true,
+    };
+    UpdateProfile.Command baseline = ProfileFormDraft.Copy(command);
+    Dictionary<string, string> filled = new(StringComparer.Ordinal);
+
+    FormPrefill.TryNormalize(
+      typeof(UpdateProfile.Command),
+      """{"displayName":"Grace","email":null,"nope":1}""",
+      out string suggestion,
+      out string? error,
+      out IReadOnlyList<string> fields).ShouldBeTrue(error);
+    fields.ShouldBe(["displayName", "email"]);
+    suggestion.ShouldNotContain("nope");
+
+    FormPrefill.Apply(command, suggestion, filled);
+    command.DisplayName.ShouldBe("Grace");
+    command.Email.ShouldBeNull();
+    command.Notifications.ShouldBeTrue();
+    command.Language.ShouldBe("en-US");
+    ProfileFormDraft.Same(command, baseline).ShouldBeFalse();
+    baseline.DisplayName.ShouldBe("Ada");
+    FormPrefill.Matches(command, nameof(UpdateProfile.Command.DisplayName), filled["DisplayName"]).ShouldBeTrue();
+    command.DisplayName = "Ada";
+    FormPrefill.Matches(command, nameof(UpdateProfile.Command.DisplayName), filled["DisplayName"]).ShouldBeFalse();
+
+    FormPrefill.TryNormalize(
+      typeof(UpdateProfile.Command),
+      """{"displayName":null}""",
+      out _,
+      out error,
+      out _).ShouldBeFalse();
+    error.ShouldNotBeNull().ShouldContain("cannot be null");
+
+    FormPrefill.TryNormalize(
+      typeof(UpdateProfile.Command),
+      """{"notifications":"yes"}""",
+      out _,
+      out error,
+      out _).ShouldBeFalse();
+    error.ShouldNotBeNull().ShouldContain("boolean");
+
+    FormPrefill.TryNormalize(
+      typeof(UpdateProfile.Command),
+      "",
+      out suggestion,
+      out error,
+      out fields).ShouldBeFalse();
+    suggestion.ShouldBeEmpty();
+    error.ShouldNotBeNull().ShouldContain("Accepted keys");
+    error.ShouldContain("displayName");
+    error.ShouldContain("email");
+    error.ShouldContain("language");
+    error.ShouldContain("region");
+    error.ShouldContain("theme");
+    error.ShouldContain("notifications");
+    fields.ShouldBeEmpty();
+
+    FormPrefill.TryNormalize(
+      typeof(UpdateProfile.Command),
+      """{"nope":1}""",
+      out suggestion,
+      out error,
+      out fields).ShouldBeFalse();
+    suggestion.ShouldBeEmpty();
+    error.ShouldNotBeNull().ShouldContain("Accepted keys");
+    fields.ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
   private sealed class ProfileSpa : ISpaTestApplication, IDisposable
   {
     public IServiceProvider ServiceProvider { get; }
     public ScriptedProfileApi Api { get; } = new();
+    public RecordingConfirmation Confirmation { get; } = new();
 
     public ProfileSpa()
     {
@@ -122,6 +259,7 @@ public class FetchAndUpdate_Should_
       );
       services.AddTimeWarpStateBlazor();
       services.AddSingleton<IWebServerApiService>(Api);
+      services.AddSingleton<IConfirmationService>(Confirmation);
       services.AddScoped<NavigationManager, IdleNavigationManager>();
       ServiceProvider = services.BuildServiceProvider();
     }
@@ -181,6 +319,43 @@ public class FetchAndUpdate_Should_
         Title = "No scripted response for " + typeof(TResponse).Name + ".",
       };
       return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(problem);
+    }
+  }
+
+  private sealed class RecordingConfirmation : IConfirmationService
+  {
+    public bool Answer { get; set; } = true;
+
+    public Func<Task>? During { get; set; }
+
+    public string? Title { get; private set; }
+
+    public string? Message { get; private set; }
+
+    public string? ConfirmLabel { get; private set; }
+
+    public string? CancelLabel { get; private set; }
+
+    public async Task<bool> ConfirmAsync
+    (
+      string title,
+      string message,
+      string confirmLabel,
+      string cancelLabel,
+      CancellationToken cancellationToken
+    )
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      Title = title;
+      Message = message;
+      ConfirmLabel = confirmLabel;
+      CancelLabel = cancelLabel;
+      if (During is not null)
+      {
+        await During();
+      }
+
+      return Answer;
     }
   }
 
