@@ -44,3 +44,9 @@ means no export, so the change is safe in CI even without a collector.
 Fleet rollout: Steve asked on 2026-11-07 for telemetry on all dev CLI commands in every live
 reposet repo. The same task exists in each live repo that has a `tools/dev-cli`. Only
 timewarp-nuru had it before this rollout.
+
+## Results
+
+- Superseded. Task 498 landed `UseTelemetry(options => options.ServiceName = "timewarp-architecture-dev")`
+  in `tools/dev-cli/dev.cs` as a boy-scout change (PR #653, merged 2026-11-22). `ganda repo audit`
+  check `dev-cli-telemetry` passes on master. Nothing left to do here. Closed by Steve, 2026-11-23.
