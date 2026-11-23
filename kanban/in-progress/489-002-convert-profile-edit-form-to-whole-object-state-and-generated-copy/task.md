@@ -67,6 +67,7 @@ Gates:
 ## Session
 
 - Implementation: Grok 4.7, 2026-11-23. The profile store keeps one `GetProfile.Response`. The page copies it with `UpdateProfile.Command.From` on load, Cancel, and after Save. Blank language, region, and theme are filled when the server builds the response.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2085f-f489-7141-ac5e-da7d0fb7708e, max-turns 500, Done — 2026-11-23T13:10:05Z
 
 ## Parent
 
