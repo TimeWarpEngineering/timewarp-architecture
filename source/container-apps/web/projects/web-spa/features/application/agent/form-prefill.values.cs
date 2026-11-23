@@ -4,8 +4,10 @@
 
 #region Design
 // Only supplied properties are stored, so an omitted bool is not false. Unknown keys are
-// ignored. Explicit null is kept only for a nullable property. UserId is never part of a draft.
-// Canonical JSON for a field is the contract serializer, so a later edit hides the agent mark.
+// ignored when at least one key matches. No match, including an empty object, is not a draft:
+// the caller stores nothing and the error lists the accepted keys. Explicit null is kept
+// only for a nullable property. UserId is never part of a draft. Canonical JSON for a field
+// is the contract serializer, so a later edit hides the agent mark.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -29,7 +31,7 @@ partial class FormPrefill
     ArgumentNullException.ThrowIfNull(commandType);
     if (string.IsNullOrWhiteSpace(argumentsJson))
     {
-      return Empty(out suggestionJson, out error, out fields);
+      return NoMatch(commandType, out suggestionJson, out error, out fields);
     }
 
     JsonNode? node;
@@ -47,7 +49,7 @@ partial class FormPrefill
 
     if (node is null)
     {
-      return Empty(out suggestionJson, out error, out fields);
+      return NoMatch(commandType, out suggestionJson, out error, out fields);
     }
 
     if (node is not JsonObject arguments)
@@ -177,18 +179,25 @@ partial class FormPrefill
       names.Add(camel);
     }
 
+    if (names.Count == 0)
+    {
+      return NoMatch(commandType, out suggestionJson, out error, out fields);
+    }
+
     suggestionJson = normalized.ToJsonString();
     error = null;
     fields = names;
     return true;
   }
 
-  private static bool Empty(out string suggestionJson, out string? error, out IReadOnlyList<string> fields)
+  private static bool NoMatch(Type commandType, out string suggestionJson, out string? error, out IReadOnlyList<string> fields)
   {
-    suggestionJson = "{}";
-    error = null;
+    suggestionJson = "";
+    List<string> keys = [.. Properties(commandType).Keys];
+    keys.Sort(StringComparer.Ordinal);
+    error = "No field matched. Accepted keys: " + string.Join(", ", keys) + ".";
     fields = [];
-    return true;
+    return false;
   }
 
   private static Dictionary<string, PropertyInfo> Properties(Type type)

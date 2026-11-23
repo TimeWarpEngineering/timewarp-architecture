@@ -413,4 +413,39 @@ public partial class CatalogAgent_Should
     scope.Store.GetState<ProfileState>().Profile.ShouldBeNull();
     scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Ada");
   }
+
+  public static async Task Prefill_With_No_Matching_Field_Does_Not_Store_A_Draft()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    NavigationManager navigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    navigation.NavigateTo("/Profile");
+    await scope.Store.GetState<AgentSurfaceState>().SetEditMode(AgentEditMode.AutomaticallyEdit);
+
+    WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
+    string empty = await dispatcher.InvokeTool("Prefill.Profile.UpdateProfile", "").WaitAsync(Timeout);
+    empty.ShouldContain("\"drafted\":false");
+    empty.ShouldContain("displayName");
+    empty.ShouldContain("notifications");
+    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+
+    string unknown = await dispatcher.InvokeTool(
+      "Prefill.Profile.UpdateProfile",
+      """{"nope":1}""").WaitAsync(Timeout);
+    unknown.ShouldContain("\"drafted\":false");
+    unknown.ShouldContain("Accepted keys");
+    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+
+    using CatalogAgentFunctions functions = CatalogAgentFunctions.Create
+    (
+      await SelectForSessionAsync(scope, AgentEditMode.AutomaticallyEdit)
+    );
+    AIFunction prefill = functions.Tools.Single(tool => tool.Name == "Prefill.Profile.UpdateProfile")
+      .ShouldBeAssignableTo<AIFunction>();
+    object? drafted = await prefill.InvokeAsync(Arguments(scope, "{}"));
+    FormPrefill.Result result = drafted.ShouldBeOfType<FormPrefill.Result>();
+    result.Drafted.ShouldBeFalse();
+    result.Error.ShouldNotBeNull().ShouldContain("email");
+    result.Fields.ShouldBeEmpty();
+    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+  }
 }

@@ -4,9 +4,11 @@
 
 #region Design
 // The dialog stays in the handler (TWA0026). The page dispatches this only when its working
-// copy is dirty. Decline clears the suggestion when the id is still the one that was asked
-// about. Accept sets Accepted for that same id. A newer suggestion that arrives while the
-// dialog is open is left as it is: not cleared, not accepted.
+// copy is dirty. The message says the draft replaces unsaved changes on the form: the copy
+// may differ because of an earlier draft, not only because the person typed. Decline clears
+// the suggestion when the id is still the one that was asked about. Accept sets Accepted
+// for that same id. A newer suggestion that arrives while the dialog is open is left as it
+// is: not cleared, not accepted.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
@@ -34,7 +36,7 @@ partial class ProfileState
         bool accepted = await confirmation.ConfirmAsync
         (
           "Replace unsaved edits?",
-          "An agent drafted new profile values. Applying them replaces what you typed.",
+          "An agent drafted new profile values. Applying them replaces unsaved changes on this form.",
           "Apply draft",
           "Keep mine",
           cancellationToken

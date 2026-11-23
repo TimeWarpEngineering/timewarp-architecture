@@ -7,8 +7,10 @@
 // facts. No Aspire host: the store is what these facts observe. The working copy is
 // UpdateProfile.Command.From on the stored response, and a DevTools snapshot of the populated
 // state goes through StateJsonContext. Re-read the store after Send (clone-on-dispatch).
-// A prefill stores JSON and an id. Confirm asks through IConfirmationService. Apply copies
-// only the supplied fields and does not move the baseline.
+// A prefill stores JSON and an id. Confirm asks through IConfirmationService. The question
+// says the draft replaces unsaved changes on the form. Apply copies only the supplied
+// fields and does not move the baseline. An empty argument list and a set of unknown keys
+// are not a draft.
 #endregion
 
 namespace ProfileState_;
@@ -118,6 +120,8 @@ public class FetchAndUpdate_Should_
     stored.ProfileSuggestionAccepted.ShouldBeTrue();
     stored.ProfileSuggestionId.ShouldBe(firstId);
     spa.Confirmation.Title.ShouldBe("Replace unsaved edits?");
+    spa.Confirmation.Message.ShouldBe(
+      "An agent drafted new profile values. Applying them replaces unsaved changes on this form.");
     spa.Confirmation.ConfirmLabel.ShouldBe("Apply draft");
     spa.Confirmation.CancelLabel.ShouldBe("Keep mine");
 
@@ -207,8 +211,25 @@ public class FetchAndUpdate_Should_
       "",
       out suggestion,
       out error,
-      out fields).ShouldBeTrue(error);
-    suggestion.ShouldBe("{}");
+      out fields).ShouldBeFalse();
+    suggestion.ShouldBeEmpty();
+    error.ShouldNotBeNull().ShouldContain("Accepted keys");
+    error.ShouldContain("displayName");
+    error.ShouldContain("email");
+    error.ShouldContain("language");
+    error.ShouldContain("region");
+    error.ShouldContain("theme");
+    error.ShouldContain("notifications");
+    fields.ShouldBeEmpty();
+
+    FormPrefill.TryNormalize(
+      typeof(UpdateProfile.Command),
+      """{"nope":1}""",
+      out suggestion,
+      out error,
+      out fields).ShouldBeFalse();
+    suggestion.ShouldBeEmpty();
+    error.ShouldNotBeNull().ShouldContain("Accepted keys");
     fields.ShouldBeEmpty();
     return Task.CompletedTask;
   }
@@ -309,6 +330,8 @@ public class FetchAndUpdate_Should_
 
     public string? Title { get; private set; }
 
+    public string? Message { get; private set; }
+
     public string? ConfirmLabel { get; private set; }
 
     public string? CancelLabel { get; private set; }
@@ -324,6 +347,7 @@ public class FetchAndUpdate_Should_
     {
       cancellationToken.ThrowIfCancellationRequested();
       Title = title;
+      Message = message;
       ConfirmLabel = confirmLabel;
       CancelLabel = cancelLabel;
       if (During is not null)

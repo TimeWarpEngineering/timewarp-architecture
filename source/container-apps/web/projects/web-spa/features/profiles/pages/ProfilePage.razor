@@ -17,9 +17,11 @@
   binds a page-local UpdateProfile.Command. Command.From(Profile) runs when the page loads
   and when Cancel is clicked, and again after Save so a trimmed email replaces the draft.
   It does not run on every render. Language, region, and theme come from the response.
-  A prefill suggestion copies only the supplied fields onto that command. If the command
-  differs from the last copy, the page asks first. Agent-filled fields show the Info badge
-  until the person changes them. Copying from the store clears the badges.
+  A prefill suggestion copies only the supplied fields onto that command. The page does
+  not read the suggestion until CopyCommandFromProfile has copied a loaded profile into
+  the working command, so a draft that arrives during the fetch stays in state. If the
+  command differs from the last copy, the page asks first. Agent-filled fields show the
+  Info badge until the person changes them. Copying from the store clears the badges.
   The xAI key section is a second form after the profile form. It renders only when
   UserXaiApiKeyState.Visible is true (site mode is not Off). The draft key is page-local,
   a password field, and is cleared after a successful save. State never stores it.
@@ -35,6 +37,7 @@
   private UpdateProfile.Command Baseline { get; set; } = new();
   private readonly Dictionary<string, string> AgentFilled = new(StringComparer.Ordinal);
   private bool Applying;
+  private bool WorkingCopyReady;
   private string? HandledSuggestionId;
   private IProfileDetails Details => Command;
 
@@ -78,7 +81,7 @@
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     await base.OnAfterRenderAsync(firstRender);
-    if (Applying || !RendererInfo.IsInteractive)
+    if (Applying || !RendererInfo.IsInteractive || !WorkingCopyReady)
     {
       return;
     }
@@ -125,6 +128,7 @@
   private void CopyCommandFromProfile()
   {
     AgentFilled.Clear();
+    WorkingCopyReady = false;
     if (ProfileState.Profile is not GetProfile.Response profile)
     {
       return;
@@ -132,6 +136,7 @@
 
     Command = UpdateProfile.Command.From(profile);
     Baseline = ProfileFormDraft.Copy(Command);
+    WorkingCopyReady = true;
   }
 
   private bool IsDirty() => !ProfileFormDraft.Same(Command, Baseline);

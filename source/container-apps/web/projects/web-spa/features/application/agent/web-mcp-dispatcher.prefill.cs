@@ -4,8 +4,10 @@
 
 #region Design
 // Validation runs before the prompt, so a draft that cannot apply never asks. The prompt shows
-// the pretty-printed suggestion. Approval follows the same page-bound gate as other tools. The
-// suggestion action is what executes. The submit action is not saved.
+// the pretty-printed suggestion. Prefill tools are page-bound by construction: SelectAsync
+// skips an action that is not page-bound, so approval always waits on this path and a path
+// change cancels the call. The suggestion action is what executes. The submit action is not
+// saved.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -42,16 +44,15 @@ partial class WebMcpDispatcher
         return Error(name, BusyError);
       }
 
-      bool pageBound = PageAgentScope.IsPageBound(tool.Entry.ActionType);
       (bool approved, bool navigated) = await WaitForApprovalAsync
       (
         callId,
         decision,
         name,
         FormPrefill.Render(suggestionJson),
-        pageBound
+        pageBound: true
       );
-      if (pageBound && (navigated || !IsOnPath(path)))
+      if (navigated || !IsOnPath(path))
       {
         return Error(name, PageChangedError);
       }
@@ -61,32 +62,18 @@ partial class WebMcpDispatcher
         return Serialize(new WebMcpRejected(name, Approved: false));
       }
 
-      if (pageBound)
+      CatalogAgentTool? current = await FindOfferedAsync(path, name);
+      if (current?.Entry is null || current.OffPageRoute is not null || !current.Prefill)
       {
-        CatalogAgentTool? current = await FindOfferedAsync(path, name);
-        if (current?.Entry is null || current.OffPageRoute is not null || !current.Prefill)
-        {
-          return Error(name, UnavailableError);
-        }
-
-        if (!IsOnPath(path))
-        {
-          return Error(name, PageChangedError);
-        }
-
-        tool = current;
+        return Error(name, UnavailableError);
       }
-      else
+
+      if (!IsOnPath(path))
       {
-        string currentPath = Route.PathOr(Navigation);
-        CatalogAgentTool? current = await FindOfferedAsync(currentPath, name);
-        if (current?.Entry is null || !current.Prefill)
-        {
-          return Error(name, UnavailableError);
-        }
-
-        tool = current;
+        return Error(name, PageChangedError);
       }
+
+      tool = current;
     }
 
     if (tool.Entry is null)
