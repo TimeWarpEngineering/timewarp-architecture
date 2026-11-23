@@ -43,8 +43,9 @@ Profile conversion.
 - [ ] 003 Role edit form + permission/scope drafts out of store
 - [ ] 004 AiPage assistant-name and BYOK forms
 - [ ] 005 AuthenticationPage + SiteSettingsState
-- [ ] Follow-up in timewarp-flow: update `tw-web-api-contracts` `references/mutability.md` with
-      the store/clone/working-copy rules (skill source lives there, not in this repo)
+- [ ] Results state what `tw-web-api-contracts` `references/mutability.md` (timewarp-flow) should
+      say about store/clone/working-copy once every child lands. Do not edit that skill from
+      this repo; file the follow-up in timewarp-flow (groom 2026-11-23).
 
 ## Notes
 
