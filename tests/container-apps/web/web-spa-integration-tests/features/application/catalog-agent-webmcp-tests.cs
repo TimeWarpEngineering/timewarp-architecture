@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.AI;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Profiles;
 
 [TestTag("Integration")]
 public partial class CatalogAgent_Should
@@ -40,7 +41,15 @@ public partial class CatalogAgent_Should
     home.ShouldNotContain(tool => tool.Name == "Credentials.AddExistingPasskey");
     // A literal, not the selection algorithm again: the tool list on / that the task promises.
     Names(home).ShouldBe(
-      ["Credentials.AddPasskey", "Feedback.ListMyFeedback", "Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    [
+      "Credentials.AddPasskey",
+      "Feedback.ListMyFeedback",
+      "Screenshot.CaptureScreenshot",
+      "Prefill.Profile.UpdateProfile",
+      AgentNavigate.ToolName,
+      AgentSiteMap.ToolName,
+      PageAgentContext.ToolName,
+    ]);
     Console.WriteLine($"WEBMCP-PROOF path=/ tools={string.Join(",", Names(home))}");
 
     IReadOnlyList<WebMcpToolDescriptor> settings = await WebMcpPublisher.DescribeAsync
@@ -236,5 +245,172 @@ public partial class CatalogAgent_Should
     result.ShouldContain(WebMcpDispatcher.PageChangedError);
     result.ShouldNotContain("\"approved\":false");
     scope.Store.GetState<CounterState>().Count.ShouldBe(10);
+  }
+
+  public static async Task Prefill_Profile_Update_Is_Optional_And_Offered_Off_Page()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    ClaimsPrincipal everyone = Principal([.. PermissionIds.All]);
+
+    IReadOnlyList<CatalogAgentTool> home = await CatalogAgentToolSet.SelectAsync
+    (
+      everyone, authorization, catalog.Entries, "/", AgentEditMode.AskBeforeEditing, CancellationToken.None
+    );
+    CatalogAgentTool offPage = home.Single(tool => tool.Name == "Prefill.Profile.UpdateProfile");
+    offPage.Prefill.ShouldBeTrue();
+    offPage.OffPageRoute.ShouldBe("/Profile");
+    offPage.RequiresApproval.ShouldBeFalse();
+    offPage.Entry.ShouldNotBeNull().Name.ShouldBe("Profile.UpdateProfile");
+    home.ShouldNotContain(tool => tool.Name == "Profile.SetProfileSuggestion");
+
+    using JsonDocument schema = JsonDocument.Parse(offPage.InputSchema);
+    schema.RootElement.TryGetProperty("required", out _).ShouldBeFalse();
+    schema.RootElement.GetProperty("additionalProperties").GetBoolean().ShouldBeFalse();
+    JsonElement properties = schema.RootElement.GetProperty("properties");
+    properties.GetProperty("displayName").GetProperty("type").GetString().ShouldBe("string");
+    properties.GetProperty("email").GetProperty("type").GetString().ShouldBe("string");
+    properties.GetProperty("notifications").GetProperty("type").GetString().ShouldBe("boolean");
+    properties.TryGetProperty("userId", out _).ShouldBeFalse();
+
+    IReadOnlyList<CatalogAgentTool> profile = await CatalogAgentToolSet.SelectAsync
+    (
+      everyone, authorization, catalog.Entries, "/Profile", AgentEditMode.AskBeforeEditing, CancellationToken.None
+    );
+    CatalogAgentTool onPage = profile.Single(tool => tool.Name == "Prefill.Profile.UpdateProfile");
+    onPage.OffPageRoute.ShouldBeNull();
+    onPage.RequiresApproval.ShouldBeTrue();
+    profile.ShouldContain(tool => tool.Name == "Profile.UpdateProfile");
+
+    IReadOnlyList<CatalogAgentTool> automatic = await CatalogAgentToolSet.SelectAsync
+    (
+      everyone, authorization, catalog.Entries, "/Profile", AgentEditMode.AutomaticallyEdit, CancellationToken.None
+    );
+    automatic.Single(tool => tool.Name == "Prefill.Profile.UpdateProfile").RequiresApproval.ShouldBeFalse();
+
+    (await CatalogAgentToolSet.SelectAsync
+    (
+      Principal(PermissionIds.ProfileRead),
+      authorization,
+      catalog.Entries,
+      "/Profile",
+      AgentEditMode.AskBeforeEditing,
+      CancellationToken.None
+    )).ShouldNotContain(tool => tool.Name == "Prefill.Profile.UpdateProfile");
+
+    (await CatalogAgentToolSet.SelectAsync
+    (
+      new ClaimsPrincipal(new ClaimsIdentity()),
+      authorization,
+      catalog.Entries,
+      "/",
+      AgentEditMode.AskBeforeEditing,
+      CancellationToken.None
+    )).ShouldNotContain(tool => tool.Prefill);
+  }
+
+  public static async Task WebMcp_Prefill_On_Profile_Asks_Then_Stores_The_Draft()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    scope.ServiceProvider.GetRequiredService<NavigationManager>().NavigateTo("/Profile");
+    WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
+
+    Task<string> invoke = dispatcher.InvokeTool(
+      "Prefill.Profile.UpdateProfile",
+      """{"displayName":"Ada","notifications":false,"extra":"ignored"}""");
+    Guid callId = await WaitForPendingAsync(scope, invoke);
+    AgentSurfaceState surface = scope.Store.GetState<AgentSurfaceState>();
+    surface.PendingToolName.ShouldBe("Prefill.Profile.UpdateProfile");
+    surface.PendingArgumentsJson.ShouldNotBeNull().ShouldContain("displayName");
+    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+
+    await surface.ResolveApproval(callId, approved: true);
+    string result = await invoke.WaitAsync(Timeout);
+    result.ShouldContain("\"drafted\":true");
+    ProfileState stored = scope.Store.GetState<ProfileState>();
+    stored.Profile.ShouldBeNull();
+    stored.ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Ada");
+    stored.ProfileSuggestionJson.ShouldNotContain("extra");
+    stored.ProfileSuggestionId.ShouldNotBeNullOrWhiteSpace();
+    stored.ProfileSuggestionAccepted.ShouldBeFalse();
+  }
+
+  public static async Task WebMcp_Prefill_Reject_Leaves_No_Draft()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    scope.ServiceProvider.GetRequiredService<NavigationManager>().NavigateTo("/Profile");
+    WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
+
+    Task<string> invoke = dispatcher.InvokeTool("Prefill.Profile.UpdateProfile", """{"displayName":"Ada"}""");
+    Guid callId = await WaitForPendingAsync(scope, invoke);
+    await scope.Store.GetState<AgentSurfaceState>().ResolveApproval(callId, approved: false);
+    string result = await invoke.WaitAsync(Timeout);
+
+    result.ShouldContain("\"approved\":false");
+    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+    scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+  }
+
+  public static async Task WebMcp_Prefill_Off_Page_Returns_Navigate_And_Automatic_Stores_Without_A_Prompt()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    NavigationManager navigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    navigation.NavigateTo("/");
+    WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
+
+    string offer = await dispatcher.InvokeTool("Prefill.Profile.UpdateProfile", """{"displayName":"Ada"}""")
+      .WaitAsync(Timeout);
+    offer.ShouldContain("\"navigateTo\":\"/Profile\"");
+    offer.ShouldContain("\"executed\":false");
+    scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+
+    await scope.Send(new AgentSurfaceState.SetEditModeActionSet.Action(AgentEditMode.AutomaticallyEdit));
+    navigation.NavigateTo("/Profile");
+    string drafted = await dispatcher.InvokeTool(
+      "Prefill.Profile.UpdateProfile",
+      """{"email":null,"displayName":"Grace"}""").WaitAsync(Timeout);
+    drafted.ShouldContain("\"drafted\":true");
+    scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+    string json = scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull();
+    json.ShouldContain("Grace");
+    json.ShouldContain("null");
+  }
+
+  public static async Task Ask_Prefill_Automatic_Stores_The_Draft_And_Off_Page_Offers_Navigate()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    NavigationManager navigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    AgentSurfaceState surface = scope.Store.GetState<AgentSurfaceState>();
+    navigation.NavigateTo("/");
+    await surface.SetEditMode(AgentEditMode.AskBeforeEditing);
+    using (CatalogAgentFunctions home = CatalogAgentFunctions.Create
+    (
+      await SelectForSessionAsync(scope, AgentEditMode.AskBeforeEditing)
+    ))
+    {
+      AIFunction offPage = home.Tools.Single(tool => tool.Name == "Prefill.Profile.UpdateProfile")
+        .ShouldBeAssignableTo<AIFunction>();
+      offPage.ShouldNotBeOfType<ApprovalRequiredAIFunction>();
+      object? offer = await offPage.InvokeAsync(Arguments(scope, """{"displayName":"Ada"}"""));
+      offer.ShouldBeOfType<AgentNavigate.Offer>().NavigateTo.ShouldBe("/Profile");
+    }
+
+    navigation.NavigateTo("/Profile");
+    await surface.SetEditMode(AgentEditMode.AutomaticallyEdit);
+    using CatalogAgentFunctions functions = CatalogAgentFunctions.Create
+    (
+      await SelectForSessionAsync(scope, AgentEditMode.AutomaticallyEdit)
+    );
+    AIFunction prefill = functions.Tools.Single(tool => tool.Name == "Prefill.Profile.UpdateProfile")
+      .ShouldBeAssignableTo<AIFunction>();
+    prefill.ShouldNotBeOfType<ApprovalRequiredAIFunction>();
+    object? drafted = await prefill.InvokeAsync(Arguments(scope, """{"displayName":"Ada","notifications":true}"""));
+    FormPrefill.Result result = drafted.ShouldBeOfType<FormPrefill.Result>();
+    result.Drafted.ShouldBeTrue();
+    result.Fields.ShouldBe(["displayName", "notifications"]);
+    scope.Store.GetState<ProfileState>().Profile.ShouldBeNull();
+    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Ada");
   }
 }

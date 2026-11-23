@@ -3,7 +3,8 @@
 #endregion
 
 #region Design
-// The list is the Ctrl-K commands, the current page's own actions, navigate, and site_map.
+// The list is the Ctrl-K commands, the current page's own actions, one Prefill tool per
+// edit-form submit, navigate, and site_map.
 // CommandPaletteRoster stays the filter for commands; this type only reads it.
 // A palette command becomes a tool when its visibility includes Agent. Human-only commands stay
 // in the palette and never become tools. Page-bound commands (PageAgentScope, derived from
@@ -13,6 +14,9 @@
 // not palette commands stay executable only on their page, and only for a signed-in principal,
 // matching the palette's sign-in rule for commands, so an anonymous visitor gets navigate and
 // site_map alone.
+// A suggestion catalog action is not a tool. FormPrefill lists Prefill.<Action> for each
+// edit-form submit the principal may run. On the page it asks only in Ask before editing.
+// Off the page it is a navigate offer and does not ask. The submit action itself is unchanged.
 // navigate and site_map share AgentSiteMap.DestinationsAsync, the menu's destinations for this
 // principal (Sign in included while signed out, Ctrl-K's deep links last), so both answer and move across the whole app
 // from every page, including Home (task 300). site_map is read-only and never needs approval.
@@ -63,6 +67,7 @@ public static class CatalogAgentToolSet
 
     string normalized = PageAgentScope.Normalize(path);
     List<ActionCatalogEntry> entryList = [.. entries];
+    HashSet<Type> suggestionTypes = FormPrefill.SuggestionTypes(entryList);
     IReadOnlyList<CommandPaletteRow> rows = await CommandPaletteRoster.BuildAsync
     (
       user,
@@ -92,7 +97,8 @@ public static class CatalogAgentToolSet
         continue;
       }
 
-      if (!entry.Visibility.HasFlag(ActionVisibility.Agent) || !seen.Add(entry.Name))
+      if (!entry.Visibility.HasFlag(ActionVisibility.Agent) || suggestionTypes.Contains(entry.ActionType)
+        || !seen.Add(entry.Name))
       {
         continue;
       }
@@ -115,6 +121,11 @@ public static class CatalogAgentToolSet
       : [];
     foreach (Type actionType in pageActions)
     {
+      if (suggestionTypes.Contains(actionType))
+      {
+        continue;
+      }
+
       ActionCatalogEntry? entry = entryList.Find(candidate => candidate.ActionType == actionType);
       if (entry is null || !seen.Add(entry.Name))
       {
@@ -132,6 +143,22 @@ public static class CatalogAgentToolSet
       }
 
       tools.Add(ToTool(entry, editMode, offPageRoute: null));
+    }
+
+    foreach (CatalogAgentTool prefill in await FormPrefill.SelectAsync
+    (
+      user,
+      authorizationService,
+      entryList,
+      normalized,
+      editMode,
+      cancellationToken
+    ))
+    {
+      if (seen.Add(prefill.Name))
+      {
+        tools.Add(prefill);
+      }
     }
 
     IReadOnlyList<AgentSiteMap.Destination> destinations =

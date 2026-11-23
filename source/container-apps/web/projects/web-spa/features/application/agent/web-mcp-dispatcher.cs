@@ -18,6 +18,8 @@
 // Arguments are parsed and bound before anything is shown: a call that cannot bind returns
 // {action, error} without a prompt, and the banner shows the canonical rendering of the bound
 // values (CatalogAgentArguments.Render). Execute receives exactly that bound array.
+// A Prefill tool validates the draft first, prompts only when it requires approval, and executes
+// the suggestion action. It does not bind or save the submit action.
 // Mutating tools take the single WebMcpApprovalGate slot. A second mutating call while one waits
 // is refused with an error instead of replacing the call on screen. While a page-bound call waits,
 // the dispatcher listens to LocationChanged and cancels that call, which also covers focused pages
@@ -40,7 +42,7 @@ using System.Text.Json.Serialization;
 
 /// <summary>JS entry point for WebMCP tool execution.</summary>
 [SideEffectService]
-public sealed class WebMcpDispatcher
+public sealed partial class WebMcpDispatcher
 {
   public const string BusyError = "Another action is waiting for confirmation.";
   public const string UnavailableError = "The action is not available on this page.";
@@ -142,6 +144,11 @@ public sealed class WebMcpDispatcher
     if (tool.Entry is null)
     {
       return Error(name, UnavailableError);
+    }
+
+    if (tool.Prefill)
+    {
+      return await PrefillAsync(path, name, tool, argumentsJson);
     }
 
     object?[] bound;

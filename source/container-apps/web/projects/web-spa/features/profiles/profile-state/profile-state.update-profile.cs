@@ -4,6 +4,7 @@
 
 #region Design
 // Action ctor takes UpdateProfile.Command so the generator emits ProfileState.UpdateProfile(Command).
+// EditFormSubmit opts this action into a Prefill tool. The suggestion action stores the draft.
 // ProfilePage binds IProfileDetails (the Command) and submits via that method (TWA0022).
 // On success the stored snapshot becomes a GetProfile.Response. UpdateProfile.Response has no
 // avatar, so the previous snapshot's avatar is kept. With no snapshot, FallbackAvatar is used.
@@ -21,6 +22,7 @@ partial class ProfileState
 {
   public static class UpdateProfileActionSet
   {
+    [EditFormSubmit(typeof(Command), typeof(SetProfileSuggestionActionSet.Action))]
     [CatalogAction
     (
       Description = "Save the signed-in user's profile fields.",

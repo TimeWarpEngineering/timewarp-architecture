@@ -177,6 +177,22 @@ public partial class CatalogAgent_Should
       }
     }
 
+    foreach (CatalogAgentTool prefill in await FormPrefill.SelectAsync
+    (
+      user,
+      authorization,
+      catalog.Entries,
+      path,
+      AgentEditMode.AskBeforeEditing,
+      CancellationToken.None
+    ))
+    {
+      if (seen.Add(prefill.Name))
+      {
+        names.Add(prefill.Name);
+      }
+    }
+
     names.Add(AgentNavigate.ToolName);
     names.Add(AgentSiteMap.ToolName);
     return [.. names];

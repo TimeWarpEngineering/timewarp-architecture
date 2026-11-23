@@ -37,6 +37,7 @@ public class ActionCatalog_Should
     "Feedback.ReplyAsFiler",
     "Feedback.SubmitFeedback",
     "Feedback.UploadFeedbackAttachment",
+    "Profile.SetProfileSuggestion",
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",

@@ -17,6 +17,9 @@
   binds a page-local UpdateProfile.Command. Command.From(Profile) runs when the page loads
   and when Cancel is clicked, and again after Save so a trimmed email replaces the draft.
   It does not run on every render. Language, region, and theme come from the response.
+  A prefill suggestion copies only the supplied fields onto that command. If the command
+  differs from the last copy, the page asks first. Agent-filled fields show the Info badge
+  until the person changes them. Copying from the store clears the badges.
   The xAI key section is a second form after the profile form. It renders only when
   UserXaiApiKeyState.Visible is true (site mode is not Off). The draft key is page-local,
   a password field, and is cleared after a successful save. State never stores it.
@@ -29,6 +32,10 @@
   private static readonly ProfileDetailsValidator ProfileValidator = new();
 
   private UpdateProfile.Command Command { get; set; } = new();
+  private UpdateProfile.Command Baseline { get; set; } = new();
+  private readonly Dictionary<string, string> AgentFilled = new(StringComparer.Ordinal);
+  private bool Applying;
+  private string? HandledSuggestionId;
   private IProfileDetails Details => Command;
 
   private static readonly SetUserXaiApiKey.Validator KeyValidator = new();
@@ -68,15 +75,70 @@
     CopyCommandFromProfile();
   }
 
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (Applying || !RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    ProfileState current = this.ProfileState;
+    string? json = current.ProfileSuggestionJson;
+    string? id = current.ProfileSuggestionId;
+    if (json is null || id is null || string.Equals(id, HandledSuggestionId, StringComparison.Ordinal))
+    {
+      return;
+    }
+
+    Applying = true;
+    try
+    {
+      if (!current.ProfileSuggestionAccepted && IsDirty())
+      {
+        await ProfileState.ConfirmProfileSuggestion();
+        current = this.ProfileState;
+        json = current.ProfileSuggestionJson;
+        id = current.ProfileSuggestionId;
+        if (json is null || id is null || !current.ProfileSuggestionAccepted)
+        {
+          if (json is not null && id is not null)
+          {
+            StateHasChanged();
+          }
+
+          return;
+        }
+      }
+
+      HandledSuggestionId = id;
+      FormPrefill.Apply(Command, json, AgentFilled);
+      StateHasChanged();
+      await ProfileState.ClearProfileSuggestion();
+    }
+    finally
+    {
+      Applying = false;
+    }
+  }
+
   private void CopyCommandFromProfile()
   {
+    AgentFilled.Clear();
     if (ProfileState.Profile is not GetProfile.Response profile)
     {
       return;
     }
 
     Command = UpdateProfile.Command.From(profile);
+    Baseline = ProfileFormDraft.Copy(Command);
   }
+
+  private bool IsDirty() => !ProfileFormDraft.Same(Command, Baseline);
+
+  private bool IsAgentFilled(string propertyName) =>
+    AgentFilled.TryGetValue(propertyName, out string? canonical)
+    && FormPrefill.Matches(Command, propertyName, canonical);
 
   private async Task HandleValidSubmit()
   {
@@ -111,11 +173,11 @@
               Name=@ProfileState.Profile?.DisplayName
               Size="AvatarSize.Size56" />
           </FormField>
-          <FormField Label="Display name">
+          <FormField Label="Display name" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.DisplayName))">
             <FluentTextInput @bind-Value=Details.DisplayName Name="DisplayName" AriaLabel="Display name" data-qa="ProfileDisplayName" Width="100%" />
             <ValidationMessage For="@(() => Details.DisplayName)" />
           </FormField>
-          <FormField Label="Email (optional)">
+          <FormField Label="Email (optional)" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Email))">
             <FluentTextInput @bind-Value=Details.Email Name="Email" AriaLabel="Email (optional)" data-qa="ProfileEmail" Width="100%" />
             <ValidationMessage For="@(() => Details.Email)" />
           </FormField>
@@ -124,7 +186,7 @@
 
       <FormSection Title="Preferences" Description="Language, region, theme, and notifications.">
         <FormGrid>
-          <FormField Label="Language">
+          <FormField Label="Language" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Language))">
             <FluentCombobox TOption="string" TValue="string"
               Items="@ProfileCatalog.LanguageCodes"
               OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Languages, code))"
@@ -137,7 +199,7 @@
               data-qa="ProfileLanguage" />
             <ValidationMessage For="@(() => Details.Language)" />
           </FormField>
-          <FormField Label="Region">
+          <FormField Label="Region" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Region))">
             <FluentCombobox TOption="string" TValue="string"
               Items="@ProfileCatalog.RegionCodes"
               OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Regions, code))"
@@ -150,7 +212,7 @@
               data-qa="ProfileRegion" />
             <ValidationMessage For="@(() => Details.Region)" />
           </FormField>
-          <FormField Label="Theme">
+          <FormField Label="Theme" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Theme))">
             <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
               Items="@ProfileCatalog.Themes"
               OptionValue="@(static entry => entry?.Code)"
@@ -162,7 +224,7 @@
               data-qa="ProfileTheme" />
             <ValidationMessage For="@(() => Details.Theme)" />
           </FormField>
-          <FormField Label="Notifications">
+          <FormField Label="Notifications" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Notifications))">
             <FluentCheckbox @bind-Value=Details.Notifications AriaLabel="Notifications" />
           </FormField>
         </FormGrid>

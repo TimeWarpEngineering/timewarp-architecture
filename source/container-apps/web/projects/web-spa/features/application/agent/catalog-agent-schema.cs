@@ -67,7 +67,14 @@ public static class CatalogAgentSchema
       return EnumSchema(type);
     }
 
-    return ComplexSchema(type);
+    return ComplexSchema(type, includeRequired: true);
+  }
+
+  /// <summary>The command object as a tool schema with every field optional.</summary>
+  public static string OptionalCommand(Type commandType)
+  {
+    ArgumentNullException.ThrowIfNull(commandType);
+    return ComplexSchema(commandType, includeRequired: false).ToJsonString();
   }
 
   private static JsonObject EnumSchema(Type type)
@@ -81,7 +88,7 @@ public static class CatalogAgentSchema
     return new JsonObject { ["type"] = "string", ["enum"] = names };
   }
 
-  private static JsonObject ComplexSchema(Type type)
+  private static JsonObject ComplexSchema(Type type, bool includeRequired)
   {
     JsonObject properties = [];
     JsonArray required = [];
@@ -110,7 +117,7 @@ public static class CatalogAgentSchema
 
       bool nullableReference = !propertyType.IsValueType
         && nullability.Create(property).WriteState == NullabilityState.Nullable;
-      if (!nullableReference && Nullable.GetUnderlyingType(property.PropertyType) is null)
+      if (includeRequired && !nullableReference && Nullable.GetUnderlyingType(property.PropertyType) is null)
       {
         required.Add(JsonNamingPolicy.CamelCase.ConvertName(property.Name));
       }

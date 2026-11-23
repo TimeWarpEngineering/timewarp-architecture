@@ -8,6 +8,8 @@
 // the person is not on that page: the tool is listed, and invoking it returns a navigate offer
 // instead of running. RequiresApproval is the template's read-only rule, decided once when the
 // tool is selected. An off-page offer is not an edit, so that bit is false.
+// Prefill is a synthetic tool, like navigate. Its Entry is the submit action (the offer and the
+// permission check). Invoke stores a draft by executing the suggestion action instead.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -20,5 +22,6 @@ public sealed record CatalogAgentTool
   string InputSchema,
   bool RequiresApproval,
   ActionCatalogEntry? Entry,
-  string? OffPageRoute = null
+  string? OffPageRoute = null,
+  bool Prefill = false
 );

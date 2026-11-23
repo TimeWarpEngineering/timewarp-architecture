@@ -10,6 +10,10 @@
 }
 
 .twe-form-field__label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--twe-space-2);
   font-size: var(--twe-text-body);
   font-weight: 600;
   color: var(--twe-ink);

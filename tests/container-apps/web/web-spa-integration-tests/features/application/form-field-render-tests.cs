@@ -31,6 +31,8 @@ public class FormField_Should_
     css.ShouldContain(".twe-form-field__control");
     css.ShouldContain("width: 100%");
     css.ShouldContain(".twe-form-field__hint");
+    css.ShouldContain(".twe-form-field__label");
+    css.ShouldContain("display: flex");
     css.ShouldNotContain(".twe-form-field__control > *");
 
     css.ShouldContain(".twe-form-field__control ::deep > fluent-text-input");
@@ -66,6 +68,35 @@ public class FormField_Should_
     html.ShouldContain("twe-form-field__control");
     html.ShouldContain("twe-form-field--span-12");
     html.ShouldContain("data-qa=\"FormFieldControl\"");
+    html.ShouldNotContain("<style");
+    html.ShouldNotContain("data-qa=\"AgentFilled\"");
+  }
+
+  public static async Task Render_Agent_Filled_Badge()
+  {
+    await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
+    await using HtmlRenderer renderer = new(services, NullLoggerFactory.Instance);
+
+    string html = await renderer.Dispatcher.InvokeAsync(async () =>
+    {
+      ParameterView parameters = ParameterView.FromDictionary(
+        new Dictionary<string, object?>
+        {
+          ["Label"] = "Display name",
+          ["AgentFilled"] = true,
+          ["ChildContent"] = (RenderFragment)(builder =>
+          {
+            builder.OpenElement(0, "input");
+            builder.CloseElement();
+          })
+        });
+      return (await renderer.RenderComponentAsync<FormField>(parameters)).ToHtmlString();
+    });
+
+    html.ShouldContain("Display name");
+    html.ShouldContain("Agent");
+    html.ShouldContain("twe-badge--info");
+    html.ShouldContain("data-qa=\"AgentFilled\"");
     html.ShouldNotContain("<style");
   }
 
