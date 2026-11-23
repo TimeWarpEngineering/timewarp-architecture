@@ -60,7 +60,7 @@ The Ask composer lead row has a microphone. A click records in the browser, the 
 - `./bin/dev build` — succeeded, 0 warnings, 0 errors, 00:00:21.54.
 - `dotnet run --file source/container-apps/web/features/agent-chat/transcribe-agent-audio/transcribe-agent-audio-tests.cs` — exit 0, 10 passed (handler 5, speech request and mapping 3, validator 2).
 - `tests/container-apps/web/web-spa-playwright-tests/ask-voice-input-playwright-tests.cs` is not a standalone runfile (no `#if !JARIBU_MULTI`). `./bin/dev test` does not take a file. CI runs it with the Playwright project. Filtered proof from that project directory: `dotnet test -c Release --no-build --no-restore -- --filter-class AskVoiceInput_Given_Wasm` — passed, 1 test.
-- `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing).
+- `ganda repo audit` — exit 0 after the transcription runfile was staged executable (`runfile-executable` had failed on the first commit because the shebang was mode 100644). 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing).
 
 ## Notes
 
