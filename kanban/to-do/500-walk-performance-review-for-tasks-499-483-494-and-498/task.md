@@ -12,7 +12,7 @@ Use this task to walk through each finding one by one and decide which follow-up
 
 - [x] Collect SigNoz OTEL traces, walk logs, transcripts, and PR CI timings for tasks 499, 483, 494, and 498 (`report/analysis.md`)
 - [x] Item 3 — Mitigate `roslynk` background `dotnet restore` storm and unauthenticated Cloudflare MCP servers (uninstalled `roslynk 3.0.0` and disabled Cloudflare MCPs on 2026-11-23)
-- [ ] Item 2 (`timewarp-architecture`) — Decide & file tasks for `ci (playwright)` (`10–15m`/PR: disable in `workflow.yml` + research task to evaluate value)
+- [x] Item 2 (`timewarp-architecture`) — Filed tasks **501** (disable Playwright in CI), **502** (research Playwright value), **503** (thin-trigger `workflow.yml` + `dev workflow` refactor, depends on 501), and **504** (`wslc` runners + `green-key` skip, depends on 503)
 - [ ] Item 1A (`timewarp-ganda`) — Decide & file task: set `GANDA_ATTEST_HOOK=0` in `home fast-forward` (`39–52s` per fast-forward, still live on `beta.38`)
 - [ ] Item 1B (`timewarp-ganda`) — Decide & file task: attest in `audit` node for Task 707 reuse + short-TTL cache `package-pin-currency` (still live on `beta.38`)
 - [ ] Item 1C (`timewarp-ganda` / oracle brief) — Decide & file task: skip `post-commit` attest hook on intermediate WIP commits
