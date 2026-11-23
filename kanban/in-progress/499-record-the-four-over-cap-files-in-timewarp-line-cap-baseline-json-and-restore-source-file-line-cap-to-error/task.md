@@ -124,7 +124,10 @@ Boy-scout audit fixes (pre-existing failures on master with ganda beta.38+c8f6a9
   `web-spa/source/features/counter.ts`, `web-spa/wwwroot/service-worker.js`, and
   `web-spa/wwwroot/service-worker.published.js` (existing header comments moved into the regions).
 - `package-pin-currency`: `TimeWarp.Nuru` pin 4.0.0-beta.16 → 4.0.0-beta.17 in `Directory.Packages.props`
-  (and the two comments naming the Nuru version). Its nuspec dependencies (Build.Tasks 2.0.1-beta.1,
+  (and the two comments naming the Nuru version). The first commit's attest then flagged the
+  dev-only `TimeWarp.Nuru.DevCli` pin (4.0.0-beta.16 behind beta.17, relaxed until the dev-cli tree
+  changes), so it moved to 4.0.0-beta.17 too; `dotnet run --file tools/dev-cli/dev.cs -- --capabilities`
+  compiles and exits 0 on the new pins. Its nuspec dependencies (Build.Tasks 2.0.1-beta.1,
   Mediator 15.0.0-beta.10, Contracts 2.0.0-beta.34) match the existing pins.
 - `vscode-window-icon` stays a Warning: `.vscode/settings.json` is git-ignored local state.
 
@@ -144,4 +147,5 @@ Expect: exit 1 with "N+1 lines, baseline N. The recorded count can only shrink."
   (reads `counter.ts`) → not a standalone runfile (no `#if !JARIBU_MULTI` guard); CI runs it.
 - No test file was added or edited.
 - `./bin/dev check-version` → source 2.0.0-beta.32 is one prerelease ahead of nuget 2.0.0-beta.31; safe to release.
-- `ganda repo audit` → exit 0 (only `vscode-window-icon` Warning, git-ignored local file).
+- `ganda repo audit` → exit 0 (only `vscode-window-icon` Warning, git-ignored local file). After the
+  DevCli pin fix: `./bin/dev build` 0 warnings / 0 errors, `ganda repo audit` exit 0.
