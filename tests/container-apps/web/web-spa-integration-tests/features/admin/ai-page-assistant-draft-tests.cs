@@ -13,6 +13,12 @@
 // a command that still matches the response it was copied from. A command that differs keeps its edit. When
 // the stored field that edit changes is unchanged, the command takes the new version. When
 // that field changed too, the command keeps the old version. The render block does not assign.
+// SaveAssistantAsync and SaveByokAsync are the page's own save. ShouldReRender leaves the
+// saved form on the old version, because that form's field changed. The handler then accepts
+// the saved response with force. These tests edit a field and invoke that handler on the
+// renderer dispatcher. The saved form shows the saved value and version. An unsaved edit in
+// the other form stays. The save updates the command after the state notification, so the
+// test asks the page to render again before reading the HTML.
 #endregion
 
 namespace AiPageAssistantDraft_;
@@ -226,6 +232,52 @@ public class AiPage_Should_
     html.ShouldContain("data-xai-byok-mode=\"Allow\"");
   }
 
+  public static async Task Move_The_Assistant_Form_To_The_Saved_Response_And_Keep_A_Byok_Edit()
+  {
+    ScriptedWebServer server = new();
+    server.Settings = Settings("Akili", version: 3);
+    server.Renamed = new UpdateAssistantName.Response("Nia", 9);
+    using DraftSpa spa = new(server);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new SiteSettingsState.FetchSiteSettingsActionSet.Action());
+
+    string html = await RenderAsync(scope, async page =>
+    {
+      SetByokMode(page, XaiByokMode.Off);
+      SetAssistantName(page, "Nia");
+      await InvokePageAsync(page, "SaveAssistantAsync");
+    });
+
+    html.ShouldContain("data-assistant-name=\"Nia\"");
+    html.ShouldContain("data-assistant-version=\"9\"");
+    html.ShouldNotContain("data-assistant-version=\"3\"");
+    html.ShouldContain("data-xai-byok-mode=\"Off\"");
+    html.ShouldContain("data-xai-byok-version=\"9\"");
+  }
+
+  public static async Task Move_The_Byok_Form_To_The_Saved_Response_And_Keep_A_Name_Edit()
+  {
+    ScriptedWebServer server = new();
+    server.Settings = Settings("Akili", version: 3);
+    server.ByokUpdated = new UpdateXaiByokMode.Response(XaiByokMode.Off, 11);
+    using DraftSpa spa = new(server);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new SiteSettingsState.FetchSiteSettingsActionSet.Action());
+
+    string html = await RenderAsync(scope, async page =>
+    {
+      SetAssistantName(page, "Local");
+      SetByokMode(page, XaiByokMode.Off);
+      await InvokePageAsync(page, "SaveByokAsync");
+    });
+
+    html.ShouldContain("data-xai-byok-mode=\"Off\"");
+    html.ShouldContain("data-xai-byok-version=\"11\"");
+    html.ShouldNotContain("data-xai-byok-version=\"3\"");
+    html.ShouldContain("data-assistant-name=\"Local\"");
+    html.ShouldContain("data-assistant-version=\"11\"");
+  }
+
   private static GetSiteSettings.Response Settings(string name, long version, XaiByokMode mode = XaiByokMode.Allow) =>
     new(
       entraSignInEnabled: true,
@@ -276,6 +328,20 @@ public class AiPage_Should_
     PropertyInfo property = typeof(AiPage).GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic)
       ?? throw new InvalidOperationException(name);
     return property.GetValue(page) ?? throw new InvalidOperationException(name);
+  }
+
+  private static async Task InvokePageAsync(AiPage page, string methodName)
+  {
+    MethodInfo method = typeof(AiPage).GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)
+      ?? throw new InvalidOperationException(methodName);
+    Task task = (Task?)method.Invoke(page, null) ?? throw new InvalidOperationException(methodName);
+    await task;
+    MethodInfo render = typeof(ComponentBase).GetMethod
+    (
+      "StateHasChanged",
+      BindingFlags.Instance | BindingFlags.NonPublic
+    ) ?? throw new InvalidOperationException("StateHasChanged");
+    render.Invoke(page, null);
   }
 
   private sealed class PageCapture

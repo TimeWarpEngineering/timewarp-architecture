@@ -13,6 +13,8 @@ Acceptance:
 - An agent rename or key-policy update while the page is open refreshes an unedited form, including the other form's version.
 - An unsaved edit remains when the other save advances `Version`, and that edit's command takes the new version.
 - An unsaved edit whose own stored field also changed keeps the typed value and the old version.
+- Saving the assistant name through the page replaces that form with the saved name and version, and keeps an unsaved key-policy edit. Saving the key policy through the page does the same for the mode, and keeps an unsaved name.
+- Each form is shown when its copied source response is set. There is no separate loaded flag.
 - The xAI API key form is unchanged.
 
 ## Description
@@ -41,7 +43,9 @@ fields with `SyncAssistantDraft` / `SyncByokDraft` plus `SyncUnedited*` dirty tr
 
 `SiteSettingsState.SiteSettings` holds that response beside the flattened fields. Fetch assigns it. A successful assistant-name save, key-policy save, or authentication-policy save replaces the instance through `ReviseSiteSettings`, because `Version` is get-only.
 
-`AiPage` binds `UpdateAssistantName.Command` and `UpdateXaiByokMode.Command`. `From` runs after the page fetch and after that form's successful save. A later `SiteSettingsState` action reconciles both drafts in `ShouldReRender`. An unedited command is replaced. An edited command stays, and takes the new `Version` when its own stored field is unchanged. The xAI API key form is unchanged.
+`AiPage` binds `UpdateAssistantName.Command` and `UpdateXaiByokMode.Command`. `From` runs after the page fetch and after that form's successful save. A later `SiteSettingsState` action reconciles both drafts in `ShouldReRender`. An unedited command is replaced. An edited command stays, and takes the new `Version` when its own stored field is unchanged. The assistant form renders when `AssistantSource` is set, and the key-policy form renders when `ByokSource` is set. The xAI API key form is unchanged.
+
+Review round 1: the page's own save is what moves the saved form onto the saved response. `SaveAssistantAsync` and `SaveByokAsync` accept that response with force after `ShouldReRender` has left the old version. The tests edit the other form, invoke those handlers, and read the rendered attributes.
 
 ### How to validate
 
@@ -49,19 +53,33 @@ Smoke: sign in as an admin and open Admin → AI. Wait until the assistant name 
 
 Expect: both forms open on the server name, mode, and the same version. Saving the name keeps the unsaved Off policy and moves that form's version to the saved version. Saving the policy keeps the unsaved name and moves that form's version to the saved version. Reload shows the saved name and Off. The site xAI API key form still saves and clears a key, and the stored secret stays hidden.
 
-Gates:
+Gates (fix pass, review round 1):
 
 - `./bin/dev build` — succeeded, 0 warnings, 0 errors.
-- `dotnet run --file source/container-apps/web/features/settings/update-assistant-name/update-assistant-name-tests.cs` — passed, 24 tests, including `From_Should_CopyName_And_Version_From_GetSiteSettings`.
-- `dotnet run --file source/container-apps/web/features/settings/update-xai-byok-mode/update-xai-byok-mode-tests.cs` — passed, 11 tests, including `From_Should_CopyMode_And_Version_From_GetSiteSettings`.
-- `tests/container-apps/web/web-spa-integration-tests/features/admin/ai-page-assistant-draft-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`). CI runs the project. `dotnet run --project tests/container-apps/web/web-spa-integration-tests -c Release --no-build -- --filter-class AiPage_Should_` — passed, 7 tests.
-- `ganda repo audit` — exit 0. 42 passed, 3 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing). `analyzer-suppressions` passed: 843 suppressions, none above the baseline.
+- `source/container-apps/web/features/settings/update-assistant-name/update-assistant-name-tests.cs` — not edited this pass. Implementation pass: `dotnet run --file` passed, 24 tests, including `From_Should_CopyName_And_Version_From_GetSiteSettings`.
+- `source/container-apps/web/features/settings/update-xai-byok-mode/update-xai-byok-mode-tests.cs` — not edited this pass. Implementation pass: `dotnet run --file` passed, 11 tests, including `From_Should_CopyMode_And_Version_From_GetSiteSettings`.
+- `tests/container-apps/web/web-spa-integration-tests/features/admin/ai-page-assistant-draft-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`). CI runs the project. `dotnet run --project tests/container-apps/web/web-spa-integration-tests -c Release --no-build -- --filter-class AiPage_Should_` — passed, 9 tests, including `Move_The_Assistant_Form_To_The_Saved_Response_And_Keep_A_Byok_Edit` and `Move_The_Byok_Form_To_The_Saved_Response_And_Keep_A_Name_Edit`.
+- `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing). `analyzer-suppressions` passed: 843 suppressions, none above the baseline.
+
+### Review
+
+- Round 1, effort 2, roster: general. Counts at merge: 0 bug, 1 suggestion, 1 nit. Fix pass addressed both. Round 2 has not run.
+- M1: `AiPage_Should_` edits a field and invokes `SaveAssistantAsync` / `SaveByokAsync`. The saved form shows the saved value and version. The other form keeps its unsaved edit.
+- M2: `AssistantDraftLoaded` and `ByokDraftLoaded` are gone. The markup renders each form when its source response is set.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ## Session
 
 - Implementation: Grok 4.7, 2026-11-23. The assistant-name and key-policy forms copy `GetSiteSettings.Response` with `From`. A state action reconciles the open drafts in `ShouldReRender`, because `OnParametersSet` does not run for that re-render. An edit stays, and takes the new version when its own stored field is unchanged.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a208c8-fc85-7d03-8ddf-af336c82e51b, max-turns 500, Done — 2026-11-23T14:51:10Z
+- Review oracle round 1: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, turn cap 120, 2026-11-23. 2 open findings (M1 suggestion, M2 nit), fix pass requested.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0c375f0b-0f7f-4d7b-be31-ab10bf662f28, max-turns 120, artifacts general.md, merged.md — 2026-11-23T14:53:33Z
+- Fix pass: Grok 4.7, 2026-11-23. The forms render from the copied source. The page save tests invoke `SaveAssistantAsync` and `SaveByokAsync`, so a deleted force accept fails on the saved version.
 
 ## Parent
 
 - 489
+
+## Review
+
+- Round 1: fix pass addressed M1 and M2. Round 2 has not run.

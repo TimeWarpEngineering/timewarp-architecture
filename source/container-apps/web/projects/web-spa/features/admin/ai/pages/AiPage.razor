@@ -14,14 +14,15 @@
   command that still matches the response it was copied from. A command that differs is dirty:
   the edit stays. When that response's AssistantName is unchanged, the command takes the new
   Version. When AssistantName changed too, the command keeps its Version. Nothing assigns the
-  command from the render block. data-qa="AssistantSettings" and AssistantNameRules validation match the
+  command from the render block. The section renders when AssistantSource is set.
+  data-qa="AssistantSettings" and AssistantNameRules validation match the
   section that used to sit on Authentication. Interactive init always dispatches
   FetchSiteSettings, including when sign-in already loaded a snapshot.
   Submit is SiteSettingsState.UpdateAssistantName. A successful save
   reloads the public identity from AssistantIdentityRefreshHandler, so the button, Ctrl-K row
   and panel update without a page reload. AssistantNameSaveFailed keeps the draft.
   The Ask API key section binds UpdateXaiByokMode.Command the same way, against XaiByokMode,
-  including the ShouldReRender reconcile.
+  including the ShouldReRender reconcile. The section renders when ByokSource is set.
   It sits next to the site key. XaiByokModeSaveFailed keeps that draft. When the host has set XAI:ApiKey the
   select is replaced by the saved label and the reason the policy has no effect.
   The draft key is page-local and is cleared after a successful save. State never
@@ -59,10 +60,6 @@
   private GetSiteSettings.Response? AssistantSource;
 
   private GetSiteSettings.Response? ByokSource;
-
-  private bool AssistantDraftLoaded;
-
-  private bool ByokDraftLoaded;
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -180,7 +177,6 @@
     {
       AssistantCommand = UpdateAssistantName.Command.From(stored);
       AssistantSource = stored;
-      AssistantDraftLoaded = true;
       return;
     }
 
@@ -204,7 +200,6 @@
     {
       ByokCommand = UpdateXaiByokMode.Command.From(stored);
       ByokSource = stored;
-      ByokDraftLoaded = true;
       return;
     }
 
@@ -266,7 +261,7 @@
 }
 
 <TimeWarpPage Title="AI">
-  @if (AssistantDraftLoaded)
+  @if (AssistantSource is not null)
   {
     <EditForm Model="AssistantCommand" OnValidSubmit="SaveAssistantAsync" FormName="AssistantNameForm" novalidate>
       <FluentValidator Validator="@AssistantValidator" />
@@ -392,7 +387,7 @@
       <p data-qa="XaiByokModeHostReason">XAI:ApiKey is set in configuration, so this policy has no effect. The deployment key always wins.</p>
     </FormSection>
   }
-  else if (ByokDraftLoaded)
+  else if (ByokSource is not null)
   {
     <EditForm Model="ByokCommand" OnValidSubmit="SaveByokAsync" FormName="XaiByokModeForm" novalidate>
       <FluentValidator Validator="@ByokValidator" />
