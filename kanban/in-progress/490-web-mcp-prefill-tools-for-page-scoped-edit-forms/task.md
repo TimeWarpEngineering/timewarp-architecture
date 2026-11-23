@@ -78,9 +78,17 @@ Gates for the round-2 fix pass. These test files are not standalone runfiles (no
 
 ### Review
 
-Round 1 (effort 3, roster: general): 1 bug, 2 suggestions, and 2 nits. The fix pass addressed M1–M5. Round 2 has not run. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Rounds: 2. Round 1 (effort 3, roster general) raised 1 bug, 2 suggestions, and 2 nits (M1–M5). The fix pass (aa25cba8c) addressed all five. Round 2 (effort 2, roster general) re-checked each fix on the delta and raised no new findings.
+
+Final counts: bug 1 fixed, suggestion 2 fixed, nit 2 fixed. 0 open, 0 wontfix.
+
+Disposition: **clean**. No exceptions or escalations. The browser smoke was not run. Page tests on an interactive HTML host stand in for it.
+
+Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Session
+
+- Review oracle round 2: Claude Code (claude-opus-5-5), effort 2, roster general. Re-checked M1–M5 as fixed on aa25cba8c with no new findings. Disposition clean. 2026-11-24
 
 - Fix pass for review round 1: the page waits until a loaded profile is the working copy before it applies a draft. Arguments that match no field are not stored. The replace question names unsaved changes on the form. Prefill approval is page-bound. Page tests call `OnAfterRenderAsync` because the static HTML renderer skips it. 2026-11-24
 - Review oracle round 1: Claude Code (claude-opus-5-5), effort 3, roster general. 5 open findings (M1 to M5), so a fix pass is requested. 2026-11-24
@@ -89,4 +97,5 @@ Round 1 (effort 3, roster: general): 1 bug, 2 suggestions, and 2 nits. The fix p
 
 ## Review
 
-- Round 1: fix pass addressed M1, M2, M3, M4, M5. Round 2 has not run.
+- Round 1: fix pass addressed M1, M2, M3, M4, M5.
+- Round 2: Done
