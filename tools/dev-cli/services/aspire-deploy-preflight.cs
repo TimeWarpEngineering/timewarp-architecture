@@ -5,7 +5,7 @@
 
 #region Design
 // Kept apart from services/deploy/ so that folder stays pure for dev-cli-tests (same split as
-// aspire-cli.cs / aspire-run.cs). Probes only read: `aspire --version` (refuse below 13.6; warn
+// aspire-cli.cs / aspire-run.cs). Probes only read: `aspire --version` (refuse below 17.0; warn
 // when older than Directory.Packages.props <AspireVersion>), `helm version --short`,
 // `kubectl config current-context`, `kubectl get --raw /version`, `kind get clusters`, an HTTP GET of
 // the registry's /v2/, `az account show`, `dotnet user-secrets list --project <apphost>`, and the

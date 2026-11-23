@@ -8,7 +8,7 @@
 // leaving failures to the common error pipeline.
 // [TrackAction] exposes in-flight status so the UI can render a loading indicator while
 // the fetch is pending.
-// Task 148 D7 / 205: maps DisplayName/Email/Avatar plus Language/Region/Theme/Notifications from Response.
+// Task 489-002: the success path stores the response object. It does not copy fields onto the state.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
@@ -41,13 +41,7 @@ partial class ProfileState
       }
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        ProfileState.DisplayName = response.DisplayName;
-        ProfileState.Email = response.Email;
-        ProfileState.Avatar = response.Avatar;
-        ProfileState.Language = response.Language;
-        ProfileState.Region = response.Region;
-        ProfileState.Theme = response.Theme;
-        ProfileState.Notifications = response.Notifications;
+        ProfileState.Profile = response;
         return Task.CompletedTask;
       }
     }

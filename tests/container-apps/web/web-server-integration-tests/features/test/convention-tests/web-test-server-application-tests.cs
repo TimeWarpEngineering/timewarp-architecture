@@ -35,12 +35,4 @@ public class Should
     true.ShouldBeTrue();
     return Task.CompletedTask;
   }
-
-  [Skip("This test runs forever to allow me to manually test if servers are running properly.  Normally needs to be skipped as it will never completed")]
-  public static async Task RunForever()
-  {
-    await Task.Delay(int.MaxValue);
-    Console.WriteLine("Will never get here");
-  }
-
 }

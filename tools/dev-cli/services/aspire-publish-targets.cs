@@ -57,11 +57,14 @@ internal static class AspirePublishTargets
   /// <summary>Every target, in the order `dev publish all` publishes them.</summary>
   internal static readonly AspirePublishTarget[] All = [Compose, Kubernetes, Aca, AcaNeon];
 
-  /// <summary>The <c>dotnet test</c> arguments that run the safety suites of <paramref name="targets"/> in one invocation.</summary>
-  internal static string[] SafetySuiteTestArguments(IReadOnlyList<AspirePublishTarget> targets, bool noBuild)
+  /// <summary>
+  /// The arguments after the typed <c>dotnet test -c Release</c> options (DotNet.Test() in
+  /// aspire-publish.cs adds --no-build --no-restore) that run the safety suites of
+  /// <paramref name="targets"/> in one invocation.
+  /// </summary>
+  internal static string[] SafetySuiteFilterArguments(IReadOnlyList<AspirePublishTarget> targets)
   {
     string filter = targets.Count == 1 ? targets[0].SafetySuiteClass : SafetySuiteClassSuffix;
-    string[] build = noBuild ? ["--no-build", "--no-restore"] : [];
-    return ["test", "-c", "Release", .. build, "--", "--filter-class", filter];
+    return ["--", "--filter-class", filter];
   }
 }

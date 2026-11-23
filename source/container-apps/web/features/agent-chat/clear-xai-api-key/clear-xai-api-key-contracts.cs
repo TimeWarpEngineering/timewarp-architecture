@@ -5,6 +5,8 @@
 #region Design
 // DELETE is safe to retry: a second call leaves the row gone. IIdempotentCommand. Host
 // configuration is not cleared by this command. settings.write. No agent-token scheme.
+// [Destructive] (task 483): the SPA asks before it sends this (ConfirmAsync), so the transports carry the
+// same destructive hint; TWA0044 keeps the two in agreement.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -20,6 +22,7 @@ public static partial class ClearXaiApiKey
 {
   /// <summary>No body. The caller is the authenticated admin.</summary>
   [ApiRoute("api/admin/ai/xai-api-key", HttpVerb.Delete)]
+  [Destructive]
   [Operation("xai-api-key.clear", Description = "Clear the stored site xAI API key.", Group = "admin.ai")]
   public sealed partial class Command : IApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>;
 

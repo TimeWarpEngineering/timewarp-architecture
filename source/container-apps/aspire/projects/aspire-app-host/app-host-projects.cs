@@ -16,15 +16,15 @@ internal sealed class AppHostProjects
 {
 #if api
   /// <summary>The api-server project resource.</summary>
-  internal required IResourceBuilder<ProjectResource> ApiServer { get; init; }
+  internal required IResourceBuilder<DotnetProjectResource> ApiServer { get; init; }
 #endif
 #if grpc
   /// <summary>The grpc-server project resource.</summary>
-  internal required IResourceBuilder<ProjectResource> GrpcServer { get; init; }
+  internal required IResourceBuilder<DotnetProjectResource> GrpcServer { get; init; }
 #endif
 #if web
   /// <summary>The web-server project resource.</summary>
-  internal required IResourceBuilder<ProjectResource> WebServer { get; init; }
+  internal required IResourceBuilder<DotnetProjectResource> WebServer { get; init; }
 
   /// <summary>The State DevTools inspector in run mode; null in publish mode.</summary>
   internal IResourceBuilder<ExecutableResource>? StateDevTools { get; init; }

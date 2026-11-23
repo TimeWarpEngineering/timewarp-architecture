@@ -8,6 +8,7 @@
 // patterns uniform across contracts.
 // Guard clauses in the Response constructor make an empty profile unrepresentable; Avatar is a
 // non-empty string (data URI) so the UI never receives a blank image source.
+// This response is partial so the details generator can add Clone. A state snapshot keeps Avatar.
 // Wire names (task 148 D2 / 205): DisplayName matches the domain Profile.DisplayName exactly (task 474);
 // Email is optional progressive profile; Language/Region/Theme/Notifications mirror the Profile
 // aggregate; Avatar is not domain/EF. Response implements IProfileDetails so the Profile page form
@@ -35,7 +36,7 @@ public static partial class GetProfile
 
   public sealed class Validator : AbstractValidator<Query>;
 
-  public sealed class Response : BaseResponse, IProfileDetails
+  public sealed partial class Response : BaseResponse, IProfileDetails
   {
     public string DisplayName { get; set; }
     public string? Email { get; set; }

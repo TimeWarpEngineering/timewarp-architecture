@@ -1,11 +1,16 @@
-// Purpose: collocated FluentSelect module at the URL WASM import()s.
-// Design: Live WASM JSInterop looks up Microsoft.FluentUI.Blazor.Select.SetComboBoxValue
+// #region Purpose
+// Collocated FluentSelect module at the URL WASM import()s.
+// #endregion
+//
+// #region Design
+// Live WASM JSInterop looks up Microsoft.FluentUI.Blazor.Select.SetComboBoxValue
 // (rc.4 identifier, no Components) on the imported module. rc.5 C# also calls
 // Microsoft.FluentUI.Blazor.Components.Select.Initialize / ClearValue via
 // InvokeFluentVoidAsync. Publish both identifier trees. SetComboBoxValue is the
 // rc.4 combobox _control.value write (205-004 closed-label UX). Remove when a
 // Fluent UI package packs this JS and these identifiers. Do not vendor the rest
 // of the nupkg.
+// #endregion
 
 export var Microsoft;
 (function (Microsoft) {

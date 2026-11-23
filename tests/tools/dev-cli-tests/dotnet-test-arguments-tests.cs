@@ -1,5 +1,6 @@
 #region Purpose
-// Pins `dev test` argument construction: a serial build phase, then --no-build tests.
+// Pins `dev test` argument construction: the MTP coverage arguments after the typed
+// `dotnet test -c Release --no-build --no-restore` options.
 #endregion
 
 namespace DotNetTestArguments_;
@@ -9,17 +10,11 @@ public class Arguments_Given_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Arguments_Given_>();
 
-  public static Task Build_Should_BuildRelease()
+  public static Task PlatformArguments_Should_PutCoverageFlagsAfterDoubleDash()
   {
-    DotNetTestArguments.Build().ShouldBe(["build", "-c", "Release"]);
-    return Task.CompletedTask;
-  }
-
-  public static Task Test_Should_SkipBuildAndRestore()
-  {
-    DotNetTestArguments.Test("artifacts/coverage/x").ShouldBe(
+    DotNetTestArguments.PlatformArguments("artifacts/coverage/x").ShouldBe(
     [
-      "test", "-c", "Release", "--no-build", "--no-restore", "--",
+      "--",
       "--results-directory", "artifacts/coverage/x", "--coverage",
       "--coverage-output-format", "cobertura", "--coverage-output", "coverage.cobertura.xml"
     ]);
