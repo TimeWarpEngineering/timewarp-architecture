@@ -7,7 +7,7 @@
 // C-create in-proc ServiceProvider (same shape as feedback-admin-state-tests): a scripted
 // IWebServerApiService answers per request type; states are re-read from the Store after Send.
 // Covers SetSearch and SetSort landing on the fetch query, a failed fetch clearing the rows,
-// OpenPrincipal storing the detail and seeding the role draft, and the non-revealing 404.
+// OpenPrincipal storing the detail, a save sending the page's role ids, and the non-revealing 404.
 #endregion
 
 namespace PrincipalState_;
@@ -95,7 +95,7 @@ public class PrincipalActions_Should_
     state.ListLoadError.ShouldNotBeNull();
   }
 
-  public static async Task Open_Stores_The_Detail_And_Seeds_The_Role_Draft()
+  public static async Task Open_Stores_The_Detail()
   {
     using AdminSpa spa = new();
     using SpaTestScope scope = SpaTestScope.Create(spa);
@@ -108,8 +108,34 @@ public class PrincipalActions_Should_
     current.PrincipalId.Value.ShouldBe(PrincipalId);
     current.Profile.ShouldNotBeNull().DisplayName.ShouldBe("Ada Lovelace");
     state.LoadError.ShouldBeNull();
-    state.IsRoleSelected(PrincipalId, RoleIds.Member).ShouldBeTrue();
-    state.IsRoleSelected(PrincipalId, RoleIds.Administrator).ShouldBeFalse();
+    current.RoleIds.ShouldContain(RoleIds.Member);
+    current.RoleIds.ShouldNotContain(RoleIds.Administrator);
+  }
+
+  public static async Task SetRoles_Should_Send_The_Command_Role_Ids()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    SetPrincipalRoles.Command? seen = null;
+    spa.Api.Answer<SetPrincipalRoles.Command>(command =>
+    {
+      seen = command;
+      return new SetPrincipalRoles.Response([.. command.RoleIds]);
+    });
+
+    SetPrincipalRoles.Command page = new()
+    {
+      PrincipalId = PrincipalId,
+      RoleIds = [RoleIds.Administrator]
+    };
+    await scope.Store.GetState<PrincipalState>().SetPrincipalRoles(page);
+
+    seen.ShouldNotBeNull();
+    seen.RoleIds.ShouldBe([RoleIds.Administrator]);
+    seen.ShouldNotBeSameAs(page);
+    seen.UserId.ShouldNotBe(Guid.Empty);
+    page.RoleIds.ShouldBe([RoleIds.Administrator]);
+    scope.Store.GetState<PrincipalState>().LastSetPrincipalRolesSucceeded.ShouldBeTrue();
   }
 
   public static async Task Open_Of_A_Missing_Principal_Sets_A_Non_Revealing_Error()

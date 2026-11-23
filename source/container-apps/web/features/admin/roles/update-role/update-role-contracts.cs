@@ -13,6 +13,8 @@
 // AuthenticationSchemeNames' Design region.
 // [Operation] names it roles.update for every transport. IIdempotentCommand: the PUT replaces
 // name and description, so a retry leaves the same state.
+// CopyBeyondDetails copies RoleId from GetRole.Response. RoleId is a route id, not an
+// IRoleDetails field, so From would otherwise leave it empty.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -32,6 +34,14 @@ public static partial class UpdateRole
     public Guid UserId { get; set; }
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
+
+    static partial void CopyBeyondDetails(Command command, IRoleDetails source)
+    {
+      if (source is GetRole.Response role)
+      {
+        command.RoleId = role.RoleId;
+      }
+    }
   }
 
   public sealed class Validator : AbstractValidator<Command>

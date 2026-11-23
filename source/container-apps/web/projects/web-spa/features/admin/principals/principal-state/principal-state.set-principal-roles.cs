@@ -1,13 +1,15 @@
 #region Purpose
-// SetPrincipalRoles action: persists draft role multi-select for one principal.
+// SetPrincipalRoles action: persists the role list the page built for one principal.
 #endregion
 
 #region Design
-// HandleSuccess does not fetch. The Set response echoes *stored* roles only — patching
-// drafts from it desyncs virtual grants (roleless human → Member; roleless agent → no role; bootstrap unions
-// Admin+Member; review M1). LastSetPrincipalRolesSucceeded is set false in GetRequest and
-// true in HandleSuccess so PrincipalsPage sequences FetchPrincipals only after a successful
-// write (failed 409 must not re-seed drafts). NotifySessionChanged is not an
+// The page owns the checkbox working copy and passes RoleIds on the command. This handler
+// stamps UserId and sends that list. It does not read a store draft.
+// HandleSuccess does not fetch. The Set response echoes *stored* roles only — the page
+// recopies from OpenPrincipal, which returns effective roles (roleless human → Member;
+// roleless agent → no role; bootstrap unions Admin+Member; review M1).
+// LastSetPrincipalRolesSucceeded is set false in GetRequest and true in HandleSuccess so
+// the page reopens only after a successful write. NotifySessionChanged is not an
 // action dispatch (calls the auth state provider directly) and stays here so AuthorizeView /
 // nav re-run developer.access when the edited principal is the signed-in identity-session
 // user (WASM: re-project GetCurrentSession permission claims; Server circuit:
@@ -23,57 +25,16 @@ using static SetPrincipalRoles;
 
 partial class PrincipalState
 {
-  public static class SetRoleSelectedActionSet
-  {
-    [TrackAction]
-    public sealed class Action : IBaseAction
-    {
-      public Guid PrincipalId { get; }
-      public Guid RoleId { get; }
-      public bool Selected { get; }
-
-      public Action(Guid principalId, Guid roleId, bool selected)
-      {
-        PrincipalId = principalId;
-        RoleId = roleId;
-        Selected = selected;
-      }
-    }
-
-    internal class Handler(IStore store) : BaseHandler<Action>(store)
-    {
-      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
-      {
-        if (!PrincipalState.DraftRoleIds.TryGetValue(action.PrincipalId, out HashSet<Guid>? set))
-        {
-          set = [];
-          PrincipalState.DraftRoleIds[action.PrincipalId] = set;
-        }
-
-        if (action.Selected)
-        {
-          set.Add(action.RoleId);
-        }
-        else
-        {
-          set.Remove(action.RoleId);
-        }
-
-        return default;
-      }
-    }
-  }
-
   public static class SetPrincipalRolesActionSet
   {
     [TrackAction]
     public sealed class Action : IBaseAction
     {
-      public Guid PrincipalId { get; }
+      public Command Command { get; }
 
-      public Action(Guid principalId)
+      public Action(Command command)
       {
-        PrincipalId = principalId;
+        Command = command;
       }
     }
 
@@ -95,14 +56,13 @@ partial class PrincipalState
 
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
       {
-        ActivePrincipalId = action.PrincipalId;
+        ActivePrincipalId = action.Command.PrincipalId;
         PrincipalState.LastSetPrincipalRolesSucceeded = false;
-        IReadOnlyCollection<Guid> draft = PrincipalState.GetDraftRoleIds(action.PrincipalId);
         return Task.FromResult<Command?>(new Command
         {
           UserId = Guid.NewGuid(),
-          PrincipalId = action.PrincipalId,
-          RoleIds = [.. draft]
+          PrincipalId = action.Command.PrincipalId,
+          RoleIds = [.. action.Command.RoleIds]
         });
       }
 

@@ -1,0 +1,86 @@
+@namespace TimeWarp.Architecture.Features.Admin.Roles
+@inherits BaseComponent
+
+@*
+  Purpose: edit-role form — bind IRoleDetails, dispatch RoleState.UpdateRole.
+
+  Design: Pair to RoleForm. EditForm binds the IRoleDetails interface. The model is
+  UpdateRole.Command built with UpdateRole.Command.From when the role id changes, on
+  Cancel, and after Save. It does not copy on every render. Blazilla FluentValidator
+  takes the same RoleDetailsValidator as create, so only Name and Description are validated.
+  RoleId is copied inside From (CopyBeyondDetails). UserId is stamped in the handler.
+  A failed save does not throw. Copying from the unchanged snapshot puts the form back.
+*@
+
+@code {
+  private static readonly RoleDetailsValidator RoleValidator = new();
+
+  private Guid BoundRoleId { get; set; }
+  private UpdateRole.Command Command { get; set; } = new();
+  private IRoleDetails RoleDetails => Command;
+
+  [Parameter]
+  public GetRole.Response? Role { get; set; }
+
+  private bool IsSaving => IsAnyActive(typeof(RoleState.UpdateRoleActionSet.Action));
+
+  protected override void OnParametersSet()
+  {
+    if (Role is not GetRole.Response role || role.RoleId == BoundRoleId)
+    {
+      return;
+    }
+
+    Bind(role);
+  }
+
+  private void Bind(GetRole.Response role)
+  {
+    BoundRoleId = role.RoleId;
+    Command = UpdateRole.Command.From(role);
+  }
+
+  private async Task HandleValidSubmit()
+  {
+    await RoleState.UpdateRole(Command);
+    if (RoleState.RoleSnapshot is GetRole.Response role && role.RoleId == BoundRoleId)
+    {
+      Command = UpdateRole.Command.From(role);
+    }
+  }
+
+  private void HandleCancel()
+  {
+    if (RoleState.RoleSnapshot is GetRole.Response role && role.RoleId == BoundRoleId)
+    {
+      Command = UpdateRole.Command.From(role);
+    }
+  }
+}
+
+@if (Role is null)
+{
+  <p data-qa="RoleEditEmpty">No role loaded.</p>
+}
+else
+{
+  <EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleEditForm" novalidate>
+    <FluentValidator Validator="@RoleValidator" />
+    <FormSection Title="Role" Description="Name and description for this role.">
+      <FormGrid>
+        <FormField Label="Name">
+          <FluentTextInput @bind-Value=RoleDetails.Name Name="Name" AriaLabel="Name" data-qa="RoleEditName" Width="100%" />
+          <ValidationMessage For="@(() => RoleDetails.Name)" />
+        </FormField>
+        <FormField Label="Description">
+          <FluentTextInput @bind-Value=RoleDetails.Description Name="Description" AriaLabel="Description" data-qa="RoleEditDescription" Width="100%" />
+          <ValidationMessage For="@(() => RoleDetails.Description)" />
+        </FormField>
+      </FormGrid>
+    </FormSection>
+    <FormActions>
+      <FluentButton Type=ButtonType.Button Appearance=ButtonAppearance.Subtle Disabled=@IsSaving OnClick=HandleCancel data-qa="RoleEditCancel">Cancel</FluentButton>
+      <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsSaving data-qa="RoleEditSave">Save</FluentButton>
+    </FormActions>
+  </EditForm>
+}

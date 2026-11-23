@@ -8,6 +8,8 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.Person();
 
   private Guid RequestedId;
+  private HashSet<Guid> RoleDraft { get; set; } = [];
+  private HashSet<string> ScopeDraft { get; set; } = new(StringComparer.Ordinal);
 
   protected override async Task OnParametersSetAsync()
   {
@@ -23,37 +25,77 @@
 
     RequestedId = PrincipalId;
     await PrincipalState.OpenPrincipal(PrincipalId);
+    CopyDrafts();
   }
 
-  private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
-    await PrincipalState.SetRoleSelected(principalId, roleId, selected);
+  private void CopyDrafts()
+  {
+    if (PrincipalState.Current is not { } current || current.PrincipalId.Value != PrincipalId)
+    {
+      return;
+    }
+
+    RoleDraft = [.. current.RoleIds];
+    ScopeDraft = new HashSet<string>(current.AgentScopeGrants, StringComparer.Ordinal);
+  }
+
+  private void OnRoleSelected(Guid roleId, bool selected)
+  {
+    if (selected)
+    {
+      RoleDraft.Add(roleId);
+    }
+    else
+    {
+      RoleDraft.Remove(roleId);
+    }
+  }
 
   private async Task OnSave(Guid principalId)
   {
-    await PrincipalState.SetPrincipalRoles(principalId);
+    await PrincipalState.SetPrincipalRoles(new SetPrincipalRoles.Command
+    {
+      PrincipalId = principalId,
+      RoleIds = [.. RoleDraft]
+    });
     if (!PrincipalState.LastSetPrincipalRolesSucceeded)
     {
       return;
     }
 
     await PrincipalState.OpenPrincipal(principalId);
+    CopyDrafts();
   }
 
   private bool IsSavingAgentScopes =>
     IsAnyActive(typeof(PrincipalState.SetPrincipalAgentScopesActionSet.Action));
 
-  private async Task OnAgentScopeSelected(Guid principalId, string scope, bool selected) =>
-    await PrincipalState.SetAgentScopeSelected(principalId, scope, selected);
+  private void OnAgentScopeSelected(string scope, bool selected)
+  {
+    if (selected)
+    {
+      ScopeDraft.Add(scope);
+    }
+    else
+    {
+      ScopeDraft.Remove(scope);
+    }
+  }
 
   private async Task OnSaveAgentScopes(Guid principalId)
   {
-    await PrincipalState.SetPrincipalAgentScopes(principalId);
+    await PrincipalState.SetPrincipalAgentScopes(new SetPrincipalAgentScopes.Command
+    {
+      PrincipalId = principalId,
+      Scopes = [.. ScopeDraft]
+    });
     if (!PrincipalState.LastSetPrincipalAgentScopesSucceeded)
     {
       return;
     }
 
     await PrincipalState.OpenPrincipal(principalId);
+    CopyDrafts();
   }
 
   private static string OrDash(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
@@ -121,8 +163,8 @@
               {
                 <FluentCheckbox
                   Label="@RoleIds.GetRoleNameByGuid(roleId)"
-                  Value="@PrincipalState.IsRoleSelected(current.PrincipalId.Value, roleId)"
-                  ValueChanged="@(async (bool value) => await OnRoleSelected(current.PrincipalId.Value, roleId, value))" />
+                  Value="@RoleDraft.Contains(roleId)"
+                  ValueChanged="@(value => OnRoleSelected(roleId, value))" />
               }
             </FluentStack>
             <FluentButton
@@ -160,8 +202,8 @@
                 <div data-qa="@($"PrincipalAgentScope-{scope}")">
                   <FluentCheckbox
                     Label="@scope"
-                    Value="@PrincipalState.IsAgentScopeSelected(current.PrincipalId.Value, scope)"
-                    ValueChanged="@(async (bool value) => await OnAgentScopeSelected(current.PrincipalId.Value, scope, value))" />
+                    Value="@ScopeDraft.Contains(scope)"
+                    ValueChanged="@(value => OnAgentScopeSelected(scope, value))" />
                 </div>
               }
             </FluentStack>

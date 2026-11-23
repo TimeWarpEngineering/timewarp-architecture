@@ -1,20 +1,18 @@
 #region Purpose
-// SPA state for the admin principals list (search, sort), the open principal, and role assignment.
+// SPA state for the admin principals list (search, sort) and the open principal.
 #endregion
 
 #region Design
 // Principals null = no snapshot yet; empty = loaded with zero rows.
 // In-flight fetch is [TrackAction] on FetchPrincipals — pages use IsAnyActive, not null.
-// DraftRoleIds tracks multi-select edits per principal before Save → SetPrincipalRoles.
 // LastSetPrincipalRolesSucceeded is the page-side Fetch gate: DefaultApiHandler does not
-// throw on problem details, so OnSave Fetchs only when HandleSuccess ran.
+// throw on problem details, so OnSave reopens only when HandleSuccess ran.
 // Task 328: Search, SortBy, and SortDescending are State actions (SetSearch, SetSort); the page
 // dispatches FetchPrincipals afterwards and the server filters and sorts the whole list. A failed
 // list fetch clears the rows and sets ListLoadError so a stale list never shows under a new
 // query. Current is the open principal (OpenPrincipal); a 404 clears it and sets LoadError.
-// Role drafts are seeded from the opened principal, not the list: roles are edited on the
-// detail page, so a list re-fetch never overwrites a draft. DraftAgentScopes (task 466) is
-// the principal's own agent-scope grants, seeded the same way. Initialize clears everything.
+// Role and agent-scope checkbox drafts are not stored here. PrincipalDetailPage owns those
+// sets and builds the save commands from them. Initialize clears everything.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -25,8 +23,6 @@ using static ListPrincipals;
 public sealed partial class PrincipalState : State<PrincipalState>
 {
   private List<PrincipalSummaryDto>? PrincipalsList { get; set; }
-  private Dictionary<Guid, HashSet<Guid>> DraftRoleIds { get; set; } = [];
-  private Dictionary<Guid, HashSet<string>> DraftAgentScopes { get; set; } = [];
 
   public IReadOnlyList<PrincipalSummaryDto>? Principals => PrincipalsList?.AsReadOnly();
 
@@ -42,8 +38,6 @@ public sealed partial class PrincipalState : State<PrincipalState>
   public override void Initialize()
   {
     PrincipalsList = null;
-    DraftRoleIds = [];
-    DraftAgentScopes = [];
     LastSetPrincipalRolesSucceeded = false;
     LastSetPrincipalAgentScopesSucceeded = false;
     Search = null;
@@ -53,20 +47,4 @@ public sealed partial class PrincipalState : State<PrincipalState>
     LoadError = null;
     ListLoadError = null;
   }
-
-  public IReadOnlyCollection<Guid> GetDraftRoleIds(Guid principalId) =>
-    DraftRoleIds.TryGetValue(principalId, out HashSet<Guid>? set)
-      ? set
-      : Array.Empty<Guid>();
-
-  public bool IsRoleSelected(Guid principalId, Guid roleId) =>
-    DraftRoleIds.TryGetValue(principalId, out HashSet<Guid>? set) && set.Contains(roleId);
-
-  public bool IsAgentScopeSelected(Guid principalId, string scope) =>
-    DraftAgentScopes.TryGetValue(principalId, out HashSet<string>? set) && set.Contains(scope);
-
-  public IReadOnlyCollection<string> GetDraftAgentScopes(Guid principalId) =>
-    DraftAgentScopes.TryGetValue(principalId, out HashSet<string>? set)
-      ? set
-      : Array.Empty<string>();
 }
