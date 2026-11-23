@@ -66,6 +66,7 @@ Gates:
 ## Session
 
 - Implementation: Grok 4.7, 2026-11-23. The role store keeps one `GetRole.Response`. New Role shows create and edit side by side. Permission, agent-scope, and principal checkbox drafts live on the page. Save sends the command the page built.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20899-0a3b-7033-8938-225fdcd97bf0, max-turns 500, Done — 2026-11-23T13:54:31Z
 
 ## Parent
 
