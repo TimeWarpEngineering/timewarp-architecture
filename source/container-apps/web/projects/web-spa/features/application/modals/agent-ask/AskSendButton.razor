@@ -18,8 +18,8 @@
   cascaded conversation, the same library-owned conversation the send button and the starter
   prompts call; the library then clears the partial answer and returns to Idle. AwaitingInput (an
   approval card waiting) shows the muted send, not Stop: the card is the way out of that state.
-  The component subscribes to status changes itself because AgentAsk re-renders only when a turn
-  ends.
+  The component subscribes to status changes itself so Stop appears as soon as the turn streams.
+  AgentAsk re-renders on the same callback so the microphone can disable for the turn.
 *@
 
 @code {

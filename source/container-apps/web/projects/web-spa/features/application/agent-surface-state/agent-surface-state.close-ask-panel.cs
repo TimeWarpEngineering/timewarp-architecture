@@ -10,6 +10,8 @@
 // Automatically edit would otherwise keep removing the WebMCP confirm bar after the person stopped
 // watching the panel. Automatic is bounded to an open panel. Expand is cleared so the next open
 // docks beside the page instead of covering it. An unconsumed composer focus request is dropped.
+// A live microphone is stopped here. Idle close does not import ask-ai.js, so a test host whose
+// JavaScript runtime returns nothing still closes.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -23,16 +25,17 @@ partial class AgentSurfaceState
 
     internal sealed class Handler
     (
-      IStore store
+      IStore store,
+      IJSRuntime jsRuntime
     ) : BaseHandler<Action>(store)
     {
-      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
+        await AgentSurfaceState.ReleaseVoiceCaptureAsync(jsRuntime);
         AgentSurfaceState.IsPanelOpen = false;
         AgentSurfaceState.IsPanelExpanded = false;
         AgentSurfaceState.ComposerFocusPending = false;
         AgentSurfaceState.EditMode = AgentEditMode.AskBeforeEditing;
-        return default;
       }
     }
   }
