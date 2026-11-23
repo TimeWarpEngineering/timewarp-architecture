@@ -2,21 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 747
+- Lines changed: 239
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
 - Turn cap: 120 (--max-turns; cursor uncapped)
-
-# Review framework — task 495
-
-**Date:** 2026-11-24
-**Host task:** kanban/in-progress/495-design-system-review-fixes-message-bar-status-badges-light-shell-type-scale-color-tokens/
-**Diff scope:** branch `task/495-design-system-review-fixes-message-bar-status` vs `master` (merge base), product paths under `source/` and `tests/`, plus the kitchen `task.md` and `assets/`
-**Plan / brief:** task.md items 1–7 (message bar tints and inline actions, drop Lost pill, light shell Member label and nav rest fill, type-scale roles and one eyebrow, color-token chips with resolved values, scroll reset on part change, parts list fits viewport)
-**Effort:** 2 (by-diff budget), roster axis general
-**Reviewer roster:** general
-**Session IDs:** review oracle, Claude Code (claude-opus-5-5), ganda task-work review node
 
 ## Ground rules
 

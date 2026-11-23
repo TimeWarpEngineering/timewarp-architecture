@@ -144,6 +144,7 @@ and 07-catalog-clipped are referenced but missing from assets/; capture them in 
 - Review oracle round 1: general reviewer, effort 2 (by-diff, turn cap 120), Claude Code claude-opus-5-5, 2026-11-24. 1 open bug (M1, dark `--twe-danger-tint`); fix pass requested. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session fbf4715a-fc03-45c7-b72c-3e9d0eda85e0, max-turns 120, artifacts general.md, merged.md — 2026-11-23T18:26:14Z
 - Fix pass (review round 1 M1): `--twe-danger-tint` is declared again on `body[data-theme="dark"]` at 12% of the dark danger into dark paper. 18% falls under 4.5:1 because the error text is the danger color itself (2026-11-24).
+- Review oracle round 2: general reviewer, effort 2 (by-diff, turn cap 120), Claude Code claude-opus-5-5, 2026-11-24. Reviewed the fix delta: M1 fixed, 0 new findings, disposition clean. Files: `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -179,12 +180,17 @@ Fix pass (M1), after the dark tint edit:
 - Round 1 (general, effort 2): 1 bug open, 0 suggestions, 0 nits. M1: `--twe-danger-tint` is
   declared only on `:root`, so dark mode keeps the light pink fill for the error message bar
   and error badges. Fixed on this pass: the dark block re-declares the 12% mix. See
-  `review/round-1/merged.md`. Round 2 has not run.
+  `review/round-1/merged.md`.
+- Round 2 (general, effort 2, fix delta `bf6441618`): M1 confirmed fixed. 0 new findings.
+- Final counts: bug 0 open / 1 fixed / 0 wontfix. Suggestion 0. Nit 0.
+- Disposition: **clean**. 2 rounds, 0 open, no wontfix, no escalations.
+- Paths: `review/review-framework.md`, `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Review
 
-- Round 1: M1 fixed on this pass. Round 2 has not run.
-
+- Round 1: M1 (bug) raised, then fixed in `bf6441618`.
+- Round 2: Done
 ## Notes
 
 - Out of scope by design: sample content on the page (trigger button appearance, chart colors, grouped
