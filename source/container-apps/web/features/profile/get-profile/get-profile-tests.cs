@@ -24,6 +24,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 {
 
   using System;
+  using System.Reflection;
   using System.Text.Json;
   using System.Threading;
   using System.Threading.Tasks;
@@ -310,6 +311,33 @@ namespace TimeWarp.Architecture.Features.Profiles
       response.Notifications.ShouldBeTrue();
     }
 
+    public static async Task Stored_blank_preferences_Should_ReturnResponseDefaults()
+    {
+      Guid userId = Guid.Parse("dddddddd-eeee-ffff-0000-111111111111");
+      ProfileId id = ProfileId.From(userId);
+      InMemoryProfileStore store = new();
+      DomainProfile seeded = DomainProfile.Create(id, "Ada", "fr-FR", "FR", "dark");
+      SetPreference(seeded, nameof(DomainProfile.Language), null);
+      SetPreference(seeded, nameof(DomainProfile.Region), "  ");
+      SetPreference(seeded, nameof(DomainProfile.Theme), "");
+      await store.AddAsync(seeded);
+
+      ProfileHandler handler = CreateHandler(userId, store);
+      Response response = (await handler.Handle(new Query(), CancellationToken.None))
+        .Match(ok => ok, _ => throw new InvalidOperationException("Expected Response"));
+
+      response.DisplayName.ShouldBe("Ada");
+      response.Language.ShouldBe("en-US");
+      response.Region.ShouldBe("US");
+      response.Theme.ShouldBe("system");
+
+      DomainProfile? stored = await store.FindAsync(id);
+      stored.ShouldNotBeNull();
+      stored.Language.ShouldBeNull();
+      stored.Region.ShouldBe("  ");
+      stored.Theme.ShouldBe("");
+    }
+
     public static async Task Avatar_same_userId_Should_Be_Deterministic()
     {
       Guid userId = Guid.Parse("cccccccc-dddd-eeee-ffff-000000000001");
@@ -324,6 +352,13 @@ namespace TimeWarp.Architecture.Features.Profiles
       first.Avatar.ShouldStartWith("data:image/svg+xml;base64,");
       first.Avatar.ShouldBe(second.Avatar);
       first.Avatar.Length.ShouldBeGreaterThan(200);
+    }
+
+    private static void SetPreference(DomainProfile profile, string name, string? value)
+    {
+      PropertyInfo property = typeof(DomainProfile).GetProperty(name)
+        ?? throw new InvalidOperationException($"Profile.{name} was not found.");
+      property.SetValue(profile, value);
     }
 
     private static ProfileHandler CreateHandler(Guid? userId, IProfileStore store)

@@ -26,7 +26,7 @@
 
   private bool Loaded;
 
-  private string DisplayName => ShellUserName(IdentityName, ProfileState.DisplayName);
+  private string DisplayName => ShellUserName(IdentityName, ProfileState.Profile?.DisplayName);
 
   protected override async Task OnParametersSetAsync()
   {
@@ -74,11 +74,11 @@
   <div class="twe-nav-column__user">
     @if (CanOpenProfile)
     {
-      <UserCard Name="@DisplayName" Detail="@ProfileState.Email" Href="@ProfilePage.GetPageUrl()" data-qa="ShellUserCard" />
+      <UserCard Name="@DisplayName" Detail="@ProfileState.Profile?.Email" Href="@ProfilePage.GetPageUrl()" data-qa="ShellUserCard" />
     }
     else
     {
-      <UserCard Name="@DisplayName" Detail="@ProfileState.Email" data-qa="ShellUserCard" />
+      <UserCard Name="@DisplayName" Detail="@ProfileState.Profile?.Email" data-qa="ShellUserCard" />
     }
   </div>
 }
