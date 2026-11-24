@@ -14,7 +14,7 @@ Filed 2026-11-11 at Steven's request ("Yes, create the Impeccable detector trial
 2. **Rendered URL scan.** Start the template and run detect against the running page URL. The rules that need rendering (low contrast, tiny text) only run on a URL scan. Blazor renders to plain HTML and CSS, so this scan avoids the detector's lack of a built-in `.razor` type.
 3. **Source scan.** Also run detect against `.razor` / `.razor.css` sources via `detector.extensions`.
 4. **FluentUI and brand ignores (L, folded).** Add ignore config for FluentUI web components and design tokens, plus the brand typography, so brand fonts and FluentUI internals are not reported as slop.
-5. **Triage (~1 hour).** Record hits, misses and false positives. Spend about an hour sorting them. Note anything hidden by shadow DOM.
+5. **Triage (time-boxed).** Record hits, misses and false positives, sorting them into actionable signal vs noise. Note anything hidden by shadow DOM.
 6. **Recommend, do not implement, B and D.** From the triage, recommend whether to add (B) a CLI-only CI detect step and (D) the rule ideas that actually fired into the `tw-blazor-css-strategy` skill, or neither. Do not add the CI step or edit the skill in this task.
 
 ## Out of scope
@@ -37,7 +37,7 @@ Also out of scope: adding a CI detect step or editing `tw-blazor-css-strategy` i
 - [ ] Scan the running template URL
 - [ ] Scan `.razor` / `.razor.css` via `detector.extensions`
 - [ ] Add FluentUI, token and brand-typography ignores
-- [ ] Record hits, misses and false positives (~1 hour triage)
+- [ ] Record hits, misses and false positives (time-boxed triage)
 - [ ] Recommend CI detect (B), rule borrow into `tw-blazor-css-strategy` (D), or neither — do not implement those follow-ups here
 
 ## Session
