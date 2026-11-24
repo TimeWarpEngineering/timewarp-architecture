@@ -4,8 +4,8 @@
 
 #region Design
 // Builds yarp and the Aspire AppHost in Release, reads each WebServerApiRoutePrefixes.g.cs, and
-// writes goldens/ingress only when those emits match. CI runs this command and then
-// `git diff --exit-code -- goldens/ingress`. A dirty diff means the golden was hand-edited, or a
+// writes goldens/ingress only when those emits match. `dev workflow` runs this command after the fast
+// test group and fails on any diff or untracked file under goldens/ingress. A dirty diff means the golden was hand-edited, or a
 // web-contracts [ApiRoute] changed and the golden was not regenerated: re-run this command and
 // commit, or fix the generator if the new text is wrong.
 // The Offerable offer-record generator is not rebuilt here. Task 282 removed it.

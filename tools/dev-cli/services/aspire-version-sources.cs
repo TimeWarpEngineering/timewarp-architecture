@@ -9,10 +9,12 @@
 // aspire-run.cs (task 498, TWA0038 line cap). Package pins must start with $(AspireVersion); a
 // preview suffix after it is allowed. The AppHost check refuses the obsolete Aspire.AppHost.Sdk
 // (ASPIRE012), requires Aspire.Hosting.AppHost and Aspire.Hosting.Dotnet, and refuses an Aspire
-// PackageReference that carries its own Version or VersionOverride. The workflow check ignores '#'
+// PackageReference that carries its own Version or VersionOverride. The one CI install is the
+// composite action .github/actions/setup-ci (SetupActionRelativePath). Its check ignores '#'
 // comments and requires `Aspire.Cli --version "$version"` where that variable is the sed read of
-// the property in Directory.Packages.props. XML comments are stripped first, so a comment can name
-// a rejected form without counting as one.
+// the property in Directory.Packages.props. WorkflowInstallError keeps workflow.yml from installing
+// Aspire.Cli itself, so the action stays the single source. XML comments are stripped first, so a
+// comment can name a rejected form without counting as one.
 #endregion
 
 namespace DevCli.Services;
@@ -20,12 +22,16 @@ namespace DevCli.Services;
 /// <summary>Agreement check for the one Aspire version across pins, the AppHost, and CI.</summary>
 internal static class AspireVersionSources
 {
+  /// <summary>The composite action that holds CI's one Aspire.Cli install.</summary>
+  internal const string SetupActionRelativePath = ".github/actions/setup-ci/action.yml";
+
   /// <summary>
   /// Null when the AppHost's Aspire packages, the Aspire package pins, and the CI Aspire.Cli install
-  /// all take <c>AspireVersion</c> from Directory.Packages.props. The first disagreement otherwise.
+  /// in <paramref name="setupActionYaml"/> all take <c>AspireVersion</c> from Directory.Packages.props.
+  /// The first disagreement otherwise.
   /// </summary>
   internal static string? Validate(
-    string directoryPackagesProps, string appHostProject, string workflowYaml)
+    string directoryPackagesProps, string appHostProject, string setupActionYaml)
   {
     if (AspireRun.ParseRepoAspireVersion(directoryPackagesProps) is null)
     {
@@ -34,7 +40,27 @@ internal static class AspireVersionSources
 
     return AspirePackagePinError(directoryPackagesProps)
       ?? AppHostPackagesError(appHostProject)
-      ?? WorkflowCliInstallError(workflowYaml);
+      ?? WorkflowCliInstallError(setupActionYaml);
+  }
+
+  /// <summary>
+  /// Null when <paramref name="workflowYaml"/> installs no Aspire.Cli itself and asks the setup
+  /// action for it. A second install would be a second version source.
+  /// </summary>
+  internal static string? WorkflowInstallError(string workflowYaml)
+  {
+    string code = WithoutYamlComments(workflowYaml);
+    foreach (string line in code.Split('\n'))
+    {
+      if (line.Contains("Aspire.Cli", StringComparison.Ordinal))
+      {
+        return $"workflow.yml installs Aspire.Cli itself. Use {SetupActionRelativePath} with aspire-cli: 'true'.";
+      }
+    }
+
+    return code.Contains("aspire-cli: 'true'", StringComparison.Ordinal)
+      ? null
+      : $"workflow.yml must install Aspire.Cli through {SetupActionRelativePath} (aspire-cli: 'true').";
   }
 
   private static string? AspirePackagePinError(string directoryPackagesProps)

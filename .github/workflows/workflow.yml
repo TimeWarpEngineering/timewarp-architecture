@@ -1,53 +1,22 @@
 name: CI/CD
 
-# Single canonical workflow. Jobs:
-#   - ci-group: PR/merge build/test/publish pipeline as parallel `dev workflow` phase/group jobs
-#     (task 366): ci (fast), ci (integration), ci (publish). The playwright group is off in CI
-#     (task 501) while task 502 weighs the suite; `dev test --group playwright` still runs it.
-#   - ci: one status over ci-group (the stable required-check name)
-#   - release: release/workflow_dispatch pipeline (pack, OIDC push) — one job, never parallel
-#   - skill-lint: vally skill/eval lint (former skill-lint.yaml; PR + path filter)
-#   - template-smoke: pack → install → generate → build (former template-smoke.yml). Push, PR
-#     and a merge dispatch smoke SmokeDefault only; the nightly (schedule, or dispatch with
-#     mode nightly) runs `dev template-smoke --matrix --app-tests`: every flag-off variant plus
-#     each generated app's test projects (task 375). A flag costs nightly time, not PR time.
-# Path semantics from the former separate workflows are preserved via detect-paths
-# + job-level if conditions (not separate workflow files). On a pull request the ci gate is
-# PullRequestBuildClassifier (`dev workflow --phase classify`, task 493), not a regex here.
-#
-# Triggers (task 359): push and pull_request cover master and feature/** so stacked child PRs
-# (ganda task work-set merges each child onto its feature branch) get real checks. `edited` is
-# not a pull_request type: a description edit changes no code. A base retarget also fires
-# `edited`, so retargeting no longer re-runs CI; work-set opens children against the feature
-# branch directly, and after a manual retarget push a commit or close/reopen the PR.
-# The nightly `schedule` runs only template-smoke, from the default branch (GitHub fires a schedule
-# on the default branch only). GitHub emails a failed scheduled run to the user who last changed
-# the cron line; a human files the kanban task from it (ganda is private and never runs in CI).
-# Publishing is release-only: push/pull_request run `dev workflow` in Pr/Merge mode (build,
-# test, `dev publish` file outputs) with no NuGet login, pack, or push on any branch.
-#
-# Checkout and NuGet cache (task 368):
-#   - Every job checks out shallow (fetch-depth: 1). Nothing in CI reads history or tags: SourceLink
-#     and TimeWarp.Build.Tasks' GitMetadataTask read only HEAD (`git rev-parse HEAD`,
-#     `git log -1`), `dev check-version` compares <Version> against nuget.org, and `dev release`
-#     (the only tag writer) runs locally, not here. detect-paths fetches its one base commit by SHA.
-#   - Jobs that restore cache ~/.nuget/packages under an exact content-hash key (every
-#     Directory.Packages.props, msbuild/*.props, global.json). No restore-keys: a CPM change starts
-#     a clean cache instead of layering onto an old one. Restored packages all come from nuget.org
-#     (immutable per version); the only locally packed version is template-smoke's 2.0.0-smoke,
-#     which is evicted before its cache is saved. release restores read-only and never saves.
-#   - The dev CLI runfile build is not cached: its up-to-date check compares file times, and every
-#     checkout writes fresh ones, so a restored build would just recompile. Its package restore is
-#     covered by the NuGet cache.
+# Thin trigger: this file says when to run and on which runner. Every decision and check is
+# `dev workflow` (tools/dev-cli/endpoints/workflow-command.cs, Design region); shared runner setup
+# is .github/actions/setup-ci. Jobs:
+#   classify        ci / skill / template outputs from `dev workflow --phase classify`
+#   ci-group        ci (fast), ci (integration), ci (publish): one `dev workflow` phase each
+#   ci              the required check over ci-group
+#   release         release event and dispatch: pack, OIDC push (one job, never a matrix)
+#   skill-lint      `dev lint-skills` at the vally pin
+#   template-smoke  pack, install, generate, build; the nightly runs the flag-off matrix
 
 on:
   push:
     branches:
       - master
       - 'feature/**'
-    # Push keeps a paths filter (task 493): a kanban-only or docs-only merge must not rebuild,
-    # re-run the publish phase, or upload its artifacts. Required checks gate pull requests, not
-    # pushes, so nothing waits on a push run this filter skips.
+    # A kanban-only or docs-only push gets no run. Required checks gate pull requests, not
+    # pushes, so nothing waits on a push this filter skips.
     paths:
       - 'source/**'
       - 'tests/**'
@@ -56,6 +25,7 @@ on:
       - 'tools/**'
       - 'msbuild/**'
       - '.github/workflows/**'
+      - '.github/actions/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
       - 'timewarp-architecture.slnx'
@@ -65,26 +35,21 @@ on:
       - 'evals/**'
       - 'skills/**'
       - 'goldens/**'
-  # pull_request has no paths or paths-ignore filter (task 493, the one-workflow CI standard from
-  # timewarp-ganda 476/479/565/587, audited by ganda 655): every pull request reports `ci`. A pull
-  # request that changes only non-build paths skips build and test through
-  # PullRequestBuildClassifier (see detect-paths), and the skipped ci-group reports success.
+  # No paths filter: every pull request reports `ci`. A non-build pull request skips build and
+  # test through PullRequestBuildClassifier, and the skipped ci-group reports success.
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
+    types: [opened, synchronize, reopened]
     branches:
       - master
       - 'feature/**'
   release:
     types: [published]
   schedule:
-    - cron: '17 7 * * *'  # nightly template-smoke flag-off matrix, 07:17 UTC (task 375)
+    - cron: '17 7 * * *'  # nightly template-smoke flag-off matrix, 07:17 UTC
   workflow_dispatch:
     inputs:
       mode:
-        description: 'merge = normal CI (default). probe = trusted-publishing check only (OIDC login, no build, no publish). nightly = template-smoke flag-off matrix + generated-app tests only (no release).'
+        description: 'merge = pack without publishing (default). probe = trusted-publishing check only (OIDC login, no build, no publish). nightly = template-smoke flag-off matrix + generated-app tests only.'
         type: choice
         options:
           - merge
@@ -92,118 +57,50 @@ on:
           - nightly
         default: merge
 
-# ganda workflow-pwsh-shell: every run step is pwsh (timewarp-ganda task 508).
+# A newer pull request run, or a newer push to the same branch, cancels the older one. Release,
+# dispatch, and schedule runs get a group of their own (run_id) and are never cancelled.
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+    github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) ||
+    github.event_name == 'push' && format('push-{0}', github.ref) ||
+    format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+
 defaults:
   run:
     shell: pwsh
 
 jobs:
-  detect-paths:
+  classify:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
-      # Pull request: the classifier's answer; a classify step that wrote nothing means build.
-      # Push: the regex below (the push trigger's paths filter already dropped non-build pushes).
-      ci: ${{ github.event_name == 'pull_request' && (steps.classify.outputs.ci || 'true') || steps.filter.outputs.ci }}
-      skill: ${{ steps.filter.outputs.skill }}
-      template: ${{ steps.filter.outputs.template }}
+      # A classify step that wrote nothing turns the job on.
+      ci: ${{ steps.classify.outputs.ci || 'true' }}
+      skill: ${{ steps.classify.outputs.skill || 'true' }}
+      template: ${{ steps.classify.outputs.template || 'true' }}
     steps:
-      # A pull request checks out full history: the classifier diffs base...head and needs the
-      # merge base (a shallow checkout fails that diff, which builds). Push stays shallow (task 368).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
+          fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}  # base...head needs the merge base
 
-      - name: Setup .NET
-        if: github.event_name == 'pull_request'
-        uses: actions/setup-dotnet@v4
+      - uses: ./.github/actions/setup-ci
         with:
-          global-json-file: global.json
-
-      # Read-only: this job restores only the dev CLI's packages, so it must not save the shared
-      # key before a ci-group job saves the full solution set.
-      - name: Restore NuGet package cache
-        if: github.event_name == 'pull_request'
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-ci-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
-
-      # Task 493: the pull request build decision. Writes ci=true|false to GITHUB_OUTPUT. The rule
-      # lives in TimeWarp.Nuru.DevCli; this repo's additions are .timewarp/dev.jsonc pullRequestBuild.
-      - name: Classify pull request
-        id: classify
-        if: github.event_name == 'pull_request'
-        run: |
-          dotnet run tools/dev-cli/dev.cs -- workflow --phase classify
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          nuget-cache: restore  # only the dev CLI's packages; a ci-group job saves the full set
 
       - name: Classify changed paths
-        id: filter
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ('${{ github.event_name }}' -eq 'pull_request') {
-            $base = '${{ github.event.pull_request.base.sha }}'
-            $head = '${{ github.event.pull_request.head.sha }}'
-          } else {
-            $base = '${{ github.event.before }}'
-            $head = '${{ github.sha }}'
-          }
-          if ([string]::IsNullOrEmpty($base) -or $base -eq '0000000000000000000000000000000000000000') {
-            # New branch / unknown base — run all path-gated jobs that apply.
-            'ci=true' >> $env:GITHUB_OUTPUT
-            'skill=true' >> $env:GITHUB_OUTPUT
-            'template=true' >> $env:GITHUB_OUTPUT
-            Write-Host 'No usable base SHA — enabling all path-gated jobs.'
-            exit 0
-          }
-          # Push checks out shallow (task 368): fetch just the two commits to compare. `git diff` of
-          # two commits compares their trees, so no history between them is needed. A pull request
-          # checked out full history above and already has both. A base that can no longer be
-          # fetched (force push) is treated like an unknown base.
-          $global:LASTEXITCODE = 0
-          if ('${{ github.event_name }}' -ne 'pull_request') {
-            git fetch --no-tags --depth=1 origin $base $head
-          }
-          if ($LASTEXITCODE -ne 0) {
-            'ci=true' >> $env:GITHUB_OUTPUT
-            'skill=true' >> $env:GITHUB_OUTPUT
-            'template=true' >> $env:GITHUB_OUTPUT
-            Write-Host "Could not fetch base $base — enabling all path-gated jobs."
-            exit 0
-          }
-          $changedLines = @(git diff --name-only $base $head)
-          $global:LASTEXITCODE = 0
-          Write-Host 'Changed files:'
-          $changedLines | Write-Host
-
-          $ci = 'false'
-          $skill = 'false'
-          $template = 'false'
-          $ciPattern = '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props|goldens/)'
-          $skillPattern = '(^|/)SKILL\.md$|(^|/)eval\.yaml$|^\.vally\.yaml$|^evals/|^skills/|\.github/workflows/|^tools/dev-cli/'
-          $templatePattern = '^(source/|tests/|timewarp-templates/|\.template\.config/|msbuild/|Directory\.Build\.props|Directory\.Packages\.props|timewarp-architecture\.slnx|tools/dev-cli/|\.github/workflows/)'
-          if ($changedLines -match $ciPattern) { $ci = 'true' }
-          if ($changedLines -match $skillPattern) { $skill = 'true' }
-          if ($changedLines -match $templatePattern) { $template = 'true' }
-
-          "ci=$ci" >> $env:GITHUB_OUTPUT
-          "skill=$skill" >> $env:GITHUB_OUTPUT
-          "template=$template" >> $env:GITHUB_OUTPUT
-          Write-Host "ci=$ci skill=$skill template=$template"
+        id: classify
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow --phase classify
 
   ci-group:
-    # Task 366: PR/merge CI as parallel jobs, one per `dev workflow` phase/group. Groups are defined
-    # once, by convention, in tools/dev-cli/services/test-groups.cs; this matrix names them and
-    # never lists projects. Each job builds what it needs on its own runner (a shared build artifact
-    # would be bin/obj for the whole solution, far over the org's 500 MB Actions storage cap).
-    needs: [detect-paths]
+    needs: [classify]
     if: |
       always() && !cancelled() &&
       (github.event_name == 'push' || github.event_name == 'pull_request') &&
-      needs.detect-paths.outputs.ci == 'true'
+      needs.classify.outputs.ci == 'true'
     name: ci (${{ matrix.name }})
     runs-on: ubuntu-latest
     permissions:
@@ -218,195 +115,63 @@ jobs:
             args: --phase test --group integration
           - name: publish
             args: --phase publish
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          fetch-depth: 1  # SourceLink and commit metadata read HEAD only (task 368)
+          fetch-depth: 1
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: ./.github/actions/setup-ci
         with:
-          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
-          global-json-file: global.json
+          dev-certs: 'true'
+          aspire-cli: 'true'
 
-      # One key for every group: each job builds the whole solution, so they restore the same set.
-      # The first group to finish saves it; the others skip the save.
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-ci-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+      - name: Run CI pipeline
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}
 
-      # Integration tests hit the servers over HTTPS with the ASP.NET dev certificate; trust it so the
-      # runner's HttpClient doesn't fail with UntrustedRoot (passes locally only because the dev box
-      # already trusts it). On Linux, `--trust` writes the cert to ~/.aspnet/dev-certs/trust and exits
-      # 4 ("trusted by some clients") — OpenSSL (HttpClient) only honours it once that dir is on
-      # SSL_CERT_DIR (set on the Run CI Pipeline step below). See https://aka.ms/dev-certs-trust.
-      - name: Trust HTTPS dev certificate
-        run: dotnet dev-certs https --trust || true
-
-      # Every group installs the Aspire CLI. Since Aspire 17 (task 498) the AppHost build takes DCP and
-      # the dashboard from the CLI bundle (ASPIRE013), and the test groups boot the AppHost through
-      # Aspire.Hosting.Testing. `dev workflow --phase publish` also runs `dev publish all`.
-      # The version is <AspireVersion> in Directory.Packages.props — the same property the Aspire packages use.
-      - name: Install Aspire CLI
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
-          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
-          if ([string]::IsNullOrWhiteSpace($version)) {
-            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
-            exit 1
-          }
-          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
-          dotnet tool install --global Aspire.Cli --version $version
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Run CI Pipeline
-        run: |
-          # Make OpenSSL (the runner's HttpClient) honour the trusted dev cert (see Trust step above).
-          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          dotnet run tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      # Task 308: rewrite the checked-in ingress prefix golden from the two host builds, then fail
-      # if that rewrite changed the tree. A hand-edited golden, or a contract change that skipped
-      # regenerate, shows up here. Scoped to goldens/ingress. The fast job is the one place it runs.
-      - name: Regenerate ingress prefixes and fail on diff
-        if: success() && matrix.name == 'fast'
-        run: |
-          $ErrorActionPreference = 'Stop'
-          dotnet run tools/dev-cli/dev.cs -- regenerate-generated
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git diff --exit-code -- goldens/ingress
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $porcelain = @(git status --porcelain -- goldens/ingress)
-          if ($porcelain.Count -gt 0) {
-            Write-Host 'goldens/ingress has unstaged or untracked changes after regenerate'
-            $porcelain | Write-Host
-            exit 1
-          }
-
-      # Task 487: `dev test` collects MTP code coverage, one Cobertura file per test project at
-      # artifacts/coverage/<project>/coverage.cobertura.xml. Each matrix job uploads its own group.
-      - name: coverage
+      - name: Upload coverage
         if: success() && matrix.name != 'publish'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.name }}
           path: artifacts/coverage
           if-no-files-found: warn
 
-      # Task 070-003: generated Compose output is CI-only (never committed). The migration bundle is
-      # a ~100 MB self-contained binary and is left out; the idempotent SQL script is the
-      # documented migration path for Compose (see the AppHost Design region).
-      - name: Upload Compose publish output
-        if: always() && matrix.name == 'publish'
-        uses: actions/upload-artifact@v4
-        with:
-          name: aspire-compose-${{ github.run_number }}
-          path: |
-            artifacts/aspire-output/compose/docker-compose.yaml
-            artifacts/aspire-output/compose/.env
-            artifacts/aspire-output/compose/efmigrations/*.sql
-          include-hidden-files: true
-          if-no-files-found: ignore
-          retention-days: 1
-
-      # Task 070-004: the Helm chart (`dev publish kubernetes`, safety-checked and helm-linted — Helm
-      # ships on ubuntu runners). CI-only, never committed; the chart directory carries the migration
-      # SQL script and no bundle, so the whole directory is the artifact.
-      - name: Upload Helm chart
-        if: always() && matrix.name == 'publish'
-        uses: actions/upload-artifact@v4
-        with:
-          name: aspire-helm-${{ github.run_number }}
-          path: artifacts/aspire-output/kubernetes/
-          if-no-files-found: ignore
-          retention-days: 1
-
-      # Task 070-007: the Azure Container Apps Bicep (`dev publish aca`, safety-checked). Publish only —
-      # CI has no Azure credentials and never deploys. The ~100 MB migration bundle is left out; the
-      # Bicep modules and the idempotent SQL script are the reviewable output.
-      - name: Upload Azure Container Apps publish output
-        if: always() && matrix.name == 'publish'
-        uses: actions/upload-artifact@v4
-        with:
-          name: aspire-aca-${{ github.run_number }}
-          path: |
-            artifacts/aspire-output/aca/**/*.bicep
-            artifacts/aspire-output/aca/efmigrations/*.sql
-          if-no-files-found: ignore
-          retention-days: 1
-
-      # Task 317: the Azure Container Apps + Neon Bicep (`dev publish aca-neon`, safety-checked).
-      # Publish only — CI has no Azure or Neon credentials and never deploys. The migration bundle
-      # is left out; the Bicep modules and the idempotent SQL script are the reviewable output.
-      - name: Upload Azure Container Apps + Neon publish output
-        if: always() && matrix.name == 'publish'
-        uses: actions/upload-artifact@v4
-        with:
-          name: aspire-aca-neon-${{ github.run_number }}
-          path: |
-            artifacts/aspire-output/aca-neon/**/*.bicep
-            artifacts/aspire-output/aca-neon/efmigrations/*.sql
-          if-no-files-found: ignore
-          retention-days: 1
-
   ci:
-    # Task 366: one stable check name over the ci-group matrix, so a branch-protection rule that
-    # requires `ci` keeps working. Skipped groups (no ci paths changed) pass, as the single `ci`
-    # job's skip did before; a failed or cancelled group fails it. detect-paths is checked too
-    # (task 493): a failed classify step leaves no ci output, which skips ci-group, and that skip
-    # must not read as a pass.
-    needs: [detect-paths, ci-group]
+    # The required check. A skipped ci-group (non-build change) passes; a failed or cancelled
+    # group fails. A failed classify fails too: its skip of ci-group must not read as a pass.
+    needs: [classify, ci-group]
     if: always() && (github.event_name == 'push' || github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     steps:
       - name: All CI groups passed
+        env:
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          GROUP_RESULT: ${{ needs.ci-group.result }}
         run: |
-          $detect = '${{ needs.detect-paths.result }}'
-          $result = '${{ needs.ci-group.result }}'
-          Write-Host "detect-paths: $detect ci-group: $result"
-          if ($detect -ne 'success') { exit 1 }
-          if ($result -ne 'success' -and $result -ne 'skipped') { exit 1 }
+          Write-Host "classify: $env:CLASSIFY_RESULT ci-group: $env:GROUP_RESULT"
+          if ($env:CLASSIFY_RESULT -ne 'success') { exit 1 }
+          if ($env:GROUP_RESULT -ne 'success' -and $env:GROUP_RESULT -ne 'skipped') { exit 1 }
 
   release:
-    # Release (`release: published`) and workflow_dispatch: one job, one `dev workflow` pass in
-    # Release mode (clean -> build -> pack -> push -> template-publish-smoke). Never a matrix:
-    # packing and pushing must not run in parallel copies. NuGet Trusted Publishing binds to this
-    # repo + workflow.yml, not the job name. A nightly dispatch is template-smoke only.
+    # NuGet Trusted Publishing binds to this repo + workflow.yml, not the job name.
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'nightly')
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
-
+      id-token: write  # NuGet Trusted Publishing (OIDC)
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          fetch-depth: 1  # SourceLink and commit metadata read HEAD only (task 368)
+          fetch-depth: 1
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
-          global-json-file: global.json
-
-      # Read-only: the release run reuses the ci cache for the same CPM inputs but never saves one,
-      # so nothing a release run restores or packs can seed a later run.
-      - name: Restore NuGet package cache
+      - uses: ./.github/actions/setup-ci
         if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
-        uses: actions/cache/restore@v4
         with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-ci-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+          nuget-cache: restore  # nothing a release restores or packs seeds a later run
+          aspire-cli: 'true'
 
       - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
+        if: github.event_name == 'release' || inputs.mode == 'probe'
         id: nuget-login
         uses: nuget/login@v1
         with:
@@ -416,80 +181,46 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
         run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
 
-      # `dev workflow` builds the solution, which includes the AppHost. Since Aspire 17 (task 498) that
-      # build takes DCP and the dashboard from the Aspire CLI bundle. Same pinned install as the ci groups.
-      # Probe mode builds nothing, so it skips the install.
-      - name: Install Aspire CLI
+      - name: Run release pipeline
         if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
-          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
-          if ([string]::IsNullOrWhiteSpace($version)) {
-            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
-            exit 1
-          }
-          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
-          dotnet tool install --global Aspire.Cli --version $version
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Run CI Pipeline
-        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
-        run: |
-          # Unchanged from the single-job pipeline (no dev-cert trust step on release: the dir is absent).
-          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          if ('${{ github.event_name }}' -eq 'release') {
-            dotnet run tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          } else {
-            dotnet run tools/dev-cli/dev.cs -- workflow
-          }
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow
 
       - name: Upload Artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
+          # Do not rename Packages-*: tw-release's locate-run depends on it. 3 days covers a weekend
+          # between merge and `dev release` under the org's 500 MB Actions storage cap.
           name: Packages-${{ github.run_number }}
           path: artifacts/packages/*.nupkg
           if-no-files-found: ignore
-          # Org Free-plan cap is 500 MB shared Actions storage. 3 days covers a
-          # weekend between merge and `dev release`. A cut after expiry needs
-          # `gh run rerun <ci-run-id>` first (tw-release expired-artifact remedy).
-          # Any future diagnostic upload (smoke logs, test results) must set
-          # retention-days: 1. Do not rename Packages-*; locate-run depends on it.
           retention-days: 3
 
   skill-lint:
-    # Former skill-lint.yaml — PR only, skill/eval path filter via detect-paths.
-    needs: [detect-paths]
+    needs: [classify]
     if: |
       always() && !cancelled() &&
       github.event_name == 'pull_request' &&
-      needs.detect-paths.outputs.skill == 'true'
+      needs.classify.outputs.skill == 'true'
     name: Lint skill specs
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
         with:
-          node-version: "22"
+          fetch-depth: 1
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-node@v7
         with:
-          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
-          global-json-file: global.json
+          node-version: '22'
 
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
+      - uses: ./.github/actions/setup-ci
         with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-skill-lint-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+          nuget-cache-key: skill-lint
 
-      # The version is tools/dev-cli/vally-cli.version — the same pin `dev lint-skills` requires.
       - name: Install vally CLI
         run: |
           $ErrorActionPreference = 'Stop'
@@ -501,81 +232,47 @@ jobs:
           }
           Write-Host "Installing @microsoft/vally-cli@$version from tools/dev-cli/vally-cli.version"
           npm install -g "@microsoft/vally-cli@$version"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          exit $LASTEXITCODE
 
       - name: Lint skill specs
-        run: dotnet run tools/dev-cli/dev.cs -- lint-skills
+        run: dotnet run --file tools/dev-cli/dev.cs -- lint-skills
 
   template-smoke:
-    # Former template-smoke.yml — push/PR path filter, workflow_dispatch, and the nightly schedule.
-    needs: [detect-paths]
+    needs: [classify]
     if: |
       always() && !cancelled() && (
         github.event_name == 'schedule' ||
         (github.event_name == 'workflow_dispatch' && inputs.mode != 'probe') ||
-        (
-          (github.event_name == 'push' || github.event_name == 'pull_request') &&
-          needs.detect-paths.outputs.template == 'true'
-        )
+        ((github.event_name == 'push' || github.event_name == 'pull_request') && needs.classify.outputs.template == 'true')
       )
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: ./.github/actions/setup-ci
         with:
-          # The SDK global.json names (11.0.100 GA since task 492), not a floating channel.
-          global-json-file: global.json
+          nuget-cache-key: template-smoke  # the generated app's package set, not the monorepo's
+          dev-certs: 'true'
+          aspire-cli: 'true'
 
-      # Own key: the smoke restores the generated app's set, not the monorepo solution's.
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-template-smoke-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
-
-      # Generated-app Jaribu aggregators and (nightly) test projects hit HTTPS with the ASP.NET dev
-      # certificate (same as the `ci-group` jobs). Trust it and put the trust dir on SSL_CERT_DIR so OpenSSL/HttpClient does
-      # not fail with UntrustedRoot on Linux runners. See https://aka.ms/dev-certs-trust.
-      - name: Trust HTTPS dev certificate
-        run: dotnet dev-certs https --trust || true
-
-      # The generated app's AppHost build takes DCP and the dashboard from the Aspire CLI bundle
-      # (Aspire 17, task 498), and its aspire-tests boot that AppHost. Same pinned install as the ci groups.
-      - name: Install Aspire CLI
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # One assignment: dev-cli checks that this line reads <AspireVersion> from Directory.Packages.props.
-          $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
-          if ([string]::IsNullOrWhiteSpace($version)) {
-            Write-Host 'Directory.Packages.props has no <AspireVersion>.'
-            exit 1
-          }
-          Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
-          dotnet tool install --global Aspire.Cli --version $version
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      # Nightly: every flag-off variant plus each generated app's test projects (aspire-tests use the
-      # runner's Docker). Everything else: SmokeDefault only (task 375).
+      # Nightly: every flag-off variant plus each generated app's tests. Otherwise SmokeDefault only.
       - name: Template smoke (pack → install → generate → build)
+        env:
+          NIGHTLY: ${{ github.event_name == 'schedule' || inputs.mode == 'nightly' }}
         run: |
-          $env:SSL_CERT_DIR = "$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          if ('${{ github.event_name }}' -eq 'schedule' -or '${{ inputs.mode }}' -eq 'nightly') {
-            dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests
+          if ($env:NIGHTLY -eq 'true') {
+            dotnet run --file tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests
           } else {
-            dotnet run tools/dev-cli/dev.cs -- template-smoke
+            dotnet run --file tools/dev-cli/dev.cs -- template-smoke
           }
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          exit $LASTEXITCODE
 
-      # The smoke packs this branch's platform packages as 2.0.0-smoke and restores them into
-      # ~/.nuget/packages. Evict them before the cache post-step saves, so a cache never carries
-      # one branch's local bits into another run.
+      # The smoke restores this branch's 2.0.0-smoke packages. Evict them before the cache
+      # post-step saves, so a cache never carries one branch's local bits into another run.
       - name: Evict smoke packages from NuGet cache
         if: always()
         run: rm -rf ~/.nuget/packages/*/2.0.0-smoke

@@ -33,7 +33,7 @@
 // self-contained host binary with no image to run it in, and postgres has no host port for it to
 // reach. Re-running the script is a no-op; web-server tolerates the not-yet-migrated window (PostgresResources Design).
 // Artifacts are CI-only, never committed: `dev publish compose` writes artifacts/aspire-output/compose
-// (git-ignored) and workflow.yml uploads compose, .env and the SQL script (not the ~100 MB bundle).
+// (git-ignored). The SQL script, not the ~100 MB bundle, is the Compose migration path.
 // Kubernetes publish target (task 070-004): AddKubernetesEnvironment makes `aspire publish` emit a Helm
 // chart; `aspire deploy` runs helm upgrade --install against the current kubectl context (Helm >= 4.2).
 // Aspire assigns every compute resource to exactly ONE compute environment (a second environment
@@ -78,7 +78,7 @@
 // this target at all — publish output IS the chart directory, and Helm rejects any chart file over
 // 5 MiB.
 // `dev publish kubernetes` writes artifacts/aspire-output/kubernetes, gates it with the same suite and
-// helm lint (when helm is on PATH); workflow.yml uploads the chart directory.
+// helm lint (when helm is on PATH).
 // Azure Container Apps publish target (task 070-007): `Publish:Target=aca` declares
 // AddAzureContainerAppEnvironment("aca-env") and `aspire publish` emits Bicep (main.bicep plus one module
 // per resource); `aspire deploy -- --Publish:Target=aca` provisions it with the Azure CLI credential. It
@@ -117,7 +117,7 @@
 // YARP returns that redirect to the browser instead of following it.
 // `dev publish aca` writes artifacts/aspire-output/aca and gates it with aspire-tests'
 // aca-publish-tests (AcaPublish_Given_); publishing needs no Azure credentials, so CI runs it on every
-// PR and uploads the Bicep and SQL script. Deploying is `dev deploy --target aca` (operator-run).
+// PR. Deploying is `dev deploy --target aca` (operator-run).
 // Azure Container Apps with Neon (task 317): `Publish:Target=aca-neon` reuses this same
 // AddAzureContainerAppEnvironment("aca-env") and the same external-ingress rule. It does not declare
 // Flexible Server or postgres-kv. Postgres is two secret parameters the operator sets in AppHost user
@@ -135,8 +135,7 @@
 // variable. The connection timeout (Timeout=30) lives in the connection string. Run mode still ignores
 // Publish:Target and keeps the AddPostgres container.
 // Migrations are the published bundle on the direct connection (`dev deploy migrate --target aca-neon`);
-// there is no firewall rule. `dev publish aca-neon` writes artifacts/aspire-output/aca-neon.
-// workflow.yml uploads that Bicep and the SQL script beside the bundle, not the bundle. The
+// there is no firewall rule. `dev publish aca-neon` writes artifacts/aspire-output/aca-neon. The
 // environment's ACR Basic registry is not free. Task 400: WithContainerRegistry on each project
 // (a ghcr.io ContainerRegistryResource) still publishes aca-env-acr at SKU Basic, and each
 // container app's registries entry stays the ACR endpoint plus a managed identity. The environment

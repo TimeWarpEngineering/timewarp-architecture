@@ -7,7 +7,9 @@
 // @microsoft/vally-cli at that version, then runs `dev lint-skills`. The verb runs
 // `vally lint skills` and `vally lint --eval-spec` for each skills/*/evals/eval.yaml.
 // A workflow that installs an unpinned package, or that shells out to `vally lint` itself,
-// fails WorkflowDriftError. dev build does not run this. ganda repo audit is not extended
+// fails WorkflowDriftError. The skill-lint job is gated on the skill output of
+// `dev workflow --phase classify`; the path rule (tools/dev-cli/ included) is WorkflowPathClasses.
+// dev build does not run this. ganda repo audit is not extended
 // from this repo.
 #endregion
 
@@ -22,7 +24,10 @@ internal static partial class SkillSpecLint
 
   internal const string PackageName = "@microsoft/vally-cli";
 
-  internal const string LintSkillsCommand = "dotnet run tools/dev-cli/dev.cs -- lint-skills";
+  internal const string LintSkillsCommand = "dotnet run --file tools/dev-cli/dev.cs -- lint-skills";
+
+  /// <summary>The classify call whose <c>skill</c> output gates the CI skill-lint job.</summary>
+  internal const string ClassifyCommand = "workflow --phase classify";
 
   internal static readonly string[] SkillLintArguments = ["lint", "skills"];
 
@@ -113,7 +118,8 @@ internal static partial class SkillSpecLint
   /// <summary>
   /// Null when CI reads <see cref="VersionFileRelativePath"/>, installs that package version,
   /// runs <see cref="LintSkillsCommand"/>, and does not invoke <c>vally lint</c> itself.
-  /// Skill-lint also runs when <c>tools/dev-cli/</c> changes.
+  /// The job is gated on <c>dev workflow --phase classify</c>, whose skill rule
+  /// (<c>WorkflowPathClasses.IsSkillPath</c>) includes <c>tools/dev-cli/</c>.
   /// </summary>
   internal static string? WorkflowDriftError(string workflowYaml)
   {
@@ -133,9 +139,9 @@ internal static partial class SkillSpecLint
       return $"CI must assign the vally version from {VersionFileRelativePath}.";
     }
 
-    if (!code.Contains("^tools/dev-cli/", StringComparison.Ordinal))
+    if (!code.Contains(ClassifyCommand, StringComparison.Ordinal) || !code.Contains("outputs.skill", StringComparison.Ordinal))
     {
-      return "CI must run skill lint when tools/dev-cli/ changes.";
+      return $"CI must gate skill lint on the skill output of `dev {ClassifyCommand}`.";
     }
 
     if (!code.Contains(LintSkillsCommand, StringComparison.Ordinal))

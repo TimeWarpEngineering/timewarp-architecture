@@ -2,46 +2,64 @@
 // Full CI/CD pipeline, mode-aware (mirrors the TimeWarp.Nuru / TimeWarp.Amuru pattern).
 #endregion
 #region Design
+// workflow.yml is a thin trigger: it says when to run and on which runner, and calls this command.
+// Runner setup (.NET from global.json, the NuGet cache, dev-cert trust, the pinned Aspire CLI) is the
+// one composite action .github/actions/setup-ci. Every decision and check lives here.
+//
 // Mode is auto-detected from GITHUB_EVENT_NAME (or forced with --mode):
 //   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish all (tests are the gate)
 //   release / dispatch   -> Release:   clean -> build -> pack -> push -> template-publish-smoke
-// publish compose (task 070-003) runs `aspire publish` for the Docker Compose target and gates the
-// output with aspire-tests' production-safety suite; publish kubernetes (task 070-004) does the same
-// for the Helm chart and helm-lints it (Helm ships on the runner); publish aca (task 070-007) does the
-// same for the Azure Container Apps Bicep (no Azure credentials: publishing only writes files).
-// publish aca-neon (task 317) does the same for Azure Container Apps with external Neon Postgres.
-// Task 367: the workflow runs `dev publish all --no-build` — every publish target, then their
-// safety suites in ONE aspire-tests run against the Release build that just ran, then helm lint.
-// The test step runs `dev test --no-build` (task 365): the Release solution build just ran, so
-// solution-listed test projects skip their own build/restore check.
-// workflow.yml uploads every publish output (compose files, the Helm chart, aca Bicep, aca-neon
-// Bicep; migration bundles stay out). No mode deploys anything (deploying is operator-run).
-// Task 366: Pr/Merge splits into phases so workflow.yml runs them as parallel jobs, each on its
-// own runner that builds what it needs (no shared build artifact: bin/obj is far larger than the
-// org's 500 MB Actions storage cap). --phase test [--group <name>] is clean -> build -> test
-// (one TestGroups group, or all); --phase publish is clean -> build -> publish all. No
-// --phase runs everything in order, as before. Release mode accepts no --phase/--group: packing
-// and pushing stay one job and one pass.
-// Task 493: the pull request build decision is PullRequestBuildClassifier (TimeWarp.Nuru.DevCli
-// content, timewarp-nuru 595), with this repo's additions in .timewarp/dev.jsonc pullRequestBuild.
-// It runs first on the all phase and is the whole of --phase classify, which writes ci=true|false to
-// GITHUB_OUTPUT for workflow.yml's detect-paths job; the ci-group jobs skip on ci=false. The test
-// and publish phases do not classify: their shallow checkout cannot diff base...head, and the
-// classify job already gated them. The classifier builds on every event but pull_request.
+// Pr/Merge splits into phases so workflow.yml runs them as parallel jobs (ci (fast), ci
+// (integration), ci (publish)), each on its own runner that builds what it needs: a shared build
+// artifact would be bin/obj for the whole solution, far over the org's 500 MB Actions storage cap.
+// --phase test [--group <name>] is clean -> build -> test (one TestGroups group, or all); --phase
+// publish is clean -> build -> publish all. No --phase runs everything in order. Release mode
+// accepts no --phase/--group: packing and pushing stay one job and one pass. The playwright group
+// is not in the CI matrix; `dev test --group playwright` still runs it.
+// The test step runs `dev test --no-build`, and publish runs `dev publish all --no-build` (every
+// target, their safety suites in one aspire-tests run, then helm lint), against the Release build
+// that just ran. Publish outputs are files on the runner; CI uploads none of them and deploys
+// nothing (deploying is operator-run).
+//
+// Whenever the test step includes the fast group (the fast job, or a full local run), the ingress
+// prefix golden is regenerated from the two host builds and goldens/ingress must show no diff and
+// no untracked file. A hand-edited golden, or a contract change that skipped regenerate, fails here.
+//
+// --phase classify is the whole of workflow.yml's classify job. It writes three outputs:
+//   ci        PullRequestBuildClassifier.RequiresBuild (TimeWarp.Nuru.DevCli) with this repo's
+//             additions in .timewarp/dev.jsonc pullRequestBuild, over the same changed paths. A
+//             push applies the pull request rule to its own diff (DecideAsync builds for every
+//             event but pull_request), so a skills-only push skips ci-group as a skills-only pull
+//             request does. An unreadable dev.jsonc on a push builds.
+//   skill     WorkflowPathClasses.IsSkillPath over the changed paths (gates skill-lint).
+//   template  WorkflowPathClasses.IsTemplatePath over the changed paths (gates template-smoke).
+// A pull request takes the classifier's base...head diff (the job checks out full history). A push
+// fetches its before and after commits when missing (--depth=1 only on a shallow checkout, so a
+// local full clone never turns shallow) and diffs their trees. Any diff that cannot be read
+// (new branch, force push, failed fetch, local run) turns every job on. The test and publish phases
+// do not classify: their shallow checkout cannot diff, and the classify job already gated them.
+//
+// Checkouts are shallow everywhere but classify on a pull request: SourceLink and
+// TimeWarp.Build.Tasks read only HEAD, `dev check-version` compares against nuget.org, and
+// `dev release` (the only tag writer) runs locally.
+//
 // The release path deliberately does not run tests — they already ran on the PR/merge that
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
 // API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only
-// and the post-publish template-publish-smoke gate is skipped (nothing was pushed). After a
-// real push, template-publish-smoke waits for nuget.org flatcontainer, generates against the
-// published template, asserts pins==version, restore+builds nuget.org-only — failure blocks
-// the release (task 126-003). Handlers are invoked directly (no ./bin/dev dependency) so this
-// runs in a clean CI checkout. PackableProjects includes source/libraries (TimeWarp.Modules,
-// TimeWarp.Identity, TimeWarp.402), foundation, TimeWarp.Architecture.{Attributes,Analyzers,Generators}
-// (task 092), and the template package; single Version from source/Directory.Build.props.
-// TimeWarp.Contracts is a PackageReference at the Directory.Packages.props pin. This list does not pack it.
+// and the post-publish template-publish-smoke gate is skipped (nothing was pushed). A dispatch
+// therefore never publishes, and needs no break-glass confirm input. After a real push,
+// template-publish-smoke waits for nuget.org flatcontainer, generates against the published
+// template, asserts pins==version, restore+builds nuget.org-only — failure blocks the release.
+// Handlers are invoked directly (no ./bin/dev dependency) so this runs in a clean CI checkout.
+// PackableProjects includes source/libraries (TimeWarp.Modules, TimeWarp.Identity, TimeWarp.402),
+// foundation, TimeWarp.Architecture.{Attributes,Analyzers,Generators}, and the template package;
+// single Version from source/Directory.Build.props. TimeWarp.Contracts is a PackageReference at
+// the Directory.Packages.props pin. This list does not pack it.
 #endregion
 
 namespace DevCli.Commands;
+
+using System.Text.Json;
 
 [NuruRoute("workflow", Description = "Execute full CI/CD pipeline (mode-aware)")]
 internal sealed class WorkflowCommand : ICommand<Unit>
@@ -115,7 +133,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         Terminal.WriteLine(decision.Message);
         if (phase == PhaseClassify)
         {
-          await WriteGitHubOutputAsync("ci", decision.RequiresBuild ? "true" : "false", ct);
+          await ClassifyAsync(decision);
           return Unit.Value;
         }
 
@@ -126,13 +144,117 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       return Unit.Value;
     }
 
-    private static async Task WriteGitHubOutputAsync(string name, string value, CancellationToken ct)
+    // Writes ci, skill, and template to GITHUB_OUTPUT. A diff that cannot be read turns every job on.
+    private async Task ClassifyAsync(PullRequestBuildDecision decision)
     {
-      string? outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
-      if (string.IsNullOrEmpty(outputPath)) return;
+      IReadOnlyList<string>? changed = await ReadChangedPathsAsync(decision);
+      if (changed is null)
+      {
+        Terminal.WriteLine("Changed paths unknown. Every path-gated job runs.");
+      }
+      else
+      {
+        Terminal.WriteLine($"Changed paths ({changed.Count}):");
+        foreach (string path in changed) Terminal.WriteLine($"  {path}");
+      }
 
-      await File.AppendAllTextAsync(outputPath, $"{name}={value}\n", ct);
+      (bool configRead, PullRequestBuildConfig? config) = changed is null ? (true, null) : await ReadBuildConfigAsync();
+      WorkflowJobs jobs = WorkflowPathClasses.Classify(
+        changed,
+        paths => !configRead || PullRequestBuildClassifier.RequiresBuild(paths, config));
+      (string Name, bool Value)[] outputs = [("ci", jobs.Ci), ("skill", jobs.Skill), ("template", jobs.Template)];
+
+      string? outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
+      foreach ((string name, bool value) in outputs)
+      {
+        string line = $"{name}={(value ? "true" : "false")}";
+        Terminal.WriteLine(line);
+        if (!string.IsNullOrEmpty(outputPath)) await File.AppendAllTextAsync(outputPath, line + "\n", Ct);
+      }
     }
+
+    // pullRequestBuild from .timewarp/dev.jsonc, the same additions DecideAsync reads. False when
+    // the file exists but cannot be read: the caller then builds.
+    private async Task<(bool Read, PullRequestBuildConfig? Config)> ReadBuildConfigAsync()
+    {
+      string path = Path.Combine(RepoRoot, BuildConfigFile);
+      if (!File.Exists(path)) return (true, null);
+
+      try
+      {
+        return (true, RepoConfigService.Parse(await File.ReadAllTextAsync(path, Ct)).PullRequestBuild);
+      }
+      catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+      {
+        Terminal.WriteErrorLine($"{BuildConfigFile} could not be read ({exception.Message}). ci runs.");
+        return (false, null);
+      }
+    }
+
+    private const string BuildConfigFile = ".timewarp/dev.jsonc";
+
+    // Pull request: the classifier's diff (empty with a build decision means it was not read).
+    // Push: fetch before and after (the checkout is shallow) and diff their trees. Else unknown.
+    private async Task<IReadOnlyList<string>?> ReadChangedPathsAsync(PullRequestBuildDecision decision)
+    {
+      string? eventName = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME");
+      if (eventName == PullRequestBuildClassifier.PullRequestEventName)
+      {
+        return !decision.RequiresBuild || decision.ChangedPaths.Count > 0 ? decision.ChangedPaths : null;
+      }
+
+      if (eventName != "push") return null;
+
+      string? eventPath = Environment.GetEnvironmentVariable("GITHUB_EVENT_PATH");
+      string? json = File.Exists(eventPath) ? await File.ReadAllTextAsync(eventPath, Ct) : null;
+      if (!WorkflowPathClasses.TryReadPushShas(json, out string before, out string after)) return null;
+
+      if (!await HasCommitsAsync(before, after))
+      {
+        // --depth only on a shallow checkout (CI); on a full clone it would make the clone shallow.
+        CommandOutput shallow = await GitCommand("rev-parse", "--is-shallow-repository").CaptureAsync(Ct);
+        string[] fetch = shallow.Stdout.Trim() == "true"
+          ? ["fetch", "--no-tags", "--depth=1", "origin", before, after]
+          : ["fetch", "--no-tags", "origin", before, after];
+        if (!(await GitCommand(fetch).CaptureAsync(Ct)).Success) return null;
+      }
+
+      CommandOutput diff = await GitCommand("diff", "--name-only", before, after).CaptureAsync(Ct);
+      if (!diff.Success) return null;
+
+      return diff.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    private async Task<bool> HasCommitsAsync(params string[] shas)
+    {
+      foreach (string sha in shas)
+      {
+        if (!(await GitCommand("cat-file", "-e", sha + "^{commit}").CaptureAsync(Ct)).Success) return false;
+      }
+
+      return true;
+    }
+
+    private ShellBuilder GitCommand(params string[] arguments) =>
+      Shell.Builder("git").WithArguments(arguments).WithWorkingDirectory(RepoRoot).WithNoValidation();
+
+    // Regenerates the ingress golden, then fails on any tracked diff or untracked file under it.
+    private async Task<bool> VerifyIngressGoldenAsync()
+    {
+      if (!await RunStepAsync("Regenerate ingress golden", new RegenerateGeneratedCommand.Handler(Terminal).Handle(new RegenerateGeneratedCommand(), Ct))) return false;
+
+      CommandOutput diff = await GitCommand("diff", "--exit-code", "--", IngressGoldenDirectory).PassthroughAsync(Ct);
+      CommandOutput status = await GitCommand("status", "--porcelain", "--", IngressGoldenDirectory).CaptureAsync(Ct);
+      if (diff.Success && status.Success && string.IsNullOrWhiteSpace(status.Stdout)) return true;
+
+      Terminal.WriteErrorLine($"{IngressGoldenDirectory} changed after regenerate-generated. Run `dev regenerate-generated` and commit the golden.".Red());
+      if (!string.IsNullOrWhiteSpace(status.Stdout)) Terminal.WriteErrorLine(status.Stdout);
+      Terminal.WriteErrorLine("\nPipeline FAILED — Ingress golden check failed".Red());
+      Environment.ExitCode = 1;
+      return false;
+    }
+
+    private const string IngressGoldenDirectory = "goldens/ingress";
 
     private bool FindRepoRoot()
     {
@@ -201,12 +323,14 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     {
       bool test = phase is PhaseAll or PhaseTest;
       bool publish = phase is PhaseAll or PhasePublish;
+      bool golden = test && (group is null or TestGroups.Fast);
       const string publishSteps = "publish all";
+      string testSteps = (group is null ? "test" : $"test ({group})") + (golden ? " -> ingress golden" : "");
       string steps = phase switch
       {
-        PhaseTest => group is null ? "test" : $"test ({group})",
+        PhaseTest => testSteps,
         PhasePublish => publishSteps,
-        _ => $"test -> {publishSteps}",
+        _ => $"{testSteps} -> {publishSteps}",
       };
       Terminal.WriteLine($"Pipeline: clean -> build -> {steps}\n");
       Environment.ExitCode = 0;
@@ -214,6 +338,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
       if (test && !await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand { NoBuild = true, Group = group }, Ct))) return;
+      if (golden && !await VerifyIngressGoldenAsync()) return;
       if (publish && !await RunStepAsync("Publish all", new PublishAllCommand.Handler(Terminal).Handle(new PublishAllCommand { NoBuild = true }, Ct))) return;
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());

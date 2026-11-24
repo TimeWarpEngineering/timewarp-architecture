@@ -213,8 +213,29 @@ public class RepoAspireVersion_Given_
     string? error = AspireVersionSources.Validate(
       File.ReadAllText(Path.Combine(root, AspireRun.DirectoryPackagesPropsFile)),
       File.ReadAllText(Path.Combine(root, AspireRun.AppHostProject)),
-      File.ReadAllText(Path.Combine(root, ".github/workflows/workflow.yml")));
+      File.ReadAllText(Path.Combine(root, AspireVersionSources.SetupActionRelativePath)));
     error.ShouldBeNull();
+    AspireVersionSources.WorkflowInstallError(File.ReadAllText(Path.Combine(root, ".github/workflows/workflow.yml")))
+      .ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task WorkflowInlineInstall_Should_Fail()
+  {
+    string workflow = "aspire-cli: 'true'\n" + WorkflowReadingProperty();
+    string? error = AspireVersionSources.WorkflowInstallError(workflow);
+    error.ShouldNotBeNull();
+    error.ShouldContain(AspireVersionSources.SetupActionRelativePath);
+    return Task.CompletedTask;
+  }
+
+  public static Task WorkflowWithoutSetupActionInstall_Should_Fail()
+  {
+    string? error = AspireVersionSources.WorkflowInstallError("uses: ./.github/actions/setup-ci\n# aspire-cli: 'true'\n");
+    error.ShouldNotBeNull();
+    error.ShouldContain("aspire-cli");
+    AspireVersionSources.WorkflowInstallError("uses: ./.github/actions/setup-ci\nwith:\n  aspire-cli: 'true'\n")
+      .ShouldBeNull();
     return Task.CompletedTask;
   }
 
