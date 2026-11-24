@@ -91,19 +91,21 @@
   in front of the orbs; and each assistant turn shows it through --twe-assistant-avatar, which
   ApplyAvatarAsync sets on the document root because the library renders the turns and inline
   styles are banned.
-  Voice (task 453): the microphone in the lead slot dispatches AgentSurfaceState.Dictate. The
-  browser records in ask-ai.ts and stops on its own when the base64 would pass
-  TranscribeAgentAudio.MaxDataLength, the only copy of that limit. The server sends a shorter
-  clip to xAI speech-to-text. The transcript is inserted at the caret and is not sent. Recording
-  shows a stop icon and the elapsed time. That time is a timer, not a live region, so it is not
-  announced every second. Transcribing and a failure replace it, and that sentence stays a status.
-  A refusal of this clip is dropped so the next press records. A transport failure, 429, or 5xx
-  keeps the clip and retry sends it. An insert failure keeps the transcript and retry inserts it.
+  Voice (task 453, streaming since task 505): the microphone in the lead slot dispatches
+  AgentSurfaceState.Dictate. ask-ai.ts streams the audio to the web server, which relays it to xAI
+  streaming speech-to-text with the server key, and writes the partial transcript into the
+  composer while the person talks. Stop replaces that preview with the final text, which is not
+  sent. Recording shows a stop icon and the elapsed time. That time is a timer, not a live region,
+  so it is not announced every second. Transcribing and a failure replace it, and that sentence
+  stays a status. A failure keeps no audio: the next press records again. An insert failure keeps
+  the transcript and retry inserts it.
   The button waits while a turn streams or an approval card is up (one TurnInProgress check),
   except to stop a recording already going. The status callback re-renders this panel for those
   states so the disabled binding reaches the button.
-  A one-second timer in this panel only calls StateHasChanged so the elapsed label moves; it does not touch
-  the microphone. Close and New conversation release a live capture.
+  A one-second timer in this panel moves the elapsed label and asks ask-ai.ts whether the dictation
+  ended on its own (the server answered or failed, or the TranscribeAgentAudio.MaxSeconds cap was
+  reached); then it dispatches Dictate, which stops and shows the result. Close and New
+  conversation release a live capture.
   Screenshot (task 303-001): the camera button in the lead slot dispatches
   ScreenshotState.CaptureForAsk, which draws the page body (the page behind this panel, since the
   panel lives in the layout aside) and attaches that capture in the same handler.
@@ -663,8 +665,8 @@
             return;
           }
 
-          bool overLimit = await VoiceOverLimitAsync();
-          if (overLimit && AgentSurfaceState.VoicePhase == AskVoicePhase.Recording)
+          bool ended = await VoiceEndedAsync();
+          if (ended && AgentSurfaceState.VoicePhase == AskVoicePhase.Recording)
           {
             await AgentSurfaceState.Dictate();
             stop = true;
@@ -687,8 +689,8 @@
     }
   }
 
-  [DirectComponentSideEffect("Once a second while recording, asks whether the clip already hit the transcription size limit. Stopping is still the Dictate action.")]
-  private Task<bool> VoiceOverLimitAsync() => AskAiJsModule.VoiceCaptureExceededAsync(JsRuntime);
+  [DirectComponentSideEffect("Once a second while recording, asks whether the dictation ended on its own (server answer, failure, or the length cap). Stopping is still the Dictate action.")]
+  private Task<bool> VoiceEndedAsync() => AskAiJsModule.VoiceCaptureEndedAsync(JsRuntime);
 
   private void StopVoiceClock()
   {

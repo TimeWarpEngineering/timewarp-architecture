@@ -13,8 +13,9 @@
 // The probe, the user key, and the resolver are TryAdd. Settings and the current principal are
 // optional constructor parameters, so a host that has neither still resolves host-then-site.
 // The resolver logger is optional too. A missing logger still treats an unreadable mode as Required.
-// Speech-to-text uses its own named HttpClient (30s) and IAgentSpeechToText. It shares the options,
-// the admission cap, and the key resolver. It is not an IChatClient.
+// Speech-to-text is IAgentSpeechToText over a WebSocket (task 505), not an IChatClient and not an
+// HttpClient, so the Aspire standard resilience handler does not wrap it. DictationRelay is scoped:
+// it reads the current principal. It shares the options, the admission cap, and the key resolver.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -28,7 +29,7 @@ using TimeWarp.Architecture.Secrets;
 /// <summary>Wires the server-side chat relay.</summary>
 public static class XaiChatRegistration
 {
-  /// <summary>Adds options, admission, <see cref="IAgentChatUpstream"/>, and speech-to-text.</summary>
+  /// <summary>Adds options, admission, <see cref="IAgentChatUpstream"/>, speech-to-text, and the dictation relay.</summary>
   public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
   {
     ArgumentNullException.ThrowIfNull(services);
@@ -40,14 +41,12 @@ public static class XaiChatRegistration
     services.TryAddSingleton<IProtectedSecretStore, UnavailableProtectedSecretStore>();
     services.TryAddSingleton<IXaiChatClientFactory, OpenAiXaiChatClientFactory>();
     services.AddHttpClient(XaiApiKeyProbe.HttpClientName);
-    services.AddHttpClient(
-      XaiSpeechToText.HttpClientName,
-      client => client.Timeout = TimeSpan.FromSeconds(30));
     services.TryAddSingleton<IXaiApiKeyProbe, XaiApiKeyProbe>();
     services.TryAddScoped<ISiteXaiApiKey, SiteXaiApiKey>();
     services.TryAddScoped<IUserXaiApiKey, UserXaiApiKey>();
     services.TryAddScoped<IXaiApiKeyResolver, XaiApiKeyResolver>();
     services.AddSingleton<IAgentChatUpstream, XaiChatUpstream>();
     services.AddSingleton<IAgentSpeechToText, XaiSpeechToText>();
+    services.TryAddScoped<DictationRelay>();
   }
 }

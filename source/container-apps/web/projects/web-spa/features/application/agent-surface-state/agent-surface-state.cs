@@ -37,8 +37,8 @@
 // XaiApiKeyRefreshHandler reloads chat configuration after a successful admin set or clear.
 // VoicePhase (task 453) is the composer's microphone. CloseAskPanel and NewConversation release
 // a live capture and, while a transcription is in flight, publish VoiceEpoch so a late insert
-// does not land. VoiceData stays only when another try might succeed. VoiceTranscript stays when
-// the composer could not take the text, and the retry inserts it. The elapsed clock is the
+// does not land. VoiceTranscript stays when the composer could not take the text, and the retry
+// inserts it. Since task 505 the audio streams, so no clip is kept between presses. The elapsed clock is the
 // panel's, read from VoiceStartedAt.
 #endregion
 
@@ -137,10 +137,6 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
 
   /// <summary>When the current recording started. The panel formats the elapsed time.</summary>
   public DateTimeOffset? VoiceStartedAt { get; private set; }
-
-  private string? VoiceMediaType;
-
-  private string? VoiceData;
 
   private string? VoiceTranscript;
 

@@ -1,39 +1,48 @@
 #region Purpose
-// Forwards one dictated clip to xAI speech-to-text, or returns the fake transcript in tests.
+// Opens xAI streaming speech-to-text for one dictation, or the fake stream in tests.
 #endregion
 
 #region Design
 // The key stays on the server. BeginKeyResolution opens the same one-read slot as the chat
-// relay, IsConfiguredAsync fills it, and TranscribeAsync consumes it. UseFakeUpstream is honored
-// only in Development or Testing, and then it wins over a real key and does not dial xAI.
-// The request is XaiSpeech.CreateRequest: POST {endpoint}/stt, Bearer, model then file last.
-// Error bodies are not read, so a refusal that echoes the key never reaches a log or a problem.
+// relay, IsConfiguredAsync fills it, and OpenAsync consumes it. UseFakeUpstream is honored only
+// in Development or Testing, and then it wins over a real key and does not dial xAI.
+// The upstream is a ClientWebSocket to XaiSpeech.StreamUri with Authorization: Bearer. OpenAsync
+// waits for transcript.created (the docs say audio sent before it is not ready to be taken) under
+// ConnectTimeout. Measured 0.75-0.95 s from connect to created on 2026-11-24, so 10 s is a
+// stall. A failed or timed-out open is logged without the exception message (a refused handshake
+// could carry the request) and returns a generic 502.
+// No HttpClient: the batch POST and its named client are gone (task 505). That client inherited
+// the Aspire standard resilience handler (10 s per attempt, retries), which cut real clips at 10 s
+// and resent the POST until the 30 s HttpClient timeout. A WebSocket does not go through it.
+// The fake stream answers the first audio frame with an interim "Voice", and Complete with the
+// utterance FakeTranscript followed by done, so browser proofs see a partial then the final text.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
 
-using System.Net.Http;
+using System.Buffers;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading.Channels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Architecture.Features.AgentChats.Application;
-using static TimeWarp.Architecture.Features.AgentChats.TranscribeAgentAudio;
 
-/// <summary>xAI speech-to-text, or the deterministic fake transcript.</summary>
+/// <summary>xAI streaming speech-to-text, or the deterministic fake stream.</summary>
 internal sealed class XaiSpeechToText : IAgentSpeechToText
 {
-  internal const string HttpClientName = "xai-speech-to-text";
+  internal static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(10);
 
-  private static readonly Action<ILogger, Exception?> LogTransportFailed =
-    LoggerMessage.Define
+  private static readonly Action<ILogger, string, Exception?> LogOpenFailed =
+    LoggerMessage.Define<string>
     (
       LogLevel.Error,
-      new EventId(1, nameof(LogTransportFailed)),
-      "xAI speech-to-text request failed"
+      new EventId(1, nameof(LogOpenFailed)),
+      "xAI speech-to-text stream did not open: {Reason}"
     );
 
   private static readonly AsyncLocal<KeySlot?> OpenTurn = new();
 
-  private readonly IHttpClientFactory HttpClientFactory;
   private readonly IOptionsMonitor<XaiChatOptions> Options;
   private readonly IHostEnvironment Environment;
   private readonly IServiceScopeFactory Scopes;
@@ -41,14 +50,12 @@ internal sealed class XaiSpeechToText : IAgentSpeechToText
 
   public XaiSpeechToText
   (
-    IHttpClientFactory httpClientFactory,
     IOptionsMonitor<XaiChatOptions> options,
     IHostEnvironment environment,
     IServiceScopeFactory scopes,
     ILogger<XaiSpeechToText> logger
   )
   {
-    HttpClientFactory = httpClientFactory;
     Options = options;
     Environment = environment;
     Scopes = scopes;
@@ -89,17 +96,16 @@ internal sealed class XaiSpeechToText : IAgentSpeechToText
     XaiByokCopy.MissingKeyDetail(OpenTurn.Value?.Mode ?? XaiByokMode.Allow, development);
 
   /// <inheritdoc />
-  public async Task<OneOf<Response, SharedProblemDetails>> TranscribeAsync
+  public async Task<OneOf<IAgentSpeechSession, SharedProblemDetails>> OpenAsync
   (
-    Command command,
+    int sampleRate,
     CancellationToken cancellationToken
   )
   {
-    ArgumentNullException.ThrowIfNull(command);
     XaiChatOptions options = Options.CurrentValue;
     if (AllowFake && options.UseFakeUpstream)
     {
-      return new Response(FakeTranscript);
+      return new FakeSpeechSession();
     }
 
     string? apiKey;
@@ -122,74 +128,45 @@ internal sealed class XaiSpeechToText : IAgentSpeechToText
       return AgentChatProblems.NotConfigured(XaiByokCopy.MissingKeyDetail(mode, Environment.IsDevelopment()));
     }
 
-    byte[] audio;
+    Uri uri = XaiSpeech.StreamUri(options.Endpoint, sampleRate);
+    ClientWebSocket? socket = new();
     try
     {
-      audio = Convert.FromBase64String(command.Data);
-    }
-    catch (FormatException)
-    {
-      return XaiSpeech.BadAudio();
-    }
-
-    if (audio.Length == 0)
-    {
-      return XaiSpeech.BadAudio();
-    }
-
-    HttpRequestMessage? request = null;
-    try
-    {
+      socket.Options.SetRequestHeader("Authorization", "Bearer " + apiKey);
+      using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+      timeout.CancelAfter(ConnectTimeout);
       try
       {
-        request = XaiSpeech.CreateRequest(options.Endpoint, apiKey, command.MediaType, audio);
+        await socket.ConnectAsync(uri, timeout.Token).ConfigureAwait(false);
+        string? first = await XaiSpeechSession.ReceiveTextAsync(socket, timeout.Token).ConfigureAwait(false);
+        if (first is null || !XaiSpeech.IsCreated(first))
+        {
+          LogOpenFailed(Logger, "no transcript.created", null);
+          return AgentChatProblems.UpstreamFailed();
+        }
       }
-      catch (ArgumentException)
+      catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
       {
-        return XaiSpeech.BadAudio();
+        throw;
       }
-
-      HttpClient client = HttpClientFactory.CreateClient(HttpClientName);
-      HttpResponseMessage? responseMessage = null;
-      try
+      catch (OperationCanceledException)
       {
-        try
-        {
-          responseMessage = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-          throw;
-        }
-        catch (Exception exception) when (exception is HttpRequestException or OperationCanceledException)
-        {
-          LogTransportFailed(Logger, exception);
-          return XaiSpeech.UpstreamFailed();
-        }
-
-        int status = (int)responseMessage.StatusCode;
-        string? body = null;
-        if (status is >= 200 and <= 299)
-        {
-          body = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        OneOf<string, SharedProblemDetails> mapped = XaiSpeech.Map(status, body);
-        if (mapped.IsT0)
-        {
-          return new Response(mapped.AsT0);
-        }
-
-        return mapped.AsT1;
+        LogOpenFailed(Logger, "timed out", null);
+        return AgentChatProblems.UpstreamFailed();
       }
-      finally
+      catch (WebSocketException exception)
       {
-        responseMessage?.Dispose();
+        LogOpenFailed(Logger, exception.WebSocketErrorCode.ToString(), null);
+        return AgentChatProblems.UpstreamFailed();
       }
+
+      XaiSpeechSession opened = new(socket);
+      socket = null;
+      return opened;
     }
     finally
     {
-      request?.Dispose();
+      socket?.Dispose();
     }
   }
 
@@ -217,5 +194,145 @@ internal sealed class XaiSpeechToText : IAgentSpeechToText
     public string? Key { get; set; }
 
     public XaiByokMode Mode { get; set; }
+  }
+
+  /// <summary>The Development/Testing stream: one interim on audio, the fake transcript on complete.</summary>
+  private sealed class FakeSpeechSession : IAgentSpeechSession
+  {
+    private readonly Channel<SpeechEvent> Events = Channel.CreateUnbounded<SpeechEvent>();
+    private bool SentInterim;
+
+    public ValueTask SendAudioAsync(ReadOnlyMemory<byte> audio, CancellationToken cancellationToken)
+    {
+      if (!SentInterim)
+      {
+        SentInterim = true;
+        Events.Writer.TryWrite(new SpeechEvent(SpeechEventKind.Interim, "Voice"));
+      }
+
+      return ValueTask.CompletedTask;
+    }
+
+    public ValueTask CompleteAsync(CancellationToken cancellationToken)
+    {
+      Events.Writer.TryWrite
+      (
+        new SpeechEvent(SpeechEventKind.UtteranceFinal, TranscribeAgentAudio.FakeTranscript)
+      );
+      Events.Writer.TryWrite(new SpeechEvent(SpeechEventKind.Done, string.Empty));
+      Events.Writer.TryComplete();
+      return ValueTask.CompletedTask;
+    }
+
+    public async ValueTask<SpeechEvent?> ReceiveAsync(CancellationToken cancellationToken)
+    {
+      if (await Events.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)
+        && Events.Reader.TryRead(out SpeechEvent speechEvent))
+      {
+        return speechEvent;
+      }
+
+      return null;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+      Events.Writer.TryComplete();
+      return ValueTask.CompletedTask;
+    }
+  }
+}
+
+/// <summary>One open xAI transcription socket.</summary>
+internal sealed class XaiSpeechSession : IAgentSpeechSession
+{
+  private const int MaxMessageBytes = 1024 * 1024;
+
+  private readonly ClientWebSocket Socket;
+
+  internal XaiSpeechSession(ClientWebSocket socket)
+  {
+    Socket = socket;
+  }
+
+  public ValueTask SendAudioAsync(ReadOnlyMemory<byte> audio, CancellationToken cancellationToken) =>
+    Socket.SendAsync(audio, WebSocketMessageType.Binary, endOfMessage: true, cancellationToken);
+
+  public ValueTask CompleteAsync(CancellationToken cancellationToken) =>
+    Socket.SendAsync
+    (
+      Encoding.UTF8.GetBytes(XaiSpeech.AudioDoneMessage).AsMemory(),
+      WebSocketMessageType.Text,
+      endOfMessage: true,
+      cancellationToken
+    );
+
+  public async ValueTask<SpeechEvent?> ReceiveAsync(CancellationToken cancellationToken)
+  {
+    while (true)
+    {
+      string? text = await ReceiveTextAsync(Socket, cancellationToken).ConfigureAwait(false);
+      if (text is null)
+      {
+        return null;
+      }
+
+      SpeechEvent speechEvent = XaiSpeech.Parse(text);
+      if (speechEvent.Kind != SpeechEventKind.Ignored)
+      {
+        return speechEvent;
+      }
+    }
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    if (Socket.State == WebSocketState.Open)
+    {
+      using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(2));
+      try
+      {
+        await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, timeout.Token).ConfigureAwait(false);
+      }
+      catch (Exception exception) when (exception is WebSocketException or OperationCanceledException)
+      {
+        // Closing a socket that is already going away.
+      }
+    }
+
+    Socket.Dispose();
+  }
+
+  /// <summary>The next text message, or null on close. Binary frames are skipped.</summary>
+  internal static async Task<string?> ReceiveTextAsync(WebSocket socket, CancellationToken cancellationToken)
+  {
+    ArrayBufferWriter<byte> message = new();
+    while (true)
+    {
+      Memory<byte> target = message.GetMemory(16 * 1024);
+      ValueWebSocketReceiveResult result = await socket.ReceiveAsync(target, cancellationToken).ConfigureAwait(false);
+      if (result.MessageType == WebSocketMessageType.Close)
+      {
+        return null;
+      }
+
+      message.Advance(result.Count);
+      if (message.WrittenCount > MaxMessageBytes)
+      {
+        return null;
+      }
+
+      if (!result.EndOfMessage)
+      {
+        continue;
+      }
+
+      if (result.MessageType == WebSocketMessageType.Text)
+      {
+        return Encoding.UTF8.GetString(message.WrittenSpan);
+      }
+
+      message.ResetWrittenCount();
+    }
   }
 }

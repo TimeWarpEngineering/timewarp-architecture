@@ -34,20 +34,25 @@
 // attributes are banned (strict CSP), but the CSSOM is not. Only a base64 SVG data URI is
 // accepted, so the value cannot break out of url(); anything else removes the property and the
 // turns fall back to the brand gradient.
-// StartVoiceCapture / StopVoiceCapture / CancelVoiceCapture (task 453) own the microphone.
-// The clip stays in the browser until stop, which returns base64. Start receives the one server
-// limit (base64 character length). The recorder stops itself when the next chunk would pass that
-// limit and reports too-long, without the bytes. The page posts a shorter clip to the server;
-// this file never sees an API key. InsertComposerText splices at the caret the way
-// InsertReference does, without stripping a leading @, adds a space when the neighbor is a
-// word, dispatches input, and focuses the textarea. It does not send. A mismatched insert epoch
-// (Close or New conversation) inserts nothing.
+// The dictation exports (StartVoiceCapture, StopVoiceCapture, CancelVoiceCapture,
+// VoiceCaptureEnded, SetVoiceInsertEpoch, CommitComposerText) live in ask-voice.ts and are
+// re-exported here, so AskAiJsModule imports one module. ComposerSelector is ask-composer.ts.
 // #endregion
 
+import { ComposerSelector } from "./ask-composer.js";
 import { FocusReturnClaimEvent, type FocusReturnClaim } from "./focus-return-claim.js";
 
+export {
+  CancelVoiceCapture,
+  CommitComposerText,
+  SetVoiceInsertEpoch,
+  StartVoiceCapture,
+  StopVoiceCapture,
+  VoiceCaptureEnded,
+} from "./ask-voice.js";
+
 export function InsertReference(token: string): void {
-  const area = document.querySelector<HTMLTextAreaElement>(".twe-agent-ask .sc-ai-input__textarea");
+  const area = document.querySelector<HTMLTextAreaElement>(ComposerSelector);
   if (area === null) {
     return;
   }
@@ -69,7 +74,7 @@ export function InsertReference(token: string): void {
 }
 
 export function AtStartsWord(): boolean {
-  const area = document.querySelector<HTMLTextAreaElement>(".twe-agent-ask .sc-ai-input__textarea");
+  const area = document.querySelector<HTMLTextAreaElement>(ComposerSelector);
   if (area === null) {
     return false;
   }
@@ -86,7 +91,6 @@ export function FocusComposer(): void {
   document.querySelector<HTMLTextAreaElement>(ComposerSelector)?.focus();
 }
 
-const ComposerSelector = ".twe-agent-ask .sc-ai-input__textarea";
 const PanelSelector = ".twe-agent-ask";
 const OpenFocusFrames = 30;
 
@@ -179,281 +183,4 @@ export function SetAssistantAvatar(dataUri: string | null): void {
   }
 
   root.setProperty("--twe-assistant-avatar", `url("${AvatarPrefix}${body}")`);
-}
-
-type VoiceCapture = {
-  error: string | null;
-  mediaType: string | null;
-  data: string | null;
-};
-
-let voiceStream: MediaStream | null = null;
-let voiceRecorder: MediaRecorder | null = null;
-let voiceChunks: Blob[] = [];
-let voiceMime = "audio/webm";
-let voiceMaxBase64 = 0;
-let voiceByteCount = 0;
-let voiceTooLong = false;
-let voiceAccepting = false;
-let voiceInsertEpoch = 0;
-
-function voiceCapture(error: string | null, mediaType: string | null, data: string | null): VoiceCapture {
-  return { error, mediaType, data };
-}
-
-function resetVoiceBudget(): void {
-  voiceChunks = [];
-  voiceByteCount = 0;
-  voiceTooLong = false;
-}
-
-function base64Length(bytes: number): number {
-  if (bytes <= 0) {
-    return 0;
-  }
-
-  return Math.ceil(bytes / 3) * 4;
-}
-
-function rememberVoiceChunk(chunk: Blob): void {
-  if (!voiceAccepting || chunk.size <= 0 || voiceTooLong) {
-    return;
-  }
-
-  voiceChunks.push(chunk);
-  voiceByteCount += chunk.size;
-  if (voiceMaxBase64 > 0 && base64Length(voiceByteCount) > voiceMaxBase64) {
-    voiceTooLong = true;
-    const recorder = voiceRecorder;
-    if (recorder !== null && recorder.state !== "inactive") {
-      try {
-        recorder.stop();
-      } catch {
-        // stop is already in progress
-      }
-    }
-  }
-}
-
-function releaseVoiceTracks(): void {
-  if (voiceStream !== null) {
-    for (const track of voiceStream.getTracks()) {
-      track.stop();
-    }
-  }
-
-  voiceStream = null;
-}
-
-function preferredVoiceMime(): string {
-  if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") {
-    return "";
-  }
-
-  const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
-  for (const candidate of candidates) {
-    if (MediaRecorder.isTypeSupported(candidate)) {
-      return candidate;
-    }
-  }
-
-  return "";
-}
-
-export function SetVoiceInsertEpoch(epoch: number): void {
-  voiceInsertEpoch = epoch;
-}
-
-export function VoiceCaptureExceeded(): boolean {
-  return voiceTooLong;
-}
-
-export async function StartVoiceCapture(maxBase64Length: number): Promise<VoiceCapture> {
-  try {
-    await CancelVoiceCapture();
-    voiceMaxBase64 = Number.isFinite(maxBase64Length) && maxBase64Length > 0 ? maxBase64Length : 0;
-    if (
-      typeof navigator === "undefined" ||
-      navigator.mediaDevices?.getUserMedia === undefined ||
-      typeof MediaRecorder === "undefined"
-    ) {
-      return voiceCapture("unavailable", null, null);
-    }
-
-    voiceMime = preferredVoiceMime();
-    try {
-      voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (error) {
-      const name = error instanceof DOMException ? error.name : "";
-      releaseVoiceTracks();
-      if (name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError") {
-        return voiceCapture("denied", null, null);
-      }
-
-      return voiceCapture("unavailable", null, null);
-    }
-
-    resetVoiceBudget();
-    voiceRecorder =
-      voiceMime.length > 0
-        ? new MediaRecorder(voiceStream, { mimeType: voiceMime })
-        : new MediaRecorder(voiceStream);
-    voiceRecorder.addEventListener("dataavailable", (event: BlobEvent) => {
-      rememberVoiceChunk(event.data);
-    });
-    voiceAccepting = true;
-    voiceRecorder.start(1000);
-    const mediaType =
-      voiceRecorder.mimeType.length > 0
-        ? voiceRecorder.mimeType
-        : voiceMime.length > 0
-          ? voiceMime
-          : "audio/webm";
-    return voiceCapture(null, mediaType, null);
-  } catch {
-    await CancelVoiceCapture();
-    return voiceCapture("failed", null, null);
-  }
-}
-
-function dropVoice(error: string): VoiceCapture {
-  voiceAccepting = false;
-  voiceRecorder = null;
-  resetVoiceBudget();
-  releaseVoiceTracks();
-  return voiceCapture(error, null, null);
-}
-
-export function StopVoiceCapture(): Promise<VoiceCapture> {
-  if (voiceTooLong) {
-    const recorder = voiceRecorder;
-    const result = dropVoice("too-long");
-    if (recorder !== null && recorder.state !== "inactive") {
-      try {
-        recorder.stop();
-      } catch {
-        // the recorder already stopped when the limit was crossed
-      }
-    }
-
-    return Promise.resolve(result);
-  }
-
-  const recorder = voiceRecorder;
-  if (recorder === null || recorder.state === "inactive") {
-    dropVoice("empty");
-    return Promise.resolve(voiceCapture("empty", null, null));
-  }
-
-  const mediaType =
-    recorder.mimeType.length > 0 ? recorder.mimeType : voiceMime.length > 0 ? voiceMime : "audio/webm";
-  return new Promise((resolve) => {
-    recorder.addEventListener(
-      "stop",
-      () => {
-        if (voiceTooLong) {
-          resolve(dropVoice("too-long"));
-          return;
-        }
-
-        const blob = new Blob(voiceChunks, { type: mediaType });
-        voiceAccepting = false;
-        voiceRecorder = null;
-        resetVoiceBudget();
-        releaseVoiceTracks();
-        if (blob.size === 0) {
-          resolve(voiceCapture("empty", null, null));
-          return;
-        }
-
-        void blob
-          .arrayBuffer()
-          .then((buffer) => {
-            const data = bytesToBase64(new Uint8Array(buffer));
-            if (voiceMaxBase64 > 0 && data.length > voiceMaxBase64) {
-              resolve(voiceCapture("too-long", null, null));
-              return;
-            }
-
-            resolve(voiceCapture(null, mediaType, data));
-          })
-          .catch(() => {
-            resolve(voiceCapture("empty", null, null));
-          });
-      },
-      { once: true },
-    );
-    try {
-      recorder.stop();
-    } catch {
-      resolve(dropVoice("empty"));
-    }
-  });
-}
-
-export async function CancelVoiceCapture(): Promise<void> {
-  const recorder = voiceRecorder;
-  voiceAccepting = false;
-  voiceRecorder = null;
-  resetVoiceBudget();
-  if (recorder !== null && recorder.state !== "inactive") {
-    await new Promise<void>((resolve) => {
-      recorder.addEventListener("stop", () => resolve(), { once: true });
-      try {
-        recorder.stop();
-      } catch {
-        resolve();
-      }
-    });
-  }
-
-  releaseVoiceTracks();
-}
-
-export function InsertComposerText(text: string, epoch: number): boolean {
-  if (epoch !== voiceInsertEpoch) {
-    return false;
-  }
-
-  const area = document.querySelector<HTMLTextAreaElement>(ComposerSelector);
-  if (area === null || text.length === 0) {
-    return false;
-  }
-
-  const start = area.selectionStart ?? area.value.length;
-  const end = area.selectionEnd ?? start;
-  const before = area.value.slice(0, start);
-  const after = area.value.slice(end);
-  let inserted = text;
-  if (before.length > 0 && !/\s/.test(before[before.length - 1] ?? "")) {
-    inserted = " " + inserted;
-  }
-
-  if (after.length > 0 && !/^\s/.test(after)) {
-    inserted = inserted + " ";
-  }
-
-  area.value = before + inserted + after;
-  const caret = before.length + inserted.length;
-  area.selectionStart = caret;
-  area.selectionEnd = caret;
-  area.dispatchEvent(new Event("input", { bubbles: true }));
-  area.focus();
-  return true;
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  const size = 0x8000;
-  let binary = "";
-  for (let index = 0; index < bytes.length; index += size) {
-    const slice = bytes.subarray(index, Math.min(index + size, bytes.length));
-    const chunk: number[] = [];
-    for (let offset = 0; offset < slice.length; offset++) {
-      chunk.push(slice[offset] ?? 0);
-    }
-
-    binary += String.fromCharCode.apply(null, chunk);
-  }
-
-  return btoa(binary);
 }

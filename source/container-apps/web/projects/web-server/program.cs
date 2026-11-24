@@ -21,6 +21,7 @@
 // removed task 131 F-002). Pipeline order: UseMarkdownContentNegotiation (before UseRouting —
 // rewrites / → /index.md when Accept prefers text/markdown) → UseTipDiscoveryAlias (before
 // UseRouting — bare /api → /api/tip for x402 scanners, task 104-020) → UseRouting →
+// UseWebSockets (task 505: the Ask dictation socket, TranscribeAgentAudioEndpoint) →
 // UseRateLimiter (task 104-015: path-classified GlobalLimiter for principal-register +
 // payment-challenge; after routing so rewrites are settled; edge/Cloudflare is outer ring
 // only — 104-023) → RoleResolutionFailureMiddleware (task 160: inner of DeveloperExceptionPage,
@@ -307,6 +308,10 @@ public partial class Program : IAspNetProgram
     // caching headers.
     webApplication.UseRouting();
 
+    // Task 505: the Ask dictation socket (TranscribeAgentAudioEndpoint). SignalR handles its own
+    // upgrade; a plain endpoint needs the middleware.
+    webApplication.UseWebSockets();
+
     // Task 104-015: after UseRouting (rewrites settled); before FE so rejected requests never
     // reach handlers / PaymentGate. Path-classified GlobalLimiter + structured 429 OnRejected.
     // Edge volumetric limits stay outside the app (104-023).
@@ -362,6 +367,7 @@ public partial class Program : IAspNetProgram
 
     CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
+    TranscribeAgentAudioEndpoint.Map(webApplication);
     // Task 335-002: Development-only discovery route the WASM DevTools exporter reads (see Design).
     webApplication.MapTimeWarpStateDevToolsClientConfig();
   }

@@ -9,8 +9,9 @@
 // chat control, so the insertion stays in the browser. Copy takes the text from C# (the last
 // answer the thumbs also use) and only writes it to the clipboard.
 // Callers opt out of TWA0026 with DirectComponentSideEffect. wwwroot/js is emitted by
-// TypeScript.MSBuild and is not committed. StartVoiceCapture takes the one base64 limit.
-// InsertComposerText takes the epoch Close publishes so a late transcript inserts nothing.
+// TypeScript.MSBuild and is not committed. StartVoiceCapture takes AskVoiceStreamOptions, the
+// dictation constants from TranscribeAgentAudio (task 505). CommitComposerText takes the epoch
+// Close publishes so a late transcript inserts nothing.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -95,15 +96,16 @@ internal static class AskAiJsModule
     return InvokeAsync(jsRuntime, "SetAssistantAvatar", dataUri);
   }
 
-  /// <summary>Starts the microphone. <paramref name="maxBase64Length"/> is the one server limit. Error is denied, unavailable, or failed. No audio yet.</summary>
-  internal static Task<AskVoiceCaptureResult> StartVoiceCaptureAsync(IJSRuntime jsRuntime, int maxBase64Length)
+  /// <summary>Starts the microphone and the dictation socket. Error is denied, unavailable, or failed.</summary>
+  internal static Task<AskVoiceCaptureResult> StartVoiceCaptureAsync(IJSRuntime jsRuntime, AskVoiceStreamOptions options)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
-    return InvokeCaptureAsync(jsRuntime, "StartVoiceCapture", maxBase64Length);
+    ArgumentNullException.ThrowIfNull(options);
+    return InvokeCaptureAsync(jsRuntime, "StartVoiceCapture", options);
   }
 
-  /// <summary>True once the live capture has crossed the limit passed to start.</summary>
-  internal static async Task<bool> VoiceCaptureExceededAsync(IJSRuntime jsRuntime)
+  /// <summary>True once the live dictation ended on its own: the server answered or failed, or the cap was reached.</summary>
+  internal static async Task<bool> VoiceCaptureEndedAsync(IJSRuntime jsRuntime)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
     try
@@ -114,7 +116,7 @@ internal static class AskAiJsModule
         return false;
       }
 
-      return await module.InvokeAsync<bool>("VoiceCaptureExceeded");
+      return await module.InvokeAsync<bool>("VoiceCaptureEnded");
     }
     catch (JSException)
     {
@@ -155,7 +157,7 @@ internal static class AskAiJsModule
     }
   }
 
-  /// <summary>Stops the microphone and returns base64 audio, or an empty error.</summary>
+  /// <summary>Stops the microphone and returns the final transcript, or an error code.</summary>
   internal static Task<AskVoiceCaptureResult> StopVoiceCaptureAsync(IJSRuntime jsRuntime)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
@@ -187,8 +189,8 @@ internal static class AskAiJsModule
     }
   }
 
-  /// <summary>Inserts text at the composer caret and focuses it. False when the composer is gone or <paramref name="epoch"/> is stale.</summary>
-  internal static async Task<bool> InsertComposerTextAsync(IJSRuntime jsRuntime, string text, int epoch)
+  /// <summary>Replaces the live preview (or inserts at the caret) and focuses the composer. False when the composer is gone or <paramref name="epoch"/> is stale.</summary>
+  internal static async Task<bool> CommitComposerTextAsync(IJSRuntime jsRuntime, string text, int epoch)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
     ArgumentNullException.ThrowIfNull(text);
@@ -200,7 +202,7 @@ internal static class AskAiJsModule
         return false;
       }
 
-      return await module.InvokeAsync<bool>("InsertComposerText", text, epoch);
+      return await module.InvokeAsync<bool>("CommitComposerText", text, epoch);
     }
     catch (JSException)
     {
