@@ -44,6 +44,12 @@ Acceptance:
   otherwise remove it from the manifest and `.mcp.json` and keep the CLIs plus the skill.
 - `dev build` green, `dev lint-skills` green, `ganda repo audit` green.
 
+Fix pass (review round 1, M1-M3): only `skills/**` ships in a generated app, so the skill itself
+must carry the three manifest entries and say a generated app adds them; the template smoke must
+require `tw-dotnet-diagnostics/SKILL.md`. The counters section must describe what the pinned
+exporter writes (per-interval `Rate` deltas of cumulative counters, CPU split by `cpu.mode`) and
+how to turn it into cores, MB/s, and pause fraction. Every example writes under `/tmp`.
+
 ## Out of scope (until the trial passes)
 
 - BenchmarkDotNet diagnoser
@@ -152,11 +158,35 @@ target net8.0 only, so a machine with only the .NET 11 runtime needs roll-forwar
   needs its own benchmark (`tw-perf-sweep`).
 - `dotnet-trace report topN` on a `gc-verbose` trace ranks allocating call sites; Microsoft's docs
   do not say so.
+- Misread (review round 1): the implementer restatement says generated apps get this because
+  `.config/`, `.mcp.json`, and `skills/` all ship in the template. Only `skills/**` is in the
+  pack allow-list (`timewarp-architecture-template.csproj`). `.config/dotnet-tools.json` and
+  `.mcp.json` are not packed, and `AGENTS.md` is not packed. The same restatement's acceptance
+  says the question is answered against "a live Architecture service". Requirement 3 says to run
+  Architecture under Aspire. The trial used a standalone `api-server` and recorded why (shared
+  AppHost user-secrets). That deviation is not a separate finding: both tool sets attach by pid,
+  and the keep/remove rule does not depend on the host.
 
 ## Results
 
 Files: `.config/dotnet-tools.json` (three CLIs pinned), `skills/tw-dotnet-diagnostics/SKILL.md`
-(new), `AGENTS.md` (one "Where to look" row). `.mcp.json` ends unchanged from master.
+(new), `AGENTS.md` (one "Where to look" row),
+`tools/dev-cli/services/template-smoke/template-smoke-generated-content.cs` (smoke requires the
+new skill; count printed from the list). `.mcp.json` ends unchanged from master.
+
+Fix pass, review round 1:
+
+- M1 fixed: the skill says the pins live in this repository's manifest, shows the three entries
+  (10.0.750501, `rollForward: true`) for a generated app to add, and says why roll-forward is
+  needed. `AssertSkillsShipped` requires `tw-dotnet-diagnostics/SKILL.md`; the "ten" wording is
+  gone (the message prints the list length, 11). `.config/` stays unpacked.
+- M2 fixed: checked against the trial's 10.0.750501 JSON (`/tmp/t315/ms/counters.json`). The
+  runtime counters are cumulative; the exporter writes each as a per-refresh-interval delta,
+  `counterType: "Rate"`, name suffix `(s / 1 sec)` / `(By / 1 sec)`, value in `value`; CPU comes as
+  `cpu.mode=user` and `cpu.mode=system` series. The skill now says that, gives a parse that
+  averages the `Rate` events (it printed 1.34 + 0.65 = 2.0 cores, 85 MB/s, pause 0.0116 on the
+  trial file), and derives CPU share and pause fraction.
+- M3 fixed: every example writes under `/tmp`; the rule names counters files and the 11 MB size.
 
 ### How to validate
 
@@ -176,6 +206,21 @@ table; `.mcp.json` lists only the `aspire` server.
 
 ### Gates
 
+Fix pass (review round 1):
+
+- `dotnet run --file tools/dev-cli/dev.cs -- self-install` (dev-cli source changed), then
+  `./bin/dev build`: pass (28.3 s).
+- Test files: none added or edited. No Jaribu test covers `TemplateSmokeGeneratedContent`; the
+  template smoke is its check (next line).
+- `./bin/dev template-smoke`: pass; "Generated app contains skills/ (11 SKILL.md files; analysis/
+  excluded)", generated app Jaribu suites green, "Template smoke SUCCEEDED".
+- `./bin/dev lint-skills`: pass.
+- `ganda repo audit`: fail on `kanban-landed` only (task 522, another live walk, kitchen not
+  landed on origin-home). `ganda repo audit --fix` landed it (`499db4623 land kanban 522` on
+  origin-home); result: all checks pass.
+
+Implement pass:
+
 - `./bin/dev build`: pass, 0 warnings, 0 errors (25.7 s).
 - Test files: none added or edited. No C# changed (tool manifest, a skill, and AGENTS.md only), so
   no test file covers the change. CI runs the full suite and the template smoke on the PR.
@@ -188,4 +233,12 @@ table; `.mcp.json` lists only the `aspire` server.
 - Created: grok-bot (2026-10-12)
 - 2026-11-25 implementer (claude, ganda task work): pinned tools, ran the trial on standalone
   api-server, removed the MCP per the rule, added `tw-dotnet-diagnostics`.
+- 2026-11-25 implementer (claude, ganda task work, implement-fix-2): fixed review round 1 M1-M3
+  (skill manifest entries for generated apps, smoke list, counters JSON parse, `/tmp` paths).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session da67d941-9e83-4098-ae56-cac8b39ecc25, max-turns 500, Done — 2026-11-24T20:52:57Z
+- Review round 1: grok, session 01a20f55-6ee6-7e13-896f-e20bdede3a55 (2026-11-25). Effort 2, roster general. Open findings M1, M2, M3. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20f55-6ee6-7e13-896f-e20bdede3a55, max-turns 120, artifacts general.md, merged.md — 2026-11-24T21:02:34Z
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
