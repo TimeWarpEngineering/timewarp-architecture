@@ -5,9 +5,8 @@
 #region Design
 // PageOrder is the All view order. Group declaration order is the catalog heading
 // order. Within a group, the catalog follows PageOrder.
-// Slugs are lowercase kebab-case. This table is the authority. Resolve compares
-// ordinal and case-insensitive. Url emits the canonical lowercase slug under
-// /DesignSystem/. An empty slug is All, not a part named all.
+// Slugs are lowercase kebab-case. This table is the authority. Slug lookup, URLs,
+// and rendering a part are DesignSystemPartLookup (split out for the TWA0038 line cap).
 // Usage is a hand-written snippet. The single-part view renders it. All does not,
 // so the full page stays the section list.
 // PaletteName prefixes a part title with DesignSystemPage.Title. Ctrl-K uses it so
@@ -97,6 +96,18 @@ internal static class DesignSystemParts
       </FormActions>
       """,
       typeof(FormsSample)
+    ),
+    new
+    (
+      "card",
+      "Card",
+      Group.Layout,
+      """
+      <Card Title="Reports">
+        <p>Card content.</p>
+      </Card>
+      """,
+      typeof(CardSample)
     ),
     new
     (
@@ -426,6 +437,16 @@ internal static class DesignSystemParts
     ),
     new
     (
+      "permission-tree",
+      "Permission tree",
+      Group.Identity,
+      """
+      <PermissionTree Groups="Groups" @bind-Selected="Draft" Locked="Locked" AriaLabel="Permissions" />
+      """,
+      typeof(PermissionTreeSample)
+    ),
+    new
+    (
       "dev-note",
       "Dev note",
       Group.Foundations,
@@ -459,37 +480,4 @@ internal static class DesignSystemParts
       typeof(NotificationsSample)
     ),
   ];
-
-  internal static Selection Resolve(string? slug)
-  {
-    if (string.IsNullOrWhiteSpace(slug))
-    {
-      return new Selection(SelectionKind.All, null);
-    }
-
-    foreach (Part part in PageOrder)
-    {
-      if (part.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase))
-      {
-        return new Selection(SelectionKind.Part, part);
-      }
-    }
-
-    return new Selection(SelectionKind.Unknown, null);
-  }
-
-  internal static bool TryGet(string slug, out Part? part)
-  {
-    Selection selection = Resolve(slug);
-    part = selection.Part;
-    return selection.Kind == SelectionKind.Part;
-  }
-
-  internal static string Url(Part part) => string.Concat(DesignSystemPage.GetPageUrl(), "/", part.Slug);
-
-  internal static RenderFragment Render(Part part) => builder =>
-  {
-    builder.OpenComponent(0, part.Sample);
-    builder.CloseComponent();
-  };
 }

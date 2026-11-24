@@ -1,0 +1,31 @@
+@namespace TimeWarp.Architecture.Features.DesignSystem
+
+@*
+  Purpose: Design-system sample for PermissionTree — one mixed group and one group with a locked item.
+
+  Design: Task 512. The sample passes a fixed selected set and a fixed locked set and wires no
+  change handler, so it shows the three parent states and a locked row without storing a demo
+  choice (the form fields are the only stored choice on this page).
+*@
+
+@code {
+  private static readonly IReadOnlyList<PermissionTreeGroup> SampleGroups =
+  [
+    new("records", "records.*", ["records.read", "records.write", "records.delete"]),
+    new("people", "people.*", ["people.read", "people.manage"]),
+    new("billing", "billing.*", ["billing.read", "billing.change"])
+  ];
+
+  private static readonly IReadOnlySet<string> SampleSelected =
+    new HashSet<string>(["records.read", "records.write", "people.read", "people.manage"], StringComparer.Ordinal);
+
+  private static readonly IReadOnlySet<string> SampleLocked =
+    new HashSet<string>(["people.manage"], StringComparer.Ordinal);
+}
+
+<Card Title="Permission tree">
+  <p class="ds-subtitle">Editable groups. A parent row is checked, mixed, or clear from its items. A locked item stays checked. The page owns the selected set.</p>
+  <div class="ds-follow" data-qa="DesignSystemPermissionTree">
+    <PermissionTree Groups="SampleGroups" Selected="SampleSelected" Locked="SampleLocked" AriaLabel="Sample permissions" />
+  </div>
+</Card>

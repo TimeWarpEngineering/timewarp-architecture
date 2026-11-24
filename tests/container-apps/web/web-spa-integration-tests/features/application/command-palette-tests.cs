@@ -54,7 +54,7 @@ public partial class CommandPalette_Should_
       .ShouldBe(
         [
           .. PageRegistry.All.Select(static page => page.Url),
-          .. DesignSystemParts.PageOrder.Select(static part => DesignSystemParts.Url(part)),
+          .. DesignSystemParts.PageOrder.Select(static part => DesignSystemPartLookup.Url(part)),
         ],
         ignoreOrder: true);
 

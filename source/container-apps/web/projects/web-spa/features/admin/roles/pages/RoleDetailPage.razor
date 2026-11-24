@@ -11,9 +11,11 @@
   and agent-scope sets live on this page. Checkboxes mutate those sets. Save dispatches
   the command built from the set that was saved and recopies only that set. The load
   copies both. Checkboxes and Save require admin.roles.manage
-  (CheckAuthorization). Protected-core Administrator admin.* grants are disabled when
-  selected; last-admin lockout is SetPrincipalRoles (server), not this editor. Groups come
-  from PermissionIds.GroupsByPrefix. Agent scopes on Member reach roleless human principals,
+  (CheckAuthorization). Both sets render through the catalogued PermissionTree element
+  (task 512); RoleMembershipTrees builds the groups and the locked set. Each tree raises a
+  new set and the page assigns it to its draft. Protected-core Administrator admin.* grants
+  are locked when selected; last-admin lockout is SetPrincipalRoles (server), not this page.
+  Permission groups come from PermissionIds.GroupsByPrefix; agent scopes group by resource. Agent scopes on Member reach roleless human principals,
   including a human who holds an agent key. A self-registered agent has no effective role,
   so those scopes do not apply to it. That sentence is shown only on the Member role.
   The shell location breadcrumb is Home / Roles / this role's name (Title, once loaded).
@@ -29,8 +31,11 @@
   private bool CanManage { get; set; }
   private bool ManageChecked { get; set; }
   private Guid RequestedId { get; set; }
-  private HashSet<string> PermissionDraft { get; set; } = new(StringComparer.Ordinal);
-  private HashSet<string> ScopeDraft { get; set; } = new(StringComparer.Ordinal);
+  private IReadOnlySet<string> PermissionDraft { get; set; } = new HashSet<string>(StringComparer.Ordinal);
+  private IReadOnlySet<string> ScopeDraft { get; set; } = new HashSet<string>(StringComparer.Ordinal);
+
+  private IReadOnlySet<string> LockedPermissions =>
+    RoleMembershipTrees.LockedPermissions(RoleId, PermissionDraft);
 
   private bool IsSaving =>
     IsAnyActive(typeof(RoleState.SetRolePermissionsActionSet.Action));
@@ -112,17 +117,9 @@
     CopyPermissionsFromSnapshot();
   }
 
-  private void OnScopeSelected(string scope, bool selected)
-  {
-    if (selected)
-    {
-      ScopeDraft.Add(scope);
-    }
-    else
-    {
-      ScopeDraft.Remove(scope);
-    }
-  }
+  private void OnPermissionsChanged(IReadOnlySet<string> selected) => PermissionDraft = selected;
+
+  private void OnScopesChanged(IReadOnlySet<string> selected) => ScopeDraft = selected;
 
   private async Task OnSaveAgentScopes()
   {
@@ -165,7 +162,14 @@
               <DefinitionItem Term="Description">@Role.Description</DefinitionItem>
             </DefinitionList>
           }
-          <RolePermissionEditor RoleId="RoleId" CanManage="CanManage" SelectedIds="PermissionDraft" />
+          <PermissionTree
+            Groups="RoleMembershipTrees.Permissions"
+            Selected="PermissionDraft"
+            SelectedChanged="OnPermissionsChanged"
+            Locked="LockedPermissions"
+            Disabled="@(!CanManage)"
+            AriaLabel="Permissions"
+            data-qa="RolePermissionEditor" />
         </div>
         @if (CanManage)
         {
@@ -195,18 +199,15 @@
               scopes do not apply to it.
             </p>
           }
-          <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
-            @foreach (string scope in AgentScopes.All)
-            {
-              <div data-qa="@($"AgentScope-{scope}")">
-                <FluentCheckbox
-                  Label="@scope"
-                  Disabled="@(!CanManage)"
-                  Value="@ScopeDraft.Contains(scope)"
-                  ValueChanged="@(value => OnScopeSelected(scope, value))" />
-              </div>
-            }
-          </FluentStack>
+          <PermissionTree
+            Groups="RoleMembershipTrees.AgentScopeGroups"
+            Selected="ScopeDraft"
+            SelectedChanged="OnScopesChanged"
+            Disabled="@(!CanManage)"
+            GroupQaPrefix="AgentScopeGroup"
+            ItemQaPrefix="AgentScope"
+            AriaLabel="Agent scopes"
+            data-qa="RoleAgentScopeEditor" />
           @if (CanManage)
           {
             <FluentButton

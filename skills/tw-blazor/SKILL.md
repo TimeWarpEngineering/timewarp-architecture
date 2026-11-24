@@ -388,6 +388,30 @@ short fields such as City / State / ZIP). Spacing via the `--twe-space-*` tokens
 Reference: `source/container-apps/web/projects/web-spa/features/design-system/samples/FormsSample.razor`
 (Forms card). Applied on ProfilePage, RoleForm, and AuthenticationPage.
 
+# Visual controls come from the design system
+
+A visual control that a product page renders is one of two things:
+
+- a FluentUI component used at its defaults, or
+- a component under `components/` with a catalogue entry on `/DesignSystem`
+  (`features/design-system/design-system-parts.cs`: slug, title, group, usage snippet, and a
+  sample under `features/design-system/samples/`).
+
+A feature folder does not define reusable chrome. When a page needs a control the catalogue
+lacks, add it under `components/elements/` (or `components/composites/`), give it a sample and a
+catalogue entry, and use it from the page. Spacing inside it is `--twe-space-*` tokens, not
+literal px.
+
+Grouped checkboxes, trees, and radio groups (`FluentCheckbox`, `FluentTreeView`,
+`FluentRadioGroup`) never sit in `features/*/components/`; a feature component renders a
+catalogued element instead. Example: role permissions and agent scopes render `PermissionTree`
+(`components/elements/PermissionTree.razor`), which owns the parent three-state, locked rows, row
+density, and arrow-key focus.
+
+**Test-checked.** `DesignSystemCatalog_Should_` in `web-spa-integration-tests` fails when a
+`.razor` under `components/elements/` is not named in `design-system-parts.cs`, or when a
+`.razor` under `features/*/components/` renders one of those three controls directly.
+
 # Browser console logs in the Aspire dashboard
 
 In Development and Testing the host page (`App.razor`) loads `js/browser-log-forwarder.js` before
