@@ -124,6 +124,7 @@ Acceptance criteria:
 - Audit: `kanban-landed` fails on task 315's kitchen. 315 is another live walk (claim alive, in its
   review step) whose kitchen has not landed yet; landing it from here would interfere with that
   walk, so it was left alone. This branch merged `origin/master` to clear its own drift.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 07a96c22-b168-4636-8e11-0e512ab5c2ea, max-turns 500, Blocked — 2026-11-24T20:57:40Z
 
 ## Results
 
@@ -144,3 +145,7 @@ Review outcome: 17 merged findings (1 blocker held, 9 major, 6 minor, 1 nit) plu
 - **Expect:** hash `496a0506…9b98` and `64` paths (matches `review/snapshot-meta.md`); every
   disposition row except M-01 (held) and M-17 (rejected) links an existing to-do child task; both
   `review/round-1/grok-4.7.md` and `review/round-1/fable.md` exist and contain no secret values.
+
+## Blocked
+
+2026-11-24: The operator must fix the held live-host security finding first: rotate the exposed credentials and take the endpoint down (details in the walk log summary and ~/.local/state/timewarp/task-458-held/fable.md F-001). Then resume this walk to restore the F-001 text, file its follow-on task, and rerun ganda repo audit after task 315 lands its kitchen.
