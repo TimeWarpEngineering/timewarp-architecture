@@ -21,10 +21,10 @@ principals/profiles (328).
 production code.** Steve participates in architecture decisions. Stop at the design and options;
 do not pick the final shape alone.
 
-## Inventory to start from (cockpit, 2026-10-12)
+## Inventory to start from (updated 2026-11-24; re-verify DbSets against master)
 
-- `IAggregateRoot` is implemented by only **three** types: `Profile`, `AgentHumanLink`,
-  `FeedbackItem`.
+- `IAggregateRoot` is implemented by **four** types: `FeedbackItem`, `Role` (added in Task 473),
+  `Profile`, and `AgentHumanLink`.
 - EF `DbSet`s across the template: `AgentHumanLink`, `Credential`, `FeedbackAttachment`,
   `FeedbackItem`, `Principal`, `PrincipalRoleAssignment`, `Profile`, `RolePermissionGrant`,
   `SiteSettings`. Some come from the `TimeWarp.Identity` package (`Principal`, `Credential`).
