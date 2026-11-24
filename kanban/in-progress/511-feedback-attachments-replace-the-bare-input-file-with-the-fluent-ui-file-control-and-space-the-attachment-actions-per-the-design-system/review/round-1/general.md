@@ -1,0 +1,7 @@
+# Round 1 — general
+**Date:** 2026-11-24
+**Scope reviewed:** branch `task/511-feedback-attachments-replace-the-bare-input-file` vs `master` — `FeedbackListPage` razor, code-behind, and CSS; `feedback-attachment-picker-playwright-tests.cs`; task 511 `evidence/` shots; `## Goal (implementer restatement)` against the original requirements; recorded `## Results` and `### How to validate`.
+
+## Summary
+
+The Attachments field on `/Feedback` no longer renders the browser file widget. A hidden `FluentInputFile` (`DragDropZoneVisible=false`, `Mode=Buffer`, `AnchorId`) opens from an outline "Choose files" button with the Size16 attach icon, and `OnInputFileChange` still calls the unchanged `OnFilesAsync`. The three actions sit in one wrapping row at `--twe-space-3`, and the chips list sits `--twe-space-2` under that row and is omitted when empty. FluentUI 5.1.0 returns from `OnUploadFilesHandlerAsync` as soon as `OnInputFileChange` has a delegate, so the component's own buffer read and its 10 MiB / 10-file defaults do not replace the page's 5 MiB and 8-file rules. The new Playwright class checks the hidden input, keyboard and click, token gaps, and the empty chips list, and the six evidence shots match those states in light and dark. The restatement matches the task. Recorded gates cover the build, the picker class, the existing attachment and screenshot classes, the feedback details integration class, and audit. No issues.
