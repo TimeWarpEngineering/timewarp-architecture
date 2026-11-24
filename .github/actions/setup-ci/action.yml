@@ -1,0 +1,77 @@
+name: Setup CI
+description: >-
+  Shared runner setup for workflow.yml jobs: .NET from global.json, the NuGet package cache,
+  optional HTTPS dev-certificate trust, and the optional Aspire CLI pinned by <AspireVersion>.
+  Check out the repository first; a local action cannot load before the checkout.
+
+inputs:
+  nuget-cache:
+    description: >-
+      save = restore and save ~/.nuget/packages. restore = restore only (never seeds a later run).
+      none = no cache.
+    required: false
+    default: save
+  nuget-cache-key:
+    description: Key segment. Jobs that restore the same package set share one.
+    required: false
+    default: ci
+  dev-certs:
+    description: Trust the ASP.NET HTTPS dev certificate and put its trust dir on SSL_CERT_DIR.
+    required: false
+    default: 'false'
+  aspire-cli:
+    description: Install Aspire.Cli at <AspireVersion> from Directory.Packages.props.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        global-json-file: global.json
+
+    # Exact content-hash key, no restore-keys: a CPM change starts a clean cache instead of layering
+    # onto an old one. The dev CLI runfile build is not cached: checkout stamps fresh file times, so
+    # a restored build would recompile anyway.
+    - name: Cache NuGet packages
+      if: inputs.nuget-cache == 'save'
+      uses: actions/cache@v6
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ inputs.nuget-cache-key }}-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+
+    - name: Restore NuGet package cache
+      if: inputs.nuget-cache == 'restore'
+      uses: actions/cache/restore@v6
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ inputs.nuget-cache-key }}-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+
+    # On Linux `--trust` writes the cert to ~/.aspnet/dev-certs/trust and exits 4 ("trusted by some
+    # clients"). OpenSSL (HttpClient) honours it only once that dir is on SSL_CERT_DIR.
+    # See https://aka.ms/dev-certs-trust.
+    - name: Trust HTTPS dev certificate
+      if: inputs.dev-certs == 'true'
+      shell: pwsh
+      run: |
+        dotnet dev-certs https --trust
+        "SSL_CERT_DIR=$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs" >> $env:GITHUB_ENV
+        exit 0
+
+    # Since Aspire 17 an AppHost build takes DCP and the dashboard from the CLI bundle (ASPIRE013).
+    # dev-cli checks that this is the only Aspire.Cli install and that it reads <AspireVersion>.
+    - name: Install Aspire CLI
+      if: inputs.aspire-cli == 'true'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $version=(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props).Trim()
+        if ([string]::IsNullOrWhiteSpace($version)) {
+          Write-Host 'Directory.Packages.props has no <AspireVersion>.'
+          exit 1
+        }
+        Write-Host "Installing Aspire.Cli $version from Directory.Packages.props"
+        dotnet tool install --global Aspire.Cli --version $version
+        exit $LASTEXITCODE

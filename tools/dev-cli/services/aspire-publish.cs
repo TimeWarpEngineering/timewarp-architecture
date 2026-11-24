@@ -10,7 +10,7 @@
 //      per target — the real CLI path an operator uses, so a publish-pipeline error fails here. Each
 //      output directory is wiped first so a stale file can never pass the check.
 //   2. ONE aspire-tests `dotnet test` (task 367) with every target's <OutputEnvironmentVariable>
-//      pointing at its directory, so the facts inspect exactly the files CI uploads instead of their
+//      pointing at its directory, so the facts inspect exactly the files the CLI wrote instead of their
 //      own in-proc publish. One run builds and starts the test host once instead of once per target.
 //      The rules live once, in the test suite; this runner only points it at the CLI output.
 //      The filter comes from AspirePublishTargets; -c Release and --no-build are DotNet.Test() options.
@@ -25,7 +25,7 @@
 // PublishAndCheckAsync and PublishFilesAsync both check. dev deploy migrate skips the aspire
 // preflight, so PublishFilesAsync is the check on that path. dev deploy already warned in
 // preflight, so that call passes warnWhenOlder: false.
-// Generated output is CI-only (never committed): artifacts/ is git-ignored; workflow.yml uploads it.
+// Generated output is never committed: artifacts/ is git-ignored, and CI checks it without uploading it.
 // Task 393: `dev deploy` and a `dev deploy migrate` whose artifact is missing call PublishFilesAsync,
 // which is this pipeline's aspire publish only. The safety suite stays on `dev publish`.
 #endregion

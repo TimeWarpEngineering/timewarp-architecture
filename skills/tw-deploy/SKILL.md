@@ -72,7 +72,7 @@ dev publish all                             # all four publishes, then one safet
   container registry the cluster can pull from (`registry-endpoint` + `registry-repository`
   parameters), and an ingress controller already installed in the cluster.
 - **Generated output is never committed.** `dev publish` writes under `artifacts/` (git-ignored);
-  CI uploads the output as a workflow artifact. Regenerate, do not hand-edit.
+  CI publishes and checks it but keeps no copy. Regenerate, do not hand-edit.
 - **`dev publish <target>` is the gate.** It runs the target's production-safety suite in
   aspire-tests against the generated files. Run it after any change to publish-mode wiring.
   `dev publish all` publishes every target and checks them in one aspire-tests run.

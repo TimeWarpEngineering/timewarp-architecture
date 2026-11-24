@@ -220,12 +220,18 @@ public class Workflow_Given_
     return Task.CompletedTask;
   }
 
-  public static Task MissingDevCliPathFilter_Should_Fail()
+  public static Task MissingClassifyGate_Should_Fail()
   {
-    string workflow = AgreeingWorkflow().Replace("^tools/dev-cli/", "^tools/other/", StringComparison.Ordinal);
+    string workflow = AgreeingWorkflow().Replace("outputs.skill", "outputs.other", StringComparison.Ordinal);
     string? error = SkillSpecLint.WorkflowDriftError(workflow);
     error.ShouldNotBeNull();
-    error.ShouldContain("tools/dev-cli/");
+    error.ShouldContain(SkillSpecLint.ClassifyCommand);
+    return Task.CompletedTask;
+  }
+
+  public static Task DevCliChange_Should_RunSkillLint()
+  {
+    WorkflowPathClasses.IsSkillPath("tools/dev-cli/endpoints/lint-skills-command.cs").ShouldBeTrue();
     return Task.CompletedTask;
   }
 
@@ -233,8 +239,9 @@ public class Workflow_Given_
     """
     version=$(tr -d '[:space:]' < tools/dev-cli/vally-cli.version)
     npm install -g "@microsoft/vally-cli@$version"
-    ^tools/dev-cli/
-    dotnet run tools/dev-cli/dev.cs -- lint-skills
+    run: dotnet run --file tools/dev-cli/dev.cs -- workflow --phase classify
+    if: needs.classify.outputs.skill == 'true'
+    dotnet run --file tools/dev-cli/dev.cs -- lint-skills
     """;
 
 }
