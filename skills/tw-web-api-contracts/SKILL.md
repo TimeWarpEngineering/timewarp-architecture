@@ -8,9 +8,10 @@ when-to-use: Web.Contracts, web-contracts, command contract, query contract, Api
 
 Endpoint-centric, JSON-over-HTTP contracts designed for **Blazor front ends**. Each
 endpoint owns its request/response types. **Mutability signals purpose**: immutable
-members are read-only display data; mutable members on `I*Details` interfaces bind in
-`EditForm` without a separate view model. **Shared validation** lives on interfaces and
-is composed into per-endpoint validators.
+members are read-only display data; mutable `I*Details` members make the `Update*` Command the
+`EditForm` model with no view model. The store keeps the fetched Response, and a generated `From`
+copies it ([edit forms](references/mutability.md#edit-forms-store-snapshot-and-working-copy)).
+**Shared validation** lives on interfaces and is composed into per-endpoint validators.
 
 This pattern appears across TimeWarp-based solutions. Project names vary (`web-contracts`,
 `Web.Contracts`, `Api.Contracts`, …) but the contract shape is the same.
@@ -18,8 +19,8 @@ This pattern appears across TimeWarp-based solutions. Project names vary (`web-c
 **Why endpoint-centric, not entity-centric:** each operation owns its request/response types
 so endpoints do not couple through a shared entity DTO (over-fetch, under-fetch, and
 cross-endpoint breakage). Share structure and validation through `I*Details` interfaces
-composed into per-endpoint validators — that is what lets Blazor bind `EditForm` to one
-shape without a parallel view model.
+composed into per-endpoint validators — that is what lets Blazor bind `EditForm` to the
+Command through one shape without a parallel view model.
 
 **Why generate FastEndpoints on both hosts:** route, verb, and auth live on the contract, so there are no
 hand-written MVC `BaseEndpoint` shims. Validation stays on the mediator's `FluentValidationBehavior`. Hosts set
@@ -308,20 +309,21 @@ When Blazor will bind and edit the payload:
    interfaces cannot have them; `= null!` goes on the **implementing class**).
 3. Identity/read-only keys on implementations use `{ get; init; }` or `{ get; }`.
 4. Add `AbstractValidator<I<Feature>Details>` in the same file.
-5. `Create*` / `Update*` **Command implements the interface** (and declares its properties).
-6. `Get*` **Response implements the interface** when the form loads existing data for edit.
+5. `Create*` / `Update*` **Command implements the interface** and is the `EditForm` model;
+   `partial` with a parameterless constructor gets a generated `From(I<Feature>Details)`.
+6. `Get*` **Response implements the interface** so `From` can copy it; the store keeps it whole
+   and the form never binds it. `partial` gets a generated deep `Clone`.
 7. Endpoint `Validator` composes: `RuleFor(x => x).SetValidator(new RoleDetailsValidator());`
 
-This is the core value over default .NET DTO patterns: **one shape, shared rules, no
-parallel view model**.
+This is the core value over default .NET DTO patterns: **one shape, shared rules, no parallel view model**.
 
 When an aggregate root lives in the slice (`<slice>.Domain`), its group's contracts agree with it
 by exact member name: details and query-response members exist on the root, a `Set<Name>` list
 command has a root `Set<Name>` mutation, a handler-derived response value is `[Computed]`, and any
 other operation carries `[NotAggregate("reason")]` (TWA0039–TWA0043, `tw-aggregate-pattern`).
 
-The Blazor side binds `EditForm` to the interface with an explicit validator instance (Blazilla);
-see [mutability.md](references/mutability.md) for that and for accessor intent.
+`From` runs on load, Cancel, and own save, not every render; `Version` stays off the interface
+(`CopyBeyondDetails`). Rules, TWA0047–TWA0049, Blazilla: [edit forms](references/mutability.md#edit-forms-store-snapshot-and-working-copy).
 
 ### 4. Apply nullability — type declares intent
 
@@ -358,15 +360,14 @@ See [nullability.md](references/nullability.md).
 | Display / server-built | `{ get; }` or `{ get; init; }` | `IReadOnlyList<T>` |
 | Blazor bindable / edit | `{ get; set; }` on `I*Details` | `List<T>` when editable |
 
-Read-only display sharing across endpoints: get-only interfaces (e.g. `IPolicyDto`) — not
-bindable, not `I*Details`.
+Read-only display sharing across endpoints: get-only interfaces (e.g. `IPolicyDto`) — not bindable, not `I*Details`.
 
 ### 6. Response patterns — the discriminator is "has invariants"
 
 | Case | Pattern |
 |------|---------|
 | **Any invariant to enforce** (non-empty id, valid state) | Parameterized ctor + `Guard.Against.*`; immutable `{ get; }` |
-| Editable load | Implements `I*Details`; ctor sets identity; mutable `{ get; set; }` on bindable fields |
+| Editable load | `partial`; implements `I*Details`; ctor sets identity; mutable `{ get; set; }` on the details fields; generated deep `Clone` (never `Clone() => this`, TWA0047); stored whole, copied into the Command by `From` |
 | List | `Response : ListResponse<TDto>` |
 | No body | `public sealed class Response;` |
 | Truly invariant-free echo | `public required int Id { get; init; }` acceptable |
@@ -441,6 +442,7 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 - [ ] Folder plural + repo's casing; namespace plural
 - [ ] Bindable flows use `I*Details` + shared `AbstractValidator<I*Details>`; Command/Response
       declare the interface properties
+- [ ] Edit form binds the Command from `From`, not the stored Response (TWA0047–TWA0049)
 - [ ] Nullability matches validator rules — no `string?` + unconditional `NotEmpty()` (TWA0002),
       no `= string.Empty` on required fields (TWA0003)
 - [ ] No `default!` on non-generic reference types
@@ -459,7 +461,7 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 | `= string.Empty` + `NotEmpty()` | Silent-bug default → `= null!` (or `required`) |
 | Empty `Command` body while implementing `I*Details` | Won't compile — declare the interface's data properties on the class |
 | Initializer on an interface property | Invalid C# — `= null!` belongs on the implementing class |
-| Separate Blazor view model | Command/Response implement `I*Details`; bind the interface |
+| Separate Blazor view model, or `EditForm` bound to the stored Response | Bind `I*Details` over `Update*.Command.From(response)` |
 | Runtime-type validator resolution (Morris) with interface binding | Use Blazilla's explicit `Validator` instance parameter |
 | Entity-centric shared DTO per endpoint | Endpoint-centric types; share only validation interfaces or read-only display interfaces |
 | `sealed record` request/response | Classes + `partial` + source generation |
@@ -475,8 +477,7 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 ## Canonical examples
 
 - **Living anchor (timewarp-architecture template):** `web/features/admin/roles/` — every
-  operation carries `[Operation]` and a kind interface (`IQuery`, `ICommand`,
-  `IIdempotentCommand`);
+  operation carries `[Operation]` and a kind interface (`IQuery`, `ICommand`, `IIdempotentCommand`);
   `role-details-contracts.cs` (`IRoleDetails` + validator, shared at slice root),
   `create-role/create-role-contracts.cs`, `get-roles/get-roles-contracts.cs` (attribute auth +
   open-data), `get-role/get-role-contracts.cs` (manual auth, `I*Details` Response). Each
