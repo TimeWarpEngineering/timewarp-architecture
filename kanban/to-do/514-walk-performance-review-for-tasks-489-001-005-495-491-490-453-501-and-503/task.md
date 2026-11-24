@@ -18,7 +18,7 @@ Use this task to walk through each finding one by one and decide which follow-up
 - [x] Item 5 (`timewarp-architecture`) — Re-measured on merged PR #670 (Task 504 `wslc` + `green-key`): master merge CI dropped `9m 27s → 1m 26s` (`green-key` skip), PR CI dropped `8m 41s → 7m 36s` (`ci (integration)` on `ubuntu-latest` is now the `5m 55s` critical path); closing for now
 - [x] Item 6 (`timewarp-architecture` task **515**) — Filed task **515** to extract a shared `InteractiveHtmlRenderer` + `InvokeAfterRenderAsync` test helper in `web-spa-integration-tests` and document combined MTP test-filter usage (skipping `StateJsonContext` since `489-003` already added `TypeInfoPropertyName` + comment)
 - [x] Item 7 (`timewarp-ganda` task **717**) — Filed `timewarp-ganda` task **717** to skip merge-commit subjects when `open-pr` picks a PR title and teach `task work --restart` to honor the branch's recorded `--into` feature base when checking predecessors
-- [ ] Item 8 (`timewarp-ganda`) — Fix `task-work.progress.log` `timing total` double-counting (`503` printed `1h06m` vs `54m38s` actual; `490` printed `2h36m` vs `1h56m` actual) and misleading composite `review` outlier alerts
+- [x] Item 8 (`timewarp-ganda` task **718**) — Filed `timewarp-ganda` task **718** to exclude nested review substeps from `timing total`, keep `XmYs` precision on step lines, and separate pure `review` from `implement-fix` in `WalkRetroSuggestion`
 - [ ] Hand off to `/tw-correct` (`timewarp-architecture` & `timewarp-flow`) — Repeated agent mistakes: (A) `dotnet test` from repo root / parallel `obj` collisions (14+ times across 4 tasks), (B) piping `dev build` / `ganda repo audit` into `head`/`tail` (5 times across 4 tasks), (C) un-baselined analyzer suppressions (2 tasks)
 
 ## Session
