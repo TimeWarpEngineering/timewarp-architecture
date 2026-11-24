@@ -100,6 +100,7 @@ Acceptance:
 - Created: 2026-11-24 from Steve's local test of 453 (short clip ok, real prompt timed out)
 - 2026-11-24 implementer (Claude): measured batch and streaming against real xAI, found the root
   cause in the master AppHost traces, replaced the batch upload with a streaming relay.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ea7358cd-9743-4f4c-bbd0-5ceb7cfc18b2, max-turns 500, Done — 2026-11-24T10:42:26Z
 
 ## Results
 
