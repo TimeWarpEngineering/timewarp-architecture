@@ -4,8 +4,8 @@
 
 #region Design
 // HtmlRenderer's static host reports IsInteractive false, so it never runs the page's fetch.
-// This host subclasses StaticHtmlRenderer and reports an interactive renderer, then renders
-// AuthenticationPage in the same scope that can seed or update the snapshot. The form attributes
+// The shared InteractiveHtmlRenderer (infrastructure/) reports an interactive renderer and
+// renders AuthenticationPage in the same scope that can seed or update the snapshot. The form attributes
 // data-policy-version, data-entra-allow-bootstrap, and the accepted-tenant rows are the command.
 // Command.From(SiteSettings) runs after the fetch, on Cancel, and after a successful save.
 // A later SiteSettingsState arrives through ShouldReRender. An unedited command is replaced.
@@ -22,7 +22,6 @@ using System.Reflection;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.HtmlRendering.Infrastructure;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web.HtmlRendering;
 using Microsoft.Extensions.Logging;
@@ -339,16 +338,6 @@ public class AuthenticationDraft_Should_
       }));
       builder.CloseComponent();
     }
-  }
-
-  private sealed class InteractiveHtmlRenderer : StaticHtmlRenderer
-  {
-    public InteractiveHtmlRenderer(IServiceProvider services, ILoggerFactory loggerFactory)
-      : base(services, loggerFactory)
-    {
-    }
-
-    protected override RendererInfo RendererInfo { get; } = new("Test", isInteractive: true);
   }
 
   private sealed class DraftSpa(IWebServerApiService server) : ISpaTestApplication, IDisposable
