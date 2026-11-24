@@ -16,7 +16,7 @@ xAI speech-to-text request failed
 TaskCanceledException: The request was canceled due to the configured HttpClient.Timeout of 30 seconds elapsing.
 ```
 
-xAI's batch latency grows with clip length and crosses the default 30 s `HttpClient` timeout on
+xAI's batch latency grows with clip length and crosses the 30 s timeout the implementer set on the named `HttpClient` on
 any real prompt. The result is then thrown away. grok.com does not work this way: it streams audio
 while the user talks and shows partial text with sub-second latency.
 
@@ -33,7 +33,7 @@ while the user talks and shows partial text with sub-second latency.
   whichever is smaller. Do not add an npm dependency.
 - Set an explicit timeout on the `xai-speech-to-text` named client in
   `source/container-apps/web/features/agent-chat/xai-chat-registration-server.cs` sized from the
-  measurements (not the 30 s default), and make the SPA copy for the timeout case say the clip was
+  measurements (30 s is a hand-picked value, not a default), and make the SPA copy for the timeout case say the clip was
   too long to transcribe in time rather than the generic failure.
 
 ### Part 2: streaming transcription
