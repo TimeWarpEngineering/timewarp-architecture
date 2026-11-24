@@ -48,14 +48,14 @@ rather than one that discards filings on restart.
       `feedback-admin-view-contracts.cs`) filled by the handler from `IFeedbackAttachmentBlobStore`
 - [ ] `FeedbackItemPage` and the admin item view render the missing-file state; body markdown
       image for a missing attachment renders that state too
-- [ ] Decide reconcile vs remove for existing orphan rows; implement as a startup or `dev` verb
-      pass, not a hand SQL script; run it against arch.timewarp.work
+- [ ] Decide reconcile vs remove for existing orphan rows; implement as an idempotent startup or `dev` verb
+      pass, not a hand SQL script (verify locally against seeded orphan rows in Postgres during the PR walk; live `arch.timewarp.work` reconcile runs post-deploy)
 - [ ] Delete the in-memory feedback stores, their module, and `InMemoryBlobWarning`; mode
       selection becomes Azure, then Postgres
 - [ ] Gate the feedback slice on the `postgres` flag; `dev template-smoke --matrix` green
 - [ ] Move feedback tests off the in-memory stores to the Postgres lane
 - [ ] Jaribu tests: orphan row renders missing state
-- [ ] Screenshots of the two production items after the fix in `evidence/`
+- [ ] Screenshots of the missing-file attachment state (admin + filer views, including body markdown image) captured locally from the running app in `evidence/` (live `arch.timewarp.work` verification runs post-deploy)
 - [ ] `dev build`, `ganda repo audit`
 
 ## Notes
