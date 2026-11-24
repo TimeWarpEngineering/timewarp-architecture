@@ -6,15 +6,15 @@
 **Plan / brief:** Wire Role update, Role create, AI (two tools), and Authentication into the task 490 prefill tools. One suggestion store and one shared page component. Derive the opt-in from a page-scoped submit whose Command implements one `I*Details` interface, and delete `[EditFormSubmit]`. Passkeys rename is out when it is not that shape. A convention test fails an unwired derived submit.
 **Effort:** 3 (by-diff budget; roster axis is general only)
 **Reviewer roster:** general
-**Session IDs:** implementer Claude `5f10deb9-8939-414b-8d64-765f03250951`; reviewer Grok `01a20e1d-6ad8-7190-a625-7d15a7f2d866`
+**Session IDs:** implementer Claude `5f10deb9-8939-414b-8d64-765f03250951`; round 1 reviewer Grok `01a20e1d-6ad8-7190-a625-7d15a7f2d866`; round 2 reviewer Grok `01a20e2e-3a68-75a2-beeb-f6cb5c7a575c`
 
 ## Budget (by-diff)
 
-- Lines changed: 2295
-- Effort: 3
+- Lines changed: 217
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -26,3 +26,11 @@
 - Exception: one targeted command may check one suspected bug; the finding names the command and the reason. A full build, full test run, or audit is never that command
 - A missing or thin recorded result is a finding, not a reason to run the gates
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2
+
+**Date:** 2026-11-24
+**Diff scope:** commit `a4d911915` against its parent (the round 1 M1 fix). Product files: `form-suggestion-state.cs`, `form-suggestion-state.session-changed.cs`, `AuthenticationStateListener.razor`, `profile-state-tests.cs`, `sign-out-state-tests.cs`. `review/round-1/` stays frozen.
+**Effort:** 2 (by-diff budget above; roster axis general only)
+**Reviewer roster:** general
+**Session IDs:** reviewer Grok `01a20e2e-3a68-75a2-beeb-f6cb5c7a575c`

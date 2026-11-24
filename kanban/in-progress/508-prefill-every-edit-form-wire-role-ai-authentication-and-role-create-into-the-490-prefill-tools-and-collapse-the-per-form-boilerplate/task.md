@@ -205,6 +205,10 @@ resets, so the signed-out path (empty id) and a sign-in as someone else both cle
 `Initialize` also forgets the principal. `FetchAndUpdate_Should_.Suggestion_Should_Drop_When_PrincipalChanges`
 pins it; `SignOut_Should_` seeds a draft and `AssertCleared` expects none.
 
+Round 2, effort 2, roster general. `review/review-framework.md`, `review/round-2/general.md`,
+`review/round-2/merged.md`, `review/disposition.md`. Re-read of the fix delta confirmed M1 fixed.
+No new findings. Final counts: bug 0 open / 1 fixed / 0 wontfix. Disposition: clean.
+
 ## Depends on
 
 - 490
@@ -224,6 +228,7 @@ pins it; `SignOut_Should_` seeds a draft and `AssertCleared` expects none.
 
 - Implement-fix-2 oracle (Claude Code, claude-opus-5-5): M1 fixed, FormSuggestionState
   SessionChanged wired into the authentication listener; tests extended. 2026-11-24
+- Reviewer: Grok session 01a20e2e-3a68-75a2-beeb-f6cb5c7a575c (2026-11-24). Round 2 general, effort 2. M1 fixed, disposition clean.
 
 ## Learnings
 
@@ -232,3 +237,4 @@ Misread: the original Evidence section requires a screenshot in `evidence/` for 
 ## Review
 
 - Round 1: Blocked — open M1
+- Round 2: Done
