@@ -1,0 +1,67 @@
+{
+  "telemetry": false,
+  "detector": {
+    "extensions": [
+      {
+        "ext": ".razor",
+        "engine": "html"
+      }
+    ],
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "**/_content/Microsoft.FluentUI.AspNetCore.Components/**",
+      "**/obj/**",
+      "**/bin/**"
+    ],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "segoe ui variable",
+        "createdAt": "2026-11-24T19:46:52.294Z",
+        "reason": "Brand typography: FluentUI v5 --fontFamilyBase (tokens.css --twe-font-sans)"
+      },
+      {
+        "rule": "overused-font",
+        "value": "segoe ui",
+        "createdAt": "2026-11-24T19:46:52.331Z",
+        "reason": "Brand typography fallback in FluentUI --fontFamilyBase"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          "**/wwwroot/css/tokens.css"
+        ],
+        "createdAt": "2026-11-24T19:46:52.363Z",
+        "reason": "Token source: --twe-font-* define the type stack"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "**/wwwroot/css/tokens.css"
+        ],
+        "createdAt": "2026-11-24T19:46:52.397Z",
+        "reason": "Token source: the palette and role tokens live here"
+      },
+      {
+        "rule": "ai-color-palette",
+        "value": "*",
+        "files": [
+          "**/wwwroot/css/tokens.css"
+        ],
+        "createdAt": "2026-11-24T19:46:52.431Z",
+        "reason": "Brand palette: TimeWarp purple and blue are BrandOptions defaults, not generated slop"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "**/brand.css"
+        ],
+        "createdAt": "2026-11-24T19:46:52.466Z",
+        "reason": "BrandOptions writes /brand.css at runtime"
+      }
+    ]
+  }
+}
