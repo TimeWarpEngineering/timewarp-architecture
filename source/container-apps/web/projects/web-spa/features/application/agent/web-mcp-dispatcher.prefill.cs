@@ -21,14 +21,14 @@ partial class WebMcpDispatcher
       return Error(name, UnavailableError);
     }
 
-    EditFormSubmitAttribute? submit = tool.Entry.ActionType.GetCustomAttribute<EditFormSubmitAttribute>();
-    if (submit is null)
+    Type? details = FormPrefill.DetailsType(tool.Entry.ActionType);
+    if (details is null)
     {
       return Error(name, UnavailableError);
     }
 
     if (!FormPrefill.TryNormalize(
-      submit.CommandType,
+      details,
       argumentsJson,
       out string suggestionJson,
       out string? error,

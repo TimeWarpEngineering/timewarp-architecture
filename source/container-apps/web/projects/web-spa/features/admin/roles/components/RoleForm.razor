@@ -16,6 +16,9 @@
   (DefaultApiHandler toasts, does not throw) stays on this form.
   Layout is FormSection / FormGrid / FormField / FormActions (full-width controls,
   right-aligned Save). No Cancel — there is no cheap draft reset on CreateRole.Command.
+  The form sits in FormPrefillScope for CreateRole, so Prefill.Role.CreateRole drafts Name and
+  Description onto the command and each FormField shows the Agent badge. The baseline is the
+  empty command, so anything typed makes the form dirty and the scope asks first.
 *@
 
 @code {
@@ -35,21 +38,23 @@
   }
 }
 
-<EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleForm" novalidate>
-  <FluentValidator Validator="@RoleValidator" />
-  <FormSection Title="Role" Description="Name and description for the new role.">
-    <FormGrid>
-      <FormField Label="Name">
-        <FluentTextInput @bind-Value=RoleDetails.Name Name="Name" AriaLabel="Name" data-qa="RoleName" Width="100%" />
-        <ValidationMessage For="@(() => RoleDetails.Name)" />
-      </FormField>
-      <FormField Label="Description">
-        <FluentTextInput @bind-Value=RoleDetails.Description Name="Description" AriaLabel="Description" data-qa="RoleDescription" Width="100%" />
-        <ValidationMessage For="@(() => RoleDetails.Description)" />
-      </FormField>
-    </FormGrid>
-  </FormSection>
-  <FormActions>
-    <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary data-qa="RoleSave">Save</FluentButton>
-  </FormActions>
-</EditForm>
+<FormPrefillScope TSubmit="RoleState.CreateRoleActionSet.Action" Model="Command" Noun="role">
+  <EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleForm" novalidate>
+    <FluentValidator Validator="@RoleValidator" />
+    <FormSection Title="Role" Description="Name and description for the new role.">
+      <FormGrid>
+        <FormField Label="Name" Field="@nameof(IRoleDetails.Name)">
+          <FluentTextInput @bind-Value=RoleDetails.Name Name="Name" AriaLabel="Name" data-qa="RoleName" Width="100%" />
+          <ValidationMessage For="@(() => RoleDetails.Name)" />
+        </FormField>
+        <FormField Label="Description" Field="@nameof(IRoleDetails.Description)">
+          <FluentTextInput @bind-Value=RoleDetails.Description Name="Description" AriaLabel="Description" data-qa="RoleDescription" Width="100%" />
+          <ValidationMessage For="@(() => RoleDetails.Description)" />
+        </FormField>
+      </FormGrid>
+    </FormSection>
+    <FormActions>
+      <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary data-qa="RoleSave">Save</FluentButton>
+    </FormActions>
+  </EditForm>
+</FormPrefillScope>

@@ -1,14 +1,21 @@
 #region Purpose
-// Builds Prefill tools for edit-form submit actions and dispatches the suggestion action.
+// Builds Prefill tools for edit-form submit actions and dispatches the draft storage action.
 #endregion
 
 #region Design
 // The tool is synthetic, like navigate: it is not itself a catalog entry. The suggestion action
-// is a catalog entry so Dispatch can Execute it. ISender.Send is TWA0022 in this project, so the
-// pipeline does not call Send. Product slices are not named; the EditFormSubmit attribute and the
-// catalog carry the types. Normalization and apply live on the other part of this type. Approval
-// is Ask before editing on the page, and never for the off-page navigate offer. The page copies
-// fields locally and then clears the suggestion.
+// (FormSuggestionState.SetFormSuggestion) is a catalog entry so Dispatch can Execute it.
+// ISender.Send is TWA0022 in this project, so the pipeline does not call Send.
+// Opt-in is derived, not declared (task 508). A catalog action is an edit-form submit when a
+// page lists it in [Page(AgentActions = ...)] and its public Command property's type implements
+// exactly one I*Details interface (tw-web-api-contracts: the edit form binds that interface).
+// The [EditFormSubmit] attribute that 490 used is deleted: it repeated what the contract and the
+// page already say. The draft schema and the accepted keys are that interface's properties, so
+// RoleId, Version, and UserId are never drafted. A page renders FormPrefillScope<TSubmit> around
+// the form to apply the draft; FormPrefillConvention_Should_ fails when a derived submit has no
+// scope in this assembly. Product slices are not named here. Normalization and apply live on the
+// other part of this type. Approval is Ask before editing on the page, and never for the
+// off-page navigate offer. The form copies fields locally and then clears the suggestion.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -33,20 +40,59 @@ public static partial class FormPrefill
     return Prefix + actionName;
   }
 
+  /// <summary>The draft storage action type when the catalog has it. It is never an agent tool.</summary>
   public static HashSet<Type> SuggestionTypes(IEnumerable<ActionCatalogEntry> entries)
   {
     ArgumentNullException.ThrowIfNull(entries);
     HashSet<Type> types = [];
     foreach (ActionCatalogEntry entry in entries)
     {
-      EditFormSubmitAttribute? attribute = entry.ActionType.GetCustomAttribute<EditFormSubmitAttribute>();
-      if (attribute is not null)
+      if (entry.ActionType == typeof(FormSuggestionState.SetFormSuggestionActionSet.Action))
       {
-        types.Add(attribute.SuggestionActionType);
+        types.Add(entry.ActionType);
       }
     }
 
     return types;
+  }
+
+  /// <summary>
+  /// The I*Details interface an edit form binds for <paramref name="actionType"/>, read from the
+  /// action's public Command property. Null when there is no Command or not exactly one such interface.
+  /// </summary>
+  public static Type? DetailsType(Type actionType)
+  {
+    ArgumentNullException.ThrowIfNull(actionType);
+    PropertyInfo? command = actionType.GetProperty("Command", BindingFlags.Instance | BindingFlags.Public);
+    if (command?.GetMethod is null)
+    {
+      return null;
+    }
+
+    Type? found = null;
+    foreach (Type candidate in command.PropertyType.GetInterfaces())
+    {
+      if (!candidate.Name.StartsWith('I', StringComparison.Ordinal) || !candidate.Name.EndsWith("Details", StringComparison.Ordinal))
+      {
+        continue;
+      }
+
+      if (found is not null)
+      {
+        return null;
+      }
+
+      found = candidate;
+    }
+
+    return found;
+  }
+
+  /// <summary>True when a page lists <paramref name="actionType"/> and its Command binds an I*Details interface.</summary>
+  public static bool IsEditFormSubmit(Type actionType)
+  {
+    ArgumentNullException.ThrowIfNull(actionType);
+    return DetailsType(actionType) is not null && PageAgentScope.IsPageBound(actionType);
   }
 
   public static async Task<IReadOnlyList<CatalogAgentTool>> SelectAsync
@@ -70,30 +116,20 @@ public static partial class FormPrefill
     }
 
     List<ActionCatalogEntry> entryList = [.. entries];
-    HashSet<Type> catalogTypes = [];
-    foreach (ActionCatalogEntry entry in entryList)
+    if (SuggestionTypes(entryList).Count == 0)
     {
-      catalogTypes.Add(entry.ActionType);
+      return [];
     }
 
     List<CatalogAgentTool> tools = [];
     foreach (ActionCatalogEntry entry in entryList)
     {
-      EditFormSubmitAttribute? attribute = entry.ActionType.GetCustomAttribute<EditFormSubmitAttribute>();
-      if (attribute is null || !entry.Visibility.HasFlag(ActionVisibility.Agent))
+      if (!entry.Visibility.HasFlag(ActionVisibility.Agent) || !IsEditFormSubmit(entry.ActionType))
       {
         continue;
       }
 
-      if (!catalogTypes.Contains(attribute.SuggestionActionType))
-      {
-        continue;
-      }
-
-      if (!PageAgentScope.IsPageBound(entry.ActionType))
-      {
-        continue;
-      }
+      Type details = DetailsType(entry.ActionType)!;
 
       if (!await CommandPaletteRoster.IsPermittedAsync(user, authorizationService, entry))
       {
@@ -132,7 +168,7 @@ public static partial class FormPrefill
       (
         ToolName(entry.Name),
         description,
-        CatalogAgentSchema.OptionalCommand(attribute.CommandType),
+        CatalogAgentSchema.OptionalCommand(details),
         RequiresApproval: onPage && editMode == AgentEditMode.AskBeforeEditing,
         entry,
         offPage,
@@ -161,13 +197,15 @@ public static partial class FormPrefill
     ArgumentNullException.ThrowIfNull(fields);
     cancellationToken.ThrowIfCancellationRequested();
 
-    EditFormSubmitAttribute attribute = submit.ActionType.GetCustomAttribute<EditFormSubmitAttribute>()
-      ?? throw new InvalidOperationException($"'{submit.Name}' is not an edit-form submit.");
+    if (!IsEditFormSubmit(submit.ActionType))
+    {
+      throw new InvalidOperationException($"'{submit.Name}' is not an edit-form submit.");
+    }
 
     ActionCatalogEntry? suggestion = null;
     foreach (ActionCatalogEntry entry in catalog.Entries)
     {
-      if (entry.ActionType == attribute.SuggestionActionType)
+      if (entry.ActionType == typeof(FormSuggestionState.SetFormSuggestionActionSet.Action))
       {
         suggestion = entry;
         break;
@@ -176,11 +214,10 @@ public static partial class FormPrefill
 
     if (suggestion is null)
     {
-      throw new InvalidOperationException(
-        "No catalog entry executes " + attribute.SuggestionActionType.FullName + ".");
+      throw new InvalidOperationException("No catalog entry executes FormSuggestionState.SetFormSuggestion.");
     }
 
-    await suggestion.Execute(store, [suggestionJson], cancellationToken);
+    await suggestion.Execute(store, [FormSuggestionState.KeyFor(submit.ActionType), suggestionJson], cancellationToken);
     return new Result(Drafted: true, Error: null, fields);
   }
 

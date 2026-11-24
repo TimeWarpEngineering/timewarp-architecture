@@ -30,6 +30,10 @@
   as an IntegrationCard; the status sentence stays the meta line, and save and clear stay
   outside the card. Host configuration and a deployment with no durable store render
   read-only text, including the setup hint. Save and clear only dispatch.
+  The assistant form and the Ask API key form each sit in a FormPrefillScope for their submit
+  action, so Prefill.SiteSettings.UpdateAssistantName and Prefill.SiteSettings.UpdateXaiByokMode
+  draft AssistantName or XaiByokMode (never Version) and the field shows the Agent badge. A
+  reconcile that keeps the dirty command only moves Version, so the edit stays marked dirty.
 *@
 
 @code {
@@ -263,34 +267,36 @@
 <TimeWarpPage Title="AI">
   @if (AssistantSource is not null)
   {
-    <EditForm Model="AssistantCommand" OnValidSubmit="SaveAssistantAsync" FormName="AssistantNameForm" novalidate>
-      <FluentValidator Validator="@AssistantValidator" />
-      <FormSection Title="Assistant"
-                   Description="The name the in-app assistant goes by on the top-bar button, Ctrl-K, the panel and its greeting. Its avatar is generated from the name."
-                   data-qa="AssistantSettings"
-                   data-assistant-version="@AssistantCommand.Version"
-                   data-assistant-name="@AssistantCommand.AssistantName">
-        <FormGrid>
-          <FormField Label="Assistant name">
-            <FluentTextInput @bind-Value="AssistantCommand.AssistantName"
-                             Name="AssistantName"
-                             AriaLabel="Assistant name"
-                             Width="100%"
-                             Disabled="@IsBusy"
-                             data-qa="AssistantName" />
-            <ValidationMessage For="@(() => AssistantCommand.AssistantName)" />
-          </FormField>
-        </FormGrid>
-      </FormSection>
-      <FormActions>
-        <FluentButton Type="ButtonType.Submit"
-                      Appearance="ButtonAppearance.Primary"
-                      Disabled="@IsBusy"
-                      data-qa="AssistantNameSave">
-          Save assistant name
-        </FluentButton>
-      </FormActions>
-    </EditForm>
+    <FormPrefillScope TSubmit="SiteSettingsState.UpdateAssistantNameActionSet.Action" Model="AssistantCommand" Noun="assistant">
+      <EditForm Model="AssistantCommand" OnValidSubmit="SaveAssistantAsync" FormName="AssistantNameForm" novalidate>
+        <FluentValidator Validator="@AssistantValidator" />
+        <FormSection Title="Assistant"
+                     Description="The name the in-app assistant goes by on the top-bar button, Ctrl-K, the panel and its greeting. Its avatar is generated from the name."
+                     data-qa="AssistantSettings"
+                     data-assistant-version="@AssistantCommand.Version"
+                     data-assistant-name="@AssistantCommand.AssistantName">
+          <FormGrid>
+            <FormField Label="Assistant name" Field="@nameof(IAssistantNameDetails.AssistantName)">
+              <FluentTextInput @bind-Value="AssistantCommand.AssistantName"
+                               Name="AssistantName"
+                               AriaLabel="Assistant name"
+                               Width="100%"
+                               Disabled="@IsBusy"
+                               data-qa="AssistantName" />
+              <ValidationMessage For="@(() => AssistantCommand.AssistantName)" />
+            </FormField>
+          </FormGrid>
+        </FormSection>
+        <FormActions>
+          <FluentButton Type="ButtonType.Submit"
+                        Appearance="ButtonAppearance.Primary"
+                        Disabled="@IsBusy"
+                        data-qa="AssistantNameSave">
+            Save assistant name
+          </FluentButton>
+        </FormActions>
+      </EditForm>
+    </FormPrefillScope>
   }
   else
   {
@@ -389,35 +395,37 @@
   }
   else if (ByokSource is not null)
   {
-    <EditForm Model="ByokCommand" OnValidSubmit="SaveByokAsync" FormName="XaiByokModeForm" novalidate>
-      <FluentValidator Validator="@ByokValidator" />
-      <FormSection Title="Ask API key"
-                   Description="Whose xAI API key Ask uses when the deployment has not set XAI:ApiKey. The deployment key always wins."
-                   data-qa="XaiByokModeSettings"
-                   data-xai-byok-version="@ByokCommand.Version"
-                   data-xai-byok-mode="@ByokCommand.XaiByokMode">
-        <FormGrid>
-          <FormField Label="Personal xAI API key">
-            <FluentSelect TOption="XaiByokMode" TValue="XaiByokMode"
-                          Items="@XaiByokModes"
-                          OptionText="@XaiByokModeLabel"
-                          @bind-Value="ByokCommand.XaiByokMode"
-                          AriaLabel="Personal xAI API key"
-                          Width="100%"
-                          Disabled="@IsBusy"
-                          data-qa="XaiByokMode" />
-            <ValidationMessage For="@(() => ByokCommand.XaiByokMode)" />
-          </FormField>
-        </FormGrid>
-      </FormSection>
-      <FormActions>
-        <FluentButton Type="ButtonType.Submit"
-                      Appearance="ButtonAppearance.Primary"
-                      Disabled="@IsBusy"
-                      data-qa="XaiByokModeSave">
-          Save xAI key policy
-        </FluentButton>
-      </FormActions>
-    </EditForm>
+    <FormPrefillScope TSubmit="SiteSettingsState.UpdateXaiByokModeActionSet.Action" Model="ByokCommand" Noun="Ask API key">
+      <EditForm Model="ByokCommand" OnValidSubmit="SaveByokAsync" FormName="XaiByokModeForm" novalidate>
+        <FluentValidator Validator="@ByokValidator" />
+        <FormSection Title="Ask API key"
+                     Description="Whose xAI API key Ask uses when the deployment has not set XAI:ApiKey. The deployment key always wins."
+                     data-qa="XaiByokModeSettings"
+                     data-xai-byok-version="@ByokCommand.Version"
+                     data-xai-byok-mode="@ByokCommand.XaiByokMode">
+          <FormGrid>
+            <FormField Label="Personal xAI API key" Field="@nameof(IXaiByokModeDetails.XaiByokMode)">
+              <FluentSelect TOption="XaiByokMode" TValue="XaiByokMode"
+                            Items="@XaiByokModes"
+                            OptionText="@XaiByokModeLabel"
+                            @bind-Value="ByokCommand.XaiByokMode"
+                            AriaLabel="Personal xAI API key"
+                            Width="100%"
+                            Disabled="@IsBusy"
+                            data-qa="XaiByokMode" />
+              <ValidationMessage For="@(() => ByokCommand.XaiByokMode)" />
+            </FormField>
+          </FormGrid>
+        </FormSection>
+        <FormActions>
+          <FluentButton Type="ButtonType.Submit"
+                        Appearance="ButtonAppearance.Primary"
+                        Disabled="@IsBusy"
+                        data-qa="XaiByokModeSave">
+            Save xAI key policy
+          </FluentButton>
+        </FormActions>
+      </EditForm>
+    </FormPrefillScope>
   }
 </TimeWarpPage>

@@ -1,0 +1,123 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@typeparam TSubmit where TSubmit : IBaseAction
+@inherits BaseComponent
+@implements IAgentFilledFields
+
+@*
+  Purpose: applies an agent draft onto one edit form's working copy and marks the fields it wrote.
+
+  Design: Task 508. A page opts its form into the Prefill.<Action> tool by wrapping the form in
+  this component with TSubmit set to the submit action, Model set to the working copy, and Noun
+  naming the form for the replace question. FormPrefill derives the tool from the submit action;
+  this component is the page half, and FormPrefillConvention_Should_ fails when a derived submit
+  has no FormPrefillScope<TSubmit>. The draft lives in FormSuggestionState under
+  FormSuggestionState.KeyFor(TSubmit).
+  Baseline: when Model is a new reference (the page copied from the store on load, Cancel, or
+  Save) or Ready turns true, the component snapshots it as contract JSON and drops the Agent
+  marks. Dirty means the working copy's JSON differs from that snapshot, so typing, an earlier
+  draft, or an in-place edit all count. Apply does not move the baseline: a draft stays unsaved
+  until the person saves.
+  Apply runs in OnAfterRenderAsync once the renderer is interactive and Ready is true, so a
+  draft that arrives while the page is still loading stays in state. A clean form takes the
+  draft at once. A dirty form dispatches ConfirmFormSuggestion first ("An agent drafted new
+  {Noun} values. Applying them replaces unsaved changes on this form.", "Apply draft",
+  "Keep mine"); decline drops the draft and the typed values stay. After apply the component
+  re-renders, which re-renders the form inside it, then dispatches ClearFormSuggestion for that
+  draft id. The page needs no apply, dirty, or badge code.
+  Badge: the component cascades itself as IAgentFilledFields. FormField with Field set to a
+  working-copy property shows the Info badge labeled Agent while that property still equals
+  the value the draft wrote.
+*@
+
+@code {
+  private static readonly string Form = FormSuggestionState.KeyFor(typeof(TSubmit));
+
+  private readonly Dictionary<string, string> AgentFilled = new(StringComparer.Ordinal);
+  private object? BaselineModel;
+  private string? BaselineJson;
+  private bool BaselineReady;
+  private bool Applying;
+  private string? HandledId;
+
+  /// <summary>The working copy the form binds (the submit action's Command).</summary>
+  [Parameter, EditorRequired] public object? Model { get; set; }
+
+  /// <summary>Names the form in the replace question, for example "profile" or "role".</summary>
+  [Parameter, EditorRequired] public string Noun { get; set; } = "";
+
+  /// <summary>False while Model is a placeholder that is not yet a copy of stored data.</summary>
+  [Parameter] public bool Ready { get; set; } = true;
+
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+
+  public bool IsAgentFilled(string propertyName) =>
+    Model is not null
+    && AgentFilled.TryGetValue(propertyName, out string? canonical)
+    && FormPrefill.Matches(Model, propertyName, canonical);
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    if (!ReferenceEquals(Model, BaselineModel) || (Ready && !BaselineReady))
+    {
+      AgentFilled.Clear();
+      BaselineModel = Model;
+      BaselineJson = Model is null ? null : Snapshot(Model);
+    }
+
+    BaselineReady = Ready;
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (Applying || !RendererInfo.IsInteractive || !Ready || Model is null)
+    {
+      return;
+    }
+
+    FormSuggestion? draft = FormSuggestionState.For(Form);
+    if (draft is null || string.Equals(draft.Id, HandledId, StringComparison.Ordinal))
+    {
+      return;
+    }
+
+    Applying = true;
+    try
+    {
+      if (!draft.Accepted && IsDirty())
+      {
+        await FormSuggestionState.ConfirmFormSuggestion(Form, Noun);
+        draft = FormSuggestionState.For(Form);
+        if (draft is null || !draft.Accepted)
+        {
+          if (draft is not null)
+          {
+            StateHasChanged();
+          }
+
+          return;
+        }
+      }
+
+      HandledId = draft.Id;
+      FormPrefill.Apply(Model, draft.Json, AgentFilled);
+      StateHasChanged();
+      await FormSuggestionState.ClearFormSuggestion(Form, draft.Id);
+    }
+    finally
+    {
+      Applying = false;
+    }
+  }
+
+  private bool IsDirty() =>
+    Model is not null && !string.Equals(Snapshot(Model), BaselineJson, StringComparison.Ordinal);
+
+  private static string Snapshot(object model) =>
+    JsonSerializer.Serialize(model, model.GetType(), ContractSerializationDefaults.Options);
+}
+
+<CascadingValue TValue="IAgentFilledFields" Value="this" IsFixed="true">
+  @ChildContent
+</CascadingValue>

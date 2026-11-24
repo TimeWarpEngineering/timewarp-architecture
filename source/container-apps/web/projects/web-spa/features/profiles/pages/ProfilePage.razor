@@ -17,11 +17,11 @@
   binds a page-local UpdateProfile.Command. Command.From(Profile) runs when the page loads
   and when Cancel is clicked, and again after Save so a trimmed email replaces the draft.
   It does not run on every render. Language, region, and theme come from the response.
-  A prefill suggestion copies only the supplied fields onto that command. The page does
-  not read the suggestion until CopyCommandFromProfile has copied a loaded profile into
-  the working command, so a draft that arrives during the fetch stays in state. If the
-  command differs from the last copy, the page asks first. Agent-filled fields show the
-  Info badge until the person changes them. Copying from the store clears the badges.
+  The form sits in FormPrefillScope for UpdateProfile, which applies an agent draft, asks
+  before replacing unsaved edits, and drives each FormField's Agent badge through Field.
+  Ready is WorkingCopyReady, so a draft that arrives during the fetch is not applied onto
+  the empty command and stays in state. Each copy from the store is a new command, which
+  resets the scope's baseline and clears the badges.
   The xAI key section is a second form after the profile form. It renders only when
   UserXaiApiKeyState.Visible is true (site mode is not Off). The draft key is page-local,
   a password field, and is cleared after a successful save. State never stores it.
@@ -34,11 +34,7 @@
   private static readonly ProfileDetailsValidator ProfileValidator = new();
 
   private UpdateProfile.Command Command { get; set; } = new();
-  private UpdateProfile.Command Baseline { get; set; } = new();
-  private readonly Dictionary<string, string> AgentFilled = new(StringComparer.Ordinal);
-  private bool Applying;
   private bool WorkingCopyReady;
-  private string? HandledSuggestionId;
   private IProfileDetails Details => Command;
 
   private static readonly SetUserXaiApiKey.Validator KeyValidator = new();
@@ -78,56 +74,8 @@
     CopyCommandFromProfile();
   }
 
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    await base.OnAfterRenderAsync(firstRender);
-    if (Applying || !RendererInfo.IsInteractive || !WorkingCopyReady)
-    {
-      return;
-    }
-
-    ProfileState current = this.ProfileState;
-    string? json = current.ProfileSuggestionJson;
-    string? id = current.ProfileSuggestionId;
-    if (json is null || id is null || string.Equals(id, HandledSuggestionId, StringComparison.Ordinal))
-    {
-      return;
-    }
-
-    Applying = true;
-    try
-    {
-      if (!current.ProfileSuggestionAccepted && IsDirty())
-      {
-        await ProfileState.ConfirmProfileSuggestion();
-        current = this.ProfileState;
-        json = current.ProfileSuggestionJson;
-        id = current.ProfileSuggestionId;
-        if (json is null || id is null || !current.ProfileSuggestionAccepted)
-        {
-          if (json is not null && id is not null)
-          {
-            StateHasChanged();
-          }
-
-          return;
-        }
-      }
-
-      HandledSuggestionId = id;
-      FormPrefill.Apply(Command, json, AgentFilled);
-      StateHasChanged();
-      await ProfileState.ClearProfileSuggestion();
-    }
-    finally
-    {
-      Applying = false;
-    }
-  }
-
   private void CopyCommandFromProfile()
   {
-    AgentFilled.Clear();
     WorkingCopyReady = false;
     if (ProfileState.Profile is not GetProfile.Response profile)
     {
@@ -135,15 +83,8 @@
     }
 
     Command = UpdateProfile.Command.From(profile);
-    Baseline = ProfileFormDraft.Copy(Command);
     WorkingCopyReady = true;
   }
-
-  private bool IsDirty() => !ProfileFormDraft.Same(Command, Baseline);
-
-  private bool IsAgentFilled(string propertyName) =>
-    AgentFilled.TryGetValue(propertyName, out string? canonical)
-    && FormPrefill.Matches(Command, propertyName, canonical);
 
   private async Task HandleValidSubmit()
   {
@@ -167,79 +108,81 @@
 
 <TimeWarpPage Title="Profile">
   <Section Title="Profile" LoadingActionType="typeof(ProfileState.FetchProfileDataActionSet.Action)">
-    <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="ProfileForm" novalidate>
-      <FluentValidator Validator="@ProfileValidator" />
+    <FormPrefillScope TSubmit="ProfileState.UpdateProfileActionSet.Action" Model="Command" Noun="profile" Ready="WorkingCopyReady">
+      <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="ProfileForm" novalidate>
+        <FluentValidator Validator="@ProfileValidator" />
 
-      <FormSection Title="Profile" Description="How you appear on this account.">
-        <FormGrid>
-          <FormField>
-            <FluentAvatar
-              Image=@(ProfileState.Profile?.Avatar ?? ProfileState.FallbackAvatar)
-              Name=@ProfileState.Profile?.DisplayName
-              Size="AvatarSize.Size56" />
-          </FormField>
-          <FormField Label="Display name" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.DisplayName))">
-            <FluentTextInput @bind-Value=Details.DisplayName Name="DisplayName" AriaLabel="Display name" data-qa="ProfileDisplayName" Width="100%" />
-            <ValidationMessage For="@(() => Details.DisplayName)" />
-          </FormField>
-          <FormField Label="Email (optional)" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Email))">
-            <FluentTextInput @bind-Value=Details.Email Name="Email" AriaLabel="Email (optional)" data-qa="ProfileEmail" Width="100%" />
-            <ValidationMessage For="@(() => Details.Email)" />
-          </FormField>
-        </FormGrid>
-      </FormSection>
+        <FormSection Title="Profile" Description="How you appear on this account.">
+          <FormGrid>
+            <FormField>
+              <FluentAvatar
+                Image=@(ProfileState.Profile?.Avatar ?? ProfileState.FallbackAvatar)
+                Name=@ProfileState.Profile?.DisplayName
+                Size="AvatarSize.Size56" />
+            </FormField>
+            <FormField Label="Display name" Field="@nameof(IProfileDetails.DisplayName)">
+              <FluentTextInput @bind-Value=Details.DisplayName Name="DisplayName" AriaLabel="Display name" data-qa="ProfileDisplayName" Width="100%" />
+              <ValidationMessage For="@(() => Details.DisplayName)" />
+            </FormField>
+            <FormField Label="Email (optional)" Field="@nameof(IProfileDetails.Email)">
+              <FluentTextInput @bind-Value=Details.Email Name="Email" AriaLabel="Email (optional)" data-qa="ProfileEmail" Width="100%" />
+              <ValidationMessage For="@(() => Details.Email)" />
+            </FormField>
+          </FormGrid>
+        </FormSection>
 
-      <FormSection Title="Preferences" Description="Language, region, theme, and notifications.">
-        <FormGrid>
-          <FormField Label="Language" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Language))">
-            <FluentCombobox TOption="string" TValue="string"
-              Items="@ProfileCatalog.LanguageCodes"
-              OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Languages, code))"
-              @bind-Value="Details.Language"
-              Name="Language"
-              AriaLabel="Language"
-              Placeholder="Search languages"
-              Width="100%"
-              Height="20rem"
-              data-qa="ProfileLanguage" />
-            <ValidationMessage For="@(() => Details.Language)" />
-          </FormField>
-          <FormField Label="Region" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Region))">
-            <FluentCombobox TOption="string" TValue="string"
-              Items="@ProfileCatalog.RegionCodes"
-              OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Regions, code))"
-              @bind-Value="Details.Region"
-              Name="Region"
-              AriaLabel="Region"
-              Placeholder="Search regions"
-              Width="100%"
-              Height="20rem"
-              data-qa="ProfileRegion" />
-            <ValidationMessage For="@(() => Details.Region)" />
-          </FormField>
-          <FormField Label="Theme" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Theme))">
-            <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
-              Items="@ProfileCatalog.Themes"
-              OptionValue="@(static entry => entry?.Code)"
-              OptionText="@(static entry => entry?.Label ?? string.Empty)"
-              @bind-Value="Details.Theme"
-              Name="Theme"
-              AriaLabel="Theme"
-              Width="100%"
-              data-qa="ProfileTheme" />
-            <ValidationMessage For="@(() => Details.Theme)" />
-          </FormField>
-          <FormField Label="Notifications" AgentFilled="@IsAgentFilled(nameof(UpdateProfile.Command.Notifications))">
-            <FluentCheckbox @bind-Value=Details.Notifications AriaLabel="Notifications" />
-          </FormField>
-        </FormGrid>
-      </FormSection>
+        <FormSection Title="Preferences" Description="Language, region, theme, and notifications.">
+          <FormGrid>
+            <FormField Label="Language" Field="@nameof(IProfileDetails.Language)">
+              <FluentCombobox TOption="string" TValue="string"
+                Items="@ProfileCatalog.LanguageCodes"
+                OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Languages, code))"
+                @bind-Value="Details.Language"
+                Name="Language"
+                AriaLabel="Language"
+                Placeholder="Search languages"
+                Width="100%"
+                Height="20rem"
+                data-qa="ProfileLanguage" />
+              <ValidationMessage For="@(() => Details.Language)" />
+            </FormField>
+            <FormField Label="Region" Field="@nameof(IProfileDetails.Region)">
+              <FluentCombobox TOption="string" TValue="string"
+                Items="@ProfileCatalog.RegionCodes"
+                OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Regions, code))"
+                @bind-Value="Details.Region"
+                Name="Region"
+                AriaLabel="Region"
+                Placeholder="Search regions"
+                Width="100%"
+                Height="20rem"
+                data-qa="ProfileRegion" />
+              <ValidationMessage For="@(() => Details.Region)" />
+            </FormField>
+            <FormField Label="Theme" Field="@nameof(IProfileDetails.Theme)">
+              <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
+                Items="@ProfileCatalog.Themes"
+                OptionValue="@(static entry => entry?.Code)"
+                OptionText="@(static entry => entry?.Label ?? string.Empty)"
+                @bind-Value="Details.Theme"
+                Name="Theme"
+                AriaLabel="Theme"
+                Width="100%"
+                data-qa="ProfileTheme" />
+              <ValidationMessage For="@(() => Details.Theme)" />
+            </FormField>
+            <FormField Label="Notifications" Field="@nameof(IProfileDetails.Notifications)">
+              <FluentCheckbox @bind-Value=Details.Notifications AriaLabel="Notifications" />
+            </FormField>
+          </FormGrid>
+        </FormSection>
 
-      <FormActions>
-        <FluentButton Type=ButtonType.Button Appearance=ButtonAppearance.Subtle Disabled=@IsBusy OnClick=HandleCancel data-qa="ProfileCancel">Cancel</FluentButton>
-        <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsBusy data-qa="ProfileSave">Save</FluentButton>
-      </FormActions>
-    </EditForm>
+        <FormActions>
+          <FluentButton Type=ButtonType.Button Appearance=ButtonAppearance.Subtle Disabled=@IsBusy OnClick=HandleCancel data-qa="ProfileCancel">Cancel</FluentButton>
+          <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsBusy data-qa="ProfileSave">Save</FluentButton>
+        </FormActions>
+      </EditForm>
+    </FormPrefillScope>
   </Section>
   @if (UserXaiApiKeyState.Visible)
   {

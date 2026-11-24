@@ -13,6 +13,9 @@
   so only Name and Description are validated. RoleId is copied inside From (CopyBeyondDetails).
   UserId is stamped in the handler. A failed save does not throw. Copying from the
   unchanged snapshot puts the form back.
+  The form sits in FormPrefillScope for UpdateRole, so Prefill.Role.UpdateRole drafts Name and
+  Description onto the working copy (never RoleId) and each FormField shows the Agent badge.
+  Bind assigns a new command, which resets the scope's baseline and clears the badges.
 *@
 
 @code {
@@ -84,23 +87,25 @@
 }
 else
 {
-  <EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleEditForm" novalidate>
-    <FluentValidator Validator="@RoleValidator" />
-    <FormSection Title="Role" Description="Name and description for this role.">
-      <FormGrid>
-        <FormField Label="Name">
-          <FluentTextInput @bind-Value=RoleDetails.Name Name="Name" AriaLabel="Name" data-qa="RoleEditName" Width="100%" />
-          <ValidationMessage For="@(() => RoleDetails.Name)" />
-        </FormField>
-        <FormField Label="Description">
-          <FluentTextInput @bind-Value=RoleDetails.Description Name="Description" AriaLabel="Description" data-qa="RoleEditDescription" Width="100%" />
-          <ValidationMessage For="@(() => RoleDetails.Description)" />
-        </FormField>
-      </FormGrid>
-    </FormSection>
-    <FormActions>
-      <FluentButton Type=ButtonType.Button Appearance=ButtonAppearance.Subtle Disabled=@IsSaving OnClick=HandleCancel data-qa="RoleEditCancel">Cancel</FluentButton>
-      <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsSaving data-qa="RoleEditSave">Save</FluentButton>
-    </FormActions>
-  </EditForm>
+  <FormPrefillScope TSubmit="RoleState.UpdateRoleActionSet.Action" Model="Command" Noun="role" Ready="HasBoundCopy">
+    <EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleEditForm" novalidate>
+      <FluentValidator Validator="@RoleValidator" />
+      <FormSection Title="Role" Description="Name and description for this role.">
+        <FormGrid>
+          <FormField Label="Name" Field="@nameof(IRoleDetails.Name)">
+            <FluentTextInput @bind-Value=RoleDetails.Name Name="Name" AriaLabel="Name" data-qa="RoleEditName" Width="100%" />
+            <ValidationMessage For="@(() => RoleDetails.Name)" />
+          </FormField>
+          <FormField Label="Description" Field="@nameof(IRoleDetails.Description)">
+            <FluentTextInput @bind-Value=RoleDetails.Description Name="Description" AriaLabel="Description" data-qa="RoleEditDescription" Width="100%" />
+            <ValidationMessage For="@(() => RoleDetails.Description)" />
+          </FormField>
+        </FormGrid>
+      </FormSection>
+      <FormActions>
+        <FluentButton Type=ButtonType.Button Appearance=ButtonAppearance.Subtle Disabled=@IsSaving OnClick=HandleCancel data-qa="RoleEditCancel">Cancel</FluentButton>
+        <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsSaving data-qa="RoleEditSave">Save</FluentButton>
+      </FormActions>
+    </EditForm>
+  </FormPrefillScope>
 }

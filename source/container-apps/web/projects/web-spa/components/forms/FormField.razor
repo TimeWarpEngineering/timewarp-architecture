@@ -13,7 +13,9 @@
   A labelled field is pickable by Ask's Tag (task 346) as AskTagMark's Field kind. The visible
   text is the label and hint; input values are never read. The hint uses twe-type-helper.
   AgentFilled shows the Info status badge labeled Agent beside the label. The page passes
-  false once the person changes the value. Unmatched attributes win.
+  false once the person changes the value. Field names the working-copy property this field
+  edits; inside a FormPrefillScope the cascaded IAgentFilledFields decides the badge for it,
+  so a prefilled form needs no per-page badge code. Unmatched attributes win.
 *@
 
 @code {
@@ -23,7 +25,12 @@
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter] public string? Class { get; set; }
   [Parameter] public bool AgentFilled { get; set; }
+  [Parameter] public string? Field { get; set; }
+  [CascadingParameter] public IAgentFilledFields? AgentFields { get; set; }
   [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private bool ShowAgentBadge =>
+    AgentFilled || (Field is not null && AgentFields?.IsAgentFilled(Field) == true);
 
   private int ResolvedSpan => Span < 1 ? 1 : Span > 12 ? 12 : Span;
 
@@ -52,7 +59,7 @@
   {
     <div class="twe-form-field__label">
       <span>@Label</span>
-      @if (AgentFilled)
+      @if (ShowAgentBadge)
       {
         <StatusBadge Status="BadgeStatus.Info" Label="Agent" data-qa="AgentFilled" />
       }

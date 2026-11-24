@@ -206,13 +206,13 @@ public sealed class CatalogAgentFunctions : IDisposable
           return new CatalogAgentCallResult(Tool.Name, Completed: false, prefillDenial);
         }
 
-        EditFormSubmitAttribute? submit = current.Entry.ActionType.GetCustomAttribute<EditFormSubmitAttribute>();
-        if (submit is null)
+        Type? details = FormPrefill.DetailsType(current.Entry.ActionType);
+        if (details is null)
         {
           return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
         }
 
-        if (!FormPrefill.TryNormalize(submit.CommandType, arguments, out string suggestionJson, out string? error, out IReadOnlyList<string> fields))
+        if (!FormPrefill.TryNormalize(details, arguments, out string suggestionJson, out string? error, out IReadOnlyList<string> fields))
         {
           return new FormPrefill.Result(Drafted: false, error, fields);
         }
