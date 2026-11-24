@@ -38,12 +38,12 @@ Profile conversion.
 
 ## Checklist
 
-- [ ] 001 generator for clone + `From(I*Details)` copy, plus pattern doc
-- [ ] 002 Profile reference conversion
-- [ ] 003 Role edit form + permission/scope drafts out of store
-- [ ] 004 AiPage assistant-name and BYOK forms
-- [ ] 005 AuthenticationPage + SiteSettingsState
-- [ ] Results state what `tw-web-api-contracts` `references/mutability.md` (timewarp-flow) should
+- [x] 001 generator for clone + `From(I*Details)` copy, plus pattern doc
+- [x] 002 Profile reference conversion
+- [x] 003 Role edit form + permission/scope drafts out of store
+- [x] 004 AiPage assistant-name and BYOK forms
+- [x] 005 AuthenticationPage + SiteSettingsState
+- [x] Results state what `tw-web-api-contracts` `references/mutability.md` (timewarp-flow) should
       say about store/clone/working-copy once every child lands. Do not edit that skill from
       this repo; file the follow-up in timewarp-flow (groom 2026-11-23).
 
@@ -65,3 +65,34 @@ Drift survey 2026-11-14 (paths under `source/container-apps/web/projects/web-spa
 No form binds a store object directly today. No Mapperly/AutoMapper/clone helper exists in
 `source/`. `contract-agreement-analyzer.cs` in `timewarp-architecture-convention-analyzers` is a
 candidate home for the generator (unverified).
+
+## Results
+
+All five children merged 2026-11-23 (489-001 #652, 489-002, 489-003 #659, 489-004, 489-005 on
+`feature/edit-forms-whole-object`). The repo now meets the four Requirements:
+
+- `ProfileState`, `RoleState`, and `SiteSettingsState` each hold one fetched `Get*.Response`.
+  The flattened mirrors, `DraftAcceptedTenants`, `DraftPermissionIds`, `DraftAgentScopes`, and
+  the `PrincipalState` drafts are gone.
+- `SyncCommandFromState`, `SyncDraftFromState`, `SyncAssistantDraft`, and `SyncByokDraft` are
+  replaced by generated `Update*.Command.From(I*Details)` (`DetailsCopyGenerator`), run on load,
+  Cancel, and after the page's own save, with `ShouldReRender` reconciliation for a later
+  store response.
+- Mutable details Responses get a generated deep `Clone`; TWA0047, TWA0048, and TWA0049 guard
+  the shape. `Version` and `RoleId` stay off `I*Details` and copy through `CopyBeyondDetails`.
+- Guide: `documentation/developer/guides/edit-form-details-copy.md`.
+
+Follow-ups left by this family:
+
+- 489-003 put `RoleEditForm` beside `RoleForm` on New Role (a groom-time spec error). Task 507
+  returns New Role to create-only and moves the edit form to the role detail page.
+- `tw-web-api-contracts` `references/mutability.md` (timewarp-flow) does not yet describe the
+  store snapshot, generated `Clone` and `From`, working copy, or `CopyBeyondDetails`. Filed as
+  timewarp-flow task 228 with the five points it must state.
+- 489-003 M5 (wontfix): a failed `UpdateRole` or `UpdateProfile` save copies the snapshot back
+  over the form. Acceptable; revisit only if a user reports losing edits.
+
+## Session
+
+- Close-out: Claude Fable 5.1 cockpit, 2026-11-24. Checked children in `kanban/done`, wrote
+  Results, filed timewarp-flow 228.
