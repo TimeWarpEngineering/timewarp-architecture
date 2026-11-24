@@ -101,6 +101,8 @@ Acceptance:
 - 2026-11-24 implementer (Claude): measured batch and streaming against real xAI, found the root
   cause in the master AppHost traces, replaced the batch upload with a streaming relay.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ea7358cd-9743-4f4c-bbd0-5ceb7cfc18b2, max-turns 500, Done — 2026-11-24T10:42:26Z
+- Reviewer: grok session 01a20d26-7bba-77e2-8fc6-978b36982dfe (2026-11-24). Effort 3, roster general, turn cap 200. Round 1.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20d26-7bba-77e2-8fc6-978b36982dfe, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-24T10:56:58Z
 
 ## Results
 
@@ -222,3 +224,11 @@ span, not a POST to `/v1/stt`.
 - `ganda repo audit --fix` (after the split): "Repository passes all audit checks."
 - Not run here: `dev template-smoke` (no `#if` flag or template-symbol change; CI smokes the
   default variant on the PR) and `dev check-version` (template-only change, no platform package).
+
+### Review
+
+Round 1, roster general, effort 3. Counts: bug 0, suggestion 0, nit 0 (all open 0). Disposition: clean. No wontfix and no escalation. The restatement matches the task. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
