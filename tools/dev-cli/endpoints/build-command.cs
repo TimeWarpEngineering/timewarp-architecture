@@ -4,7 +4,10 @@
 #region Design
 // Discovers the repository root dynamically using Git.FindRoot()
 // Handler stores Command and Ct as fields so private methods are zero-parameter
-// Streams MSBuild output via Amuru RunAsync by default; --quiet uses CaptureAsync
+// Captures MSBuild output via Amuru CaptureAsync by default: a green build prints one summary line,
+// a failed step prints the whole captured output to stderr. --verbose streams via RunAsync.
+// --quiet is the default and stays accepted. Mode rules and the summary: services/build-output.cs.
+// dev workflow (CI) builds with the defaults, so a red CI build still shows every diagnostic.
 // Before MSBuild, scan tracked files for client names (the same scan as dev check-client-names).
 // CI's fast job runs this build. A skills-only PR does not, so dev lint-skills runs the scan too.
 // ganda repo audit has no word-list check.
@@ -12,13 +15,18 @@
 
 namespace DevCli.Commands;
 
+using System.Diagnostics;
+
 [NuruRoute("build", Description = "Build all projects in the repository")]
 internal sealed class BuildCommand : ICommand<Unit>
 {
   [Option("clean", "c", Description = "Clean before building")]
   public bool Clean { get; set; }
 
-  [Option("quiet", "q", Description = "Hide build output unless the command fails")]
+  [Option("verbose", "v", Description = "Stream full MSBuild output while building")]
+  public bool Verbose { get; set; }
+
+  [Option("quiet", "q", Description = "Hide MSBuild output unless the build fails (the default)")]
   public bool Quiet { get; set; }
 
   internal sealed class Handler : IRequestHandler<BuildCommand, Unit>
@@ -27,6 +35,7 @@ internal sealed class BuildCommand : ICommand<Unit>
     private BuildCommand Command = null!;
     private CancellationToken Ct;
     private string RepoRoot = null!;
+    private BuildOutputMode Mode;
 
     public Handler(ITerminal terminal)
     {
@@ -37,6 +46,8 @@ internal sealed class BuildCommand : ICommand<Unit>
     {
       Command = command;
       Ct = ct;
+      Mode = BuildOutput.Select(command.Verbose, command.Quiet);
+      var stopwatch = Stopwatch.StartNew();
 
       if (!FindRepoRoot()) return Unit.Value;
       if (!await ClientNameScan.ReportAsync(
@@ -51,7 +62,9 @@ internal sealed class BuildCommand : ICommand<Unit>
       if (!await CleanAsync()) return Unit.Value;
       if (!await BuildAsync()) return Unit.Value;
 
-      Terminal.WriteLine("\nBuild completed successfully!".Green());
+      Terminal.WriteLine(Mode == BuildOutputMode.Stream
+        ? $"\n{BuildOutput.SuccessText}".Green()
+        : BuildOutput.SuccessSummary(RepoRoot, stopwatch.Elapsed).Green());
       return Unit.Value;
     }
 
@@ -76,7 +89,7 @@ internal sealed class BuildCommand : ICommand<Unit>
 
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
-      Terminal.WriteLine($"\nCleaning {solutionFile}...");
+      WriteStepLine($"Cleaning {solutionFile}...");
       CommandResult command = DotNet.Clean()
         .WithProject(solutionFile)
         .WithNoValidation()
@@ -89,7 +102,7 @@ internal sealed class BuildCommand : ICommand<Unit>
     {
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
-      Terminal.WriteLine($"\nBuilding {solutionFile}...");
+      WriteStepLine($"Building {solutionFile}...");
       CommandResult command = DotNet.Build()
         .WithProject(solutionFile)
         .WithConfiguration("Release")
@@ -99,9 +112,13 @@ internal sealed class BuildCommand : ICommand<Unit>
       return await ExecuteAsync(command, "Build failed!");
     }
 
+    // Streamed output needs a blank line between steps; captured output prints the step line alone.
+    private void WriteStepLine(string message) =>
+      Terminal.WriteLine(Mode == BuildOutputMode.Stream ? "\n" + message : message);
+
     private async Task<bool> ExecuteAsync(CommandResult command, string failureMessage)
     {
-      if (Command.Quiet)
+      if (Mode == BuildOutputMode.Capture)
       {
         CommandOutput result = await command.CaptureAsync(Ct);
         if (!result.Success)

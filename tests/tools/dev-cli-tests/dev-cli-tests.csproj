@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Compile-include of aspire-run.cs / aspire-version-sources.cs / services/deploy/*.cs (AspireDeploy, DeployOperate, and their records) / neon-connection.cs / db-nuke.cs / services/entra/*.cs (EntraSetup, EntraTenants, and their records) / jaribu-aggregator-summary-gate.cs / template-smoke-content-assets.cs / xai-preflight.cs / dotnet-test-arguments.cs / test-project-selection.cs / generated-ingress-prefixes.cs / feature-filename-grammar-generator.cs / test-groups.cs / aspire-publish-targets.cs / test-parallelism.cs / skill-spec-lint.cs / workflow-path-classes.cs / green-key.cs
+    <!-- Compile-include of aspire-run.cs / aspire-version-sources.cs / services/deploy/*.cs (AspireDeploy, DeployOperate, and their records) / neon-connection.cs / db-nuke.cs / services/entra/*.cs (EntraSetup, EntraTenants, and their records) / jaribu-aggregator-summary-gate.cs / template-smoke-content-assets.cs / xai-preflight.cs / dotnet-test-arguments.cs / test-project-selection.cs / generated-ingress-prefixes.cs / feature-filename-grammar-generator.cs / test-groups.cs / aspire-publish-targets.cs / test-parallelism.cs / skill-spec-lint.cs / workflow-path-classes.cs / green-key.cs / build-output.cs
          (with in-proc-test-ports.cs, which test-parallelism.cs uses)
          (pure helpers). Monorepo-only:
          template.json excludes this tree. The slnx tests/tools folder is gated by a template
@@ -40,6 +40,7 @@
     <Compile Include="..\..\..\tools\dev-cli\services\client-name-scan.cs" Link="services\client-name-scan.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\workflow-path-classes.cs" Link="services\workflow-path-classes.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\green-key.cs" Link="services\green-key.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\build-output.cs" Link="services\build-output.cs" />
     <Compile Include="..\..\common\timewarp-testing\in-proc-test-ports.cs" Link="services\in-proc-test-ports.cs" />
   </ItemGroup>
 </Project>
