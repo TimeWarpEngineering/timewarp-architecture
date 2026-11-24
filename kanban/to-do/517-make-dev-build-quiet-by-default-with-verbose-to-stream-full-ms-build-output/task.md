@@ -6,6 +6,10 @@ Walk performance analysis (Task 514, `/tw-correct` Hand-off B) found repeated ca
 
 `tools/dev-cli/endpoints/build-command.cs` already implements quiet capture (`--quiet` / `-q`: capture MSBuild output and print it only on failure), but defaults to streaming full MSBuild output. Making quiet-on-success the default removes the incentive for agents to pipe `./bin/dev build` through `tail`/`head` (parallel to `timewarp-ganda` Task 683 for `ganda repo audit`).
 
+## Depends on
+
+- 516
+
 ## Requirements
 
 1. **Quiet-on-success by default in `BuildCommand` (`tools/dev-cli/endpoints/build-command.cs`):**
