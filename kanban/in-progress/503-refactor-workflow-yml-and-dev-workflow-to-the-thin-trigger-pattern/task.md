@@ -20,20 +20,153 @@ All pipeline logic should live in C# (`dev workflow`), shared runner setup shoul
 - **Drop PR-level Aspire publish artifact uploads:** Remove the 4 `Upload ... publish output` steps (`compose`, `helm`, `aca`, `aca-neon`, 56 lines) from `ci-group` — `dev publish all` still runs all targets, safety tests, and `helm lint` in `ci (publish)`.
 - **Align actions, CLI invocation, and comments:** Use `dotnet run --file tools/dev-cli/dev.cs -- ...`, update GitHub Actions versions to current fleet standard, add `confirm=release` break-glass guard if appropriate for `workflow_dispatch`, and trim archaeological `# Task ...` comments (move durable rationale to `Design` regions).
 
+## Goal (implementer restatement)
+
+Shrink `.github/workflows/workflow.yml` to a thin trigger: YAML only says when to run and on which
+runner; every decision and check lives in `dev workflow` (C#), and runner setup lives in one local
+composite action.
+
+Acceptance:
+
+- One composite action (`.github/actions/setup-ci/action.yml`) sets up .NET from `global.json`,
+  the NuGet cache (save or restore-only, per-job key), optional dev-cert trust (plus `SSL_CERT_DIR`),
+  and the optional pinned Aspire CLI read from `<AspireVersion>`. No job repeats those blocks.
+  Checkout stays one step per job (a local action cannot load before the repo is checked out).
+- `dev workflow --phase classify` writes `ci`, `skill`, and `template` to `GITHUB_OUTPUT` for push
+  and pull request; the inline PowerShell diff/regex step is gone. `.github/actions/**` counts as a
+  build, skill, and template path. `ci` for a push comes from the push diff with the pull request
+  rule (`PullRequestBuildClassifier.RequiresBuild` plus `pullRequestBuild`), so a skills-only or
+  evals-only push skips ci-group as it did before; an unreadable diff turns every job on (review M1).
+- `dev workflow --phase test --group fast` (and any run whose tests include the fast group) runs
+  `regenerate-generated` and fails on a `goldens/ingress` diff or untracked file; the YAML step is gone.
+- `concurrency:` cancels superseded pull request runs and superseded pushes to the same ref;
+  release, dispatch, and schedule runs never cancel.
+- The four PR-level Aspire publish uploads are gone (`dev publish all` still runs in `ci (publish)`).
+- Actions at the fleet versions, `dotnet run --file tools/dev-cli/dev.cs -- ...`, no archaeological
+  `# Task NNN` comments (durable rationale moves to Design regions). No `confirm=release` guard:
+  this repo's dispatch has no publishing mode.
+- `AspireVersionSources.Validate` checks the composite action's install and that workflow.yml
+  installs no Aspire CLI itself; `SkillSpecLint.WorkflowDriftError` keeps passing with the skill
+  path rule now in C#.
+- Gates: `./bin/dev build`, dev-cli-tests, `ganda repo audit`.
+
 ## Checklist
 
-- [ ] Create local composite action for shared CI setup (checkout, .NET, NuGet cache, optional dev-cert + Aspire CLI)
-- [ ] Emit `ci`, `skill`, and `template` from `dev workflow --phase classify` and remove inline PowerShell regexes
-- [ ] Move `regenerate-generated` + `goldens/ingress` diff check into `dev workflow --phase test --group fast`
-- [ ] Add `concurrency:` block and remove the 4 PR-level Aspire publish artifact upload steps
-- [ ] Update `AspireVersionSources.Validate` / `aspire-run-tests.cs` and verify `skill-spec-lint-tests.cs`
-- [ ] Run `./bin/dev build`, `dev-cli-tests`, `dev template-smoke`, and `ganda repo audit`
+- [x] Create local composite action for shared CI setup (checkout, .NET, NuGet cache, optional dev-cert + Aspire CLI)
+- [x] Emit `ci`, `skill`, and `template` from `dev workflow --phase classify` and remove inline PowerShell regexes
+- [x] Move `regenerate-generated` + `goldens/ingress` diff check into `dev workflow --phase test --group fast`
+- [x] Add `concurrency:` block and remove the 4 PR-level Aspire publish artifact upload steps
+- [x] Update `AspireVersionSources.Validate` / `aspire-run-tests.cs` and verify `skill-spec-lint-tests.cs`
+- [x] Run `./bin/dev build`, `dev-cli-tests`, and `ganda repo audit` (`dev template-smoke`: CI runs it on this PR, see Results)
 
 ## Session
 
 - Created: 2026-11-23 (from Task 500 walk performance review)
+- 2026-11-24 implement: a local smoke of `dev workflow --phase classify` under a fake push event ran
+  `git fetch --depth=1` against the shared clone and made it shallow (the first `ganda repo audit`
+  then failed `kanban-landed`: no merge base). Repaired with `git fetch --unshallow origin`, and the
+  classifier now fetches only missing commits and uses `--depth=1` only on an already-shallow checkout.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 096317c1-d66d-4d66-a125-3ad21261d284, max-turns 500, Done — 2026-11-24T03:09:34Z
+- Review oracle: general (grok, session 01a20b87-c057-7a43-b259-d149735018ca), effort 3, roster general, round 1, 2026-11-24. Open finding M1. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20b87-c057-7a43-b259-d149735018ca, max-turns 200, artifacts general.md, merged.md — 2026-11-24T03:22:16Z
+- Review oracle: general (grok, session 01a20b9a-f6b7-75d3-b1d4-5220661fa30c), effort 2, roster general, round 2, 2026-11-24. M1 still fixed. No new findings. Disposition clean.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20b9a-f6b7-75d3-b1d4-5220661fa30c, max-turns 120, artifacts round-2/general.md, round-2/merged.md, disposition.md — 2026-11-24
 
+## Review
+
+- Round 1: Blocked — open M1
+- Round 2: Done
 ## Notes
 
 - Reference patterns: `timewarp-nuru/.github/workflows/workflow.yml`, `timewarp-ganda/.github/workflows/workflow.yml`, and `timewarp-ganda/source/timewarp-ganda/templates/repo-baseline/github/workflows/workflow.yml.template`.
 - Parent performance review: **500** (`kanban/to-do/500-walk-performance-review-for-tasks-499-483-494-and-498/report/analysis.md`).
+
+## Results
+
+`workflow.yml` is 581 → 278 lines; the shared setup is `.github/actions/setup-ci/action.yml` (77 lines).
+
+- **Composite action** `.github/actions/setup-ci`: setup-dotnet (global.json), NuGet cache
+  (`save` / `restore` / `none`, per-job key segment), optional dev-cert trust that also exports
+  `SSL_CERT_DIR` through `GITHUB_ENV`, optional Aspire CLI at `<AspireVersion>`. Checkout stays one
+  `actions/checkout` step per job: a local action cannot load before the checkout exists.
+- **Classify in C#**: job `detect-paths` is now `classify`. `dev workflow --phase classify` writes
+  `ci` (PullRequestBuildClassifier), `skill`, and `template` (new `WorkflowPathClasses`,
+  `tools/dev-cli/services/workflow-path-classes.cs`). Pull request uses the classifier's
+  base...head diff; push reads before/after from `GITHUB_EVENT_PATH`, fetches them only if missing,
+  and diffs. Unknown diff → every job on. The 54-line PowerShell regex step is gone.
+  `.github/actions/**` was added to the push `paths`, to `.timewarp/dev.jsonc` `buildPaths` (else the
+  classifier would treat it as non-build `.github/**`), and to the skill/template rules.
+- **Ingress golden** moved into `RunPrAsync`: whenever the test step includes the fast group
+  (`--group fast`, or no group), `regenerate-generated` runs, then `git diff --exit-code` and
+  `git status --porcelain` on `goldens/ingress`.
+- **concurrency:** pull request runs group by PR number, pushes by ref, both cancel in progress;
+  release / dispatch / schedule get `run-<run_id>` and never cancel.
+- **Removed** the four `aspire-*` publish artifact uploads (and comments claiming CI uploads them in
+  `publish-target.cs`, `aspire-publish.cs`, `skills/tw-deploy/SKILL.md`).
+- **Versions / CLI:** checkout@v7, setup-dotnet@v6, cache@v6, upload-artifact@v7, setup-node@v7
+  (latest releases; nuru uses the same majors). Every call is `dotnet run --file tools/dev-cli/dev.cs`.
+  The release job passes the OIDC key as `NUGET_API_KEY` env (already read by `PushAsync`) instead of
+  `--api-key` on the command line; a dispatch has no key and stays pack-only.
+  **No `confirm=release` guard:** this repo's dispatch has no publishing mode (merge = pack-only,
+  probe, nightly), so there is nothing to break-glass. Recorded in the WorkflowCommand Design region.
+- **Comments:** `# Task NNN` archaeology removed from the YAML; durable rationale (phases, storage
+  cap, shallow checkouts, cache policy, golden check, classify rules, release gating) is in the
+  `WorkflowCommand` / `WorkflowPathClasses` / `AspireVersionSources` Design regions and the action.
+- **Guards:** `AspireVersionSources.Validate` now takes the setup action (`SetupActionRelativePath`);
+  new `WorkflowInstallError` fails when workflow.yml installs Aspire.Cli itself or never asks the
+  action for it. `SkillSpecLint.WorkflowDriftError` now requires the skill-lint job to be gated on
+  `workflow --phase classify` `outputs.skill` (the `^tools/dev-cli/` regex is gone from YAML; the
+  rule is tested on `WorkflowPathClasses`), and `LintSkillsCommand` is the `--file` form.
+- AGENTS.md and the RegenerateGenerated Design region now name `dev workflow` as the golden check.
+- **Fix pass, review round 1 M1:** `ClassifyAsync` no longer writes `ci` from the event-level
+  `decision.RequiresBuild` (always true for a push). New pure `WorkflowPathClasses.Classify(changed,
+  requiresBuild)` returns `WorkflowJobs(Ci, Skill, Template)`: a null diff turns on every job; a
+  known diff takes `ci` from `PullRequestBuildClassifier.RequiresBuild(paths, pullRequestBuild)`, the
+  same rule and `.timewarp/dev.jsonc` additions a pull request uses. A `dev.jsonc` that exists but
+  cannot be read makes a push build. `IsSkillPath` is unchanged. Four tests in
+  `workflow-path-classes-tests.cs` (`Classify_Given_`): unknown diff → all true without calling the
+  rule; skills-only diff → ci from the rule, skill true, template false; source/slnx diff → ci and
+  template true; `.timewarp/dev.jsonc` keeps `skills/**`, `evals/**`, `.vally.yaml` non-build and
+  `.github/actions/**` build (the classifier itself is DevCli content this test project does not compile).
+
+### Gates
+
+Fix pass (review round 1 M1), after the last product edit:
+
+- `./bin/dev build` — Build succeeded, 0 Warning(s), 0 Error(s).
+- `dotnet run --file tools/dev-cli/dev.cs -- self-install` — dev CLI runfile compiles clean (it is not in the solution).
+- `tests/tools/dev-cli-tests/workflow-path-classes-tests.cs` — not a standalone runfile (csproj test project, no `#if !JARIBU_MULTI`); ran the built project: `tests/tools/dev-cli-tests/bin/Release/net11.0/dev-cli-tests` — 357 total, 357 succeeded, 0 failed (353 + 4 new `Classify_Given_`). CI runs it too.
+- Push smoke on b867613f6 (`skills/tw-blazor/SKILL.md` + a kanban file): `ci=false skill=true template=false`. Push smoke HEAD~3..HEAD (this branch): `ci=true skill=true template=true`. No GitHub env: every output true. Clone still not shallow.
+- `ganda repo audit` — exit 0, one advisory (`vscode-window-icon`: `.vscode/settings.json` is git-ignored local state).
+
+Implement pass:
+
+- `./bin/dev build` — Build succeeded, 0 Warning(s), 0 Error(s) (rerun after the last product edit).
+- `dotnet run --file tools/dev-cli/dev.cs -- self-install` — dev CLI (runfile, not in the solution) compiles clean under its analyzers.
+- `tests/tools/dev-cli-tests` (`workflow-path-classes-tests.cs` new; `aspire-run-tests.cs`, `skill-spec-lint-tests.cs` edited) — not standalone runfiles (csproj test project, no `#if !JARIBU_MULTI`); ran the built project once: `tests/tools/dev-cli-tests/bin/Release/net11.0/dev-cli-tests` — 353 total, 353 succeeded, 0 failed. CI runs it too.
+- `./bin/dev lint-skills` (skills/tw-deploy/SKILL.md changed) — 9 skills + evals passed.
+- actionlint 1.7.12 (`docker run rhysd/actionlint`) on workflow.yml — clean.
+- `ganda repo audit` — first run exit 1 (`kanban-landed`: no merge base, caused by the shallow fetch noted in Session); after `git fetch --unshallow` and the classifier fix, rerun exit 0 with one advisory (`vscode-window-icon`: `.vscode/settings.json` is git-ignored local state, nothing to commit).
+- Not run locally: `dev template-smoke` (only comment/doc lines changed in template content; this PR touches template paths so CI's template-smoke job runs it) and the full `dev workflow --phase test --group fast` (CI's `ci (fast)` runs the new golden step).
+
+### How to validate
+
+- Smoke: `GITHUB_EVENT_NAME=push GITHUB_EVENT_PATH=<file with {"before":"<origin/master~2>","after":"<origin/master>"}> GITHUB_OUTPUT=/tmp/out ./bin/dev workflow --phase classify; cat /tmp/out`
+  Expect: changed paths listed; `ci` true only when a path builds under the pull request rule (`ci=false` for before=`b867613f6~1` after=`b867613f6`, a skills-plus-kanban push); `skill`/`template` true only when a listed path matches; `git rev-parse --is-shallow-repository` still prints `false`.
+- Smoke: `./bin/dev workflow --phase classify` with no GitHub env.
+  Expect: "Changed paths unknown. Every path-gated job runs." and `ci=true skill=true template=true`.
+- Smoke: on this PR's checks.
+  Expect: `classify` writes all three outputs; `ci (fast)` log shows `test (fast) -> ingress golden` and the regenerate step; no `aspire-*` artifacts on the run; `Lint skill specs` and `template-smoke` run (this PR changes `.github/` and `tools/dev-cli/`); `ci` green.
+
+### Review
+
+Round 1 (general, effort 3). Ledger: `review/round-1/merged.md`. M1 (bug) fixed in the fix pass: push `ci` comes from the push diff through `WorkflowPathClasses.Classify` and `PullRequestBuildClassifier.RequiresBuild`.
+
+Round 2 (general, effort 2, turn cap 120). Delta: commit `9ecb89ee7`. Ledger: `review/round-2/merged.md`. Framework: `review/review-framework.md`. Disposition: clean (`review/disposition.md`). M1 re-checked and still fixed. No new findings. Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0.
+
+## Learnings
+
+- The original task says the composite action covers checkout. The restatement leaves checkout as one `actions/checkout` step per job, because a local action cannot load before the repo is checked out. The implementation follows the restatement. Not filed.
+- The original task sizes `workflow.yml` at about 180–220 lines. The restatement drops that figure. The file is 278 lines. Current `timewarp-nuru` `workflow.yml` is 397 lines and `timewarp-ganda` is 297, so the figure in the task is behind those references. Not filed.
+- The restatement originally treated `ci` as `PullRequestBuildClassifier.RequiresBuild` for every event. That call returns a full build for every event other than `pull_request`, so the push half of the deleted detect-paths `ci` regex was missing. That gap was M1. The restatement now says a push takes `ci` from its own diff with the pull request rule. Round 2 checked that sentence against the fix; it matches.
+
