@@ -42,17 +42,16 @@ how a tenant admin turns it on or tunes it.
 ### Bring-your-own-key is exempt by default
 
 Scope restriction exists to protect the site's spend. When the person is on their own xAI key
-(BYOK), they pay for every token, so the default is no restriction at all. The design must make
-the restriction apply only to site-key turns, with one site setting that lets an admin extend it
-to BYOK turns if they want (default off). The research measures nothing on BYOK beyond confirming
-the gate is skipped there.
+(BYOK), they pay for every token, so the default is no restriction at all. On a BYOK turn the app
+applies none of it: no scope instructions, no classifier, no restriction. This is automatic from
+the key mode, not a setting. The research measures nothing on BYOK beyond confirming the gate is
+skipped there.
 
 ### Settings
 
 If the recommendation includes a prompt or a toggle, specify the AI admin page change as a
 follow-up task spec in `## Results`: a `ScopeInstructions` text field, a `ScopeMode`
-enum (`Off`, `InstructionsOnly`, `ClassifierAndInstructions`), and a `ScopeAppliesToByok`
-boolean (default false) on site settings, with its own
+enum (`Off`, `InstructionsOnly`, `ClassifierAndInstructions`) on site settings (no BYOK toggle: BYOK turns always bypass), with its own
 `Update…` command like `UpdateAssistantName` (`tw-web-api-contracts`), surfaced on `AiPage`.
 Note that 508 wires that page into prefill, so the new field gets a prefill tool for free.
 
@@ -68,10 +67,10 @@ Note that 508 wires that page into prefill, so the new field gets a prefill tool
 - [ ] Instructions-only variant measured
 - [ ] Classifier candidates measured (xAI small model, Cloudflare if applicable, local embedding)
 - [ ] Combined variant measured
-- [ ] BYOK turns bypass the gate by default; admin override setting specified
+- [ ] BYOK turns bypass the gate automatically; no setting
 - [ ] `report/analysis.md` with recommendation and the AI-settings follow-up spec in `## Results`
 
 ## Session
 
 - Created: 2026-11-24 from Steve's Ask AI test (hello-world answer). BYOK exemption added the
-  same day: "when they're on bring your own key I don't care what they use it for, they're paying for it."
+  same day: "when they're on bring your own key I don't care what they use it for, they're paying for it." Then: no override setting, skip it automatically on BYOK.
