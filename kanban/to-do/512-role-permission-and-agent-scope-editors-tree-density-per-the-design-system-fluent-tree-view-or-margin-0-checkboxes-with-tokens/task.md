@@ -21,6 +21,10 @@ Two design-system problems, found by Steve on 2026-11-24:
    in `RolePermissionEditor.razor.css` also uses `4px`, `6px`, `8px`, `16px`, `28px` literals
    instead of `--twe-space-*` tokens.
 
+## Depends on
+
+- 508
+
 ## Requirements
 
 ### One editable tree control in the design system
