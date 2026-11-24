@@ -67,8 +67,9 @@ release to remove it.
    unknown inline elements with no box. Where that shifts layout on first paint, reserve the
    upgraded box with a `:not(:defined)` rule anchored the same way (the shell's search field
    does this). The rule stops matching once the element is defined.
-8. **Theme on first paint.** `App.razor` renders `<body data-theme-color="#55409c"
-   data-theme="system">`, and its first child is the `BrandThemeScript` classic script. That script
+8. **Theme on first paint.** `App.razor` renders `<body data-theme-color="…"
+   data-theme="system">` with the seed from `BrandOptions.NormalizedSeedColor` (set in
+   configuration, see `tw-brand`), and its first child is the `BrandThemeScript` classic script. That script
    sets `body[data-theme]` before any body content is parsed: the stored Fluent mode
    (`fluentui-blazor:theme-settings`) when it is `light` or `dark`, else `dark` when
    `prefers-color-scheme: dark` matches, else `light`. It never stores a mode, so with nothing

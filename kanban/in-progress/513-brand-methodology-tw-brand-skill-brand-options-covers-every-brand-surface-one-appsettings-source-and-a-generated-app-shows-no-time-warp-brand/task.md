@@ -134,6 +134,12 @@ Acceptance, as I read it:
   fallback inside a bound getter (LogoAlt from ProductName) froze at bind time; fallbacks are
   `Effective*` read-only properties instead.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 263ce09f-6e17-490e-a6fc-8f7bdd898405, max-turns 500, Done — 2026-11-24T18:20:14Z
+- Reviewer: grok session 01a20ec9-9a9a-7713-a38f-1427674d18bd (2026-11-25). Round 1, effort 3, roster general. Open findings in `review/round-1/merged.md`. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20ec9-9a9a-7713-a38f-1427674d18bd, max-turns 200, artifacts general.md, merged.md — 2026-11-24T18:30:29Z
+
+## Learnings
+
+- No goal misread. The restatement matches the task: one server-owned `BrandOptions` section, full surface coverage, role tokens, the skill, the rebrand proof, and the screenshots. Served `/brand.css` is proved by the in-proc host test rather than a grep of a generated file; the restatement says that, because those documents are not files in the generated tree.
 
 ## Results
 
@@ -184,6 +190,10 @@ Acceptance, as I read it:
   `x-timewarp-*` OpenAPI extensions, and `tokens.css` hue palette lines. Served `/brand.css`,
   `/manifest.json`, `/brand.json`, and the document head for a sample brand:
   `Serve_Given_A_Rebranded_Host_` (web-server-integration-tests).
+- **Review round 1 fixes.** M1: the Design System page description reads "for the configured
+  brand" instead of naming TimeWarp Enterprises; `BrandCopy_Should_` fails on "TimeWarp
+  Enterprises" in any `.razor` file of a web project. M2: `tw-blazor-css-strategy` rule 8 says the
+  seed comes from `BrandOptions.NormalizedSeedColor` and points at `tw-brand`.
 - **Skill.** `skills/tw-brand/SKILL.md` (rule, surface table, role table, steps, icon commands,
   verify, do-not); AGENTS.md "Where to look" row; `tw-blazor-css-strategy` now says role tokens
   only; template-smoke `AssertSkillsShipped` requires `tw-brand`.
@@ -199,10 +209,11 @@ Acceptance, as I read it:
 
 ### How to validate
 
-- Smoke: `./bin/dev test --project web-spa-integration-tests --filter-class Brand`, then
+- Smoke: `./bin/dev test --project web-spa-integration-tests --filter-class Brand` (also runs
+  `BrandCopy_Should_`), then
   `./bin/dev test --project web-server-integration-tests --filter-class Serve_Given_A_Rebranded_Host_`,
   then `./bin/dev template-smoke`.
-- Expect: 11/11 and 4/4 pass; template-smoke prints `Rebrand smoke: 26 files scanned, no template
+- Expect: 12/12 and 4/4 pass; template-smoke prints `Rebrand smoke: 26 files scanned, no template
   brand after a configuration-only rebrand.` and ends `Template smoke SUCCEEDED`. Open
   `evidence/home-light.png`: green frame, Northwind Traders logo and title, no TimeWarp mark.
 
@@ -212,6 +223,11 @@ Acceptance, as I read it:
 - `./bin/dev lint-skills` — 10 skills linted, 10 passed (includes `tw-brand`).
 - `tests/container-apps/web/web-spa-integration-tests/configuration/brand-options-tests.cs` (`--filter-class BrandOptions_Should_`) — 10/10 passed.
 - `tests/container-apps/web/web-spa-integration-tests/configuration/brand-role-token-tests.cs` (`BrandRoleTokens_Should_`) — 1/1 passed.
+- Fix pass round 1 (M1, M2): `./bin/dev build` — succeeded, 0 warnings, 0 errors.
+- Fix pass: `tests/container-apps/web/web-spa-integration-tests/configuration/brand-copy-tests.cs` (`--filter-class BrandCopy_Should_`) — 1/1 passed.
+- Fix pass: `tests/container-apps/web/web-spa-integration-tests/features/design-system/design-system-page-contract-tests.cs` (`DesignSystemPage_Should_`) — 6/6 passed.
+- Fix pass: `./bin/dev lint-skills` — passed (`tw-blazor-css-strategy` edited).
+- Fix pass: `ganda repo audit` — "Repository passes all audit checks."
 - `tests/container-apps/web/web-spa-integration-tests/components/time-warp-page-render-tests.cs` (`TimeWarpPage_Should_`) — 17/17 passed.
 - `tests/container-apps/web/web-spa-integration-tests/features/design-system/design-system-page-contract-tests.cs` (`DesignSystemPage_Should_`) — 6/6 passed.
 - `tests/container-apps/web/web-spa-integration-tests/features/application/navigation-destinations-tests.cs` (`Destinations_Should_`) — 8/8 passed.
@@ -224,3 +240,8 @@ Acceptance, as I read it:
 - `./bin/dev template-smoke` — `Template smoke SUCCEEDED` (default variant). Contoso.Shop rebrand: 26 files scanned, no template brand; SmokeDefault built, co-located runfiles and Jaribu aggregators passed. The first run (before the `wwwroot/js` exclude) failed on 8 hits in gitignored `wwwroot/js/*.js` build output that the template pack shipped; fixed by the template exclude.
 - `--matrix` was not run: the template.json change (`appNameKebab` onlyIf, `wwwroot/js` exclude) is flag-independent; CI runs the matrix nightly.
 - `ganda repo audit` — passed with 1 advisory warning (`vscode-window-icon`: `.vscode/settings.json` missing in this worktree); `ganda repo audit --fix` wrote the ignored local `.vscode/settings.json`; rerun: "Repository passes all audit checks."
+
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Fix pass (2026-11-25): M1 fixed, M2 fixed.
