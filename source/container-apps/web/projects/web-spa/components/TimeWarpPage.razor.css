@@ -56,15 +56,16 @@
   --layout-footer-height: var(--twe-footer-height) !important;
 }
 
-/* Header slot: white appbar inside Fluent's 8px item padding gives a brand-purple frame, with a
-   green accent on the appbar's bottom edge. The frame color is the brand token, not Fluent's
+/* Header slot: white appbar inside Fluent's 8px item padding gives a primary-role frame, with a
+   highlight accent on the appbar's bottom edge. The frame color is the role token, not Fluent's
    runtime --colorBrandBackground, so it is the same before and after Fluent's theme script runs.
-   Footer mirrors it with a blue slot and a green accent on top (task 162). */
+   Footer mirrors it with a secondary slot and a highlight accent on top (task 162). The accent
+   reads --twe-highlight-text, which dark mode swaps to BrandTokenOptions.HighlightDark. */
 .twe-shell ::deep .fluent-layout-item[area=header] {
-  background-color: var(--twe-purple);
+  background-color: var(--twe-primary);
 }
 .twe-shell ::deep .fluent-layout-item[area=footer] {
-  background-color: var(--twe-blue);
+  background-color: var(--twe-secondary);
 }
 
 .twe-appbar {
@@ -75,7 +76,7 @@
   height: 100%;
   padding: 0 16px;
   background: var(--twe-paper);
-  border-bottom: 3px solid var(--twe-green);
+  border-bottom: 3px solid var(--twe-highlight-text);
   /* The header slot paints on-brand (white) text. This bar is paper, so its foreground is ink.
      The Member label inherits it. */
   color: var(--twe-ink);
@@ -213,7 +214,7 @@
   text-decoration: underline;
 }
 .twe-breadcrumb ::deep .twe-breadcrumb__link:focus-visible {
-  outline: 2px solid var(--twe-blue);
+  outline: 2px solid var(--twe-secondary);
   outline-offset: 2px;
 }
 .twe-breadcrumb__current { color: var(--twe-ink-2); }
@@ -229,7 +230,7 @@
   height: 100%;
   padding: 0 16px;
   box-sizing: border-box;
-  border-top: 3px solid var(--twe-green);
+  border-top: 3px solid var(--twe-highlight-text);
   background: var(--twe-paper);
   color: var(--twe-muted);
   font-size: var(--twe-text-helper);

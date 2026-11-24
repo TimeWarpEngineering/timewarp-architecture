@@ -32,7 +32,7 @@
 }
 
 .twe-ask-starters ::deep > fluent-button:hover {
-  border-color: var(--twe-purple-soft);
+  border-color: var(--twe-primary-soft);
   background: var(--twe-paper);
   box-shadow: var(--twe-shadow);
 }

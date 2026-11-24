@@ -1,5 +1,5 @@
 ---
-name: timewarp-architecture-discovery
+name: host-discovery
 description: Locate agent-facing discovery surfaces on a TimeWarp.Architecture template host (llms.txt, auth.md, OpenAPI, MCP/A2A cards, Agent Skills index, markdown negotiation). Use when scanning or onboarding against this host.
 ---
 

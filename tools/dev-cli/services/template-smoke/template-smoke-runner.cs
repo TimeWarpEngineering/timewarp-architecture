@@ -23,6 +23,8 @@
 // kebab name, and a generate-only Contoso.Shop proves the dotted-name -> contoso-shop derivation
 // without paying for another restore/build.
 // Task 373: a web-off entry skips AssertMockAuthFailClosedSurfaces.
+// Task 513: the generate-only Contoso.Shop output also takes a configuration-only rebrand
+// (TemplateSmokeBrandSurfaces) and fails on any template brand left in its brand surfaces.
 // Task 375: the shared pack, install and dotted-name asserts run once; the SmokeMatrix loop runs
 // SmokeDefault alone unless --matrix selects every entry. Each flag adds a variant and minutes, so
 // PR/push CI runs SmokeDefault only and a nightly CI run (schedule, or workflow_dispatch mode nightly)
@@ -132,7 +134,8 @@ internal sealed class TemplateSmokeRunner
     string? outputDir = await Harness.Generation.GenerateAsync(DottedSmokeName, WorkDir, [], TemplateShortName, Ct);
     if (outputDir is not null
       && Harness.Content.AssertDeployParametersUseAppKebabName(outputDir, DottedSmokeKebabName)
-      && RecordIngressPort(outputDir))
+      && RecordIngressPort(outputDir)
+      && Harness.BrandSurfaces.AssertRebrandLeavesNoTemplateBrand(outputDir))
     {
       return true;
     }

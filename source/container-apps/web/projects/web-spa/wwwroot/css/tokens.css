@@ -1,12 +1,16 @@
-/* TimeWarp.Architecture design tokens — the single source of truth for color and type.
-   Plain CSS custom properties (no Tailwind). Brand = the three colors of the TimeWarp
-   Enterprises SOLID logo (images/timewarp/timewarp-enterprises.svg): purple + blue are the
-   dominant brand colors, green is a highlight. Consume via var(--twe-*); never hard-code.
+/* Design tokens — the single source of truth for color and type.
+   Plain CSS custom properties (no Tailwind). Consume via var(--twe-*); never hard-code.
+   Component CSS reads ROLE tokens only (--twe-primary*, --twe-secondary*, --twe-highlight*,
+   --twe-info, and the derived text roles). The hue palette below only seeds the role defaults;
+   BrandOptions_Should_ fails on a var(--twe-purple|blue|green…) under features/ or components/
+   (task 513, skill tw-brand). /brand.css, linked after this file, overrides every role from
+   BrandOptions, so a rebrand is configuration only and this file is the fallback.
    :root holds the light values. The body[data-theme="dark"] block at the end overrides the
-   neutral, semantic, and role tokens for Fluent's dark mode. Brand keys are never overridden
-   there, so /brand.css stays the one brand source in both modes. */
+   neutral, semantic, and text-role tokens for Fluent's dark mode. The dark text steps
+   (--twe-primary-text, --twe-secondary-text, --twe-highlight-text) are BrandOptions dark
+   variants, and /brand.css writes its own dark block for them. */
 :root {
-  /* Brand (TimeWarp Enterprises logo) */
+  /* Default palette. Seeds the role defaults below; never read by component CSS. */
   --twe-purple: #55409c;
   --twe-purple-2: #6953b1;
   --twe-purple-deep: #352078;
@@ -20,17 +24,27 @@
   --twe-green-deep: #50852c;
   --twe-green-soft: #d2ffb4;
 
-  /* Roles — purple + blue dominant, green as highlight/accent */
-  --twe-primary: #55409c;          /* purple */
-  --twe-primary-hover: #6953b1;
-  --twe-primary-active: #352078;
+  /* Roles. Primary and secondary are the dominant brand colors; highlight is the accent.
+     BrandTokenOptions names each one and /brand.css overrides it. */
+  --twe-primary: var(--twe-purple);
+  --twe-primary-hover: var(--twe-purple-2);
+  --twe-primary-active: var(--twe-purple-deep);
+  --twe-primary-soft: var(--twe-purple-soft);
   --twe-on-primary: #ffffff;
 
-  --twe-secondary: #0085b2;        /* blue */
+  --twe-secondary: var(--twe-blue);
   --twe-secondary-hover: #009fd6;
-  --twe-secondary-active: #004f78;
+  --twe-secondary-active: var(--twe-blue-deep);
+  --twe-secondary-bright: var(--twe-blue-bright);
 
-  --twe-highlight: #69a144;        /* green */
+  --twe-highlight: var(--twe-green);
+  --twe-highlight-soft: var(--twe-green-soft);
+
+  /* Text roles: the role color as text or an indicator on paper. Light mode reads the role
+     itself; the dark block swaps each to its BrandOptions dark variant. */
+  --twe-primary-text: var(--twe-primary);
+  --twe-secondary-text: var(--twe-secondary);
+  --twe-highlight-text: var(--twe-highlight);
 
   /* Neutrals + surfaces */
   --twe-ink: #1a1d28;
@@ -45,14 +59,14 @@
   --twe-danger: #c2342a;
   --twe-warning: #d97706;
   --twe-positive: #50852c;
-  --twe-info: #0085b2;
+  --twe-info: var(--twe-blue);
 
   /* Glyph or body text on paper or on a tinted positive or warning fill.
      --twe-positive is 4.44:1 on white. --twe-warning is 3.19:1 on white.
      These two clear 4.5:1 on paper and on a 12% mix of the semantic color into paper. */
   --twe-on-positive: #14784a;
   --twe-on-warning: #92400e;
-  --twe-on-info: var(--twe-blue-deep);
+  --twe-on-info: var(--twe-secondary-active);
 
   /* Status tints: badge and message-bar fills under the on-* text above.
      Danger has no separate light hex. 12% into paper is the error badge fill.
@@ -64,16 +78,15 @@
   --twe-info-tint: #e6f4fa;
   --twe-danger-tint: color-mix(in srgb, var(--twe-danger) 12%, var(--twe-paper));
 
-  /* Role colors for text on paper. Each names the brand key it reads, so /brand.css still
-     drives it. The dark block swaps each to a light brand step that reads on dark paper. */
-  --twe-link: var(--twe-blue);
+  /* Colors for text on paper. Each names the role it reads, so /brand.css still drives it.
+     The dark block re-declares each against the dark text roles. */
+  --twe-link: var(--twe-secondary-text);
   --twe-link-hover: var(--twe-secondary-active);
-  --twe-primary-text: var(--twe-primary);
-  --twe-accent-text: var(--twe-purple);
-  --twe-on-accent-tint: var(--twe-purple-deep);
+  --twe-accent-text: var(--twe-primary-text);
+  --twe-on-accent-tint: var(--twe-primary-active);
 
   /* Focus ring and focused-field border: a non-text indicator, so it needs 3:1 on paper
-     (WCAG 1.4.11). Light reads the primary purple; the dark block swaps a light brand step. */
+     (WCAG 1.4.11). Light reads primary; the dark block reads the primary text role. */
   --twe-focus-ring: var(--twe-primary);
 
   /* Inverse surface: a hint chip that contrasts with the page in either mode. */
@@ -122,7 +135,7 @@
   --twe-kpi-pad: 18px 20px;
 
   /* App shell chrome heights (TimeWarpPage.razor.css feeds them to FluentLayout).
-     /brand.css overrides the brand colors above and this logo height from BrandOptions.
+     /brand.css overrides the role colors above and this logo height from BrandOptions.
      The values here are the fallback when that sheet has not arrived. */
   --twe-logo-height: 48px;
   --twe-appbar-height: 70px;
@@ -239,20 +252,26 @@ body[data-theme="dark"] {
   --twe-positive: #54b054;
   --twe-on-positive: #9fd89f;
   --twe-on-warning: #f9d36b;
-  --twe-on-info: var(--twe-blue-bright);
+  --twe-on-info: var(--twe-secondary-text);
 
   --twe-positive-tint: color-mix(in srgb, var(--twe-positive) 18%, var(--twe-paper));
   --twe-warning-tint: color-mix(in srgb, var(--twe-warning) 18%, var(--twe-paper));
-  --twe-info-tint: color-mix(in srgb, var(--twe-blue) 24%, var(--twe-paper));
+  --twe-info-tint: color-mix(in srgb, var(--twe-info) 24%, var(--twe-paper));
   /* 12%, not 18%: the error text is --twe-danger itself, and 18% falls under 4.5:1. */
   --twe-danger-tint: color-mix(in srgb, var(--twe-danger) 12%, var(--twe-paper));
 
-  --twe-link: var(--twe-blue-bright);
-  --twe-link-hover: var(--twe-blue-bright);
+  /* Dark text roles: BrandTokenOptions PrimaryDark, SecondaryDark, HighlightDark. /brand.css
+     re-declares these three under the same selector. Everything below them reads them, and is
+     re-declared here because a var() resolves where the property is declared. */
   --twe-primary-text: var(--twe-purple-soft);
-  --twe-accent-text: var(--twe-purple-soft);
-  --twe-on-accent-tint: var(--twe-purple-soft);
-  --twe-focus-ring: var(--twe-purple-soft);
+  --twe-secondary-text: var(--twe-blue-bright);
+  --twe-highlight-text: var(--twe-green);
+
+  --twe-link: var(--twe-secondary-text);
+  --twe-link-hover: var(--twe-secondary-text);
+  --twe-accent-text: var(--twe-primary-text);
+  --twe-on-accent-tint: var(--twe-primary-text);
+  --twe-focus-ring: var(--twe-primary-text);
 
   --twe-inverse: #f5f5f5;
   --twe-on-inverse: #1a1d28;

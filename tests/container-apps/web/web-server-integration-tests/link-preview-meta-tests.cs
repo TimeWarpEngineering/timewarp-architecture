@@ -54,14 +54,14 @@ public class Serve_Given_
 
     html.ShouldContain("<title>TimeWarp.Architecture</title>");
     RequireMeta(html, "name", "description").ShouldBe(SiteMetadata.DefaultDescription);
-    RequireMeta(html, "property", "og:site_name").ShouldBe(SiteMetadata.DefaultSiteName);
+    RequireMeta(html, "property", "og:site_name").ShouldBe(BrandOptions.DefaultProductName);
     RequireMeta(html, "property", "og:title").ShouldBe(TestTitle);
     RequireMeta(html, "property", "og:description").ShouldBe(SiteMetadata.DefaultDescription);
     RequireMeta(html, "property", "og:type").ShouldBe(SiteMetadata.OpenGraphType);
     RequireMeta(html, "property", "og:image:width").ShouldBe(SiteMetadata.DefaultImageWidth.ToString(System.Globalization.CultureInfo.InvariantCulture));
     RequireMeta(html, "property", "og:image:height").ShouldBe(SiteMetadata.DefaultImageHeight.ToString(System.Globalization.CultureInfo.InvariantCulture));
     RequireMeta(html, "property", "og:image:type").ShouldBe(SiteMetadata.DefaultImageType);
-    RequireMeta(html, "property", "og:image:alt").ShouldBe(SiteMetadata.DefaultImageAlt);
+    RequireMeta(html, "property", "og:image:alt").ShouldBe(BrandOptions.DefaultProductName);
     RequireMeta(html, "name", "twitter:card").ShouldBe(SiteMetadata.TwitterCard);
     RequireMeta(html, "name", "twitter:title").ShouldBe(TestTitle);
     RequireMeta(html, "name", "twitter:description").ShouldBe(SiteMetadata.DefaultDescription);

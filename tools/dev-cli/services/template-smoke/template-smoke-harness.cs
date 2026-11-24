@@ -8,7 +8,8 @@
 // namespace-literal asserts), TemplateSmokeGeneratedContent (skills, kanban, deploy parameters,
 // ingress port), TemplateSmokeTestRuns (co-located tests, Jaribu aggregators, generated suites),
 // TemplateSmokeGeneration (generate + SmokeOneAsync + environment), and
-// TemplateSmokeInitializerAssets (host-free import-graph check).
+// TemplateSmokeInitializerAssets (host-free import-graph check), and TemplateSmokeBrandSurfaces
+// (task 513: configuration-only rebrand leaves no template brand).
 #endregion
 
 namespace DevCli.Services;
@@ -26,6 +27,7 @@ internal sealed class TemplateSmokeHarness
     TestRuns = new TemplateSmokeTestRuns(terminal, repoRoot);
     Generation = new TemplateSmokeGeneration(terminal, repoRoot, Pins);
     InitializerAssets = new TemplateSmokeInitializerAssets(terminal);
+    BrandSurfaces = new TemplateSmokeBrandSurfaces(terminal);
   }
 
   public TemplateSmokeArchitectureSuffixes Suffixes { get; }
@@ -39,4 +41,6 @@ internal sealed class TemplateSmokeHarness
   public TemplateSmokeGeneration Generation { get; }
 
   public TemplateSmokeInitializerAssets InitializerAssets { get; }
+
+  public TemplateSmokeBrandSurfaces BrandSurfaces { get; }
 }

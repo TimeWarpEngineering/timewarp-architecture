@@ -50,12 +50,11 @@
   <link href="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css" rel="stylesheet" />
   <link href="_content/Microsoft.AspNetCore.Components.AI/ai-chat.css" rel="stylesheet" />
 
-  @* Icons *@
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  @* Icons are BrandOptions (task 513). The browser reads the type from the file. *@
+  <link rel="apple-touch-icon" sizes="180x180" href="@Brand.AppleTouchIconSrc">
+  <link rel="icon" href="@Brand.FaviconSrc">
 
-  @* PWA Manifest *@
+  @* PWA manifest, served from BrandOptions by BrandEndpoints (not a static file). *@
   <link rel="manifest" href="manifest.json" />
 
   <HeadOutlet @rendermode=RenderMode />

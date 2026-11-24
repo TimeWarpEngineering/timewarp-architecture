@@ -53,7 +53,7 @@ internal static class DesignSystemParts
       "Brand",
       Group.Foundations,
       """
-      <img src="@Brand.LogoSrc" alt="@Brand.LogoAlt" width="@Brand.LogoWidth" height="@Brand.LogoHeight" />
+      <img src="@Brand.LogoSrc" alt="@Brand.EffectiveLogoAlt" width="@Brand.LogoWidth" height="@Brand.LogoHeight" />
       <p>@Brand.ProductName</p>
       """,
       typeof(BrandSample)

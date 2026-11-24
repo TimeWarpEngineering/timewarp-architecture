@@ -68,7 +68,7 @@
   width: 24px;
   height: 24px;
   border-radius: var(--twe-radius-sm);
-  background: linear-gradient(135deg, var(--twe-purple-2), var(--twe-blue));
+  background: linear-gradient(135deg, var(--twe-primary-hover), var(--twe-secondary));
 }
 
 .twe-agent-ask__avatar {
@@ -246,7 +246,7 @@
   left: 6px;
   width: 54px;
   height: 54px;
-  background: radial-gradient(circle at 35% 30%, var(--twe-blue-bright), var(--twe-blue) 70%);
+  background: radial-gradient(circle at 35% 30%, var(--twe-secondary-bright), var(--twe-secondary) 70%);
   opacity: 0.8;
 }
 
@@ -255,7 +255,7 @@
   right: 4px;
   width: 50px;
   height: 50px;
-  background: radial-gradient(circle at 35% 30%, var(--twe-green-soft), var(--twe-green) 75%);
+  background: radial-gradient(circle at 35% 30%, var(--twe-highlight-soft), var(--twe-highlight) 75%);
   opacity: 0.85;
 }
 
@@ -264,7 +264,7 @@
   left: 30px;
   width: 76px;
   height: 76px;
-  background: radial-gradient(circle at 32% 28%, var(--twe-purple-soft), var(--twe-purple-2) 55%, var(--twe-purple-deep));
+  background: radial-gradient(circle at 32% 28%, var(--twe-primary-soft), var(--twe-primary-hover) 55%, var(--twe-primary-active));
   box-shadow: var(--twe-shadow);
 }
 
@@ -488,7 +488,7 @@
   height: 24px;
   margin-top: calc(var(--twe-space-2) / 2);
   border-radius: 50%;
-  background: var(--twe-assistant-avatar, linear-gradient(135deg, var(--twe-purple-2), var(--twe-blue))) center / cover no-repeat;
+  background: var(--twe-assistant-avatar, linear-gradient(135deg, var(--twe-primary-hover), var(--twe-secondary))) center / cover no-repeat;
 }
 
 /* Assistant replies render through SafeMarkdown (task 380). The library's pre-wrap on the content

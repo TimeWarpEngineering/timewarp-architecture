@@ -1,25 +1,33 @@
 #region Purpose
-// White-label brand bound from configuration: product name, logo, Fluent seed, and shell tokens.
+// White-label brand bound from configuration: product name, logo, icon set, manifest colors,
+// Fluent seed, and shell role tokens. Every brand surface of a generated app reads this type.
 #endregion
 
 #region Design
 // Section name "BrandOptions" matches the type name: AddFluentValidatedOptions binds by type name.
 // Defaults are the checked-in TimeWarp lockup, so a host with no section paints the same shell.
-// The server configuration drives the prerendered HTML (title, data-theme-color, logo, /brand.css).
-// The WebAssembly host binds the same section from its own appsettings so hydration does not
-// swap the mark. Shell colors stay in tokens.css; /brand.css overrides the brand keys only.
-// Fluent reads the seed from the body attribute (task 290). ExactRamp is not a body attribute
-// in FluentUI 5, so BrandThemeScript writes it into Fluent's theme storage before blazor.web.js
-// and leaves a stored light or dark mode in place (it also sets the initial body[data-theme]
-// from that mode or the OS preference). The shell does not call SetThemeAsync.
-// An absolute http(s) logo may carry a query or a fragment, so a cache-busted CDN URL is valid.
-// A relative or root-relative logo stays a path: ? and # are rejected there.
+// One source (task 513): web-server configuration owns the section. It drives the prerendered
+// HTML (title, icons, data-theme-color, logo), /brand.css, /manifest.json, and the link-preview
+// image. The WebAssembly host has no copy: its Main reads GET /brand.json (BrandDocument) from
+// the server before the container is built, so hydration paints the same mark.
+// LogoAlt falls back to ProductName, ThemeColor to the seed, and BackgroundColor to the light
+// --twe-background, so a rebrand that sets only the name and the seed is complete. The bound
+// properties stay plain and the Effective* properties apply the fallback: the configuration
+// binder reads a property before it binds it and writes that value back, so a fallback inside
+// a bound getter would be frozen at bind time and miss a later ProductName or seed.
+// Shell colors stay in tokens.css; /brand.css overrides the role keys only. Fluent reads the seed
+// from the body attribute (task 290). ExactRamp is not a body attribute in FluentUI 5, so
+// BrandThemeScript writes it into Fluent's theme storage before blazor.web.js and leaves a stored
+// light or dark mode in place (it also sets the initial body[data-theme] from that mode or the OS
+// preference). The shell does not call SetThemeAsync.
+// An absolute http(s) asset may carry a query or a fragment, so a cache-busted CDN URL is valid.
+// A relative or root-relative asset stays a path: ? and # are rejected there.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;
 
 /// <summary>
-/// Product name, logo, Fluent ramp, and shell token overrides for one generated app.
+/// Product name, logo, icons, manifest colors, Fluent ramp, and shell token overrides for one generated app.
 /// </summary>
 public sealed class BrandOptions
 {
@@ -27,20 +35,29 @@ public sealed class BrandOptions
 
   public const string DefaultProductName = "TimeWarp.Architecture";
   public const string DefaultLogoSrc = "images/timewarp-horizontal.svg";
-  public const string DefaultLogoAlt = "TimeWarp Architecture";
   public const int DefaultLogoWidth = 201;
   public const int DefaultLogoHeight = 48;
   public const string DefaultSeedColor = "#55409c";
+  public const string DefaultFaviconSrc = "favicon-32x32.png";
+  public const string DefaultAppleTouchIconSrc = "apple-touch-icon.png";
+  public const string DefaultIcon192Src = "icon-192.png";
+  public const string DefaultIcon512Src = "icon-512.png";
+  public const string DefaultOgImageSrc = "images/og-image.png";
+
+  /// <summary>Light <c>--twe-background</c>, the manifest background when none is configured.</summary>
+  public const string DefaultBackgroundColor = "#fafafb";
 
   /// <summary>FluentUI theme storage key written before its startup script runs.</summary>
   public const string FluentThemeStorageKey = "fluentui-blazor:theme-settings";
 
   public string ProductName { get; set; } = DefaultProductName;
 
-  /// <summary>Relative, root-relative, or absolute http(s) logo URL.</summary>
+  /// <summary>Relative, root-relative, or absolute http(s) logo URL (<see cref="IsAssetReference"/>).</summary>
   public string LogoSrc { get; set; } = DefaultLogoSrc;
 
-  public string LogoAlt { get; set; } = DefaultLogoAlt;
+  /// <summary>Configured logo alternative text. Empty means <see cref="ProductName"/>; read <see cref="EffectiveLogoAlt"/>.</summary>
+  public string LogoAlt { get; set; } = "";
+
   public int LogoWidth { get; set; } = DefaultLogoWidth;
   public int LogoHeight { get; set; } = DefaultLogoHeight;
 
@@ -54,10 +71,41 @@ public sealed class BrandOptions
   /// </summary>
   public bool ExactRamp { get; set; }
 
+  /// <summary>Browser tab icon (<c>link rel="icon"</c>). PNG, SVG, or ICO.</summary>
+  public string FaviconSrc { get; set; } = DefaultFaviconSrc;
+
+  /// <summary>180x180 PNG for iOS home screens (<c>link rel="apple-touch-icon"</c>).</summary>
+  public string AppleTouchIconSrc { get; set; } = DefaultAppleTouchIconSrc;
+
+  /// <summary>192x192 manifest icon.</summary>
+  public string Icon192Src { get; set; } = DefaultIcon192Src;
+
+  /// <summary>512x512 manifest icon.</summary>
+  public string Icon512Src { get; set; } = DefaultIcon512Src;
+
+  /// <summary>Open Graph and Twitter card image (1200x630 by default, see SiteMetadata).</summary>
+  public string OgImageSrc { get; set; } = DefaultOgImageSrc;
+
+  /// <summary>Configured manifest <c>theme_color</c>. Empty means the seed; read <see cref="EffectiveThemeColor"/>.</summary>
+  public string ThemeColor { get; set; } = "";
+
+  /// <summary>Configured manifest <c>background_color</c>. Empty means the light page background; read <see cref="EffectiveBackgroundColor"/>.</summary>
+  public string BackgroundColor { get; set; } = "";
+
   public BrandTokenOptions Tokens { get; set; } = new();
 
   /// <summary>Seed color with surrounding whitespace removed, for the attribute, the script, and the sheet.</summary>
   public string NormalizedSeedColor => SeedColor.Trim();
+
+  /// <summary><see cref="LogoAlt"/>, or <see cref="ProductName"/> when it is empty.</summary>
+  public string EffectiveLogoAlt => string.IsNullOrWhiteSpace(LogoAlt) ? ProductName : LogoAlt;
+
+  /// <summary><see cref="ThemeColor"/>, or the seed when it is empty. Trimmed.</summary>
+  public string EffectiveThemeColor => string.IsNullOrWhiteSpace(ThemeColor) ? NormalizedSeedColor : ThemeColor.Trim();
+
+  /// <summary><see cref="BackgroundColor"/>, or <see cref="DefaultBackgroundColor"/> when it is empty. Trimmed.</summary>
+  public string EffectiveBackgroundColor =>
+    string.IsNullOrWhiteSpace(BackgroundColor) ? DefaultBackgroundColor : BackgroundColor.Trim();
 
   /// <summary><c>#RGB</c> or <c>#RRGGBB</c>, the same shape Fluent's startup script accepts.</summary>
   public static bool IsHexColor(string? value)
@@ -85,11 +133,11 @@ public sealed class BrandOptions
   }
 
   /// <summary>
-  /// A logo reference the shell can put in an attribute: a relative path, a root-relative path,
-  /// or an absolute http(s) URL. Scheme-relative and script URLs are rejected. A query or a
-  /// fragment is allowed only on an absolute http(s) URL.
+  /// A logo, icon, or image reference the shell can put in an attribute: a relative path, a
+  /// root-relative path, or an absolute http(s) URL. Scheme-relative and script URLs are rejected.
+  /// A query or a fragment is allowed only on an absolute http(s) URL.
   /// </summary>
-  public static bool IsLogoReference(string? value)
+  public static bool IsAssetReference(string? value)
   {
     if (string.IsNullOrWhiteSpace(value) || value.Length > 2048)
     {

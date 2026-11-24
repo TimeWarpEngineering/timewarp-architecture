@@ -14,8 +14,8 @@
 // HttpAppBaseUrlAccessor.
 // No resolvable origin (malformed forwarded host, no Host) returns null and the tags are omitted:
 // link-preview metadata is optional and must never fail the page render.
-// The page URL is that origin plus Request.Path. The query is omitted. The image is site-wide:
-// an absolute ImagePath is used as-is; a root-relative path is resolved against the origin,
+// The page URL is that origin plus Request.Path. The query is omitted. The image is site-wide
+// and is BrandOptions.OgImageSrc (task 513): an absolute http(s) URL is used as-is; a root-relative path is resolved against the origin,
 // not against the page. A leading slash on the relative part would replace the origin path,
 // so it is stripped before combining.
 #endregion
@@ -26,9 +26,10 @@ using TimeWarp.Architecture.Mail;
 
 internal static class LinkPreview
 {
-  internal static LinkPreviewValues? Resolve(SiteMetadata metadata, HttpRequest? request)
+  internal static LinkPreviewValues? Resolve(SiteMetadata metadata, BrandOptions brand, HttpRequest? request)
   {
     ArgumentNullException.ThrowIfNull(metadata);
+    ArgumentNullException.ThrowIfNull(brand);
 
     Uri? origin = ResolveOrigin(metadata, request);
     if (origin is null)
@@ -37,22 +38,25 @@ internal static class LinkPreview
     }
 
     Uri pageUrl = Combine(origin, request?.Path.Value);
-    Uri? absoluteImage = AbsoluteHttpOrNull(metadata.ImagePath);
-    Uri imageUrl = absoluteImage ?? Combine(origin, metadata.ImagePath);
+    Uri? absoluteImage = AbsoluteHttpOrNull(brand.OgImageSrc);
+    Uri imageUrl = absoluteImage ?? Combine(origin, brand.OgImageSrc);
 
     return new LinkPreviewValues
     {
       Description = metadata.Description,
-      SiteName = metadata.SiteName,
-      Title = metadata.Title,
+      SiteName = OrFallback(metadata.SiteName, brand.ProductName),
+      Title = OrFallback(metadata.Title, brand.ProductName),
       PageUrl = pageUrl,
       ImageUrl = imageUrl,
-      ImageAlt = metadata.ImageAlt,
+      ImageAlt = OrFallback(metadata.ImageAlt, brand.EffectiveLogoAlt),
       ImageType = metadata.ImageType,
       ImageWidth = metadata.ImageWidth,
       ImageHeight = metadata.ImageHeight,
     };
   }
+
+  private static string OrFallback(string? value, string fallback) =>
+    string.IsNullOrWhiteSpace(value) ? fallback : value;
 
   private static Uri? ResolveOrigin(SiteMetadata metadata, HttpRequest? request)
   {

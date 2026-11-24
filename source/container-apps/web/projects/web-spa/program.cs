@@ -39,6 +39,9 @@
 // is the allow-list (today only the Counter demo's IncrementCounter, under the
 // IncrementCounterActionSet.JavaScriptAlias wire name so counter.ts never spells the CLR type name);
 // it is public so SPA test hosts register the same list instead of copying it.
+// Task 513: Main reads GET /brand.json (BrandDocument) into its configuration before
+// ConfigureServices, so BrandOptions has one source: web-server configuration. The SPA's
+// wwwroot appsettings.json carries no BrandOptions section.
 // Task 335-002: AddStateDevToolsExportAsync (Main only, never ConfigureServices: web-server prerender
 // has its own server exporter) posts browser store spans to the State DevTools inspector. In
 // Development it asks web-server for the inspector origin (GET /_timewarp/state-devtools, mapped by
@@ -70,6 +73,8 @@ public static class Program
     var builder = WebAssemblyHostBuilder.CreateDefault(args);
     SetIsoCulture();
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
+    // Task 513: the server owns BrandOptions; read it before the container binds the options.
+    await BrandDocument.LoadAsync(builder.Configuration, new Uri(builder.HostEnvironment.BaseAddress), CancellationToken.None);
 
     ConfigureServices(builder.Services, builder.Configuration, builder.HostEnvironment.Environment);
 //-:cnd:noEmit
@@ -289,8 +294,9 @@ public static class Program
       .AddFluentValidatedOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
       .ValidateOnStart();
 
-    // BrandOptions: server prerender and the WebAssembly host each bind the configuration they
-    // were given. Defaults match the checked-in TimeWarp brand when the section is absent.
+    // BrandOptions: web-server configuration is the one source (task 513). Server prerender binds
+    // it directly; the WebAssembly Main added GET /brand.json to its configuration first.
+    // Defaults match the checked-in TimeWarp brand when the section is absent.
     serviceCollection
       .AddFluentValidatedOptions<BrandOptions, BrandOptionsValidator>(configuration)
       .ValidateOnStart();

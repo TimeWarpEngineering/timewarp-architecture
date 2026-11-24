@@ -216,13 +216,13 @@
       <FluentLayoutItem Area="LayoutArea.Header">
         <header class="twe-appbar">
           <div class="twe-brand">
-            @* Horizontal lockup (icon + wordmark side by side) built from the original
-               stacked timewarp-logo.svg so the wordmark stays readable at bar height.
+            @* Horizontal lockup (icon + wordmark side by side; BrandOptions.LogoSrc) cut from the
+               stacked mark so the wordmark stays readable at bar height.
                Explicit width/height reserve the box before styles apply (no first-paint
                size flash). *@
             <img class="twe-brand__logo"
                  src="@Brand.LogoSrc"
-                 alt="@Brand.LogoAlt"
+                 alt="@Brand.EffectiveLogoAlt"
                  width="@Brand.LogoWidth"
                  height="@Brand.LogoHeight"
                  data-qa="BrandLogo" />

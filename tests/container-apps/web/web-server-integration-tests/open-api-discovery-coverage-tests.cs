@@ -179,7 +179,7 @@ public class Document_Given_
         "wwwroot",
         ".well-known",
         "agent-skills",
-        "timewarp-architecture-discovery",
+        "host-discovery",
         "SKILL.md"
       )
     );
