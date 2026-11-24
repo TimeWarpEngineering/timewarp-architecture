@@ -12,8 +12,8 @@ Use this task to walk through each finding one by one and decide which follow-up
 
 - [x] Collect SigNoz OTEL traces, walk logs, agent transcripts, PR CI checks, and `ganda usage stats` for all 11 finished walks (`report/analysis.md`)
 - [x] Item 1 (`dotfiles` task **012**) — Root-caused: not a `ganda 393401fa` or profile bug; interactive Claude `Bash` strips `OTEL_*` and `BASH_ENV` was unset when launching `setsid -f bash -c ... ganda task work`. Filed `dotfiles` task **012** to export `BASH_ENV="$HOME/.bashrc"` in `bash/.bashrc`
-- [ ] Item 2 (`timewarp-ganda`) — Review Grok `grok-4.7-build` reasoning/API latency (`82–99%` of wall time, `~4h 40m` across 6 walks) vs Claude (`1.1–2.8m` review rounds, `6.6–24.8m` implementations) and decide provider/effort routing
-- [ ] Item 3 (`timewarp-ganda`) — Add provider 429 quota cooldown file (OpenCode Go weekly limit aborted Task 495 after `13m 38s` with 0 edits — 2nd occurrence in 2 days)
+- [x] Item 2 (`timewarp-ganda`) — Confirmed `harness-grok.json` is already on `reasoningEffort: "high"` (not `xhigh`); leaving Grok 4.7 as-is for now while waiting for 4.8
+- [x] Item 3 (`timewarp-ganda` task **704**) — Already tracked in `timewarp-ganda` task **704**; amended **704** with `495`/`498` evidence, opt-in-only exclusion for small/testing pools (`opencode` Go, future `agy`), and Cursor Ultra (`$200/mo`) in `usage-plans.jsonc`
 - [ ] Item 4 (`timewarp-ganda` / `.githooks/`) — Eliminate redundant `post-commit` `self-install` + `repo attest` (`81–136s`/commit on `501`/`503`) and host `audit` + `merge` triple-audit (`52–54s` still live on `501`/`503`)
 - [ ] Item 5 (`timewarp-architecture`) — Re-measure post-Playwright CI bottlenecks (`8.4–9.2m`: `classify` `1m 43s`, `ci (integration)` `6–7m`, `ci (publish)` `6m 23s`) once Task 504 (`wslc` + `green-key`) lands
 - [ ] Item 6 (`timewarp-architecture`) — Fix implementer test-harness traps (`StaticHtmlRenderer` `OnAfterRenderAsync` helper/docs from `490`'s `18m` detour; combined Aspire test filter; `ActionCatalog_Should` / `StateJsonContext` `SYSLIB1031` guard)
