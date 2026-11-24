@@ -106,6 +106,14 @@ Gates:
   - `features/admin/roles/role-state-contract-actions-tests.cs` — `--filter-class RoleState_Contract_Actions_Should` — passed, 8 tests.
 - `ganda repo audit` — exit 0. 43 passed, 2 skipped, 1 advisory warning: `vscode-window-icon` (`.vscode/settings.json` is missing; gitignored local state, pre-existing, not committable).
 
+### Review
+
+Round 1 (effort 2, roster general). No findings. Disposition: clean. Final counts: bug 0, suggestion 0, nit 0, open 0.
+
+The reviewer read the branch diff, the restatement against the original requirements, and both evidence shots. Gates were not re-run. The implementer's record above covers them.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Depends on
 
 - 489-003
@@ -116,3 +124,15 @@ Gates:
   approved through this cockpit; the error is in the spec, not the implementer.
 - Implementation: Claude Opus 5.5, 2026-11-24. RolePage back to create-only, Playwright proof of both role pages, 489-003 kitchen corrected, screenshots in evidence/.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 27063109-2b43-4d3a-ac13-c8fbabf92fa3, max-turns 500, Done — 2026-11-24T04:02:10Z
+- Review oracle round 1: Grok 4.7, effort 2, roster general, turn cap 120, 2026-11-24. No findings. Disposition clean.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7), session 01a20bb7-e67e-7780-be7e-d1d6934c4c56, max-turns 120, artifacts `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md` — 2026-11-24
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20bb7-e67e-7780-be7e-d1d6934c4c56, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-24T04:08:37Z
+
+## Learnings
+
+- Misread: the task says to remove `typeof(RoleState.GetRoleActionSet.Action)` from `RolePage`'s `[Page(AgentActions)]`. The restatement says the page never listed `GetRole` and that the 489-003 `UpdateRole` entry is the one to remove. The pre-change attribute listed `CreateRole` and `UpdateRole`. The implementation removes `UpdateRole` and keeps `CreateRole`. The goal is the same: New Role does not offer the edit action.
+- Misread: the task asks for screenshots from `dev run`. The restatement says "from the running app", and the walk used the Playwright host instead, because a second AppHost shares `UserSecretsId` with the master checkout. The shots in `evidence/` are that browser session. They show the create-only New Role page and the Administrator edit form. That meets the evidence intent, so it is not a finding.
+
+## Review
+
+- Round 1: Done
