@@ -43,6 +43,7 @@ Acceptance criteria:
 - Created: 2026-11-23 (from Task 500 walk performance review)
 - 2026-11-24 implementer: removed the `playwright` matrix leg and the screenshot upload step;
   header comment and the `TestGroups` Design comment now say the group is local-only since 501.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4241ffd3-b42d-4a89-92fe-5f377f8b1f11, max-turns 500, Done — 2026-11-24T02:25:57Z
 
 ## Notes
 
