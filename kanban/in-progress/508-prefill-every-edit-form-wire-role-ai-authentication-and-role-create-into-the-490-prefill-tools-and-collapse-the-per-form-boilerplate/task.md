@@ -201,3 +201,4 @@ Gates (all foreground, this worktree):
   (no running app in a headless worker). 2026-11-24
 - Created: 2026-11-24. 490 scope was generic; the implementer narrowed it to Profile without
   recording the deferral. Investigation table above is from the 2026-11-24 scope check.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 5f10deb9-8939-414b-8d64-765f03250951, max-turns 500, Done — 2026-11-24T15:12:09Z
