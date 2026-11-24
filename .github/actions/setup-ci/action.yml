@@ -8,7 +8,7 @@ inputs:
   nuget-cache:
     description: >-
       save = restore and save ~/.nuget/packages. restore = restore only (never seeds a later run).
-      none = no cache.
+      none = no cache. GitHub-hosted runners only: a self-hosted (wslc) runner skips the cache.
     required: false
     default: save
   nuget-cache-key:
@@ -35,15 +35,18 @@ runs:
     # Exact content-hash key, no restore-keys: a CPM change starts a clean cache instead of layering
     # onto an old one. The dev CLI runfile build is not cached: checkout stamps fresh file times, so
     # a restored build would recompile anyway.
+    # Hosted runners only (task 504, as timewarp-nuru 539): the wslc runners keep NuGet packages on a
+    # per-instance volume shared with other repos' jobs, so saving it would carry their packages into
+    # this repo's Actions cache, and restoring it would only duplicate what the volume holds.
     - name: Cache NuGet packages
-      if: inputs.nuget-cache == 'save'
+      if: inputs.nuget-cache == 'save' && runner.environment == 'github-hosted'
       uses: actions/cache@v6
       with:
         path: ~/.nuget/packages
         key: nuget-${{ runner.os }}-${{ inputs.nuget-cache-key }}-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
 
     - name: Restore NuGet package cache
-      if: inputs.nuget-cache == 'restore'
+      if: inputs.nuget-cache == 'restore' && runner.environment == 'github-hosted'
       uses: actions/cache/restore@v6
       with:
         path: ~/.nuget/packages

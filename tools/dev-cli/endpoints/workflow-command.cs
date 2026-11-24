@@ -9,6 +9,7 @@
 // Mode is auto-detected from GITHUB_EVENT_NAME (or forced with --mode):
 //   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish all (tests are the gate)
 //   release / dispatch   -> Release:   clean -> build -> pack -> push -> template-publish-smoke
+// A dispatch that names a --phase is Merge: workflow.yml's dispatch mode full runs the CI jobs.
 // Pr/Merge splits into phases so workflow.yml runs them as parallel jobs (ci (fast), ci
 // (integration), ci (publish)), each on its own runner that builds what it needs: a shared build
 // artifact would be bin/obj for the whole solution, far over the org's 500 MB Actions storage cap.
@@ -33,6 +34,10 @@
 //             request does. An unreadable dev.jsonc on a push builds.
 //   skill     WorkflowPathClasses.IsSkillPath over the changed paths (gates skill-lint).
 //   template  WorkflowPathClasses.IsTemplatePath over the changed paths (gates template-smoke).
+// Green key (services/green-key.cs, services/green-key-ledger.cs): classify then turns off each of
+// ci, skill, and template whose gate already passed on this tree, and writes green_key and
+// green_key_writer (a candidate with a key and a gate left on) for workflow.yml's green-key job,
+// which uploads the markers.
 // A pull request takes the classifier's base...head diff (the job checks out full history). A push
 // fetches its before and after commits when missing (--depth=1 only on a shallow checkout, so a
 // local full clone never turns shallow) and diffs their trees. Any diff that cannot be read
@@ -115,7 +120,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       if (!FindRepoRoot()) return Unit.Value;
 
-      CiMode mode = DetermineMode(command.Mode);
+      CiMode mode = DetermineMode(command.Mode, command.Phase);
       Terminal.WriteLine($"\nCI/CD Pipeline — Mode: {mode}\n".Cyan());
 
       if (!ValidatePhase(command, mode)) return Unit.Value;
@@ -159,15 +164,23 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       }
 
       (bool configRead, PullRequestBuildConfig? config) = changed is null ? (true, null) : await ReadBuildConfigAsync();
-      WorkflowJobs jobs = WorkflowPathClasses.Classify(
+      WorkflowJobs pathJobs = WorkflowPathClasses.Classify(
         changed,
         paths => !configRead || PullRequestBuildClassifier.RequiresBuild(paths, config));
-      (string Name, bool Value)[] outputs = [("ci", jobs.Ci), ("skill", jobs.Skill), ("template", jobs.Template)];
+      GreenKeyObservation green = await GreenKeyLedger.ObserveAsync(Terminal, RepoRoot, pathJobs, Ct);
+      WorkflowJobs jobs = GreenKey.ApplyHits(pathJobs, green.HitGates);
+      string[] outputs =
+      [
+        $"ci={Bool(jobs.Ci)}",
+        $"skill={Bool(jobs.Skill)}",
+        $"template={Bool(jobs.Template)}",
+        $"{GreenKey.KeyOutputName}={green.Key}",
+        $"{GreenKey.WriterOutputName}={Bool(green.Writer && GreenKey.IsKey(green.Key) && (jobs.Ci || jobs.Skill || jobs.Template))}",
+      ];
 
       string? outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
-      foreach ((string name, bool value) in outputs)
+      foreach (string line in outputs)
       {
-        string line = $"{name}={(value ? "true" : "false")}";
         Terminal.WriteLine(line);
         if (!string.IsNullOrEmpty(outputPath)) await File.AppendAllTextAsync(outputPath, line + "\n", Ct);
       }
@@ -192,6 +205,8 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     }
 
     private const string BuildConfigFile = ".timewarp/dev.jsonc";
+
+    private static string Bool(bool value) => value ? "true" : "false";
 
     // Pull request: the classifier's diff (empty with a build decision means it was not read).
     // Push: fetch before and after (the checkout is shallow) and diff their trees. Else unknown.
@@ -294,7 +309,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       return false;
     }
 
-    private CiMode DetermineMode(string? explicitMode)
+    private CiMode DetermineMode(string? explicitMode, string? phase)
     {
       if (!string.IsNullOrEmpty(explicitMode))
       {
@@ -313,6 +328,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       {
         "push" => CiMode.Merge,
         "release" => CiMode.Release,
+        "workflow_dispatch" when phase is not null => CiMode.Merge,
         "workflow_dispatch" => CiMode.Release,
         _ => CiMode.Pr,
       };
