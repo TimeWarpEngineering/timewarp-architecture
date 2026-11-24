@@ -71,6 +71,7 @@ Done when:
 - 2026-11-24 implementer: FluentInputFile 5.1.0 checked by decompile. `OnInputFileChange` returns
   before the component's own reading, and unmatched attributes (`aria-label`, `data-qa`) land on the
   hidden `<input type=file>`. `Icons.Regular.Size16.Attach` exists (FluentUI MCP).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1cd22e93-88ae-4755-880e-0060d4a7e266, max-turns 500, Done — 2026-11-24T07:04:55Z
 
 ## Results
 
