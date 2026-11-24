@@ -11,6 +11,9 @@
 // clones that chrome (no "Sign in with a passkey" button that only redirects) — a single
 // "Sign in" CTA navigates to /Login. FluentButton + NoSubRouteState.ChangeRoute (Profile
 // pattern) — never nest a button inside NavLink (invalid HTML).
+// Task 506 (TWA0050): Settings and Admin in the signed-in strip are RouteLinks, so each click
+// is RouteState.ChangeRoute. The "Built with" NavLinks stay: each is an https link with
+// target="_blank", which TWA0050 does not report.
 // RFC 219 D8: Entra-without-passkey soft prompt is composed by TimeWarpPage (AddPasskeyPrompt),
 // not this page. Home stays anonymous; the banner is not a route gate.
 #endregion

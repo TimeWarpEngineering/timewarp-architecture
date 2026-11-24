@@ -12,7 +12,9 @@
   per-navigation lifecycle that a LayoutComponentBase can't.
   The location breadcrumb sits under the h1: Home, then each ancestor page, then this
   page. Parents are PageRegistry routes (longest literal prefix), not the RouteState
-  history stack. Ancestors are links. The current page is text with aria-current="page".
+  history stack. Ancestors are RouteLinks (task 506, TWA0050), so a click is the
+  RouteState.ChangeRoute action; the link styles reach them through ::deep under the native ol.
+  The current page is text with aria-current="page".
   Nav groups are not crumbs. BreadcrumbLabel overrides the current crumb when the nav
   title is not the label (a design system part). Title is that label when it already
   matches (the role name). ShowInBreadcrumbs=false omits the trail (403, 404, auth)
@@ -191,7 +193,7 @@
               }
               else
               {
-                <a class="twe-breadcrumb__link" href="@crumb.Href" data-qa="BreadcrumbLink">@crumb.Label</a>
+                <RouteLink class="twe-breadcrumb__link" Route="@crumb.Href" data-qa="BreadcrumbLink">@crumb.Label</RouteLink>
               }
             </li>
           }

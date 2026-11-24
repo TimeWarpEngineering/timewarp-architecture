@@ -224,6 +224,7 @@ public partial class CommandPalette_Should_
       "/Counter", "/Chat", "/DesignSystem", "/Admin/Roles", "/Admin/Principals", "/Admin/Feedback", "/Admin/Authentication",
       "/Admin/AI",
       "/AgentLinks", "/Feedback", "Feedback.ListMyFeedback", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
+      "Role.OpenNewRole",
     })
     {
       targets.ShouldNotContain(denied);

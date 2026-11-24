@@ -1,5 +1,12 @@
 @namespace TimeWarp.Architecture.Components
 
+@*
+  Purpose: One labelled link row in the assembly info dialog.
+
+  Design: The url is a RouteLink (task 506, TWA0050), so a click is RouteState.ChangeRoute;
+  an absolute url leaves the app through it. A blank url renders nothing.
+*@
+
 @code {
   [Parameter]
   public string? Url { get; set; }
@@ -13,5 +20,5 @@
 
 @if (!string.IsNullOrWhiteSpace(Url))
 {
-  <div class="@CssClass"><a href="@Url">@DisplayText</a></div>
+  <div class="@CssClass"><RouteLink Route="@Url">@DisplayText</RouteLink></div>
 }

@@ -3,7 +3,7 @@
 @implements IAsyncDisposable
 @inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
-@attribute [DirectComponentSideEffect("matchMedia chooses the icon rail so a nav link's title tooltip is set only while the label is clipped. The watch is presentational and has no store state.")]
+@attribute [DirectComponentSideEffect("matchMedia chooses the icon rail so a nav link's title tooltip is set only while the label is clipped. The watch is presentational and has no store state. Each FluentNavItem keeps a real Href: FluentNav matches the active item on it, and a menu entry keeps middle-click and open in new tab.")]
 
 @code {
   // Purpose: Primary navigation for the app shell (rendered in TimeWarpPage's Navigation area).
@@ -25,6 +25,10 @@
   // in the registry. Login is not a registry page (the profile menu and the palette's Sign in
   // row reach it). The External category is plain links to other sites, not app pages, and it
   // follows the top groups in the primary nav.
+  // Task 506: menu items are the one place an app link stays a FluentNavItem Href. TWA0050
+  // reports Href in component markup; the opt-out above names why the menu keeps real anchors
+  // (active-item Match and middle-click). The same pages are reachable as State actions through
+  // the Ctrl-K palette and the agent's navigate tool, which call RouteState.ChangeRoute.
   // A category has no icon. In the rail its title is collapsed and the expand chevron is the mark.
   // Link text stays in the tree (clipped, not display:none). The title tooltip is set only while
   // the column is the rail (the 880–1279 default, or data-twe-nav="rail"), so a full-width label

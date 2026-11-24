@@ -60,7 +60,7 @@
       <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
         <p>
           Technical demo of the first-party WebAuthn ceremony (no email/username).
-          Product sign-in CTA: <NavLink href="/Login">Continue with passkey</NavLink>.
+          Product sign-in CTA: <RouteLink Route="@LoginPage.GetPageUrl()">Continue with passkey</RouteLink>.
         </p>
         <p>
           Session: @(IsAuthenticated is true ? "authenticated" : IsAuthenticated is false ? "not authenticated" : "checking...")

@@ -34,6 +34,28 @@ public partial class CommandPalette_Should_
     navigationManager.Uri.ShouldBe("http://localhost/Login?returnUrl=%2FCounter");
   }
 
+  // Task 506: the Roles list's New Role button is this action, so the palette reaches the form too.
+  public static async Task Enter_On_Open_New_Role_Navigates_To_The_New_Role_Form()
+  {
+    using PaletteSpa spa = new(Everything);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    NavigationManager navigationManager = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    navigationManager.NavigateTo("/Admin/Roles");
+
+    await scope.Send(new CommandPaletteState.OpenActionSet.Action());
+    await scope.Send(new CommandPaletteState.FilterActionSet.Action("open new role"));
+    CommandPaletteRow highlighted = scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull();
+    highlighted.Target.ShouldBe("Role.OpenNewRole");
+
+    await CommandPaletteRunner.RunAsync(
+      highlighted,
+      scope.Store,
+      ActionRoster.All,
+      CancellationToken.None);
+
+    navigationManager.Uri.ShouldBe("http://localhost/Admin/Roles/New");
+  }
+
   public static Task Rank_Prefix_Then_Word_Start_Then_Substring_Then_Description_Then_Subsequence()
   {
     CommandPaletteRow[] rows =

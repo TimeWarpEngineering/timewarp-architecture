@@ -1,0 +1,29 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+@attribute [DirectComponentSideEffect("The one shared in-app link (TWA0050). The anchor keeps its href so middle-click, open in new tab, and the link role still work, and static prerender HTML still links. A left click is prevented and dispatches RouteState.ChangeRoute.")]
+
+@*
+  Purpose: A text link whose click is the RouteState.ChangeRoute action.
+
+  Design: Task 506. TWA0050 reports any Href, NavLink, or <a href> in component markup,
+  because a plain link navigates outside the store. Callers write
+  <RouteLink Route="@SomePage.GetPageUrl()">text</RouteLink> instead. Route drives both the
+  href and the dispatched route, so the two cannot disagree. @onclick:preventDefault stops the
+  browser and Blazor's own link interception; the handler dispatches ChangeRoute. Ctrl+click is
+  a click, so it navigates in place; middle-click and the context menu open a new tab from the
+  href. Route may be an absolute URL: ChangeRoute resolves it with ToAbsoluteUri, so the
+  browser leaves the app. Not for a file download or a server-only path (the client router would
+  take it): such a link stays a plain anchor in a component that opts out with a reason.
+  Unmatched attributes (class, data-qa, aria-current) land in BaseComponent.Attributes and
+  splat onto the anchor. The anchor is rendered here, so a caller's isolated CSS reaches it
+  only through ::deep under a native element of the caller.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Route { get; set; } = "";
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+
+  private Task NavigateAsync() => NoSubRouteState.ChangeRoute(newRoute: Route);
+}
+
+<a href="@Route" @onclick="NavigateAsync" @onclick:preventDefault @attributes="Attributes">@ChildContent</a>

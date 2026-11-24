@@ -12,7 +12,8 @@
   each prompt under "You:" and each reply under "{AssistantName}:", one paragraph per side,
   using the raw markdown of the rich text blocks (Transcript). A turn side with no text is skipped. Thumbs are a human SubmitFeedback, not an agent tool call, so they are
   not approval-gated. Support is hidden when configuration has no url; LoadChatConfiguration has
-  already limited it to a relative path or http/https (AskSupportLink).
+  already limited it to a relative path or http/https (AskSupportLink). Support is a RouteLink
+  (TWA0050, task 506): the clipboard opt-out above is not a reason for a plain link.
   The bar renders only once the conversation has an answer, so the empty state shows no Copy or
   thumbs (task 349). The bar subscribes to the conversation status: the cascade is fixed, so a
   finished turn would not otherwise re-render it.
@@ -163,7 +164,7 @@
                   OnClick="UnhelpfulAsync" />
     @if (!string.IsNullOrWhiteSpace(SupportUrl))
     {
-      <a data-qa="AskSupport" href="@SupportUrl">Support</a>
+      <RouteLink data-qa="AskSupport" Route="@SupportUrl">Support</RouteLink>
     }
   </div>
 }

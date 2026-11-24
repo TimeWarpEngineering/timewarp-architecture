@@ -7,7 +7,9 @@
    user back where they were headed. LoginPage validates it (local-only, never /Login).
    Task 183: never NavigationManager.NavigateTo during static SSR — that nested the interactive
    root and stack-overflowed web-server (exit 134) when AuthorizeRouteView hit NotAuthorized.
-   Navigate only once interactive; static HTML keeps a plain link fallback.
+   Navigate only once interactive; static HTML keeps a link fallback. Task 506: that fallback
+   is a RouteLink (TWA0050): its href works in static HTML, and a click once interactive is
+   RouteState.ChangeRoute.
    Task 265: the navigation is the SignInState.RedirectToLogin action (forceLoad in its handler);
    this component only dispatches (TWA0026). NavigationManager is read-only here (the current Uri)
    and LoginPage.GetLoginUrl builds both the link and the handler's target. *@
@@ -33,5 +35,5 @@
 }
 
 <p>
-  <a href="@Target">Sign in to continue</a>
+  <RouteLink Route="@Target">Sign in to continue</RouteLink>
 </p>

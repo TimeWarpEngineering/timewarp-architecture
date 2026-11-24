@@ -8,9 +8,10 @@
   keep an empty box. The name is read on each render: the profile display name, then the
   identity name, then Account. The display name arrives after sign-in and can change
   without a new authentication parameter, so it is not cached beside the auth
-  task. The detail is the profile email when it is set. The card links to the
-  profile page only when that page's policy allows it. This component reads the
-  cascaded authentication state and authorizes; it does not navigate or fetch.
+  task. The detail is the profile email when it is set. The card opens the profile
+  page only when that page's policy allows it: its click dispatches
+  RouteState.ChangeRoute (task 506, TWA0050). This component reads the cascaded
+  authentication state and authorizes; it does not navigate itself or fetch.
 *@
 
 @code {
@@ -27,6 +28,8 @@
   private bool Loaded;
 
   private string DisplayName => ShellUserName(IdentityName, ProfileState.Profile?.DisplayName);
+
+  private Task OpenProfileAsync() => NoSubRouteState.ChangeRoute(newRoute: ProfilePage.GetPageUrl());
 
   protected override async Task OnParametersSetAsync()
   {
@@ -74,7 +77,7 @@
   <div class="twe-nav-column__user">
     @if (CanOpenProfile)
     {
-      <UserCard Name="@DisplayName" Detail="@ProfileState.Profile?.Email" Href="@ProfilePage.GetPageUrl()" data-qa="ShellUserCard" />
+      <UserCard Name="@DisplayName" Detail="@ProfileState.Profile?.Email" OnClick="OpenProfileAsync" data-qa="ShellUserCard" />
     }
     else
     {

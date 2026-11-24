@@ -5,7 +5,9 @@
 
   Design: Native nav and lists, because the shell already owns the one FluentNav
   registry. All is the first entry and links to /DesignSystem. Each part links to
-  /DesignSystem/{slug}. The selected entry sets aria-current="page". The filter is
+  /DesignSystem/{slug}. Each entry is a RouteLink (task 506, TWA0050), so a click is the
+  RouteState.ChangeRoute action; the link styles reach its anchor through ::deep under the
+  native list. The selected entry sets aria-current="page". The filter is
   component-local text (not a stored demo choice). Immediate delivers each
   keystroke. Wall A: the native filter div anchors ::deep to fluent-text-input.
   Each group name is an h2, and the nested part list is labelled by that heading,
@@ -88,11 +90,11 @@
     @if (ShowAll)
     {
       <li>
-        <a class="ds-catalog__link"
-           href="@DesignSystemPage.GetPageUrl()"
-           aria-current="@(AllCurrent ? "page" : null)"
-           data-qa="DesignSystemAll"
-           data-part="all">All</a>
+        <RouteLink class="ds-catalog__link"
+                   Route="@DesignSystemPage.GetPageUrl()"
+                   aria-current="@(AllCurrent ? "page" : null)"
+                   data-qa="DesignSystemAll"
+                   data-part="all">All</RouteLink>
       </li>
     }
     @foreach ((DesignSystemParts.Group group, DesignSystemParts.Part[] parts) in VisibleGroups())
@@ -103,11 +105,11 @@
           @foreach (DesignSystemParts.Part part in parts)
           {
             <li>
-              <a class="ds-catalog__link"
-                 href="@DesignSystemPartLookup.Url(part)"
-                 aria-current="@(IsCurrent(part) ? "page" : null)"
-                 data-qa="DesignSystemPartLink"
-                 data-part="@part.Slug">@part.Title</a>
+              <RouteLink class="ds-catalog__link"
+                         Route="@DesignSystemPartLookup.Url(part)"
+                         aria-current="@(IsCurrent(part) ? "page" : null)"
+                         data-qa="DesignSystemPartLink"
+                         data-part="@part.Slug">@part.Title</RouteLink>
             </li>
           }
         </ul>

@@ -1,4 +1,4 @@
-/* Identity row. The link and the static card share one rule. The rail clips the
+/* Identity row. The button and the static card share one rule. The rail clips the
    name and detail so the circle fits the 68px nav and the text stays the
    accessible name. The rail is --twe-nav-rail (tokens.css), the same gate as the menu. */
 .twe-user-card {
@@ -13,7 +13,19 @@
   text-decoration: none;
 }
 
-a.twe-user-card:hover {
+/* The button form drops the native button chrome and keeps the shared rule's top rule. */
+button.twe-user-card {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--twe-rule);
+  background: none;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+button.twe-user-card:hover {
   background: var(--twe-paper);
 }
 

@@ -28,6 +28,9 @@
     }
   }
 
+  // The unknown-slug All button is RouteState.ChangeRoute, not an anchor (TWA0050, task 506).
+  private Task ShowAllAsync() => NoSubRouteState.ChangeRoute(newRoute: DesignSystemPage.GetPageUrl());
+
   [DirectComponentSideEffect("Resets the shell content scroller when the design-system part changes. The offset is DOM state on the layout content area.")]
   protected override Task OnAfterRenderAsync(bool firstRender)
   {
@@ -60,7 +63,7 @@
           <div class="ds-missing" data-qa="DesignSystemUnknown">
             <p class="ds-missing__title">No such part.</p>
             <p class="ds-missing__body">This slug is not in the catalog.</p>
-            <FluentAnchorButton Appearance="ButtonAppearance.Subtle" Href="@DesignSystemPage.GetPageUrl()" data-qa="DesignSystemUnknownAll">All</FluentAnchorButton>
+            <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="ShowAllAsync" data-qa="DesignSystemUnknownAll">All</FluentButton>
           </div>
         }
         else if (Current.Kind == DesignSystemParts.SelectionKind.All)

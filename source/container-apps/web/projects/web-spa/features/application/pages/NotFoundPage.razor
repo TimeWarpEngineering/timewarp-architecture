@@ -4,6 +4,8 @@
   Router NotFound content. Task 290: styles moved from an inline <style> block to
   NotFoundPage.razor.css (components author no <style>), and the copy now says 404 / not found
   (it had been copied from the 403 Forbidden page). Same Card layout as ForbiddenPage.
+  Task 506: Go back home is a RouteLink (TWA0050). The native p carries the weight, which the
+  anchor RouteLink renders inherits.
 *@
 
 <TimeWarpPage Title="Page Not Found" ShowInBreadcrumbs="false">
@@ -11,6 +13,6 @@
     <p class="twe-status-page__code">404</p>
     <h2 class="twe-status-page__title">Page not found</h2>
     <p class="twe-status-page__message">The page you are looking for does not exist or has moved.</p>
-    <a class="twe-status-page__home" href="/">Go back home</a>
+    <p class="twe-status-page__home"><RouteLink Route="@HomePage.GetPageUrl()">Go back home</RouteLink></p>
   </Card>
 </TimeWarpPage>

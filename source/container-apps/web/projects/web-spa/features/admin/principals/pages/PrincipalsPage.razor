@@ -106,9 +106,9 @@
             data-qa="PrincipalsTable">
             <ChildContent>
               <TemplateColumn Title="Principal" Tooltip="true" TooltipText="@(static row => row.PrincipalId.Value.ToString())">
-                <FluentLink Href="@($"/Admin/Principals/{context.PrincipalId.Value:D}")" data-qa="AdminPrincipalRow">
+                <RouteLink Route="@($"/Admin/Principals/{context.PrincipalId.Value:D}")" data-qa="AdminPrincipalRow">
                   <code>@context.PrincipalId.Value</code>
-                </FluentLink>
+                </RouteLink>
               </TemplateColumn>
               <TemplateColumn Title="Display name" ColumnId="@nameof(PrincipalListSortColumn.DisplayName)"
                 Sortable="@CanReadProfiles" SortBy="@DisplayNameSort"

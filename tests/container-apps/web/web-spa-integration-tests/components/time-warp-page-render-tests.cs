@@ -355,7 +355,7 @@ public partial class TimeWarpPage_Should_
     html.ShouldContain("Ada Lovelace");
   }
 
-  public static async Task Link_The_User_Card_When_The_Profile_Policy_Allows_It()
+  public static async Task Make_The_User_Card_A_Button_When_The_Profile_Policy_Allows_It()
   {
     ClaimsIdentity identity = new("Test");
     identity.AddClaim(new Claim(ClaimTypes.Name, "Ada Lovelace"));
@@ -372,8 +372,8 @@ public partial class TimeWarpPage_Should_
     );
 
     string root = UserCardTag(html);
-    root.ShouldStartWith("<a ");
-    root.ShouldContain("href=\"/Profile\"");
+    root.ShouldStartWith("<button ");
+    root.ShouldNotContain("href");
     root.ShouldContain("data-qa=\"ShellUserCard\"");
     html.ShouldContain("Ada Lovelace");
     html.ShouldNotContain("title=\"GitHub\"");

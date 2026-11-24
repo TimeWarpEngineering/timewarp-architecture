@@ -13,7 +13,7 @@
     <NoWarn>$(NoWarn);CA1032</NoWarn>   <!-- Domain exceptions omit the full standard constructor set -->
     <NoWarn>$(NoWarn);CA1034</NoWarn>   <!-- Nested public types — feature contract classes (Command/Query/Response) -->
     <NoWarn>$(NoWarn);CA1040</NoWarn>   <!-- Marker interfaces (IBaseAction) -->
-    <NoWarn>$(NoWarn);CA1052</NoWarn>   <!-- Static-holder modules (feature Module types, LinkHelper) that are not made static -->
+    <NoWarn>$(NoWarn);CA1052</NoWarn>   <!-- Static-holder modules (feature Module types) that are not made static -->
     <NoWarn>$(NoWarn);CA1062</NoWarn>   <!-- Handlers receive mediator/framework-supplied non-null args -->
     <NoWarn>$(NoWarn);CA1303</NoWarn>   <!-- Literal strings in demo/task actions are not localized -->
     <NoWarn>$(NoWarn);CA1304</NoWarn>   <!-- Culture-aware string APIs in gRPC demo services (with CA1311) -->

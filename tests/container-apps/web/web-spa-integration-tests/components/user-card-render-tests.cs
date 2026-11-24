@@ -1,11 +1,11 @@
 #region Purpose
-// Render UserCard with HtmlRenderer and pin the name, detail, link, and attributes.
+// Render UserCard with HtmlRenderer and pin the name, detail, button, and attributes.
 #endregion
 
 #region Design
 // UserCard is a Tier-1 leaf. Avatar needs no services, so a bare ServiceCollection host is enough.
-// Href makes the root an anchor. A blank Href makes the root a div. A blank Detail omits the
-// detail line. Class and unmatched attributes land on that root. The component authors no style element.
+// OnClick makes the root a button (task 506: no Href, TWA0050). No OnClick makes the root a div.
+// A blank Detail omits the detail line. Class and unmatched attributes land on that root. The component authors no style element.
 #endregion
 
 namespace UserCardRender_;
@@ -57,26 +57,26 @@ public class UserCard_Should_
     shown.ShouldContain("ada@example.test");
   }
 
-  public static async Task Render_An_Anchor_When_Href_Is_Set()
+  public static async Task Render_A_Button_When_OnClick_Is_Set()
   {
     string html = await RenderAsync(new Dictionary<string, object?>
     {
       ["Name"] = "Ada Lovelace",
-      ["Href"] = "/Profile"
+      ["OnClick"] = EventCallback.Factory.Create(new object(), static () => { })
     });
 
     string root = RootTag(html);
-    root.ShouldStartWith("<a ");
+    root.ShouldStartWith("<button ");
+    root.ShouldContain("type=\"button\"");
     root.ShouldContain("class=\"twe-user-card\"");
-    root.ShouldContain("href=\"/Profile\"");
+    root.ShouldNotContain("href");
   }
 
-  public static async Task Render_A_Div_When_Href_Is_Blank()
+  public static async Task Render_A_Div_Without_OnClick()
   {
     string html = await RenderAsync(new Dictionary<string, object?>
     {
-      ["Name"] = "Ada Lovelace",
-      ["Href"] = "  "
+      ["Name"] = "Ada Lovelace"
     });
 
     string root = RootTag(html);
