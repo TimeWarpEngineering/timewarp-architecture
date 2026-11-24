@@ -31,4 +31,4 @@ Task 501 disabled `ci (playwright)` in `.github/workflows/workflow.yml` because 
 ## Notes
 
 - Companion task **501** disables `ci (playwright)` in `workflow.yml` immediately.
-- Parent performance review: **500** (`kanban/to-do/500-walk-performance-review-for-tasks-499-483-494-and-498/report/analysis.md`).
+- Parent performance review: **500** (`kanban/archived/500-walk-performance-review-for-tasks-499-483-494-and-498/report/analysis.md`) and follow-up **514** (`kanban/done/514-walk-performance-review-for-tasks-489-001-005-495-491-490-453-501-and-503/report/analysis.md`).
