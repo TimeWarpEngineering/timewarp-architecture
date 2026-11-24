@@ -72,6 +72,8 @@ Done when:
   before the component's own reading, and unmatched attributes (`aria-label`, `data-qa`) land on the
   hidden `<input type=file>`. `Icons.Regular.Size16.Attach` exists (FluentUI MCP).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1cd22e93-88ae-4755-880e-0060d4a7e266, max-turns 500, Done — 2026-11-24T07:04:55Z
+- Review oracle: grok session 01a20c5f-5555-72e0-95d3-4e4080e9423c (2026-11-24). Effort 2, roster general, round 1.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20c5f-5555-72e0-95d3-4e4080e9423c, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-24T07:13:39Z
 
 ## Results
 
@@ -121,3 +123,13 @@ On the page, Attachments shows a row of outline buttons "Choose files" and "Capt
 12px apart, with no grey "Choose Files | No file chosen" widget. Enter, Space or click opens the OS
 file picker. Chosen files appear as chips 8px under the row. With no files, nothing shows under the row.
 
+### Review
+
+- Round 1, effort 2, roster general (grok session 01a20c5f-5555-72e0-95d3-4e4080e9423c).
+- Counts: bug 0, suggestion 0, nit 0. Open 0, fixed 0, wontfix 0.
+- Disposition: clean. No wontfix and no escalation. The implementer restatement matches the task; no misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
