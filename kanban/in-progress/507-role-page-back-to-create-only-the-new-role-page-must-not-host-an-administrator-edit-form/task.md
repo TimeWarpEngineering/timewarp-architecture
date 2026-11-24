@@ -115,3 +115,4 @@ Gates:
 - Created: 2026-11-24 from Steve's review of the New Role page. The 489-003 spec wording was
   approved through this cockpit; the error is in the spec, not the implementer.
 - Implementation: Claude Opus 5.5, 2026-11-24. RolePage back to create-only, Playwright proof of both role pages, 489-003 kitchen corrected, screenshots in evidence/.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 27063109-2b43-4d3a-ac13-c8fbabf92fa3, max-turns 500, Done — 2026-11-24T04:02:10Z
