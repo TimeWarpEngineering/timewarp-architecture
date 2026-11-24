@@ -2,13 +2,23 @@
 
 **Date:** 2026-11-25
 **Host task:** kanban/in-progress/513-brand-methodology-tw-brand-skill-brand-options-covers-every-brand-surface-one-appsettings-source-and-a-generated-app-shows-no-time-warp-brand/
-**Diff scope:** branch `task/513-brand-methodology-tw-brand-skill-brand-options` vs merge-base `4b13bcf8969e063476e27d834bfc50f869d99545` (master). Three commits, 98 files, about 3646 lines. Working tree was clean except this untracked `review/` kitchen.
-**Plan / brief:** `task.md` requirements and `## Goal (implementer restatement)`. One server-owned `BrandOptions` section, role tokens, `tw-brand`, template-smoke rebrand check, evidence screenshots.
-**Effort:** 3 (by-diff; roster is general only)
+**Diff scope:** Round 1 reviewed the branch vs merge-base `4b13bcf8969e063476e27d834bfc50f869d99545` (master): three commits, 98 files, about 3646 lines. Round 2 reviews the fix delta only, commit `27f8dc2fd`: `DesignSystemPage.razor`, `skills/tw-blazor-css-strategy/SKILL.md`, `brand-copy-tests.cs`, and the kitchen record of that fix.
+**Plan / brief:** `task.md` requirements and `## Goal (implementer restatement)`. One server-owned `BrandOptions` section, role tokens, `tw-brand`, template-smoke rebrand check, evidence screenshots. Round 2 checks M1 and M2 against that fix.
+**Effort:** Round 1 effort 3; round 2 effort 1. Roster is general only for both rounds.
 **Reviewer roster:** general
-**Session IDs:** review oracle grok `01a20ec9-9a9a-7713-a38f-1427674d18bd` (2026-11-25). Implementer session is on `task.md`.
+**Session IDs:** Round 1 review oracle grok `01a20ec9-9a9a-7713-a38f-1427674d18bd` (2026-11-25). Round 2 review oracle grok `01a20ed8-08e5-7343-b16f-062062c524bd` (2026-11-25). Implementer session is on `task.md`.
 
 ## Budget (by-diff)
+
+Round 2 (this review):
+
+- Lines changed: 173
+- Effort: 1
+- TCB hits: none
+- Roster axes: general
+- Turn cap: 80 (--max-turns; cursor uncapped)
+
+Round 1 (frozen under `review/round-1/`):
 
 - Lines changed: 3646
 - Effort: 3

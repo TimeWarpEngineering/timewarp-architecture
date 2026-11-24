@@ -134,8 +134,10 @@ Acceptance, as I read it:
   fallback inside a bound getter (LogoAlt from ProductName) froze at bind time; fallbacks are
   `Effective*` read-only properties instead.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 263ce09f-6e17-490e-a6fc-8f7bdd898405, max-turns 500, Done — 2026-11-24T18:20:14Z
-- Reviewer: grok session 01a20ec9-9a9a-7713-a38f-1427674d18bd (2026-11-25). Round 1, effort 3, roster general. Open findings in `review/round-1/merged.md`. Disposition not written.
+- Reviewer: grok session 01a20ec9-9a9a-7713-a38f-1427674d18bd (2026-11-25). Round 1, effort 3, roster general. Findings in `review/round-1/merged.md`.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20ec9-9a9a-7713-a38f-1427674d18bd, max-turns 200, artifacts general.md, merged.md — 2026-11-24T18:30:29Z
+- Reviewer round 2: grok session 01a20ed8-08e5-7343-b16f-062062c524bd (2026-11-25). Effort 1, roster general. Re-reviewed the fix delta. Disposition clean in `review/disposition.md`.
+- Review oracle round 2: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7), session 01a20ed8-08e5-7343-b16f-062062c524bd, max-turns 80, artifacts `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md` — 2026-11-25
 
 ## Learnings
 
@@ -241,7 +243,15 @@ Acceptance, as I read it:
 - `--matrix` was not run: the template.json change (`appNameKebab` onlyIf, `wwwroot/js` exclude) is flag-independent; CI runs the matrix nightly.
 - `ganda repo audit` — passed with 1 advisory warning (`vscode-window-icon`: `.vscode/settings.json` missing in this worktree); `ganda repo audit --fix` wrote the ignored local `.vscode/settings.json`; rerun: "Repository passes all audit checks."
 
+### Review disposition
+
+Disposition is **clean** after two rounds. Round 1 was effort 3, roster general, and left M1 (bug) and M2 (suggestion) open. Round 2 was effort 1, roster general, and re-checked the fix delta in `27f8dc2fd`. Both findings are fixed. Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Review
 
-- Round 1: Blocked — open M1, M2
+- Round 1 (effort 3, roster general): M1 bug, M2 suggestion. Both were open at the end of that round.
 - Fix pass (2026-11-25): M1 fixed, M2 fixed.
+- Round 2 (effort 1, roster general): re-review of commit `27f8dc2fd` only. M1 fixed, M2 fixed. No new findings.
+- **Disposition:** clean. Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. See `### Review disposition` under `## Results`.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Round 2: Done
