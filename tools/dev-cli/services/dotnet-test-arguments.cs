@@ -17,6 +17,10 @@
 // out of the .slnx on purpose (the solution build never compiles co-located runfiles).
 // Task 487: every `dotnet test` also collects MTP code coverage (CoverageFlags) into
 // artifacts/coverage/<project>/coverage.cobertura.xml; CI uploads that folder (ganda audit ci-code-coverage).
+// Task 516: `dev test --project` builds only the selected projects (BuildPlan), one at a time, instead
+// of the whole solution, so a targeted run stays fast and still never builds inside `dotnet test`.
+// --filter-class / --filter-method go after the coverage flags to Jaribu's MTP options, which each
+// take one substring (class FullName / method name, ignore-case).
 #endregion
 
 namespace DevCli.Services;
@@ -55,12 +59,32 @@ internal static class DotNetTestArguments
   /// <paramref name="resultsDirectory"/> replaces <see cref="CoverageRoot"/> so each project writes
   /// its own Cobertura file (parallel projects never share one).
   /// </summary>
-  internal static string[] PlatformArguments(string resultsDirectory)
+  internal static string[] PlatformArguments(string resultsDirectory, string? filterClass = null, string? filterMethod = null)
   {
     List<string> arguments = ["--"];
     string[] flags = CoverageFlags.Split(' ');
     flags[1] = resultsDirectory;
     arguments.AddRange(flags);
+    if (!string.IsNullOrWhiteSpace(filterClass)) arguments.AddRange(["--filter-class", filterClass]);
+    if (!string.IsNullOrWhiteSpace(filterMethod)) arguments.AddRange(["--filter-method", filterMethod]);
     return [.. arguments];
   }
+
+  /// <summary>
+  /// The serial build phase for <paramref name="projects"/>. A full run builds the solution unless
+  /// <paramref name="noBuild"/>, then each project the solution does not list. A run narrowed by
+  /// <c>--project</c> (<paramref name="selectedByName"/>) skips the solution build and builds each
+  /// selected project instead; with <paramref name="noBuild"/> it builds only the out-of-solution ones.
+  /// </summary>
+  internal static TestBuildPlan BuildPlan(IReadOnlyList<string> projects, HashSet<string> solutionProjects, bool noBuild, bool selectedByName)
+  {
+    bool buildSolution = !noBuild && !selectedByName;
+    bool buildEverySelected = !noBuild && selectedByName;
+    return new(
+      buildSolution,
+      [.. projects.Where(project => buildEverySelected || !solutionProjects.Contains(Path.GetFullPath(project)))]);
+  }
 }
+
+/// <summary>Whether the build phase builds the solution, and which projects it then builds one at a time.</summary>
+internal sealed record TestBuildPlan(bool Solution, string[] Projects);

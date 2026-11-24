@@ -27,6 +27,12 @@
 // Task 366: --group <fast|playwright|integration> runs one convention-derived group (TestGroups)
 // so CI runs the groups as parallel jobs. With --group, any project that matches no group or
 // several fails the run before a test starts.
+// Task 516: --project narrows the run to named projects (TestProjectSelection), after --group when
+// both are given, and the build phase then builds only those (DotNetTestArguments.BuildPlan).
+// --filter-class / --filter-method reach every selected project's MTP run (PlatformArguments), so a
+// targeted run never needs raw `dotnet test` from the repo root. A project where the filter selects
+// no test fails (MTP exit code 8, zero tests ran), which catches a mistyped filter; with several
+// projects the run says so up front, so pair a filter with --project.
 #endregion
 
 namespace DevCli.Commands;
@@ -51,6 +57,15 @@ internal sealed class TestCommand : ICommand<Unit>
 
   [Option("max-integration", Description = "Integration-group projects running at once (default: 3; Docker and host heavy)")]
   public int? MaxIntegration { get; set; }
+
+  [Option("project", "p", Description = "Run only these test projects: exact name or a unique substring of the name or path (repeatable, comma-separated)")]
+  public string[] Project { get; set; } = [];
+
+  [Option("filter-class", Description = "Run only test classes whose full name contains this substring (Jaribu MTP)")]
+  public string? FilterClass { get; set; }
+
+  [Option("filter-method", Description = "Run only test methods whose name contains this substring (Jaribu MTP)")]
+  public string? FilterMethod { get; set; }
 
   internal sealed class Handler : IRequestHandler<TestCommand, Unit>
   {
@@ -111,6 +126,21 @@ internal sealed class TestCommand : ICommand<Unit>
         projects = grouped;
       }
 
+      string[] projectNames = TestProjectSelection.Names(Command.Project);
+      if (projectNames.Length > 0)
+      {
+        TestProjectSelectionResult selection = TestProjectSelection.Select(projects, RepoRoot, projectNames);
+        if (selection.Error is not null)
+        {
+          Terminal.WriteErrorLine(selection.Error.Red());
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        projects = selection.Projects;
+        Terminal.WriteLine($"Test projects: {string.Join(", ", projects.Select(Path.GetFileNameWithoutExtension))}");
+      }
+
       string? overrideValue = Environment.GetEnvironmentVariable(InProcTestPorts.EnvironmentVariableName);
       string? checkoutRoot = InProcTestPorts.FindCheckoutRoot([RepoRoot]);
       (int basePort, InProcTestPorts.BaseSource source) = InProcTestPorts.ResolveBase(overrideValue, checkoutRoot);
@@ -129,7 +159,8 @@ internal sealed class TestCommand : ICommand<Unit>
 
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
       SolutionProjects = DotNetTestArguments.SolutionProjects(await File.ReadAllTextAsync(solutionFile, Ct), RepoRoot);
-      if (!await BuildAsync(solutionFile, projects)) return false;
+      TestBuildPlan buildPlan = DotNetTestArguments.BuildPlan(projects, SolutionProjects, Command.NoBuild, projectNames.Length > 0);
+      if (!await BuildAsync(solutionFile, buildPlan)) return false;
 
       int[] portBases = TestParallelism.PortBases(basePort, source, maxParallel);
       HashSet<string> appHostSuites = [.. projects
@@ -139,6 +170,9 @@ internal sealed class TestCommand : ICommand<Unit>
         $"(integration: {maxIntegration}); port bases {string.Join(", ", portBases)}");
       if (appHostSuites.Count > 0)
         Terminal.WriteLine($"AppHost suites run one at a time: {string.Join(", ", appHostSuites.Select(Path.GetFileNameWithoutExtension))}");
+
+      if (projects.Length > 1 && (Command.FilterClass is not null || Command.FilterMethod is not null))
+        Terminal.WriteLine("Filters apply to every selected project; a project where they match no test fails (zero tests ran). Narrow with --project.".Yellow());
 
       ProjectResult[] results = await RunAllAsync(projects, appHostSuites, portBases, maxIntegration);
       WriteSummary(results);
@@ -153,10 +187,10 @@ internal sealed class TestCommand : ICommand<Unit>
       return true;
     }
 
-    // Serial build phase (DotNetTestArguments): solution unless --no-build, then out-of-solution projects.
-    private async Task<bool> BuildAsync(string solutionFile, string[] projects)
+    // Serial build phase (DotNetTestArguments.BuildPlan): the solution, then single projects one at a time.
+    private async Task<bool> BuildAsync(string solutionFile, TestBuildPlan plan)
     {
-      if (!Command.NoBuild)
+      if (plan.Solution)
       {
         Terminal.WriteLine($"\nBuilding {Path.GetFileName(solutionFile)} (Release)...");
         CommandResult build = DotNet.Build()
@@ -167,9 +201,10 @@ internal sealed class TestCommand : ICommand<Unit>
         if (!await BuildStepAsync(build, Path.GetFileName(solutionFile))) return false;
       }
 
-      foreach (string project in projects.Where(p => !SolutionProjects.Contains(Path.GetFullPath(p))))
+      foreach (string project in plan.Projects)
       {
-        Terminal.WriteLine($"Building {Path.GetFileNameWithoutExtension(project)} (not in the solution)...");
+        string reason = SolutionProjects.Contains(Path.GetFullPath(project)) ? "selected" : "not in the solution";
+        Terminal.WriteLine($"Building {Path.GetFileNameWithoutExtension(project)} ({reason}, Release)...");
         CommandResult build = DotNet.Build()
           .WithConfiguration("Release")
           .WithWorkingDirectory(ProjectDirectory(project))
@@ -327,13 +362,13 @@ internal sealed class TestCommand : ICommand<Unit>
     /// project-local global.json supplies the MTP runner (task 145-007). The worker's port base
     /// goes to the child (task 370).
     /// </summary>
-    private static CommandResult BuildTestCommand(string project, int portBase)
+    private CommandResult BuildTestCommand(string project, int portBase)
     {
       return DotNet.Test()
         .WithConfiguration("Release")
         .WithNoBuild()
         .WithNoRestore()
-        .WithArguments(DotNetTestArguments.PlatformArguments(CoverageDirectory(project)))
+        .WithArguments(DotNetTestArguments.PlatformArguments(CoverageDirectory(project), Command.FilterClass, Command.FilterMethod))
         .WithWorkingDirectory(ProjectDirectory(project))
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, portBase.ToString(CultureInfo.InvariantCulture))
         .WithNoValidation()

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Compile-include of aspire-run.cs / aspire-version-sources.cs / services/deploy/*.cs (AspireDeploy, DeployOperate, and their records) / neon-connection.cs / db-nuke.cs / services/entra/*.cs (EntraSetup, EntraTenants, and their records) / jaribu-aggregator-summary-gate.cs / template-smoke-content-assets.cs / xai-preflight.cs / dotnet-test-arguments.cs / generated-ingress-prefixes.cs / test-groups.cs / aspire-publish-targets.cs / test-parallelism.cs / skill-spec-lint.cs / workflow-path-classes.cs / green-key.cs
+    <!-- Compile-include of aspire-run.cs / aspire-version-sources.cs / services/deploy/*.cs (AspireDeploy, DeployOperate, and their records) / neon-connection.cs / db-nuke.cs / services/entra/*.cs (EntraSetup, EntraTenants, and their records) / jaribu-aggregator-summary-gate.cs / template-smoke-content-assets.cs / xai-preflight.cs / dotnet-test-arguments.cs / test-project-selection.cs / generated-ingress-prefixes.cs / test-groups.cs / aspire-publish-targets.cs / test-parallelism.cs / skill-spec-lint.cs / workflow-path-classes.cs / green-key.cs
          (with in-proc-test-ports.cs, which test-parallelism.cs uses)
          (pure helpers). Monorepo-only:
          template.json excludes this tree. The slnx tests/tools folder is gated by a template
@@ -30,6 +30,7 @@
     <Compile Include="..\..\..\tools\dev-cli\services\template-smoke-content-assets.cs" Link="services\template-smoke-content-assets.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\xai-preflight.cs" Link="services\xai-preflight.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\dotnet-test-arguments.cs" Link="services\dotnet-test-arguments.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\test-project-selection.cs" Link="services\test-project-selection.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\generated-ingress-prefixes.cs" Link="services\generated-ingress-prefixes.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\test-groups.cs" Link="services\test-groups.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\aspire-publish-targets.cs" Link="services\aspire-publish-targets.cs" />
