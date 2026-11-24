@@ -218,3 +218,6 @@ span, not a POST to `/v1/stt`.
   (`ask-ai.ts` 186 lines, `ask-voice.ts` 471). Rebuilt (`./bin/dev build` green) and reran the
   Playwright classes `AskVoiceInput` 2/2 and `AskFocus` 1/1. The `vscode-window-icon` warning
   (local `.vscode/settings.json` missing, git-ignored) is fixed by `ganda repo audit --fix`.
+- `ganda repo audit --fix` (after the split): "Repository passes all audit checks."
+- Not run here: `dev template-smoke` (no `#if` flag or template-symbol change; CI smokes the
+  default variant on the PR) and `dev check-version` (template-only change, no platform package).
