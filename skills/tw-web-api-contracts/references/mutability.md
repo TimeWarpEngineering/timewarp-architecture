@@ -81,24 +81,37 @@ for `EditForm`, not `I*Details`.
 
 An edit form has two objects: the Response in the state store and the Command the form edits.
 
-1. **The store holds the whole fetched `Get*.Response`.** A state property is the Response
-   object itself, not flattened copies of its fields. A store holds no unsaved form draft.
+1. **The store holds the whole fetched `Get*.Response`.** For the query an edit form loads, a
+   state property is the Response object itself, not flattened copies of its fields. A store
+   holds no unsaved form draft.
 2. **A mutable details Response gets a real `Clone`.** TimeWarp.State's transaction behavior
    clones state before every handler. It calls `ICloneable.Clone()` when the object implements
    it. `Clone() => this` shares the instance, so it is right only for an immutable contract. For
    a `partial` Response whose `I*Details` has a `set` (not `init`), the contracts generator emits
    `ICloneable.Clone()`: a `MemberwiseClone`, then new `List<T>`, `HashSet<T>`,
-   `Dictionary<TKey, TValue>`, and rank-1 arrays (and their interfaces), with `ICloneable`
-   elements cloned. Get-only and `init` members are copied without running the constructor.
+   `Dictionary<TKey, TValue>`, and rank-1 arrays (and their interfaces). Elements are shared,
+   except a reference type other than `string` that implements `ICloneable`: each such element
+   is cloned. A null nullable collection stays null; a null non-nullable collection becomes
+   empty. Any other collection type is assigned as-is, so it stays shared. Get-only and `init`
+   members are copied without running the constructor. When an object does not implement
+   `ICloneable`, TimeWarp.State builds a new instance and copies its fields (auto-property
+   backing fields included) itself.
 3. **`I*Details` drives a generated `Update*.Command.From(I*Details)`.** Every interface property
-   is copied, and collections get the same deep copy as `Clone`. The form edits that Command as a
+   is copied, and collections follow the same rules as `Clone` (new collection, shared elements
+   unless `ICloneable`). The form edits that Command as a
    working copy outside the store. The copy runs on load, on Cancel, and after the page's own
    successful save. It does not run on every `OnParametersSet` or render. A later store
-   response is reconciled where the component sees it: a page that reads the store does it in
-   `ShouldReRender` (a state re-render does not call `OnParametersSet`), and a child form that
-   takes the Response as a parameter does it in `OnParametersSet`. An unedited Command is
-   replaced from the new response. An edited Command keeps its edits, and takes the new
-   `Version` when the response's form fields still match what it was copied from.
+   response is reconciled where the component sees it, and the two places use different rules:
+   - **A page that reads the store** reconciles in `ShouldReRender` (a state re-render does not
+     call `OnParametersSet`). A clean Command is replaced with `From` on the new response. A
+     dirty Command keeps its field edits, and copies only the new `Version` when the new
+     response's form fields still match the snapshot the Command was copied from
+     (`AuthenticationPage.razor`).
+   - **A child form that takes the Response as a parameter** reconciles in `OnParametersSet`.
+     It calls `From` when the response's key fields (for a role: id, name, description) differ
+     from the values it last copied, which replaces the working copy and drops its edits. While
+     those fields match, it keeps the Command as it is and does not patch `Version` onto it
+     (`RoleEditForm.razor`).
 4. **`Version` stays off the `I*Details` interface.** It is a concurrency token, not a field the
    user edits. `From` ends by calling `static partial void CopyBeyondDetails(Command command,
    I*Details source)`. The Command implements it and copies `Version` (or a route id such as

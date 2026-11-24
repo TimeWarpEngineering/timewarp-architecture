@@ -268,7 +268,13 @@ A server-bound action set that only sends one contract is generated, not written
 contracts on the state:
 
 ```csharp
-[ContractState(typeof(GetRoles), typeof(GetRole), typeof(SetRolePermissions))]
+[ContractState
+(
+  typeof(GetRoles),
+  typeof(GetRole),
+  typeof(SetRolePermissions),
+  typeof(SetRoleAgentScopes)
+)]
 public sealed partial class RoleState : State<RoleState>
 ```
 
@@ -279,14 +285,17 @@ state:
 
 | Hook | When | Kind |
 |------|------|------|
-| `private partial void On<C>Loaded(Response)` | every Query | required: store the whole Response |
+| `private partial void On<C>Loaded(Response)` | every Query | required: store what the page reads |
 | `private partial void Build<C>Request(TRequest)` | a contract in `DraftRequests` | required: fill the request from state |
 | `private partial Task<bool> Confirm<C>Async(TRequest, IConfirmationService, CancellationToken)` | a `[Destructive]` request | required: ask before sending |
 | `partial void On<C>Succeeded(Response)` | every Command | optional |
 | `partial void OnBuilding<C>Request(TRequest)` | a contract not in `DraftRequests` | optional |
 
 A missing required hook is CS8795, so a fetch that forgets to store its Response does not compile.
-The store holds the fetched Response, not flattened fields and not unsaved form edits. An edit
+For the query an edit form loads, the hook stores the whole Response (`OnGetRoleLoaded` sets
+`RoleSnapshot = response`), not flattened fields. A list query's hook may store the rows the page
+renders (`OnGetRolesLoaded` sets `RoleRows` from `response.Items`). The store holds no unsaved
+form edits. An edit
 form or editing page keeps its working copy (an `Update*` Command from the generated `From`, or
 a page-owned set) and sends the request it built (`tw-web-api-contracts`,
 `references/mutability.md`). `DraftRequests` is only for a request the state itself builds from

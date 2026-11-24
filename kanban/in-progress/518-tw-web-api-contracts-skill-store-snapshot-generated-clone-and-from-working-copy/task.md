@@ -98,6 +98,13 @@ Done when:
 - Created: 9e8b77bb-fa9d-4469-930c-9999fd3c4875 (2026-11-24), Claude cockpit in timewarp-flow
 - Implemented 2026-11-25 by the ganda task-work implement oracle (Claude Opus 5.5).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a5e5f07c-992b-42d1-9ffd-3f485ecc0563, max-turns 500, Done — 2026-11-24T19:12:40Z
+- Reviewer: Grok session 01a20ef9-9c19-71e3-894d-b01849941f8f (2026-11-25). Effort 2, roster general, round 1. Open findings M1, M2, M3 in `review/round-1/merged.md`.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20ef9-9c19-71e3-894d-b01849941f8f, max-turns 120, artifacts general.md, merged.md — 2026-11-24T19:20:58Z
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
+- Fix pass for round 1 (implement-fix-2, 2026-11-25): M1, M2, M3 fixed; see `### Fix pass (round 1 findings)`.
 
 ## Notes
 
@@ -144,6 +151,31 @@ Changed:
 After merge, a consumer repo runs `ganda skills update tw-web-api-contracts` (and
 `ganda skills update tw-blazor`) to refresh its synced copies. Synced copies in other repos were
 not edited.
+
+### Fix pass (round 1 findings)
+
+- M1 fixed: `mutability.md` point 3 now states two rules. A store-reading page
+  (`AuthenticationPage.AcceptPolicy`, in `ShouldReRender`) replaces a clean Command with `From`
+  and, for a dirty one, copies only `Version` when the new response's form fields match the
+  snapshot it was copied from. A child form (`RoleEditForm.OnParametersSet`) calls `From` when
+  id, name, or description differ from the values last copied, and otherwise keeps the Command
+  without patching `Version`.
+- M2 fixed: `tw-blazor/SKILL.md` hook table says `On<C>Loaded` stores what the page reads; the
+  paragraph limits the whole-Response rule to the edit-form query (`RoleSnapshot = response`)
+  and allows a list hook to store rendered rows (`OnGetRolesLoaded` sets `RoleRows`). The
+  `[ContractState]` snippet now lists `SetRoleAgentScopes`, matching `role-state.cs`.
+  `mutability.md` point 1 is scoped to the edit-form query for the same reason.
+- M3 fixed: `mutability.md` point 2 carries the guide's collection rules (elements shared except
+  non-`string` `ICloneable` references; null nullable stays null; null non-nullable becomes
+  empty; other collection types assigned as-is) and says TimeWarp.State copies fields itself
+  when the object does not implement `ICloneable`. Point 3 says `From` follows the same rules.
+
+Fix-pass gates:
+
+- `./bin/dev build`: passed (Build completed successfully).
+- Test files: none. Markdown-only change under `skills/`; no product code or test file changed.
+- `./bin/dev lint-skills`: passed (10 skills linted, 10 passed; eval.yaml valid).
+- `ganda repo audit`: passed (Repository passes all audit checks).
 
 ### How to validate
 
