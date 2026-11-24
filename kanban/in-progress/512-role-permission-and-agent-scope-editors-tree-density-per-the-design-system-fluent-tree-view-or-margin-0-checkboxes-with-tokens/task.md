@@ -143,7 +143,9 @@ Acceptance:
 - `web-spa-playwright-tests/role-pages-playwright-tests.cs` (edited): `./bin/dev test --project web-spa-playwright-tests --filter-class RolePages_` — 2/2 passed.
 - `./bin/dev lint-skills` — 9/9 skills passed.
 - `dev template-smoke` not run locally; CI runs the default variant on the PR.
-- `ganda repo audit` — see below.
+- `ganda repo audit` — first run passed with one advisory FAIL (`vscode-window-icon`: local
+  `.vscode/settings.json` missing); `ganda repo audit --fix` wrote that git-ignored file; re-run:
+  "Repository passes all audit checks."
 
 ### How to validate
 
