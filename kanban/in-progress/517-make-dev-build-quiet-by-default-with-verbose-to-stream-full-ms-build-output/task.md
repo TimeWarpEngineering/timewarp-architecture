@@ -51,6 +51,8 @@ Acceptance:
 
 - Created: 2902026 (2026-11-24)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b4abdd8f-39de-453e-8ff5-876c52ee5f18, max-turns 500, Done — 2026-11-24T14:57:37Z
+- Review oracle: Grok 4.7, session 01a20e10-17ad-7ba1-879e-9ed73ba2c14c, effort 2, roster general, turn cap 120, clean — 2026-11-24
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20e10-17ad-7ba1-879e-9ed73ba2c14c, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-24T15:05:24Z
 
 ## Results
 
@@ -91,6 +93,22 @@ Expect:
 - `./bin/dev build` — exit 0, 0 warnings / 0 errors, 4 output lines (33.3s). Also checked `-v` (112 lines, exit 0) and `-q` (4 lines, exit 0).
 - `tests/tools/dev-cli-tests/build-output-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI` guard; project-based dev-cli-tests). Ran `./bin/dev test --project dev-cli-tests --filter-class BuildOutput_`: 5 passed, 0 failed.
 - `ganda repo audit` — passed, exit 0, with 1 advisory warning (`vscode-window-icon`: `.vscode/settings.json` missing in this worktree). `ganda repo audit --fix` wrote that file (gitignored, local only) and the check now passes; nothing to commit for it.
+
+### Review
+
+- Rounds: 1. Roster: general (effort 2). Disposition: **clean**, 0 open, 0 wontfix.
+- Counts: bug 0 / suggestion 0 / nit 0.
+- Restatement matches the original product requirements. No misread. See `## Learnings` for the verification-gate note.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- No product misread. The restatement matches the original requirements: capture by default, a summary line with the repository root, elapsed time, and "Build completed successfully!" on success, the full captured output and a non-zero exit on failure, `--verbose` / `-v` streams, and `--quiet` / `-q` stays accepted. Quiet is a no-op for the default, so `--verbose` wins when both flags are passed. `dev workflow` still builds with `new BuildCommand()` defaults, and a failed step still sets a non-zero exit code that stops the pipeline.
+- Verification note: requirement 3 also names `./bin/dev test --group fast`. The restatement's acceptance gates name `./bin/dev build`, the new test file, and `ganda repo audit`. The checklist records that the full fast group is left to CI. The recorded results cover this diff (self-install, default / `-v` / `-q` builds, the five `BuildOutput_` tests, and `ganda repo audit`).
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
