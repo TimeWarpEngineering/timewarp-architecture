@@ -1,11 +1,13 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)container-apps/web/projects/web-contracts/web-contracts.csproj
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
+#:project $(TestsDirectory)common/timewarp-testing/timewarp-testing.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0005;IDE0007;IDE0008
 #:include feedback-triage-world-tests.cs
+#:include feedback-postgres-stores-tests.cs
 
 // Co-located Jaribu: admin feedback list, sort, paging, detail, status changes, replies, and notes.
 // Run standalone:  dotnet run source/container-apps/web/features/feedback/feedback-admin-tests.cs
@@ -218,6 +220,23 @@ namespace TimeWarp.Architecture.Features.Feedback
       response.Item.Activity.Count.ShouldBe(1);
       response.Item.Activity[0].Kind.ShouldBe(ContractActivityKind.InternalNote);
       response.Item.Activity[0].AuthorPrincipalId.ShouldBe(world.Admin.Value);
+    }
+
+    public static async Task AdminGet_Should_ReportAnOrphanAttachmentAsMissing()
+    {
+      TriageWorld world = new();
+      FeedbackItem item = await world.AddAsync(world.Filer.Value, day: 1);
+      FeedbackAttachment kept = await world.LinkAttachmentAsync(item, "kept.png", storeBytes: true);
+      FeedbackAttachment orphan = await world.LinkAttachmentAsync(item, "pasted.png", storeBytes: false);
+
+      AdminGetContract.Response response = (await world.AdminGet().Handle(
+          new AdminGetContract.Query { FeedbackItemId = item.Id.Value },
+          CancellationToken.None))
+        .Match(ok => ok, _ => throw new InvalidOperationException("Expected admin get success"));
+      response.Item.Attachments.Single(attachment => attachment.AttachmentId == kept.Id.Value).IsFilePresent.ShouldBeTrue();
+      GetFeedback.Attachment missing = response.Item.Attachments.Single(attachment => attachment.AttachmentId == orphan.Id.Value);
+      missing.IsFilePresent.ShouldBeFalse();
+      missing.FileName.ShouldBe("pasted.png");
     }
 
     public static async Task AdminGet_Should_Return404ForAMissingId()

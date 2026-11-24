@@ -122,6 +122,7 @@ public class Document_Given_
     completeIssuance.ShouldContain("15 minutes by default");
     completeIssuance.ShouldContain("the change applies at the next issuance");
   }
+#if postgres
 
   public static async Task ListFeedback_Should_NameNewAndTheProcessedMarker()
   {
@@ -131,6 +132,7 @@ public class Document_Given_
     description.ShouldContain("processed marker");
     description.ShouldContain("off New");
   }
+#endif
 
   private static (string OperationId, string Method, string Path) CeremonyStep<TRequest>(string operationId)
     where TRequest : IApiRequest, new()

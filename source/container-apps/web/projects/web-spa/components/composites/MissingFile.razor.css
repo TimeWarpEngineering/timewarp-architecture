@@ -1,0 +1,21 @@
+.missing-file {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--twe-space-2);
+  padding: var(--twe-space-2) var(--twe-space-3);
+  border: 1px dashed var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+}
+
+.missing-file-name {
+  color: var(--twe-ink-2);
+  font-family: var(--twe-font-mono);
+  overflow-wrap: anywhere;
+}
+
+.missing-file-state {
+  font-style: italic;
+}

@@ -4,11 +4,15 @@
 
 namespace CatalogAgent_;
 
+#if postgres
 using Microsoft.AspNetCore.Components;
+#endif
 using Microsoft.Extensions.AI;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features.AgentChats;
+#if postgres
 using TimeWarp.Architecture.Features.Feedback;
+#endif
 using TimeWarp.Architecture.Features.Settings;
 
 [TestTag("Integration")]
@@ -181,6 +185,7 @@ public partial class CatalogAgent_Should
     route.PathOr(stuck).ShouldBe("/Settings");
     await Task.CompletedTask;
   }
+#if postgres
 
   public static async Task Page_Context_On_Feedback_Uses_The_Ask_Scope_Not_A_Stuck_Manager()
   {
@@ -247,4 +252,5 @@ public partial class CatalogAgent_Should
     itemDocument.RootElement.GetProperty("openItem").GetProperty("title").GetString().ShouldBe("Filing 0");
     itemDocument.RootElement.GetProperty("openItem").TryGetProperty("body", out _).ShouldBeFalse();
   }
+#endif
 }

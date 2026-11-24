@@ -8,7 +8,8 @@
 // Activity includes internal notes. FilerHasEmail tells the admin whether a reply or a
 // notifying status change will also reach the filer by email; the address itself is not sent.
 // Attachments reuse GetFeedback.Attachment, whose DownloadPath the download endpoint serves to
-// the owner and to admin.feedback.read.
+// the owner and to admin.feedback.read, and whose IsFilePresent says whether that download still
+// has a file (task 522).
 // Task 336: OwnerDisplayName is the filer's profile display name, set only when the caller
 // holds admin.profiles.read and the filer has a profile row; every admin endpoint that returns
 // this view fills it the same way, so a mutation never blanks the name on the detail page.

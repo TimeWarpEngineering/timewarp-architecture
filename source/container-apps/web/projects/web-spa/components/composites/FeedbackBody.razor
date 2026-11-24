@@ -10,6 +10,9 @@
   composer writes ![name](path) for every upload, and a non-image renders as a link), is left
   out of the list below, so each attachment appears once. Listed images go through
   MarkdownImage for the same "image unavailable" placeholder. AttachmentDataQa keeps each page's existing test hook.
+  Task 522: an attachment the server reports as not stored (IsFilePresent false) renders
+  MissingFile, in the list and wherever the body shows it, so no img or link requests a file
+  that would 404. It is not in InlineImages.
   Rendering is client-side (task 353): the server stores and returns the raw markdown.
   Task 506: the listed attachment anchor is the one TWA0050 opt-out here (attribute above). A
   download path is served by the API, so it cannot be a RouteLink.
@@ -22,14 +25,18 @@
   [Parameter] public string? AttachmentDataQa { get; set; }
 
   private IReadOnlySet<string> InlineImages = new HashSet<string>();
+  private IReadOnlyDictionary<string, string> MissingFiles = new Dictionary<string, string>();
   private IReadOnlyList<GetFeedback.Attachment> Listed = [];
 
   protected override void OnParametersSet()
   {
     InlineImages = Attachments
-      .Where(static attachment => attachment.IsImage)
+      .Where(static attachment => attachment.IsImage && attachment.IsFilePresent)
       .Select(static attachment => attachment.DownloadPath)
       .ToHashSet(StringComparer.Ordinal);
+    MissingFiles = Attachments
+      .Where(static attachment => !attachment.IsFilePresent)
+      .ToDictionary(static attachment => attachment.DownloadPath, static attachment => attachment.FileName, StringComparer.Ordinal);
     IReadOnlySet<string> referenced = SafeMarkdownPolicy.ReferencedSources(
       Body,
       Attachments.Select(static attachment => attachment.DownloadPath).ToHashSet(StringComparer.Ordinal));
@@ -37,14 +44,18 @@
   }
 }
 
-<SafeMarkdown Markdown="@Body" AllowedImageSources="@InlineImages" DataQa="@BodyDataQa" />
+<SafeMarkdown Markdown="@Body" AllowedImageSources="@InlineImages" MissingFileSources="@MissingFiles" DataQa="@BodyDataQa" />
 @if (Listed.Count > 0)
 {
   <ul class="feedback-body-attachments">
     @foreach (GetFeedback.Attachment attachment in Listed)
     {
       <li @key="attachment.AttachmentId" data-qa="@AttachmentDataQa">
-        @if (attachment.IsImage)
+        @if (!attachment.IsFilePresent)
+        {
+          <MissingFile FileName="@attachment.FileName" />
+        }
+        else if (attachment.IsImage)
         {
           <MarkdownImage Src="@attachment.DownloadPath" Alt="@attachment.FileName" />
         }

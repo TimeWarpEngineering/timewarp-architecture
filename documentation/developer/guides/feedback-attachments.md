@@ -8,16 +8,18 @@ features should follow the same shape.
 Azure Blob Storage is the real byte store. Cloudflare R2 is not used: the template already
 deploys to Azure, and an S3 client would be a second object stack nothing else uses.
 
-The store is chosen Azure, then Postgres, then in-memory:
+The store is chosen Azure, then Postgres:
 
-| `FeedbackAttachments:ConnectionString` | Postgres configured | Store |
-| --- | --- | --- |
-| set | either | `AzureFeedbackAttachmentBlobStore` |
-| empty or missing | yes | `EfFeedbackAttachmentBlobStore` (`feedback.feedback_attachment_bytes`, `bytea`) |
-| empty or missing | no | `InMemoryFeedbackAttachmentBlobStore` (tests, mock mode, apps without `postgres`) |
+| `FeedbackAttachments:ConnectionString` | Store |
+| --- | --- |
+| set | `AzureFeedbackAttachmentBlobStore` |
+| empty or missing | `EfFeedbackAttachmentBlobStore` (`feedback.feedback_attachment_bytes`, `bytea`) |
 
-`FeedbackAttachmentBlobModule` registers Azure or in-memory. `PostgresDbModule` runs after it
-and replaces the in-memory store with the Postgres one when a connection string is present.
+`FeedbackModule` registers Azure when it is configured. `PostgresDbModule` runs after it and
+registers the row stores, and the Postgres byte store when Azure is not configured. There is no
+in-memory store (task 522). The feedback slice compiles only with the `postgres` template flag,
+so an app generated without a database has no feedback feature. With the flag on and no
+connection string, the feedback stores are not registered and the feedback endpoints fail.
 
 `FeedbackAttachments:ContainerName` defaults to `feedback-attachments`. The name must be 3–63
 characters, lowercase letters, digits, and single hyphens, and must not start or end with a
@@ -32,12 +34,14 @@ Upload writes the bytes before the row, and remove deletes the row before the by
 row always has bytes. Reads load the column (at most 5 MiB) into a `MemoryStream` rather than
 streaming from the reader.
 
-In-memory bytes are lost on restart. When the in-memory blob store runs next to a durable row
-store, or in any environment other than Development, the host logs a startup warning.
-
-A row whose bytes are gone (uploaded while the bytes were in memory, before the Postgres
-store existed) is left in place. Its download is HTTP 404 with the title "Attachment no
-longer available", after the normal access check.
+A row whose bytes are gone (uploaded before task 352, when the bytes were held in memory) is
+left in place. Its download is HTTP 404 with the title "Attachment no longer available", after
+the normal access check. `GetFeedback` and `GetFeedbackForAdmin` (and every admin write that
+returns the admin view) set `IsFilePresent` on each attachment from the byte store's
+`ExistsAsync`, so the item pages show the file name with "file no longer stored" instead of a
+broken image or a link that 404s, in the attachment list and where the body shows that file.
+The flag is read from the byte store on every read, not stored on the row, so it cannot
+disagree with the bytes and needs no reconcile job.
 
 Object keys are `{owner:N}/{attachment:N}` with no leading slash.
 

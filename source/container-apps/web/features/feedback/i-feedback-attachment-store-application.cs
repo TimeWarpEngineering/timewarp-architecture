@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// Same dual-mode shape as IFeedbackStore: an in-memory singleton until PostgresDbModule
-// sees a connection string and swaps in EfFeedbackAttachmentStore. Blob bytes are a
+// Same shape as IFeedbackStore: EfFeedbackAttachmentStore, registered by PostgresDbModule when
+// it sees a connection string (no in-memory store since task 522). Blob bytes are a
 // separate port so a row and its object can fail independently.
 // TryLink is a conditional write: it succeeds only for the owner's still-unlinked row, so
 // two submits or a submit racing a remove cannot both claim one file. UnlinkAll is the

@@ -6,7 +6,8 @@
 
 #region Design
 // Same host as the other WASM proofs: appsettings UseMock on the server, wwwroot UseMock left
-// false so the page calls the real in-memory API. /Feedback is [Authorize] for
+// false so the page calls the real API, over its own Postgres database (PostgresWebHost,
+// task 522: there is no in-memory feedback store). /Feedback is [Authorize] for
 // feedback.file.self. That gate reads the SPA authentication state, which comes from the
 // identity-session cookie. X-TimeWarp-Mock-Principal-Id authenticates server API calls only,
 // so a direct visit while signed out renders RedirectToLogin (no app bar). The test creates
@@ -39,7 +40,7 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task PasteAndUpload_Should_ShowAttachmentsOnTheItem()
   {
-    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync();
     IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
@@ -132,7 +133,7 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task VisibleDetailsBox_Should_MatchTitle_And_Resize()
   {
-    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync();
     IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
@@ -164,7 +165,7 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task ReplyAndNoteBoxes_Should_FillTheirField_And_Resize()
   {
-    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync();
     IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {

@@ -31,7 +31,9 @@ using Microsoft.JSInterop;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.AgentChats;
+#if postgres
 using TimeWarp.Architecture.Features.Feedback;
+#endif
 using TimeWarp.Architecture.Web.Spa;
 
 public partial class CatalogAgent_Should
@@ -153,8 +155,10 @@ public partial class CatalogAgent_Should
 
   public static Task Screenshot_Limit_Matches_The_Feedback_Attachment_Rules()
   {
+#if postgres
     ScreenshotState.MaxBytes.ShouldBe(FeedbackAttachmentRules.MaxBytes);
     FeedbackAttachmentRules.CanonicalContentType(ScreenshotState.ContentType).ShouldBe(ScreenshotState.ContentType);
+#endif
     CompleteAgentChat.ImageMediaTypes.ShouldContain(ScreenshotState.ContentType);
     // base64 of MaxBytes must fit the relay's per-image cap.
     ((ScreenshotState.MaxBytes + 2) / 3 * 4).ShouldBeLessThanOrEqualTo(CompleteAgentChat.MaxImageDataLength);

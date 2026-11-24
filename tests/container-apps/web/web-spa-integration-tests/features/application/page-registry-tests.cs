@@ -33,7 +33,10 @@ public class All_Should_
     foreach (string expected in new[]
     {
       "HomePage", "SettingsPage", "AgentLinksPage", "ProfilePage",
-      "RolesListPage", "PrincipalsPage", "FeedbackAdminListPage", "AuthenticationPage",
+      "RolesListPage", "PrincipalsPage", "AuthenticationPage",
+#if postgres
+      "FeedbackAdminListPage",
+#endif
       "CounterPage", "ChatPage", "PasskeysPage",
       "DesignSystemPage", "TestPage", "ServicesPage", "ClaimsPage",
     })
@@ -110,16 +113,22 @@ public class All_Should_
   {
     PageRegistryEntry roles = PageRegistry.All.Single(static entry => entry.Url == "/Admin/Roles");
     PageRegistryEntry principals = PageRegistry.All.Single(static entry => entry.Url == "/Admin/Principals");
-    PageRegistryEntry feedback = PageRegistry.All.Single(static entry => entry.Url == "/Admin/Feedback");
     PageRegistryEntry home = PageRegistry.All.Single(static entry => entry.Url == "/");
+#if postgres
+    PageRegistryEntry feedback = PageRegistry.All.Single(static entry => entry.Url == "/Admin/Feedback");
     PageRegistryEntry[] admin = [roles, principals, feedback];
+#else
+    PageRegistryEntry[] admin = [roles, principals];
+#endif
     const string roleId = "11111111-1111-1111-1111-111111111111";
 
     NavigationMatch.For(roles).ShouldBe(NavLinkMatch.All);
     NavigationMatch.ContainsChildPath(admin, "/Admin/Roles/" + roleId).ShouldBeTrue();
     NavigationMatch.ContainsChildPath(admin, "/Admin/Roles/New").ShouldBeTrue();
     NavigationMatch.ContainsChildPath(admin, "/Admin/Principals/" + roleId).ShouldBeTrue();
+#if postgres
     NavigationMatch.ContainsChildPath(admin, "/Admin/Feedback/" + roleId).ShouldBeTrue();
+#endif
     NavigationMatch.ContainsChildPath(admin, "/Admin/Roles").ShouldBeFalse();
     NavigationMatch.ContainsChildPath(admin, "/Admin/RolesExtra").ShouldBeFalse();
     NavigationMatch.ContainsChildPath([home], "/Admin/Roles/" + roleId).ShouldBeFalse();

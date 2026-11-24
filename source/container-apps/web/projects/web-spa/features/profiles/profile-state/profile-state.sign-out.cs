@@ -30,7 +30,9 @@ namespace TimeWarp.Architecture.Features.Profiles;
 
 using Microsoft.AspNetCore.Components;
 using TimeWarp.Architecture.Features.AgentLinks;
+#if postgres
 using TimeWarp.Architecture.Features.Feedback;
+#endif
 using TimeWarp.Architecture.Features.Authorization;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Services;
@@ -52,7 +54,9 @@ partial class ProfileState
     [CrossSliceReference(typeof(AuthorizationState), "Sign-out resets role/permission cache with profile chrome (same Initialize as ClearCurrentUser).")]
     [CrossSliceReference(typeof(CredentialsState), "Sign-out clears credential list with profile chrome.")]
     [CrossSliceReference(typeof(AgentLinksState), "Sign-out clears agent-human links with profile chrome.")]
+#if postgres
     [CrossSliceReference(typeof(FeedbackState), "Sign-out clears feedback receipts and the filer's list with profile chrome.")]
+#endif
     internal sealed class Handler : BaseHandler<Action>
     {
       private readonly IJSRuntime JsRuntime;
@@ -74,7 +78,9 @@ partial class ProfileState
         Store.GetState<AuthorizationState>().Initialize();
         Store.GetState<CredentialsState>().Initialize();
         Store.GetState<AgentLinksState>().Initialize();
+#if postgres
         Store.GetState<FeedbackState>().Initialize();
+#endif
         Store.GetState<FormSuggestionState>().Initialize();
 
         try

@@ -19,6 +19,8 @@
   finished turn would not otherwise re-render it.
   Feedback titles carry the assistant name (task 361): "{AssistantName} answer" and
   "{AssistantName} thumbs up/down", read from AgentSurfaceState when filed.
+  Task 522: thumbs show only when CanFileFeedback; FileAsync and that flag are in
+  AskAnswerBar.razor.cs, compiled out with the feedback slice when the postgres flag is off.
 *@
 
 @code {
@@ -58,17 +60,6 @@
   private Task HelpfulAsync() => FileAsync($"{AgentSurfaceState.AssistantName} thumbs up");
 
   private Task UnhelpfulAsync() => FileAsync($"{AgentSurfaceState.AssistantName} thumbs down");
-
-  private async Task FileAsync(string title)
-  {
-    string body = LastAnswer() ?? NoAnswer;
-    if (body.Length > SubmitFeedback.MaxBodyLength)
-    {
-      body = body[..SubmitFeedback.MaxBodyLength];
-    }
-
-    await FeedbackState.SubmitFeedback(FeedbackKind.Other, title, body);
-  }
 
   private string? LastAnswer()
   {
@@ -146,22 +137,25 @@
                   aria-label="Copy conversation"
                   data-qa="AskCopyConversation"
                   OnClick="CopyConversationAsync" />
-    <FluentButton Appearance="ButtonAppearance.Subtle"
-                  IconOnly="true"
-                  IconStart="@(new Icons.Regular.Size20.ThumbLike())"
-                  Title="Thumbs up"
-                  Tooltip="Thumbs up"
-                  aria-label="Thumbs up"
-                  data-qa="AskThumbsUp"
-                  OnClick="HelpfulAsync" />
-    <FluentButton Appearance="ButtonAppearance.Subtle"
-                  IconOnly="true"
-                  IconStart="@(new Icons.Regular.Size20.ThumbDislike())"
-                  Title="Thumbs down"
-                  Tooltip="Thumbs down"
-                  aria-label="Thumbs down"
-                  data-qa="AskThumbsDown"
-                  OnClick="UnhelpfulAsync" />
+    @if (CanFileFeedback)
+    {
+      <FluentButton Appearance="ButtonAppearance.Subtle"
+                    IconOnly="true"
+                    IconStart="@(new Icons.Regular.Size20.ThumbLike())"
+                    Title="Thumbs up"
+                    Tooltip="Thumbs up"
+                    aria-label="Thumbs up"
+                    data-qa="AskThumbsUp"
+                    OnClick="HelpfulAsync" />
+      <FluentButton Appearance="ButtonAppearance.Subtle"
+                    IconOnly="true"
+                    IconStart="@(new Icons.Regular.Size20.ThumbDislike())"
+                    Title="Thumbs down"
+                    Tooltip="Thumbs down"
+                    aria-label="Thumbs down"
+                    data-qa="AskThumbsDown"
+                    OnClick="UnhelpfulAsync" />
+    }
     @if (!string.IsNullOrWhiteSpace(SupportUrl))
     {
       <RouteLink data-qa="AskSupport" Route="@SupportUrl">Support</RouteLink>

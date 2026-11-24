@@ -43,7 +43,9 @@ public partial class CatalogAgent_Should
     Names(home).ShouldBe(
     [
       "Credentials.AddPasskey",
+#if postgres
       "Feedback.ListMyFeedback",
+#endif
       "Role.OpenNewRole",
       "Screenshot.CaptureScreenshot",
       "Prefill.Profile.UpdateProfile",

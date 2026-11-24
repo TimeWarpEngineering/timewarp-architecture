@@ -3,10 +3,10 @@
 #endregion
 
 #region Design
-// Scoped, depends on PostgresDbContext. PostgresDbModule replaces the in-memory singleton when a
-// connection string is present. Remove rolls back a filing whose attachments could not be
-// linked. A unique id violation becomes InvalidOperationException, matching
-// InMemoryFeedbackStore. Reads are AsNoTracking, so Update attaches the detached item: the
+// Scoped, depends on PostgresDbContext. PostgresDbModule registers it when a connection string
+// is present; it is the only IFeedbackStore (task 522). Remove rolls back a filing whose
+// attachments could not be linked. A unique id violation becomes InvalidOperationException.
+// Reads are AsNoTracking, so Update attaches the detached item: the
 // filing columns stay unchanged, Status and Severity are marked modified, and only thread entries whose
 // Sequence is above the stored maximum are inserted (the thread is append-only). The root is
 // Modified, so AggregateDbContext runs the invariants and the Version check; a concurrency
@@ -18,10 +18,10 @@
 // (the (Status, FiledAt) index), a feedback table stays small enough for an in-memory sort of
 // the match set, and an index per sortable column would tax every filing for a rare view.
 // Search (task 345) is a parameterized lower(title) LIKE '%term%' with the term lower-cased by
-// ToLowerInvariant on the client. Postgres lower() folds by the database collation while
-// InMemoryFeedbackStore uses OrdinalIgnoreCase, so non-ASCII titles (Turkish dotted I, sharp s)
-// can match differently between the two stores. Accepted: Search narrows an @ picker or an admin
-// list, not an authorization or uniqueness check, and ASCII titles match the same in both.
+// ToLowerInvariant on the client. Postgres lower() folds by the database collation, so a
+// non-ASCII title (Turkish dotted I, sharp s) may not match a term the client lower-cased
+// differently. Accepted: Search narrows an @ picker or an admin list, not an authorization or
+// uniqueness check.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;

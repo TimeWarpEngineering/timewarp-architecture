@@ -64,7 +64,9 @@ using TimeWarp.Architecture.Features.Admin.Roles.Infrastructure;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Identity.Application;
+#if postgres
 using TimeWarp.Architecture.Features.Feedback.Infrastructure;
+#endif
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Mail;
 using TimeWarp.Architecture.Features.Tip;
@@ -168,8 +170,10 @@ public partial class Program : IAspNetProgram
     serviceCollection.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
     InMemoryRoleStoresModule.ConfigureServices(serviceCollection, configuration);
-    InMemoryFeedbackStoresModule.ConfigureServices(serviceCollection, configuration);
-    FeedbackAttachmentBlobModule.ConfigureServices(serviceCollection, configuration);
+#if postgres
+    // Task 522: feedback needs a database; its stores are registered by PostgresDbModule below.
+    FeedbackModule.ConfigureServices(serviceCollection, configuration);
+#endif
     MailModule.ConfigureServices(serviceCollection, configuration);
     InMemoryAgentHumanLinkStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);

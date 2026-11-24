@@ -28,7 +28,9 @@ using TimeWarp.Architecture.Features.AgentLinks;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Authorization;
 using TimeWarp.Architecture.Features.Identity;
+#if postgres
 using TimeWarp.Architecture.Features.Feedback;
+#endif
 using TimeWarp.Architecture.Features.Profiles;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Spa;
@@ -109,11 +111,13 @@ public class SignOut_Should_
     store.GetState<AuthorizationState>().Roles.ShouldNotBeNull();
     store.GetState<CredentialsState>().CeremonyFailed.ShouldBeTrue();
     store.GetState<AgentLinksState>().Items.ShouldNotBeEmpty();
+#if postgres
     SetProperty(
       store.GetState<FeedbackState>(),
       nameof(FeedbackState.LoadError),
       "stale");
     store.GetState<FeedbackState>().LoadError.ShouldBe("stale");
+#endif
     store.GetState<FormSuggestionState>().For(DraftForm).ShouldNotBeNull();
   }
 
@@ -123,9 +127,11 @@ public class SignOut_Should_
     store.GetState<AuthorizationState>().Roles.ShouldBeNull();
     store.GetState<CredentialsState>().CeremonyFailed.ShouldBeFalse();
     store.GetState<AgentLinksState>().Items.ShouldBeEmpty();
+#if postgres
     store.GetState<FeedbackState>().LoadError.ShouldBeNull();
     store.GetState<FeedbackState>().LastReceipt.ShouldBeNull();
     store.GetState<FeedbackState>().Items.ShouldBeEmpty();
+#endif
     store.GetState<FormSuggestionState>().Suggestions.ShouldBeEmpty();
   }
 

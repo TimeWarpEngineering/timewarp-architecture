@@ -4,7 +4,8 @@
 
 #region Design
 // A missing id and an id owned by another principal are both 404. The response kind is mapped
-// back by name onto the contract enum. Attachments are the rows linked to this item. Status and
+// back by name onto the contract enum. Attachments are the rows linked to this item, each with
+// IsFilePresent from the byte store (task 522). Status and
 // the thread are the filer's view (FeedbackContractMap.FilerThread: no internal notes).
 #endregion
 
@@ -20,15 +21,18 @@ public sealed class GetFeedback
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IFeedbackStore FeedbackStore;
     private readonly IFeedbackAttachmentStore AttachmentStore;
+    private readonly IFeedbackAttachmentBlobStore BlobStore;
 
     public Handler(
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IFeedbackStore feedbackStore,
-      IFeedbackAttachmentStore attachmentStore)
+      IFeedbackAttachmentStore attachmentStore,
+      IFeedbackAttachmentBlobStore blobStore)
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       FeedbackStore = feedbackStore;
       AttachmentStore = attachmentStore;
+      BlobStore = blobStore;
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
@@ -52,7 +56,7 @@ public sealed class GetFeedback
       }
 
       List<Attachment> attachments = await FeedbackContractMap
-        .AttachmentsAsync(AttachmentStore, item.Id, cancellationToken)
+        .AttachmentsAsync(AttachmentStore, BlobStore, item.Id, cancellationToken)
         .ConfigureAwait(false);
 
       return new Response(

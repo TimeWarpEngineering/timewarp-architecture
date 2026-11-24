@@ -1,11 +1,13 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)container-apps/web/projects/web-contracts/web-contracts.csproj
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
+#:project $(TestsDirectory)common/timewarp-testing/timewarp-testing.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0005;IDE0007;IDE0008
 #:include feedback-attachment-world-tests.cs
+#:include feedback-postgres-stores-tests.cs
 
 // Co-located Jaribu: filing that links pending attachments, lists unavailable ids, and rolls back on failure.
 // Run standalone:  dotnet run source/container-apps/web/features/feedback/feedback-attachment-submit-tests.cs
@@ -42,9 +44,9 @@ namespace TimeWarp.Architecture.Features.Feedback
       AttachmentWorld world = new();
       Guid attachmentId = await world.UploadAsync(world.Owner, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
       FeedbackAttachmentId id = FeedbackAttachmentId.From(attachmentId);
-      (await world.Attachments.TryLinkAsync(id, Guid.NewGuid(), FeedbackItemId.New())).ShouldBeFalse();
-      (await world.Attachments.TryLinkAsync(id, world.Owner.Value, FeedbackItemId.New())).ShouldBeTrue();
-      (await world.Attachments.TryLinkAsync(id, world.Owner.Value, FeedbackItemId.New())).ShouldBeFalse();
+      (await world.Attachments.TryLinkAsync(id, Guid.NewGuid(), await world.FileItemAsync())).ShouldBeFalse();
+      (await world.Attachments.TryLinkAsync(id, world.Owner.Value, await world.FileItemAsync())).ShouldBeTrue();
+      (await world.Attachments.TryLinkAsync(id, world.Owner.Value, await world.FileItemAsync())).ShouldBeFalse();
     }
 
     public static async Task Submit_Should_RollBackWhenALinkLosesARace()
@@ -52,12 +54,12 @@ namespace TimeWarp.Architecture.Features.Feedback
       AttachmentWorld world = new();
       Guid first = await world.UploadAsync(world.Owner, "first.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
       Guid second = await world.UploadAsync(world.Owner, "second.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
-      FeedbackItemId elsewhere = FeedbackItemId.New();
+      FeedbackItemId elsewhere = await world.FileItemAsync();
       RacingAttachmentStore racing = new(world.Attachments, FeedbackAttachmentId.From(second), world.Owner.Value, elsewhere);
 
       SharedProblemDetails problem = await world.SubmitProblemAsync(world.Owner, [first, second], racing);
       problem.Status.ShouldBe(400);
-      (await world.Feedback.ListByOwnerAsync(world.Owner.Value)).Count.ShouldBe(0);
+      (await world.Feedback.ListByOwnerAsync(world.Owner.Value)).ShouldHaveSingleItem().Id.ShouldBe(elsewhere);
       (await world.Attachments.FindAsync(FeedbackAttachmentId.From(first)))!.FeedbackItemId.ShouldBeNull();
       (await world.Attachments.FindAsync(FeedbackAttachmentId.From(second)))!.FeedbackItemId.ShouldBe(elsewhere);
       UnavailableIds(problem).ShouldBe([second]);
@@ -117,7 +119,7 @@ namespace TimeWarp.Architecture.Features.Feedback
     {
       AttachmentWorld world = new();
       Guid attachmentId = await world.UploadAsync(world.Owner, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
-      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(attachmentId), world.Owner.Value, FeedbackItemId.New()))
+      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(attachmentId), world.Owner.Value, await world.FileItemAsync()))
         .ShouldBeTrue();
       SharedProblemDetails problem = await world.RemoveProblemAsync(world.Owner, attachmentId);
       problem.Status.ShouldBe(409);
@@ -139,6 +141,23 @@ namespace TimeWarp.Architecture.Features.Feedback
       GetFeedback.Attachment image = opened.Attachments.Single(attachment => attachment.FileName == "shot.png");
       image.IsImage.ShouldBeTrue();
       image.DownloadPath.ShouldStartWith("/api/Feedback/attachments/");
+      opened.Attachments.ShouldAllBe(attachment => attachment.IsFilePresent);
+    }
+
+    public static async Task Get_Should_ReportAFileWhoseBytesAreGoneAsMissing()
+    {
+      AttachmentWorld world = new();
+      Guid keptId = await world.UploadAsync(world.Owner, "kept.png", FeedbackAttachmentRules.Png, AttachmentWorld.Png);
+      Guid orphanId = await world.UploadAsync(world.Owner, "pasted.png", FeedbackAttachmentRules.Png, AttachmentWorld.Png);
+      SubmitFeedback.Response filed = await world.SubmitAsync(world.Owner, [keptId, orphanId]);
+      FeedbackAttachment orphan = (await world.Attachments.FindAsync(FeedbackAttachmentId.From(orphanId))).ShouldNotBeNull();
+      await world.Blobs.DeleteAsync(orphan.StorageKey);
+
+      GetFeedback.Response opened = await world.GetAsync(world.Owner, filed.FeedbackItemId);
+      opened.Attachments.Single(attachment => attachment.AttachmentId == keptId).IsFilePresent.ShouldBeTrue();
+      GetFeedback.Attachment missing = opened.Attachments.Single(attachment => attachment.AttachmentId == orphanId);
+      missing.IsFilePresent.ShouldBeFalse();
+      missing.FileName.ShouldBe("pasted.png");
     }
 
     public static async Task Submit_Should_RejectAnotherPrincipalsPendingAttachment()

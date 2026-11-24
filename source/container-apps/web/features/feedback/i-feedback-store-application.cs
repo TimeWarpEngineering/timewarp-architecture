@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// Dual-mode, same shape as IProfileStore: InMemoryFeedbackStore is the zero-infra singleton;
-// EfFeedbackStore replaces it when PostgresDbModule sees a connection string. Remove exists
+// One implementation, EfFeedbackStore, registered by PostgresDbModule when it sees a connection
+// string. Task 522 removed the in-memory store: feedback filings are kept, so the slice compiles
+// only with the postgres template flag. Remove exists
 // only to roll back a filing whose attachments could not all be linked; nothing else deletes
 // an item (task 314 decision 6: no admin delete). ListAll is the admin cross-owner query.
 // Update persists the triage mutations (status and appended thread entries); the filing

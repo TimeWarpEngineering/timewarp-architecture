@@ -3,12 +3,12 @@
 #endregion
 
 #region Design
-// Scoped, depends on PostgresDbContext. PostgresDbModule replaces the in-memory singleton when a
-// connection string is present. Find and list are untracked. Remove loads a tracked row.
+// Scoped, depends on PostgresDbContext. PostgresDbModule registers it when a connection string
+// is present; it is the only IFeedbackAttachmentStore (task 522). Find and list are untracked. Remove loads a tracked row.
 // TryLink, UnlinkAll, and RemoveExpiredUnlinked are single conditional statements (ExecuteUpdate /
 // ExecuteDelete with the owner and link state in the WHERE clause) and read the affected row
 // count, so a concurrent submit or remove cannot be overwritten by a stale tracked row.
-// A unique id violation becomes InvalidOperationException, matching InMemoryFeedbackAttachmentStore.
+// A unique id violation becomes InvalidOperationException.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;

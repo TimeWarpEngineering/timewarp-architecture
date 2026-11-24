@@ -4,7 +4,7 @@
 #:package Shouldly
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211
-#:property DefineConstants=$(DefineConstants);api
+#:property DefineConstants=$(DefineConstants);api;postgres
 
 // Co-located Jaribu tests for markdown Accept negotiation (task 104-018).
 // Real-host smoke: twin URL + Accept rewrite on / + browser Accept falls through.
@@ -169,7 +169,10 @@ namespace TimeWarp.Architecture.AgentDiscovery
       webMcp.ShouldContain("typeof navigator.modelContext");
       webMcp.ShouldContain("MCP-B");
       webMcp.ShouldContain("Copy trace");
+#if postgres
+      // The feedback page and its route-scoped tools ship only with the postgres flag (task 522).
       webMcp.ShouldContain("/Feedback");
+#endif
       webMcp.ShouldContain("/Settings");
       webMcp.ShouldContain("\"Credentials.AddPasskey\"");
       webMcp.ShouldNotContain("Credentials.AddExistingPasskey");

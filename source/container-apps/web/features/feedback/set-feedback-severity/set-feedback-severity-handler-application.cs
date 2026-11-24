@@ -23,6 +23,7 @@ public sealed class SetFeedbackSeverity
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IFeedbackStore FeedbackStore;
     private readonly IFeedbackAttachmentStore AttachmentStore;
+    private readonly IFeedbackAttachmentBlobStore BlobStore;
     private readonly IProfileEmailLookup ProfileEmailLookup;
     private readonly FeedbackOwnerNames OwnerNames;
 
@@ -30,12 +31,14 @@ public sealed class SetFeedbackSeverity
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IFeedbackStore feedbackStore,
       IFeedbackAttachmentStore attachmentStore,
+      IFeedbackAttachmentBlobStore blobStore,
       IProfileEmailLookup profileEmailLookup,
       FeedbackOwnerNames ownerNames)
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       FeedbackStore = feedbackStore;
       AttachmentStore = attachmentStore;
+      BlobStore = blobStore;
       ProfileEmailLookup = profileEmailLookup;
       OwnerNames = ownerNames;
     }
@@ -78,7 +81,7 @@ public sealed class SetFeedbackSeverity
 
       return new Response(
         item: await FeedbackContractMap
-          .AdminViewAsync(item, AttachmentStore, ProfileEmailLookup, OwnerNames, cancellationToken)
+          .AdminViewAsync(item, AttachmentStore, BlobStore, ProfileEmailLookup, OwnerNames, cancellationToken)
           .ConfigureAwait(false));
     }
   }

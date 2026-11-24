@@ -26,6 +26,7 @@ public sealed class ChangeFeedbackStatus
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IFeedbackStore FeedbackStore;
     private readonly IFeedbackAttachmentStore AttachmentStore;
+    private readonly IFeedbackAttachmentBlobStore BlobStore;
     private readonly IProfileEmailLookup ProfileEmailLookup;
     private readonly FeedbackOwnerNames OwnerNames;
     private readonly IEmailSender EmailSender;
@@ -36,6 +37,7 @@ public sealed class ChangeFeedbackStatus
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IFeedbackStore feedbackStore,
       IFeedbackAttachmentStore attachmentStore,
+      IFeedbackAttachmentBlobStore blobStore,
       IProfileEmailLookup profileEmailLookup,
       FeedbackOwnerNames ownerNames,
       IEmailSender emailSender,
@@ -45,6 +47,7 @@ public sealed class ChangeFeedbackStatus
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       FeedbackStore = feedbackStore;
       AttachmentStore = attachmentStore;
+      BlobStore = blobStore;
       ProfileEmailLookup = profileEmailLookup;
       OwnerNames = ownerNames;
       EmailSender = emailSender;
@@ -94,7 +97,7 @@ public sealed class ChangeFeedbackStatus
           .ConfigureAwait(false);
 
       FeedbackAdminView view = await FeedbackContractMap
-        .AdminViewAsync(item, AttachmentStore, ProfileEmailLookup, OwnerNames, cancellationToken)
+        .AdminViewAsync(item, AttachmentStore, BlobStore, ProfileEmailLookup, OwnerNames, cancellationToken)
         .ConfigureAwait(false);
       return new Response(item: view, filerEmailed: filerEmailed);
     }

@@ -36,7 +36,12 @@ public class Screenshot_Given_Wasm
 
   public static async Task Capture_Should_DrawThePage_MaskSecrets_And_FeedAskAndFeedback()
   {
+    // Task 522: filing feedback needs Postgres (no in-memory feedback store).
+#if postgres
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync(services =>
+#else
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+#endif
       services.PostConfigure<XaiChatOptions>(options =>
       {
         options.UseFakeUpstream = true;
@@ -151,6 +156,7 @@ public class Screenshot_Given_Wasm
     (await page.Locator(".sc-ai-root").InnerTextAsync()).ShouldContain($"image: image/png {sentWidth}x{sentHeight}");
     await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("ask-screenshot-sent.png") });
     await page.Locator("[data-qa=AgentAskClose]").ClickAsync();
+#if postgres
 
     // Feedback: the page behind is the /Settings capture; this page can be captured too.
     await page.EvaluateAsync("() => Blazor.navigateTo('/Feedback')");
@@ -159,10 +165,14 @@ public class Screenshot_Given_Wasm
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("See the screenshot.");
     ILocator behind = page.Locator("[data-qa=FeedbackAttachPageBehind]");
     (await behind.InnerTextAsync()).ShouldContain("/Settings");
+    // The attachment buttons are disabled while the page is busy (loading "Your filings" from
+    // Postgres since task 522); a click on a disabled fluent-button is dropped, so wait first.
+    await WaitEnabledAsync(page, "FeedbackAttachPageBehind");
     await behind.ClickAsync();
     ILocator attachments = page.Locator("[data-qa=FeedbackAttachment]");
     await Assertions.Expect(attachments).ToHaveCountAsync(1, new LocatorAssertionsToHaveCountOptions { Timeout = 30_000 });
     await behind.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Detached, Timeout = 10_000 });
+    await WaitEnabledAsync(page, "FeedbackCaptureScreenshot");
     await page.Locator("[data-qa=FeedbackCaptureScreenshot]").ClickAsync();
     await Assertions.Expect(attachments).ToHaveCountAsync(2, new LocatorAssertionsToHaveCountOptions { Timeout = 30_000 });
     (await attachments.Locator("img").CountAsync()).ShouldBe(2);
@@ -182,6 +192,7 @@ public class Screenshot_Given_Wasm
     int filedWidth = await filed.First.EvaluateAsync<int>("image => image.naturalWidth");
     filedWidth.ShouldBe(width, "the filed attachment is the /Settings capture");
     await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-item-screenshot.png") });
+#endif
 
     string log = string.Join('\n', console);
     log.ShouldNotContain("Unhandled exception rendering component");
@@ -241,6 +252,21 @@ public class Screenshot_Given_Wasm
     JsonElement image = last.ShouldNotBeNull().GetProperty("images").EnumerateArray().Single();
     return (image.GetProperty("mediaType").GetString() ?? "", image.GetProperty("data").GetString() ?? "");
   }
+#if postgres
+
+  private static Task WaitEnabledAsync(IPage page, string dataQa) =>
+    page.WaitForFunctionAsync(
+      """
+      (qa) => {
+        const button = document.querySelector(`[data-qa=${qa}]`);
+        const enabled = button && !button.hasAttribute('disabled');
+        if (!enabled) { window.twEnabledSince = undefined; return false; }
+        window.twEnabledSince ??= performance.now();
+        return performance.now() - window.twEnabledSince >= 300;
+      }
+      """,
+      dataQa,
+      new PageWaitForFunctionOptions { Timeout = 30_000, PollingInterval = 50 });
 
   private static async Task SubmitFeedbackAsync(IPage page)
   {
@@ -260,6 +286,7 @@ public class Screenshot_Given_Wasm
     await page.Locator("[data-qa=FeedbackSubmit]").ClickAsync();
     await page.Locator("[data-qa=FeedbackReceiptId]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
   }
+#endif
 
   private static async Task SignInWithNewPasskeyAsync(IPage page, IBrowserContext context)
   {

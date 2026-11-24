@@ -1,5 +1,5 @@
 #region Purpose
-// Shared fakes for the feedback triage runfiles: in-memory world, principal accessor, counting directory, mail capture.
+// Shared fakes for the feedback triage runfiles: a Postgres-backed world, principal accessor, counting directory, mail capture.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback
@@ -9,6 +9,7 @@ namespace TimeWarp.Architecture.Features.Feedback
   using TimeWarp.Architecture.Features.Admin.Roles.Domain;
   using Microsoft.Extensions.Logging.Abstractions;
   using Microsoft.Extensions.Options;
+  using Shouldly;
   using TimeWarp.Architecture.Abstractions;
   using TimeWarp.Architecture.Authorization;
   using TimeWarp.Architecture.Features.Feedback.Application;
@@ -40,8 +41,11 @@ namespace TimeWarp.Architecture.Features.Feedback
 
   internal sealed class TriageWorld
   {
-    public InMemoryFeedbackStore Feedback { get; } = new();
-    public InMemoryFeedbackAttachmentStore Attachments { get; } = new();
+    private readonly FeedbackTestStores Stores = new();
+
+    public PostgresFeedbackTestStore Feedback => Stores.Feedback;
+    public PostgresFeedbackAttachmentTestStore Attachments => Stores.Attachments;
+    public PostgresFeedbackAttachmentBlobTestStore Blobs => Stores.Blobs;
     public InMemoryProfileStore Profiles { get; } = new();
     public ProfileEmailLookup Lookup { get; }
     public TriageCountingDirectory Directory { get; }
@@ -85,6 +89,20 @@ namespace TimeWarp.Architecture.Features.Feedback
       HeldScopes.Hold(principal, scopes);
 
     public void ReleaseAgentScopes(PrincipalId principal) => HeldScopes.Release(principal);
+
+    /// <summary>Links an image row to the item; storeBytes false leaves a row with no file, as before task 352.</summary>
+    public async Task<FeedbackAttachment> LinkAttachmentAsync(FeedbackItem item, string fileName, bool storeBytes)
+    {
+      var attachment = FeedbackAttachment.Create(item.OwnerPrincipalId, fileName, "image/png", 4, DateTimeOffset.UtcNow);
+      if (storeBytes)
+      {
+        await Blobs.PutAsync(attachment.StorageKey, [1, 2, 3, 4], "image/png");
+      }
+
+      await Attachments.AddAsync(attachment);
+      (await Attachments.TryLinkAsync(attachment.Id, item.OwnerPrincipalId, item.Id)).ShouldBeTrue();
+      return attachment;
+    }
 
     public static DateTimeOffset Day(int day) => new(2026, 10, day, 0, 0, 0, TimeSpan.Zero);
 
@@ -138,25 +156,25 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public AdminListHandler AdminList() => new(Feedback, OwnerNames(Admin));
 
-    public AdminGetHandler AdminGet() => new(Feedback, Attachments, Lookup, OwnerNames(Admin));
+    public AdminGetHandler AdminGet() => new(Feedback, Attachments, Blobs, Lookup, OwnerNames(Admin));
 
     public ChangeStatusHandler ChangeStatus(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, OwnerNames(principal), Sender, BaseUrl,
+      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Blobs, Lookup, OwnerNames(principal), Sender, BaseUrl,
         NullLogger<ChangeStatusHandler>.Instance);
 
     public ReplyHandler Reply(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, OwnerNames(principal), Sender, BaseUrl,
+      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Blobs, Lookup, OwnerNames(principal), Sender, BaseUrl,
         NullLogger<ReplyHandler>.Instance);
 
     public ReplyHandler Reply() => Reply(Admin);
 
     public AddNoteHandler Note(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, OwnerNames(principal));
+      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Blobs, Lookup, OwnerNames(principal));
 
     public AddNoteHandler Note() => Note(Admin);
 
     public SetSeverityHandler SetSeverity(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, OwnerNames(principal));
+      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Blobs, Lookup, OwnerNames(principal));
 
     public SetSeverityHandler SetSeverity() => SetSeverity(Admin);
 
@@ -188,7 +206,7 @@ namespace TimeWarp.Architecture.Features.Feedback
         .Match(_ => throw new InvalidOperationException("Expected severity problem"), problem => problem);
 
     public async Task<FilerGetContract.Response> FilerGetAsync(Guid id) =>
-      (await new FilerGetHandler(new TriagePrincipalAccessor(Filer), Feedback, Attachments)
+      (await new FilerGetHandler(new TriagePrincipalAccessor(Filer), Feedback, Attachments, Blobs)
           .Handle(new FilerGetContract.Query { FeedbackItemId = id }, CancellationToken.None))
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected filer get success"));
 

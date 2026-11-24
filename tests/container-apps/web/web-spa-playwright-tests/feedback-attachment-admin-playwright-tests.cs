@@ -4,7 +4,8 @@
 
 #region Design
 // Same host as the other WASM proofs: appsettings UseMock on the server, wwwroot UseMock left
-// false so the page calls the real in-memory API. /Feedback is [Authorize] for
+// false so the page calls the real API, over its own Postgres database (PostgresWebHost,
+// task 522: there is no in-memory feedback store). /Feedback is [Authorize] for
 // feedback.file.self. That gate reads the SPA authentication state, which comes from the
 // identity-session cookie. X-TimeWarp-Mock-Principal-Id authenticates server API calls only,
 // so a direct visit while signed out renders RedirectToLogin (no app bar). The test creates
@@ -41,7 +42,7 @@ public class FeedbackAttachmentAdmin_Given_Wasm
 
   public static async Task AdminListHeaderClick_Should_ReorderRows_And_ToggleDirection()
   {
-    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync();
     IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
@@ -102,7 +103,7 @@ public class FeedbackAttachmentAdmin_Given_Wasm
 
   public static async Task AdminListFilters_Should_NarrowTheRows()
   {
-    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync();
     IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
@@ -151,7 +152,7 @@ public class FeedbackAttachmentAdmin_Given_Wasm
 
   public static async Task AdminListOwnerCell_Should_ShowTheDisplayName_And_LinkToThePrincipal()
   {
-    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync();
     IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
@@ -211,7 +212,7 @@ public class FeedbackAttachmentAdmin_Given_Wasm
 
   public static async Task AdminGrids_Should_KeepThePrimaryColumn_WhenNarrow_Or_AskIsOpen()
   {
-    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync();
     IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {

@@ -22,7 +22,9 @@ namespace TimeWarp.Architecture.Web.Spa;
 using System.Text.Json.Serialization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Ai;
+#if postgres
 using TimeWarp.Architecture.Features.Admin.Feedback;
+#endif
 using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features.Admin.Roles;
 using TimeWarp.Architecture.Features.AgentLinks;
@@ -32,7 +34,9 @@ using TimeWarp.Architecture.Features.Authorization;
 using TimeWarp.Architecture.Features.Chat;
 using TimeWarp.Architecture.Features.Counters;
 using TimeWarp.Architecture.Features.DesignSystem;
+#if postgres
 using TimeWarp.Architecture.Features.Feedback;
+#endif
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Profiles;
 using TimeWarp.Architecture.Features.Settings;
@@ -56,8 +60,10 @@ using TimeWarp.Architecture.Features.WeatherForecasts;
 [JsonSerializable(typeof(CounterState))]
 [JsonSerializable(typeof(CredentialsState))]
 [JsonSerializable(typeof(DesignSystemState))]
+#if postgres
 [JsonSerializable(typeof(FeedbackAdminState))]
 [JsonSerializable(typeof(FeedbackState))]
+#endif
 [JsonSerializable(typeof(FormSuggestionState))]
 [JsonSerializable(typeof(NotificationState))]
 [JsonSerializable(typeof(PrincipalState))]
@@ -79,10 +85,12 @@ using TimeWarp.Architecture.Features.WeatherForecasts;
 [JsonSerializable(typeof(GetProfile.Response), TypeInfoPropertyName = "GetProfileResponse")]
 [JsonSerializable(typeof(GetRole.Response), TypeInfoPropertyName = "GetRoleResponse")]
 [JsonSerializable(typeof(GetSiteSettings.Response), TypeInfoPropertyName = "GetSiteSettingsResponse")]
+#if postgres
 [JsonSerializable(typeof(GetFeedback.Response), TypeInfoPropertyName = "GetFeedbackResponse")]
 [JsonSerializable(typeof(SubmitFeedback.Response), TypeInfoPropertyName = "SubmitFeedbackResponse")]
 [JsonSerializable(typeof(ListFeedback.Item), TypeInfoPropertyName = "ListFeedbackItem")]
 [JsonSerializable(typeof(ListMyFeedback.Item), TypeInfoPropertyName = "ListMyFeedbackItem")]
 [JsonSerializable(typeof(IReadOnlyList<ListFeedback.Item>), TypeInfoPropertyName = "ListFeedbackItems")]
 [JsonSerializable(typeof(IReadOnlyList<ListMyFeedback.Item>), TypeInfoPropertyName = "ListMyFeedbackItems")]
+#endif
 public sealed partial class StateJsonContext : JsonSerializerContext;

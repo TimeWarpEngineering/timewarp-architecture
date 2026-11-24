@@ -1,0 +1,20 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Shows an attachment whose file is no longer stored: its name and "file no longer
+  stored", in place of a broken image or a download link that would 404.
+
+  Design: The server decides the state (GetFeedback.Attachment.IsFilePresent, task 522), so this
+  component never requests the file. FeedbackBody uses it for listed attachments, and
+  SafeMarkdown uses it where the body shows that attachment as an image or a link. It is text,
+  not a link: there is nothing to download.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string FileName { get; set; } = null!;
+}
+
+<span class="missing-file" data-qa="MissingFile">
+  <span class="missing-file-name">@FileName</span>
+  <span class="missing-file-state">file no longer stored</span>
+</span>
