@@ -6,7 +6,7 @@ Time-boxed trial of the pedrosakuma/dotnet-diagnostics MCP server/CLI against Mi
 (dotnet-counters, dotnet-trace, dotnet-gcdump) for agent-driven performance investigation of Architecture running
 under Aspire. Busara rated the trial GREEN and taking it as a product dependency KILL. We have never used the
 Microsoft tools before, so installing them and teaching agents about them is part of the value either way.
-Background brief (Akili): `/workspace/ideas/2026-10-12-dotnet-diagnostics-intel.md` on the Grok Bot box.
+Background brief (Akili): 2026-10-12 dotnet-diagnostics intel evaluation (no local file required).
 
 ## Requirements
 
@@ -18,7 +18,7 @@ Background brief (Akili): `/workspace/ideas/2026-10-12-dotnet-diagnostics-intel.
    - Register the MCP server in the repo's `.mcp.json`, alongside the Aspire MCP.
    - Add a short skill (or a brief AGENTS.md entry) saying when and how to use each tool. Keep it brief, per
      Flow task 135 (AGENTS.md hygiene); prefer a skill over AGENTS.md body text.
-3. **Trial (1-2 hours).** Run Architecture under Aspire, then have an agent answer one real question (e.g. where
+3. **Trial (time-boxed).** Run Architecture under Aspire, then have an agent answer one real question (e.g. where
    CPU or allocations go on a hot endpoint) first with the MCP, then with the Microsoft CLIs. Compare speed and
    clarity; record both in this task.
 4. **Decide.** Keep the MCP only if clearly better and faster, with a quarterly maintainer-health recheck.
