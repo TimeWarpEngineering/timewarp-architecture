@@ -112,6 +112,8 @@ Acceptance:
   (`CardSample`). `design-system-parts.cs` would pass the TWA0038 500-line cap, so slug lookup
   (Resolve / TryGet / Url / Render) moved to `DesignSystemPartLookup`; callers updated.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 72751113-9ed4-4d4c-af4e-2656552bfd7c, max-turns 500, Done — 2026-11-24T16:14:50Z
+- Review oracle: grok, session 01a20e56-cad8-7181-b479-974da52dd732 (ganda session 853266), effort 3, roster general, round 1, disposition clean (2026-11-24)
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20e56-cad8-7181-b479-974da52dd732, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-24T16:26:19Z
 
 ## Results
 
@@ -161,3 +163,16 @@ flips it and leaves `developer.*` mixed or clear; ArrowDown / ArrowUp move focus
 Space toggles; dark mode keeps the same layout; the Permission tree catalogue entry shows a mixed,
 a checked, and a clear parent with `people.manage` locked.
 
+### Review
+
+- Round 1, roster general, effort 3. Counts: bug 0, suggestion 0, nit 0 (open 0, fixed 0, wontfix 0).
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- No misread. The `## Goal (implementer restatement)` matches the task: one catalogued `PermissionTree`, the FluentTreeView-then-checkbox choice, density ceilings, locked rows, keyboard, kept `data-qa` names, the role page for permissions and agent scopes, the tw-blazor rule, the catalogue and feature-component tests, and five evidence shots. "Parent rows at most 36px" in the restatement is the task's density ceiling ("parent rows 36px" beside "child rows no taller than 32px"). Measured rows are 25px.
+
+## Review
+
+- Round 1: Done
