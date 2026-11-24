@@ -72,6 +72,8 @@ Acceptance:
   `fluent-tooltip` is not defined before Fluent's script loads; CSS now hides
   `fluent-tooltip:not(:defined)`, and the Playwright test checks for it.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session bb9ffa58-5215-45a6-aed6-150b57118364, max-turns 500, Done — 2026-11-24T07:11:17Z
+- Review round 1: general (grok, session 01a20c65-2815-71e2-b928-0a2724a1d1eb), effort 2, roster general, 2026-11-24. Disposition clean (0 open).
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20c65-2815-71e2-b928-0a2724a1d1eb, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-24T07:21:42Z
 
 ## Results
 
@@ -127,3 +129,13 @@ Static, server for Server, chip for WebAssembly), no mode word, the version at t
 light and dark. `server-tooltip-light.png` shows the tooltip "Rendering: Server" over "Running on
 the server over a live connection." In the browser, the slot has `data-mode` set to the mode
 name and an `aria-label` with the same words.
+
+### Review
+
+Round 1, roster general, effort 2. Counts: bug 0, suggestion 0, nit 0 (all open 0). Disposition: clean. The restatement matches the task.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
