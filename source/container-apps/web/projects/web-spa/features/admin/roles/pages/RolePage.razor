@@ -3,51 +3,24 @@
 @inherits BaseComponent
 
 @*
-  Purpose: New Role page — create form and edit form side by side.
+  Purpose: New Role page — create a custom role (name and description).
 
-  Design: Both forms bind IRoleDetails and validate with RoleDetailsValidator.
-  Create is RoleForm. Edit is RoleEditForm over GetRole of the Administrator role,
-  copied with UpdateRole.Command.From. The two columns are PageSplit.
+  Design: Create-only. One Card with RoleForm, which binds IRoleDetails and validates with
+  RoleDetailsValidator. This page loads no existing role and hosts no edit form. Editing a
+  role's name and description is RoleEditForm on RoleDetailPage (/Admin/Roles/{RoleId}).
+  RoleForm opens RoleDetailPage when LastCreatedRoleId changes.
 *@
 
 @code {
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonAdd();
   public static string Title => "New Role";
-
-  private GetRole.Response? EditRole =>
-    RoleState.RoleSnapshot is { } snapshot && snapshot.RoleId == RoleIds.Administrator
-      ? snapshot
-      : null;
-
-  protected override async Task OnInitializedAsync()
-  {
-    if (!RendererInfo.IsInteractive)
-    {
-      return;
-    }
-
-    await RoleState.GetRole(new GetRole.Query { RoleId = RoleIds.Administrator });
-  }
 }
 
 <TimeWarpPage Title="New Role">
   <div class="twe-stack">
-    <p class="ds-subtitle">
-      Create a custom role, or edit the Administrator role. Both forms bind
-      <code>IRoleDetails</code> and validate with the shared <code>RoleDetailsValidator</code>.
-      On create you open the role page to assign permissions (empty until you grant some).
-    </p>
-    <PageSplit>
-      <Primary>
-        <Card Title="Create">
-          <RoleForm />
-        </Card>
-      </Primary>
-      <Secondary>
-        <Section Title="Edit" LoadingActionType="typeof(RoleState.GetRoleActionSet.Action)">
-          <RoleEditForm Role="EditRole" />
-        </Section>
-      </Secondary>
-    </PageSplit>
+    <p class="ds-subtitle">Create a custom role.</p>
+    <Card>
+      <RoleForm />
+    </Card>
   </div>
 </TimeWarpPage>

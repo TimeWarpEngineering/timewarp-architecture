@@ -4,7 +4,8 @@
 @*
   Purpose: edit-role form — bind IRoleDetails, dispatch RoleState.UpdateRole.
 
-  Design: Pair to RoleForm. EditForm binds the IRoleDetails interface. The model is
+  Design: Pair to RoleForm. Hosted only by RoleDetailPage; New Role (RolePage) is
+  create-only (task 507). EditForm binds the IRoleDetails interface. The model is
   UpdateRole.Command built with UpdateRole.Command.From when the loaded role's id, name,
   or description differ from the values last copied, on Cancel, and after Save. It does
   not copy on every render. A membership save keeps name and description, so an unsaved
