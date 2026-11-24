@@ -57,6 +57,12 @@ passes.
   `.vscode/settings.json`) and `--checks kanban-landed`, which landed live claim 507's committed
   kitchen (two evidence PNGs and task.md) onto origin-home.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session be194d43-c599-41cb-81e1-9ea44a0d2ac2, max-turns 500, Done — 2026-11-24T04:11:56Z
+- Reviewer: grok session 01a20bc0-d828-7a00-9ada-cb96335b6798 (2026-11-24), effort 3, roster general, round 1, disposition clean
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20bc0-d828-7a00-9ada-cb96335b6798, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-24T04:25:59Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -149,4 +155,11 @@ uploads `green-key-v1-{ci,skill,template}-<key>`. The master merge push then log
 - `ci (publish)` on wslc has not been proven yet. If `aspire publish` turns out to need Docker,
   set `hosted: true` on the publish matrix leg.
 - The key hashes the classify job's runner. The always-hosted integration leg's image is not in it.
+
+### Review
+
+- Round 1, roster general, effort 3. Counts: bug 0, suggestion 0, nit 0 (open 0, fixed 0, wontfix 0).
+- Disposition: **clean**. The implementer restatement matches the task. Its `schedule` line keeps nightly template-smoke hosted because that job's app tests need Docker.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Gates were not re-run. The implementer's `### Gates` record (build 0/0, dev-cli-tests 371 passed, `ganda repo audit` exit 0) covers the diff.
 
