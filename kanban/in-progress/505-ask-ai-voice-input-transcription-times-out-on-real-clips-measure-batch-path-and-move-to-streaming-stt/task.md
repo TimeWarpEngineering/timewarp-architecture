@@ -181,7 +181,8 @@ Measured with real-time-paced 100 ms PCM frames, same clips:
   timeout. Timeouts are sized from the measurements above (10 s is about 10x the slowest connect
   and about 20x the slowest finalize).
 - Browser: `ask-voice-pcm-worklet.ts` (AudioWorklet, 100 ms PCM16 frames at the context rate);
-  `ask-ai.ts` opens the socket, buffers until ready, writes partial text into the composer at the
+  `ask-voice.ts` (re-exported by `ask-ai.ts`, so `AskAiJsModule` still imports one module) opens
+  the socket, buffers until ready, writes partial text into the composer at the
   caret as a live preview, and on stop sends done and replaces the preview with the final text
   (`CommitComposerText`). All server-shared constants come from C# (`AskVoiceStreamOptions`).
   `Dictate` stays the one TimeWarp.State action; the panel's one-second clock dispatches it when
@@ -212,3 +213,8 @@ span, not a POST to `/v1/stt`.
 - `web-server-integration-tests --filter-class XaiChatUpstream` (covers `XaiChatRegistration`):
   16/16 passed. Project test; CI runs it.
 - `dev regenerate-generated`: no diff under `goldens/ingress`.
+- `ganda repo audit` (first run): FAIL `source-file-line-cap`, `ask-ai.ts` at 635 lines. Fixed by
+  moving the dictation code to `ask-voice.ts` and the composer selector to `ask-composer.ts`
+  (`ask-ai.ts` 186 lines, `ask-voice.ts` 471). Rebuilt (`./bin/dev build` green) and reran the
+  Playwright classes `AskVoiceInput` 2/2 and `AskFocus` 1/1. The `vscode-window-icon` warning
+  (local `.vscode/settings.json` missing, git-ignored) is fixed by `ganda repo audit --fix`.
