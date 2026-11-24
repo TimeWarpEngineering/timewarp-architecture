@@ -85,8 +85,10 @@ the body image) are in `evidence/`; `ganda repo audit` passes.
 
 ## Session
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e556aad5-a349-4cf5-8ac5-947325901f05, max-turns 500, Done — 2026-11-24T20:59:49Z
-- Reviewer: grok session 01a20f5b-b48c-7613-8231-9dc945372089 (2026-11-25), effort 3, roster general, round 1. Open finding M1 in `review/round-1/merged.md`. No disposition yet.
-- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20f5b-b48c-7613-8231-9dc945372089, max-turns 200, artifacts general.md, merged.md — 2026-11-24T21:10:07Z
+- Reviewer round 1: grok session 01a20f5b-b48c-7613-8231-9dc945372089 (2026-11-25), effort 3, roster general. Raised M1, open at the end of that round (`review/round-1/merged.md`).
+- Review oracle round 1: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20f5b-b48c-7613-8231-9dc945372089, max-turns 200, artifacts general.md, merged.md — 2026-11-24T21:10:07Z
+- Reviewer round 2: grok session 01a20f67-f107-7801-8ac3-611a1dcb3914 (2026-11-25), effort 1, roster general. M1 re-verified fixed. Disposition clean (`review/disposition.md`).
+- Review oracle round 2: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20f67-f107-7801-8ac3-611a1dcb3914, max-turns 80, artifacts round-2/general.md, round-2/merged.md, disposition.md — 2026-11-25
 
 ### 2026-11-25 — implementer (task-work walk)
 
@@ -206,11 +208,20 @@ output's `playwright-screenshots/FeedbackMissingFile_Given_Wasm/`, matching `evi
 After deploy: `GET /api/admin/feedback/01a12f40-fd5d-77ca-beff-b33d0d65c964` shows
 `isFilePresent: false` on its attachment, and its item page shows the missing-file state.
 
+### Review disposition
+
+- Rounds: 2. Roster: general. Round 1 effort 3 (2329 lines). Round 2 effort 1 (128-line delta since round 1).
+- Round 1 raised M1 (bug, now fixed): `documentation/developer/guides/feedback-attachments.md` said the feedback stores are unregistered when the postgres flag is on and no connection string is set. The fix pass states `UnavailableFeedbackStorage` (reads empty, removes no-op, filing/updating/uploading throws).
+- Round 2 re-read that guide against `FeedbackModule`, `PostgresDbModule`, and `UnavailableFeedbackStorage`. M1 holds as fixed. No new findings. This round did not re-run build, test, or audit; the fix-pass record covers the doc-only change.
+- Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0.
+- Outcome: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Review
 
-- Round 1: Blocked — open M1
-- Round 1 fix pass: M1 fixed (guide states the `UnavailableFeedbackStorage` stand-in)
-
+- Round 1: one open bug, M1 (guide described the stores as unregistered)
+- Round 1 fix pass: M1 fixed in the guide
+- Round 2: Done
 ## Notes
 
 Verified 2026-11-24 through the agent API (`feedback:read`): `GET /api/admin/feedback/01a12f40-fd5d-77ca-beff-b33d0d65c964`
