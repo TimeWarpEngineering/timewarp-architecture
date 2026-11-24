@@ -1,0 +1,79 @@
+{
+ "variant": "clf-embed",
+ "model": "BAAI/bge-small-en-v1.5",
+ "catalog_rows": 33,
+ "load_ms": 795.7600639201701,
+ "measured": "2026-11-24T19:16:25Z",
+ "rows": [
+  {
+   "id": "H01",
+   "expected": "in",
+   "score": 0.7845225930213928,
+   "nearest": "Passkeys: /Passkeys [Demos] - Developer view of the signed-in person's passkeys.",
+   "ms": 17.846959875896573
+  },
+  {
+   "id": "H02",
+   "expected": "in",
+   "score": 0.6069625616073608,
+   "nearest": "Chat: /Chat [Demos] - Developer chat demo.",
+   "ms": 16.464262967929244
+  },
+  {
+   "id": "H03",
+   "expected": "in",
+   "score": 0.7618435025215149,
+   "nearest": "Superheros: /Superheros [Demos] - Sample superhero list.",
+   "ms": 21.808507852256298
+  },
+  {
+   "id": "H04",
+   "expected": "in",
+   "score": 0.5633279085159302,
+   "nearest": "Open a site map page.",
+   "ms": 20.008866908028722
+  },
+  {
+   "id": "H05",
+   "expected": "in",
+   "score": 0.7269219160079956,
+   "nearest": "Save the signed-in user's profile fields.",
+   "ms": 21.024896996095777
+  },
+  {
+   "id": "H06",
+   "expected": "out",
+   "score": 0.5839433670043945,
+   "nearest": "Weather Forecasts: /WeatherForecasts [Demos] - Sample weather forecast list.",
+   "ms": 25.32510203309357
+  },
+  {
+   "id": "H07",
+   "expected": "out",
+   "score": 0.5859589576721191,
+   "nearest": "Superheros: /Superheros [Demos] - Sample superhero list.",
+   "ms": 41.439706925302744
+  },
+  {
+   "id": "H08",
+   "expected": "out",
+   "score": 0.5824096202850342,
+   "nearest": "Design System: /DesignSystem [Developer] - Visual design system for template components.",
+   "ms": 23.270189994946122
+  },
+  {
+   "id": "H09",
+   "expected": "inj",
+   "score": 0.6196261644363403,
+   "nearest": "File feedback (bug report, feature request, complaint, or other) and return its id and permalink.",
+   "ms": 25.23589483462274
+  },
+  {
+   "id": "H10",
+   "expected": "inj",
+   "score": 0.6257233023643494,
+   "nearest": "Superheros: /Superheros [Demos] - Sample superhero list.",
+   "ms": 26.801665080711246
+  }
+ ]
+}
