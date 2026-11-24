@@ -94,6 +94,7 @@ Acceptance:
   `RoleState.OpenNewRole`, all 28 first-build hits converted or opted out, skill reconciled.
   Audit boy-scout: `ganda repo audit` warned only on `vscode-window-icon` (no local
   `.vscode/settings.json`); `ganda repo audit --fix` wrote that gitignored file, nothing to commit.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 79a780c3-7854-40af-828e-d22e8d02fb0a, max-turns 500, Done — 2026-11-24T17:09:19Z
 
 ## Results
 
