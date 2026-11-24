@@ -22,17 +22,62 @@ Remove the `/api/debug-config` endpoint completely from `CommonServerModule` and
    - Add a Jaribu test (following the tiny `WebApplication` + `UseTestServer()` pattern in `tests/container-apps/web/web-server-integration-tests/open-api-discovery-coverage-tests.cs`) that builds a host with `EnvironmentName = Environments.Development`, invokes `CommonServerModule.ConfigureEndpoints(app)`, starts the test server, and asserts `GET /api/debug-config` returns `HttpStatusCode.NotFound`.
    - Keep the test completely Docker-free so it runs reliably in `ci (fast)` and `template-smoke`.
 
+## Goal (implementer restatement)
+
+Every server host that composes `CommonServerModule` must stop serving the configuration dump at
+`GET /api/debug-config`, including in `Development`. `ConfigureEndpoints` stays as an empty
+`IAspNetModule` hook so `api-server` and `web-server` keep calling it unchanged.
+
+Acceptance:
+
+- `common-server-module.cs` has no `MapGet("/api/debug-config")` and no `GetDebugView()`; no unused
+  locals or usings remain.
+- The Design region and XML docs in `common-server-module.cs`, and the Design region in
+  `open-api-discovery-coverage.cs`, no longer mention the endpoint.
+- No `debug-config` or `GetDebugView` reference remains under `source/`, `tests/`, or `skills/`.
+- A Docker-free Jaribu test boots a tiny `UseTestServer()` host in `Development`, calls
+  `CommonServerModule.ConfigureEndpoints`, and asserts `GET /api/debug-config` is `404 Not Found`.
+- `./bin/dev build` is clean, the new test passes, and `ganda repo audit` passes.
+
 ## Checklist
 
-- [ ] Remove `/api/debug-config` and `GetDebugView()` from `CommonServerModule.ConfigureEndpoints` in `source/foundation/foundation-server/common-server-module.cs`
-- [ ] Update comments and XML docs in `common-server-module.cs` and `open-api-discovery-coverage.cs`
-- [ ] Verify no other `debug-config` or `GetDebugView` endpoints remain in `source/`, `tests/`, or `skills/`
-- [ ] Add a Development-environment regression test asserting `GET /api/debug-config` returns `404 Not Found`
-- [ ] Verify `./bin/dev build` (0 warnings, 0 errors), targeted `./bin/dev test`, and `ganda repo audit`
+- [x] Remove `/api/debug-config` and `GetDebugView()` from `CommonServerModule.ConfigureEndpoints` in `source/foundation/foundation-server/common-server-module.cs`
+- [x] Update comments and XML docs in `common-server-module.cs` and `open-api-discovery-coverage.cs`
+- [x] Verify no other `debug-config` or `GetDebugView` endpoints remain in `source/`, `tests/`, or `skills/`
+- [x] Add a Development-environment regression test asserting `GET /api/debug-config` returns `404 Not Found`
+- [x] Verify `./bin/dev build` (0 warnings, 0 errors), targeted `./bin/dev test`, and `ganda repo audit`
 
 ## Session
 
 - Created: 3163313 (2026-11-24)
+
+## Results
+
+- `source/foundation/foundation-server/common-server-module.cs`: `ConfigureEndpoints` is now an
+  empty `IAspNetModule` hook (no `MapGet`, no `GetDebugView`). Design region, class summary, and
+  method summary rewritten.
+- `source/foundation/foundation-server/open-api-discovery-coverage.cs`: Design region no longer
+  names the route.
+- `source/foundation/foundation-server/global-usings.cs`: dropped `Microsoft.Extensions.Hosting`
+  (only `IsDevelopment()` used it; IDE0005 failed the build otherwise).
+- New `tests/container-apps/web/web-server-integration-tests/common-server-module-endpoints-tests.cs`:
+  Development `UseTestServer()` host, `ConfigureEndpoints`, `GET /api/debug-config` → 404.
+- `grep -rn "debug-config\|GetDebugView" source tests skills` finds only the new test's route string.
+
+### Gates
+
+- `./bin/dev build`: passed, 0 warnings, 0 errors (first run failed on IDE0005 in
+  foundation-server `global-usings.cs`; fixed by removing the unused `Microsoft.Extensions.Hosting`).
+- `./bin/dev test --no-build --project web-server-integration-tests --filter-class CommonServerModuleEndpoints_`
+  (`common-server-module-endpoints-tests.cs`, a suite file in the csproj, not a standalone runfile:
+  no `#if !JARIBU_MULTI` guard): passed, 1/1.
+- `ganda repo audit`: AUDIT_RESULT
+
+### How to validate
+
+Smoke: `./bin/dev test --project web-server-integration-tests --filter-class CommonServerModuleEndpoints_`
+Expect: 1 test passes; the log shows `GET http://localhost/api/debug-config - 404`. Also
+`grep -rn GetDebugView source` prints nothing.
 
 ## Notes
 

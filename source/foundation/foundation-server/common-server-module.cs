@@ -7,9 +7,11 @@
 // ConfigureConfiguration is a no-op host hook: configuration-source composition (Azure App
 // Config, Key Vault, custom providers) belongs in the host's Program, not this published
 // foundation package — libraries must not Console.Write credentials or force Azure package
-// weight on every consumer (task 131 F-001). /api/debug-config is Development-only because
-// GetDebugView exposes secrets. The FluentValidation DisplayNameResolver emits "Type:Member"
-// so validation errors disambiguate identically named properties across contracts.
+// weight on every consumer (task 131 F-001). ConfigureEndpoints is a no-op host hook too: the
+// module maps no endpoints, in any environment, because a configuration dump over HTTP would
+// expose every environment variable and secret the process holds (task 524). The
+// FluentValidation DisplayNameResolver emits "Type:Member" so validation errors disambiguate
+// identically named properties across contracts.
 // ConfigureServices Applies ContractSerializationDefaults to HttpJsonOptions so the host
 // wire shape matches the SPA/CLI/tests seam (camelCase properties; PascalCase string enums).
 // Mvc.JsonOptions was removed with MVC BaseEndpoint (task 131 F-002) — no MVC consumers.
@@ -40,7 +42,7 @@
 namespace TimeWarp.Foundation;
 
 /// <summary>
-/// Shared ASP.NET server module: contract JSON defaults, optional debug config, OpenAPI/Scalar helpers.
+/// Shared ASP.NET server module: contract JSON defaults and OpenAPI/Scalar helpers.
 /// </summary>
 public class CommonServerModule : IAspNetModule
 {
@@ -51,25 +53,10 @@ public class CommonServerModule : IAspNetModule
   public static void ConfigureConfiguration(ConfigurationManager configurationManager) { }
 
   /// <summary>
-  /// Maps Development-only <c>/api/debug-config</c> that dumps configuration (may include secrets).
+  /// No shared endpoints; hosts map their own routes.
   /// </summary>
-  public static void ConfigureEndpoints(WebApplication webApplication)
-  {
-    IConfigurationRoot configurationRoot = webApplication.Configuration as IConfigurationRoot ?? throw new InvalidOperationException();
+  public static void ConfigureEndpoints(WebApplication webApplication) { }
 
-    if (webApplication.Environment.IsDevelopment())
-    {
-      webApplication.MapGet
-      (
-        "/api/debug-config",
-        httpContext =>
-        {
-          string? config = configurationRoot.GetDebugView();
-          return httpContext.Response.WriteAsync(config);
-        }
-      );
-    }
-  }
   /// <summary>
   /// No shared middleware; hosts add their own pipeline.
   /// </summary>
