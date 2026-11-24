@@ -9,6 +9,26 @@ name: CI/CD
 #   release         release event and dispatch: pack, OIDC push (one job, never a matrix)
 #   skill-lint      `dev lint-skills` at the vally pin
 #   template-smoke  pack, install, generate, build; the nightly runs the flag-off matrix
+#   green-key       uploads a green-key marker for each gate that passed (task 504)
+#
+# Runner (task 504, as timewarp-nuru 539). A push, or a pull request whose head branch lives in this
+# repo, runs classify, ci-group, skill-lint, and template-smoke on the wslc container runners on
+# TWE-001 (labels self-hosted, twe-001, wslc; org runner group 3, which allows this public repo:
+# timewarp-infrastructure 004). Everything else stays on ubuntu-latest: fork pull requests (untrusted
+# code), release, schedule, workflow_dispatch, and the small ci and green-key jobs. ci (integration)
+# stays hosted on every event: its Testcontainers and aspire-tests need a Docker daemon, and the wslc
+# image has no Docker socket. A fork pull request runs its own copy of this file and can rewrite
+# runs-on, so the real gate is the fork pull request approval setting (all_external_contributors):
+# approvers read the workflow diff before approving. Set the repository variable CI_HOSTED_ONLY to
+# true to send every run to ubuntu-latest (runners offline) without a code change.
+#
+# Green key (task 504, as timewarp-ganda 469 and 470). Classify hashes the committed tree (minus
+# kanban task content), the SDK, and the runner into a key, and turns off ci-group, skill-lint, or
+# template-smoke when that gate already passed on the same key in an earlier same-repo run. So a
+# master merge push, or a kanban-only push to a green pull request, does not run CI again. The
+# green-key job uploads a marker per gate after it passes. Rules: tools/dev-cli/services/green-key.cs.
+# Fork pull requests, release, schedule, and workflow_dispatch never skip. To force a full run, add
+# the trailer `Green-Key: full-run` to the head commit, or dispatch this workflow with mode full.
 
 on:
   push:
@@ -49,12 +69,13 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'merge = pack without publishing (default). probe = trusted-publishing check only (OIDC login, no build, no publish). nightly = template-smoke flag-off matrix + generated-app tests only.'
+        description: 'merge = pack without publishing (default). probe = trusted-publishing check only (OIDC login, no build, no publish). nightly = template-smoke flag-off matrix + generated-app tests only. full = every CI job on hosted runners, no green-key skip.'
         type: choice
         options:
           - merge
           - probe
           - nightly
+          - full
         default: merge
 
 # A newer pull request run, or a newer push to the same branch, cancels the older one. Release,
@@ -73,15 +94,22 @@ defaults:
 
 jobs:
   classify:
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')
+    runs-on: >-
+      ${{ vars.CI_HOSTED_ONLY != 'true' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
+      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
+      actions: read  # green-key marker lookup (gh api actions/artifacts)
     outputs:
       # A classify step that wrote nothing turns the job on.
       ci: ${{ steps.classify.outputs.ci || 'true' }}
       skill: ${{ steps.classify.outputs.skill || 'true' }}
       template: ${{ steps.classify.outputs.template || 'true' }}
+      green_key: ${{ steps.classify.outputs.green_key }}
+      green_key_writer: ${{ steps.classify.outputs.green_key_writer || 'false' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -91,18 +119,25 @@ jobs:
         with:
           nuget-cache: restore  # only the dev CLI's packages; a ci-group job saves the full set
 
-      - name: Classify changed paths
+      - name: Classify changed paths and look up green keys
         id: classify
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow --phase classify
 
   ci-group:
     needs: [classify]
     if: |
       always() && !cancelled() &&
-      (github.event_name == 'push' || github.event_name == 'pull_request') &&
+      (github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')) &&
       needs.classify.outputs.ci == 'true'
     name: ci (${{ matrix.name }})
-    runs-on: ubuntu-latest
+    # matrix.hosted keeps a leg on ubuntu-latest on every event (see the header).
+    runs-on: >-
+      ${{ vars.CI_HOSTED_ONLY != 'true' && !matrix.hosted &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
+      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
     strategy:
@@ -113,6 +148,7 @@ jobs:
             args: --phase test --group fast
           - name: integration
             args: --phase test --group integration
+            hosted: true  # Testcontainers and aspire-tests need Docker; wslc has no socket
           - name: publish
             args: --phase publish
     steps:
@@ -140,7 +176,7 @@ jobs:
     # The required check. A skipped ci-group (non-build change) passes; a failed or cancelled
     # group fails. A failed classify fails too: its skip of ci-group must not read as a pass.
     needs: [classify, ci-group]
-    if: always() && (github.event_name == 'push' || github.event_name == 'pull_request')
+    if: always() && (github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full'))
     runs-on: ubuntu-latest
     steps:
       - name: All CI groups passed
@@ -154,7 +190,7 @@ jobs:
 
   release:
     # NuGet Trusted Publishing binds to this repo + workflow.yml, not the job name.
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'nightly')
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'nightly' && inputs.mode != 'full')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -202,10 +238,14 @@ jobs:
     needs: [classify]
     if: |
       always() && !cancelled() &&
-      github.event_name == 'pull_request' &&
+      (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')) &&
       needs.classify.outputs.skill == 'true'
     name: Lint skill specs
-    runs-on: ubuntu-latest
+    runs-on: >-
+      ${{ vars.CI_HOSTED_ONLY != 'true' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
+      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -245,7 +285,11 @@ jobs:
         (github.event_name == 'workflow_dispatch' && inputs.mode != 'probe') ||
         ((github.event_name == 'push' || github.event_name == 'pull_request') && needs.classify.outputs.template == 'true')
       )
-    runs-on: ubuntu-latest
+    runs-on: >-
+      ${{ vars.CI_HOSTED_ONLY != 'true' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
+      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
     steps:
@@ -272,7 +316,56 @@ jobs:
           exit $LASTEXITCODE
 
       # The smoke restores this branch's 2.0.0-smoke packages. Evict them before the cache
-      # post-step saves, so a cache never carries one branch's local bits into another run.
+      # post-step saves (hosted) or the next job reuses the instance's NuGet volume (wslc), so no
+      # cache carries one branch's local bits into another run.
       - name: Evict smoke packages from NuGet cache
         if: always()
         run: rm -rf ~/.nuget/packages/*/2.0.0-smoke
+
+  green-key:
+    # Uploads one marker per gate that passed on this run's key (green-key-v1-<gate>-<key>, see
+    # tools/dev-cli/services/green-key.cs). green_key_writer is true only for a same-repo push or pull
+    # request whose classify computed a key. A gate that skipped (path rule or green-key hit) or
+    # failed uploads nothing. 90 days matches timewarp-ganda; a marker is one small file.
+    needs: [classify, ci-group, skill-lint, template-smoke]
+    if: |
+      always() && !cancelled() &&
+      needs.classify.result == 'success' &&
+      needs.classify.outputs.green_key_writer == 'true'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Stage marker
+        env:
+          GREEN_KEY: ${{ needs.classify.outputs.green_key }}
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/green-key | Out-Null
+          [ordered]@{ format = 'green-key-v1'; key = $env:GREEN_KEY; run = $env:GITHUB_RUN_ID; commit = $env:GITHUB_SHA } |
+            ConvertTo-Json -Compress | Set-Content -Path artifacts/green-key/marker.json
+
+      - name: Upload ci marker
+        if: needs.ci-group.result == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: green-key-v1-ci-${{ needs.classify.outputs.green_key }}
+          path: artifacts/green-key/marker.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload skill marker
+        if: needs.skill-lint.result == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: green-key-v1-skill-${{ needs.classify.outputs.green_key }}
+          path: artifacts/green-key/marker.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload template marker
+        if: needs.template-smoke.result == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: green-key-v1-template-${{ needs.classify.outputs.green_key }}
+          path: artifacts/green-key/marker.json
+          if-no-files-found: error
+          retention-days: 90
