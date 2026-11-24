@@ -286,7 +286,7 @@ public class DarkTheme_Given_Shell
   private static Task WaitInteractiveAsync(IPage page, float timeout = 120_000) =>
     page.WaitForFunctionAsync
     (
-      "() => { const e = document.querySelector('.twe-footer__mode'); return e && e.textContent.trim() !== 'Static'; }",
+      "() => { const e = document.querySelector('[data-qa=RenderMode]'); return e && e.dataset.mode !== 'Static'; }",
       null,
       new PageWaitForFunctionOptions { Timeout = timeout }
     );

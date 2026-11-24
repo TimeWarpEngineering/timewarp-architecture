@@ -158,7 +158,7 @@ public class NavWidth_Given_Shell
   private static Task WaitInteractiveAsync(IPage page) =>
     page.WaitForFunctionAsync
     (
-      "() => { const e = document.querySelector('.twe-footer__mode'); return e && e.textContent.trim() !== 'Static'; }",
+      "() => { const e = document.querySelector('[data-qa=RenderMode]'); return e && e.dataset.mode !== 'Static'; }",
       null,
       new PageWaitForFunctionOptions { Timeout = 120_000 }
     );

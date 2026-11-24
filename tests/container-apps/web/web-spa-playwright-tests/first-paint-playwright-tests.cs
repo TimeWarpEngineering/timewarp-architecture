@@ -9,7 +9,7 @@
 // First paint is measured two ways. A context with JavaScript disabled sees only the prerendered
 // HTML and the stylesheets in <head>. A JavaScript context with blazor.web.js blocked sees the
 // same markup in a real script-capable page that never goes interactive. The settled pass loads
-// normally and waits until the footer's render-mode label leaves "Static".
+// normally and waits until the footer render-mode slot's data-mode leaves "Static".
 // The prerender bug was CSS written as a C# string inside <style>@(...)</style>. Prerender
 // HTML-encoded it (&#xA;, &quot;) and browsers do not decode entities inside <style>, so every
 // shell rule was dropped until interactive render rewrote the text. Two guards cover that:
@@ -142,7 +142,7 @@ public partial class FirstPaint_Given_PrerenderedShell
     IPage page = await context.NewPageAsync();
     await page.GotoAsync(InProcTestPorts.WebHostUrl, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
     await page.WaitForFunctionAsync(
-      "() => { const e = document.querySelector('.twe-footer__mode'); return e && e.textContent.trim() !== 'Static'; }",
+      "() => { const e = document.querySelector('[data-qa=RenderMode]'); return e && e.dataset.mode !== 'Static'; }",
       null,
       new PageWaitForFunctionOptions { Timeout = 120_000 });
     await page.WaitForTimeoutAsync(1_000);
@@ -316,7 +316,7 @@ public partial class FirstPaint_Given_PrerenderedShell
     if (javaScriptEnabled && !blockBlazor)
     {
       await page.WaitForFunctionAsync(
-        "() => { const e = document.querySelector('.twe-footer__mode'); return e && e.textContent.trim() !== 'Static'; }",
+        "() => { const e = document.querySelector('[data-qa=RenderMode]'); return e && e.dataset.mode !== 'Static'; }",
         null,
         new PageWaitForFunctionOptions { Timeout = 120_000 });
       // Let Fluent's web components upgrade and the theme settle before measuring.
@@ -338,7 +338,7 @@ public partial class FirstPaint_Given_PrerenderedShell
           appBarBackground: css('.twe-appbar', 'backgroundColor'),
           headerBackground: css('.fluent-layout-item[area=header]', 'backgroundColor'),
           searchEndLines: document.querySelector('.search-end').getClientRects().length,
-          renderMode: document.querySelector('.twe-footer__mode').textContent.trim(),
+          renderMode: document.querySelector('[data-qa=RenderMode]').dataset.mode,
           fluentBrand: getComputedStyle(document.documentElement).getPropertyValue('--colorBrandBackground').trim(),
         };
       }

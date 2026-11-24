@@ -78,6 +78,9 @@
   App.razor runs ShellNavScript in the head before the body is parsed. Prerender cannot know
   the stored choice; the script sets data-twe-nav before first paint, so the full column does
   not flash. Without JavaScript the breakpoint default remains.
+  Task 510: the footer's left corner is the render mode as a muted 16px icon (RenderModeBadge),
+  not the RendererInfo.Name word. The words are in a tooltip and the aria-label. data-mode
+  carries the name for tests. Every mode is normal under Auto, so there is no status colour.
 *@
 
 @code {
@@ -125,6 +128,10 @@
     ShellNavLoaded = true;
     await ApplicationState.LoadShellNav();
   }
+
+  private const string RenderModeAnchor = "twe-render-mode";
+  private RenderModeBadge ModeBadge => RenderModeBadge.For(RendererInfo.Name);
+  private string ModeClass => RendererInfo.IsInteractive ? "twe-footer__mode twe-footer__mode--fade" : "twe-footer__mode";
 
   private string ShellClass =>
     !AgentSurfaceState.IsPanelOpen
@@ -314,7 +321,34 @@
          height: var(--layout-footer-height); TimeWarpPage.razor.css overrides the variable. *@
       <FluentLayoutItem Area="LayoutArea.Footer">
         <footer class="twe-footer">
-          <span class="twe-footer__mode">@RendererInfo.Name</span>
+          @* Render mode as an icon (RenderModeBadge). @key replaces the slot when the name changes,
+             and the fade class (interactive renders only) fades the new icon in; static first paint
+             does not animate. The tooltip renders inline (no tooltip service) so it also works on
+             the prerendered page once Fluent's web components load; until then the CSS hides the
+             un-upgraded fluent-tooltip so its words do not print in the footer. An unknown name
+             prints as text with no tooltip. *@
+          @if (ModeBadge.Icon is null)
+          {
+            <span @key=ModeBadge.Name class="twe-footer__mode" data-qa="RenderMode" data-mode="@ModeBadge.Name">@ModeBadge.Name</span>
+          }
+          else
+          {
+            <span @key=ModeBadge.Name
+                  id="@RenderModeAnchor"
+                  class="@ModeClass"
+                  role="img"
+                  aria-label="@ModeBadge.Label"
+                  data-qa="RenderMode"
+                  data-mode="@ModeBadge.Name">
+              <FluentIcon Value=@ModeBadge.Icon Color="Color.Custom" CustomColor="var(--twe-muted)" aria-hidden="true" />
+            </span>
+            <FluentTooltip Anchor="@RenderModeAnchor" UseTooltipService="false" Positioning="Positioning.AboveStart">
+              <div class="twe-footer__mode-tip">
+                <strong>@ModeBadge.Heading</strong>
+                <span>@ModeBadge.Description</span>
+              </div>
+            </FluentTooltip>
+          }
           <FluentSpacer />
           <FluentSpinner Visible=@ActionTrackingState.IsActive Size="SpinnerSize.Tiny" />
           <FluentSpacer />

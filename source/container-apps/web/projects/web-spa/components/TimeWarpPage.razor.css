@@ -234,3 +234,32 @@
   color: var(--twe-muted);
   font-size: var(--twe-text-helper);
 }
+
+/* Render-mode icon (task 510): muted like the old text, sized to the 16px icon so the spinner
+   and version button keep their places. The fade runs only on interactive renders, when @key
+   swaps the slot for a new mode (Static to Server, Server to WebAssembly). */
+.twe-footer__mode {
+  display: inline-flex;
+  align-items: center;
+  color: var(--twe-muted);
+  cursor: default;
+}
+.twe-footer__mode--fade {
+  animation: twe-footer-mode-fade var(--twe-duration-fast) ease-in;
+}
+/* Before Fluent's script defines fluent-tooltip (prerender, JavaScript off) the element is
+   plain inline content; hide it so the tooltip words do not print in the footer. */
+.twe-footer ::deep fluent-tooltip:not(:defined) { display: none; }
+/* Heading over the sentence; the tooltip's content slot would otherwise lay them side by side. */
+.twe-footer__mode-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+@keyframes twe-footer-mode-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .twe-footer__mode--fade { animation: none; }
+}
