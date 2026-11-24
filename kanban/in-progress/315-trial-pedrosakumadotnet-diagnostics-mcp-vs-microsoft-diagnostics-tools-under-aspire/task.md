@@ -188,3 +188,4 @@ table; `.mcp.json` lists only the `aspire` server.
 - Created: grok-bot (2026-10-12)
 - 2026-11-25 implementer (claude, ganda task work): pinned tools, ran the trial on standalone
   api-server, removed the MCP per the rule, added `tw-dotnet-diagnostics`.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session da67d941-9e83-4098-ae56-cac8b39ecc25, max-turns 500, Done — 2026-11-24T20:52:57Z
