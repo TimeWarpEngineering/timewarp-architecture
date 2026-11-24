@@ -40,17 +40,17 @@ public partial class DesignSystemPage_Should_
     foreach (DesignSystemParts.Part part in DesignSystemParts.PageOrder)
     {
       IsKebabSlug(part.Slug).ShouldBeTrue(part.Slug);
-      DesignSystemParts.TryGet(part.Slug, out DesignSystemParts.Part? resolved).ShouldBeTrue(part.Slug);
+      DesignSystemPartLookup.TryGet(part.Slug, out DesignSystemParts.Part? resolved).ShouldBeTrue(part.Slug);
       resolved!.Title.ShouldBe(part.Title);
-      DesignSystemParts.TryGet(part.Slug.ToUpperInvariant(), out DesignSystemParts.Part? ignoredCase).ShouldBeTrue(part.Slug);
+      DesignSystemPartLookup.TryGet(part.Slug.ToUpperInvariant(), out DesignSystemParts.Part? ignoredCase).ShouldBeTrue(part.Slug);
       ignoredCase!.Slug.ShouldBe(part.Slug);
-      DesignSystemParts.Url(part).ShouldBe("/DesignSystem/" + part.Slug);
+      DesignSystemPartLookup.Url(part).ShouldBe("/DesignSystem/" + part.Slug);
     }
 
-    DesignSystemParts.Resolve(null).Kind.ShouldBe(DesignSystemParts.SelectionKind.All);
-    DesignSystemParts.Resolve(" ").Kind.ShouldBe(DesignSystemParts.SelectionKind.All);
-    DesignSystemParts.Resolve("all").Kind.ShouldBe(DesignSystemParts.SelectionKind.Unknown);
-    DesignSystemParts.TryGet("no-such-part", out _).ShouldBeFalse();
+    DesignSystemPartLookup.Resolve(null).Kind.ShouldBe(DesignSystemParts.SelectionKind.All);
+    DesignSystemPartLookup.Resolve(" ").Kind.ShouldBe(DesignSystemParts.SelectionKind.All);
+    DesignSystemPartLookup.Resolve("all").Kind.ShouldBe(DesignSystemParts.SelectionKind.Unknown);
+    DesignSystemPartLookup.TryGet("no-such-part", out _).ShouldBeFalse();
 
     string html = await RenderAsync();
 

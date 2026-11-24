@@ -1,0 +1,267 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Editable grouped selection — a three-state parent row per group and a checkbox per item.
+
+  Design: Task 512. Implementation choice, recorded as the task asked:
+  FluentTreeView (MultipleRecursive, Small, HideSelection) was the first choice and was
+  rejected on FluentUI 5.1.0. ITreeViewItem and FluentTreeItem have no Disabled, so a
+  locked item cannot be shown checked and unclickable. TreeViewThreeStateSelection selects
+  and clears every descendant, so a parent click would flip a locked child. The whole tree
+  also cannot be read-only. The fallback is the grouped FluentCheckbox layout: every
+  checkbox passes Margin="0" (the FluentCheckbox default outer margin was the row gap),
+  the parent row and its children sit in native lists, and spacing is --twe-space-* only
+  (row gap space-1, child indent space-6, group gap space-3).
+  The page owns the selected set. Selected is never mutated: each change builds a new set
+  and raises SelectedChanged once. Locked ids are disabled and keep their state, and a
+  parent click selects or clears only the unlocked children. A parent with every child
+  locked is disabled. Disabled makes the whole tree read-only. The parent is ThreeState
+  with ShowIndeterminate=false and ThreeStateOrderUncheckToIntermediate=true, so a click
+  goes mixed to checked, checked to unchecked, unchecked to checked, and the mixed state
+  is shown and announced by the checkbox itself.
+  Keyboard: Tab and Space are the checkbox's own. ArrowDown and ArrowUp move focus to the
+  next or previous enabled row and wrap; Home and End jump. Focus moves with
+  FluentCheckbox.FocusAsync, presentational DOM state like RovingValueGroup. The root
+  carries CancelScript so those four keys do not scroll the page; it skips modified keys,
+  the same set OnKeyDownAsync ignores.
+  data-qa: unmatched attributes splat onto the native root. Each group is
+  GroupQaPrefix-Key and each item is ItemQaPrefix-id, so a page keeps its test names.
+  This component decides nothing about grants.
+*@
+
+@code {
+  private const string ArrowDownKey = "ArrowDown";
+  private const string ArrowUpKey = "ArrowUp";
+  private const string HomeKey = "Home";
+  private const string EndKey = "End";
+
+  private const string CancelScript =
+    "if(!event.altKey&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&(event.key==='ArrowDown'"
+    + "||event.key==='ArrowUp'||event.key==='Home'||event.key==='End'))event.preventDefault()";
+
+  private static readonly IReadOnlySet<string> EmptySet = new HashSet<string>(StringComparer.Ordinal);
+
+  [Parameter] public IReadOnlyList<PermissionTreeGroup>? Groups { get; set; }
+  [Parameter] public IReadOnlySet<string>? Selected { get; set; }
+  [Parameter] public EventCallback<IReadOnlySet<string>> SelectedChanged { get; set; }
+  [Parameter] public IReadOnlySet<string>? Locked { get; set; }
+  [Parameter] public bool Disabled { get; set; }
+  [Parameter] public string GroupQaPrefix { get; set; } = "PermissionGroup";
+  [Parameter] public string ItemQaPrefix { get; set; } = "Permission";
+  [Parameter] public string? AriaLabel { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private FluentCheckbox?[] RowCheckboxes = [];
+  private bool[] RowEnabled = [];
+  private int[] GroupStart = [];
+  private int FocusSlot = -1;
+
+  private IReadOnlyList<PermissionTreeGroup> Rows => Groups ?? [];
+
+  private IReadOnlySet<string> Current => Selected ?? EmptySet;
+
+  protected override void OnParametersSet()
+  {
+    IReadOnlyList<PermissionTreeGroup> rows = Rows;
+    GroupStart = new int[rows.Count];
+    int count = 0;
+    for (int index = 0; index < rows.Count; index++)
+    {
+      GroupStart[index] = count;
+      count += 1 + Items(rows[index]).Count;
+    }
+
+    if (RowCheckboxes.Length != count)
+    {
+      RowCheckboxes = new FluentCheckbox?[count];
+    }
+
+    RowEnabled = new bool[count];
+    for (int index = 0; index < rows.Count; index++)
+    {
+      PermissionTreeGroup group = rows[index];
+      int slot = GroupStart[index];
+      RowEnabled[slot] = !IsGroupDisabled(group);
+      foreach (string item in Items(group))
+      {
+        slot++;
+        RowEnabled[slot] = !IsItemDisabled(item);
+      }
+    }
+  }
+
+  private static IReadOnlyList<string> Items(PermissionTreeGroup group) => group.Items ?? [];
+
+  private bool IsItemDisabled(string item) => Disabled || Locked?.Contains(item) == true;
+
+  private bool IsGroupDisabled(PermissionTreeGroup group)
+  {
+    if (Disabled)
+    {
+      return true;
+    }
+
+    foreach (string item in Items(group))
+    {
+      if (!IsItemDisabled(item))
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private bool? CheckStateFor(PermissionTreeGroup group)
+  {
+    IReadOnlyList<string> items = Items(group);
+    int selected = 0;
+    foreach (string item in items)
+    {
+      if (Current.Contains(item))
+      {
+        selected++;
+      }
+    }
+
+    if (selected == 0)
+    {
+      return false;
+    }
+
+    return selected == items.Count ? true : null;
+  }
+
+  private Task OnItemChanged(string item, bool value)
+  {
+    if (IsItemDisabled(item))
+    {
+      return Task.CompletedTask;
+    }
+
+    HashSet<string> next = new(Current, StringComparer.Ordinal);
+    if (value)
+    {
+      next.Add(item);
+    }
+    else
+    {
+      next.Remove(item);
+    }
+
+    return SelectedChanged.InvokeAsync(next);
+  }
+
+  private Task OnGroupChanged(PermissionTreeGroup group, bool? checkState)
+  {
+    if (IsGroupDisabled(group))
+    {
+      return Task.CompletedTask;
+    }
+
+    bool value = checkState == true;
+    HashSet<string> next = new(Current, StringComparer.Ordinal);
+    foreach (string item in Items(group))
+    {
+      if (IsItemDisabled(item))
+      {
+        continue;
+      }
+
+      if (value)
+      {
+        next.Add(item);
+      }
+      else
+      {
+        next.Remove(item);
+      }
+    }
+
+    return SelectedChanged.InvokeAsync(next);
+  }
+
+  private void TrackFocus(int slot) => FocusSlot = slot;
+
+  private async Task OnKeyDownAsync(KeyboardEventArgs keyboard)
+  {
+    if (keyboard.AltKey || keyboard.CtrlKey || keyboard.MetaKey || keyboard.ShiftKey)
+    {
+      return;
+    }
+
+    List<int> enabled = [];
+    for (int slot = 0; slot < RowEnabled.Length; slot++)
+    {
+      if (RowEnabled[slot])
+      {
+        enabled.Add(slot);
+      }
+    }
+
+    if (enabled.Count == 0)
+    {
+      return;
+    }
+
+    int position = enabled.IndexOf(FocusSlot);
+    int target = keyboard.Key switch
+    {
+      ArrowDownKey => RovingSelection.Next(enabled.Count, position),
+      ArrowUpKey => RovingSelection.Previous(enabled.Count, position),
+      HomeKey => RovingSelection.Home(enabled.Count),
+      EndKey => RovingSelection.End(enabled.Count),
+      _ => -1
+    };
+
+    if (target < 0 || RowCheckboxes[enabled[target]] is not FluentCheckbox checkbox)
+    {
+      return;
+    }
+
+    FocusSlot = enabled[target];
+    await checkbox.FocusAsync();
+  }
+}
+
+<div class="twe-perm-tree @Class" role="group" aria-label="@AriaLabel" onkeydown="@CancelScript" @attributes="AdditionalAttributes">
+  <ul class="twe-perm-tree__groups" @onkeydown="OnKeyDownAsync">
+    @for (int groupIndex = 0; groupIndex < Rows.Count; groupIndex++)
+    {
+      PermissionTreeGroup group = Rows[groupIndex];
+      int parentSlot = GroupStart[groupIndex];
+      <li class="twe-perm-tree__group" @key="group.Key" data-qa="@($"{GroupQaPrefix}-{group.Key}")">
+        <div class="twe-perm-tree__parent" @onfocusin="() => TrackFocus(parentSlot)">
+          <FluentCheckbox
+            Margin="0"
+            ThreeState="true"
+            ShowIndeterminate="false"
+            ThreeStateOrderUncheckToIntermediate="true"
+            Label="@group.Label"
+            CheckState="@CheckStateFor(group)"
+            CheckStateChanged="@(value => OnGroupChanged(group, value))"
+            Disabled="@IsGroupDisabled(group)"
+            @ref="RowCheckboxes[parentSlot]" />
+        </div>
+        <ul class="twe-perm-tree__children">
+          @for (int itemIndex = 0; itemIndex < Items(group).Count; itemIndex++)
+          {
+            string item = Items(group)[itemIndex];
+            int slot = parentSlot + 1 + itemIndex;
+            <li class="twe-perm-tree__item" @key="item" @onfocusin="() => TrackFocus(slot)">
+              <FluentCheckbox
+                Margin="0"
+                Label="@item"
+                Value="@Current.Contains(item)"
+                ValueChanged="@(value => OnItemChanged(item, value))"
+                Disabled="@IsItemDisabled(item)"
+                data-qa="@($"{ItemQaPrefix}-{item}")"
+                @ref="RowCheckboxes[slot]" />
+            </li>
+          }
+        </ul>
+      </li>
+    }
+  </ul>
+</div>

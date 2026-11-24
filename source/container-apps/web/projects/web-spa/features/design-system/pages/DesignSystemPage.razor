@@ -8,7 +8,7 @@
 
   private string? ScrolledPart;
 
-  private DesignSystemParts.Selection Current => DesignSystemParts.Resolve(Part);
+  private DesignSystemParts.Selection Current => DesignSystemPartLookup.Resolve(Part);
 
   private string? CrumbLabel
   {
@@ -68,14 +68,14 @@
           <div class="twe-stack">
             @foreach (DesignSystemParts.Part part in DesignSystemParts.PageOrder)
             {
-              @DesignSystemParts.Render(part)
+              @DesignSystemPartLookup.Render(part)
             }
           </div>
         }
         else
         {
           <div class="twe-stack" data-qa="DesignSystemPart" data-part="@Current.Part!.Slug">
-            @DesignSystemParts.Render(Current.Part)
+            @DesignSystemPartLookup.Render(Current.Part)
             <section class="ds-usage" data-qa="DesignSystemUsage">
               <h2 class="ds-usage__label">Usage</h2>
               <pre class="ds-usage__code"><code>@Current.Part.Usage</code></pre>

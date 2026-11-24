@@ -187,7 +187,7 @@ public static class CommandPaletteRoster
       .. DesignSystemParts.PageOrder.Select(static part => new PageDeepLink
       (
         DesignSystemParts.PaletteName(part),
-        DesignSystemParts.Url(part),
+        DesignSystemPartLookup.Url(part),
         DesignSystemParts.Description(part)
       ))
     ];

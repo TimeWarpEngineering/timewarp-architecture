@@ -1,0 +1,25 @@
+/* Permission tree — native root, CSS isolation. Tokens from tokens.css, no literal px.
+   Rows sit --twe-space-1 apart, children indent --twe-space-6, groups --twe-space-3. */
+.twe-perm-tree__groups,
+.twe-perm-tree__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.twe-perm-tree__groups {
+  gap: var(--twe-space-3);
+}
+
+.twe-perm-tree__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-space-1);
+}
+
+.twe-perm-tree__children {
+  gap: var(--twe-space-1);
+  padding-inline-start: var(--twe-space-6);
+}

@@ -61,7 +61,7 @@ public partial class Destinations_Should_
     string signIn = CommandPaletteRoster.SignInRow("/").Target;
     string[] expected = signedIn ? destinations : [signIn, .. destinations];
     string[] partUrls = await NavigationDestinations.IsAuthorizedAsync(user, authorization, PermissionIds.DeveloperAccess)
-      ? [.. DesignSystemParts.PageOrder.Select(static part => DesignSystemParts.Url(part))]
+      ? [.. DesignSystemParts.PageOrder.Select(static part => DesignSystemPartLookup.Url(part))]
       : [];
     palette.ShouldBe([.. expected, .. partUrls], because);
 
