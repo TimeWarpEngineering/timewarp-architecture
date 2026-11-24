@@ -23,8 +23,10 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web.HtmlRendering;
 using Microsoft.Extensions.Logging;
+using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Features.Analytics;
+using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Profiles;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Testing;
@@ -35,6 +37,8 @@ using TimeWarp.Identity;
 public class ProfilePage_Should_
 {
   private const string Draft = """{"displayName":"Grace"}""";
+
+  private static readonly string Form = FormSuggestionState.KeyFor(typeof(ProfileState.UpdateProfileActionSet.Action));
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<ProfilePage_Should_>();
@@ -47,7 +51,7 @@ public class ProfilePage_Should_
     PageView view = await RenderAsync(spa, scope, afterOpen: page =>
     {
       ArgumentNullException.ThrowIfNull(page);
-      return scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action(Draft)).AsTask();
+      return scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(Form, Draft)).AsTask();
     });
 
     view.DisplayName.ShouldBe("Grace");
@@ -66,7 +70,7 @@ public class ProfilePage_Should_
     PageView view = await RenderAsync(spa, scope, afterOpen: page =>
     {
       CommandOf(page).DisplayName = "Pat";
-      return scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action(Draft)).AsTask();
+      return scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(Form, Draft)).AsTask();
     });
 
     view.DisplayName.ShouldBe("Grace");
@@ -86,7 +90,7 @@ public class ProfilePage_Should_
     PageView view = await RenderAsync(spa, scope, afterOpen: page =>
     {
       CommandOf(page).DisplayName = "Pat";
-      return scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action(Draft)).AsTask();
+      return scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(Form, Draft)).AsTask();
     });
 
     view.DisplayName.ShouldBe("Pat");
@@ -107,7 +111,7 @@ public class ProfilePage_Should_
       afterOpen: page =>
       {
         ArgumentNullException.ThrowIfNull(page);
-        return scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action(Draft)).AsTask();
+        return scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(Form, Draft)).AsTask();
       },
       afterSettled: (page, html) =>
       {
@@ -126,19 +130,19 @@ public class ProfilePage_Should_
     using ProfileSpa spa = new();
     spa.Api.HoldProfile = true;
     using SpaTestScope scope = SpaTestScope.Create(spa);
-    await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action(Draft));
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(Form, Draft));
 
     PageView view = await RenderAsync(
       spa,
       scope,
-      duringHold: async page =>
+      duringHold: async (page, afterRender) =>
       {
         CommandOf(page).DisplayName.ShouldBeNull();
-        scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Grace");
+        scope.Store.GetState<FormSuggestionState>().For(Form)?.Json.ShouldNotBeNull().ShouldContain("Grace");
         spa.Confirmation.Calls.ShouldBe(0);
-        await InteractiveHtmlRenderer.InvokeAfterRenderAsync(page);
+        await afterRender();
         CommandOf(page).DisplayName.ShouldBeNull();
-        scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Grace");
+        scope.Store.GetState<FormSuggestionState>().For(Form)?.Json.ShouldNotBeNull().ShouldContain("Grace");
         spa.Confirmation.Calls.ShouldBe(0);
       });
 
@@ -152,7 +156,7 @@ public class ProfilePage_Should_
   (
     ProfileSpa spa,
     SpaTestScope scope,
-    Func<ProfilePage, Task>? duringHold = null,
+    Func<ProfilePage, Func<Task>, Task>? duringHold = null,
     Func<ProfilePage, Task>? afterOpen = null,
     Func<ProfilePage, string, Task>? afterSettled = null
   )
@@ -171,17 +175,17 @@ public class ProfilePage_Should_
     if (duringHold is not null)
     {
       ProfilePage loading = capture.Page ?? throw new InvalidOperationException("ProfilePage did not render while loading.");
-      await duringHold(loading);
+      await duringHold(loading, () => AfterRenderAsync(spa, loading));
       spa.Api.ProfileGate.TrySetResult();
     }
 
     await root.QuiescenceTask;
     ProfilePage page = capture.Page ?? throw new InvalidOperationException("ProfilePage did not render.");
-    await InteractiveHtmlRenderer.InvokeAfterRenderAsync(page);
+    await AfterRenderAsync(spa, page);
     if (afterOpen is not null)
     {
       await afterOpen(page);
-      await InteractiveHtmlRenderer.InvokeAfterRenderAsync(page);
+      await AfterRenderAsync(spa, page);
     }
 
     page.ReRender();
@@ -198,7 +202,16 @@ public class ProfilePage_Should_
       CommandOf(page).DisplayName,
       spa.Confirmation.Calls,
       spa.Confirmation.Message,
-      scope.Store.GetState<ProfileState>().ProfileSuggestionJson);
+      scope.Store.GetState<FormSuggestionState>().For(Form)?.Json);
+  }
+
+  private static async Task AfterRenderAsync(ProfileSpa spa, ProfilePage page)
+  {
+    await InteractiveHtmlRenderer.InvokeAfterRenderAsync(page);
+    foreach (ComponentBase scope in spa.Activator.Scopes.ToArray())
+    {
+      await InteractiveHtmlRenderer.InvokeAfterRenderAsync(scope);
+    }
   }
 
   private static UpdateProfile.Command CommandOf(ProfilePage page)
@@ -252,6 +265,8 @@ public class ProfilePage_Should_
 
     public RecordingConfirmation Confirmation { get; } = new();
 
+    public ScopeRecordingActivator Activator { get; }
+
     public IServiceProvider ServiceProvider { get; }
 
     public ProfileSpa()
@@ -260,7 +275,9 @@ public class ProfilePage_Should_
       ServiceCollection services = StaticRenderHost.CreateServices(user: new ClaimsPrincipal(identity));
       services.AddSingleton<IWebServerApiService>(Api);
       services.AddSingleton<IConfirmationService>(Confirmation);
+      services.AddSingleton<IComponentActivator>(provider => new ScopeRecordingActivator(provider));
       ServiceProvider = services.BuildServiceProvider();
+      Activator = (ScopeRecordingActivator)ServiceProvider.GetRequiredService<IComponentActivator>();
     }
 
     public void Dispose()
@@ -269,6 +286,23 @@ public class ProfilePage_Should_
       {
         disposable.Dispose();
       }
+    }
+  }
+
+  private sealed class ScopeRecordingActivator(IServiceProvider services) : IComponentActivator
+  {
+    public List<ComponentBase> Scopes { get; } = [];
+
+    public IComponent CreateInstance(Type componentType)
+    {
+      ArgumentNullException.ThrowIfNull(componentType);
+      var component = (IComponent)ActivatorUtilities.CreateInstance(services, componentType);
+      if (component is IAgentFilledFields and ComponentBase scope)
+      {
+        Scopes.Add(scope);
+      }
+
+      return component;
     }
   }
 

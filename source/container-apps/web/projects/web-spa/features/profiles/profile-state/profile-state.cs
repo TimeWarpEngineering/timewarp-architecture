@@ -4,9 +4,9 @@
 
 #region Design
 // The store holds the fetched GetProfile.Response, not a flattened copy of its fields.
-// FetchProfileData and UpdateProfile write that snapshot. A prefill stores an immutable JSON
-// suggestion, an id, and whether the person accepted it over unsaved edits. Initialize clears
-// the snapshot and the suggestion so sign-out does not leave the previous person on screen.
+// FetchProfileData and UpdateProfile write that snapshot. A prefill draft is not stored here:
+// FormSuggestionState holds it for every edit form. Initialize clears the snapshot so sign-out
+// does not leave the previous person on screen.
 // A null Profile is "not loaded yet", not a loading flag — in-flight fetch is [TrackAction]
 // on FetchProfileData.
 // FallbackAvatar is the FluentUI Person icon, a data URI, so chrome has an image before the
@@ -23,17 +23,8 @@ public sealed partial class ProfileState : State<ProfileState>
 
   public GetProfile.Response? Profile { get; private set; }
 
-  public string? ProfileSuggestionJson { get; private set; }
-
-  public string? ProfileSuggestionId { get; private set; }
-
-  public bool ProfileSuggestionAccepted { get; private set; }
-
   public override void Initialize()
   {
     Profile = null;
-    ProfileSuggestionJson = null;
-    ProfileSuggestionId = null;
-    ProfileSuggestionAccepted = false;
   }
 }

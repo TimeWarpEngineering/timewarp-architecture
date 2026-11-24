@@ -58,6 +58,7 @@ using TimeWarp.Architecture.Features.WeatherForecasts;
 [JsonSerializable(typeof(DesignSystemState))]
 [JsonSerializable(typeof(FeedbackAdminState))]
 [JsonSerializable(typeof(FeedbackState))]
+[JsonSerializable(typeof(FormSuggestionState))]
 [JsonSerializable(typeof(NotificationState))]
 [JsonSerializable(typeof(PrincipalState))]
 [JsonSerializable(typeof(ProfileState))]

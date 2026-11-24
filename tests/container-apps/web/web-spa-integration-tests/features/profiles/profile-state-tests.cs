@@ -7,10 +7,12 @@
 // facts. No Aspire host: the store is what these facts observe. The working copy is
 // UpdateProfile.Command.From on the stored response, and a DevTools snapshot of the populated
 // state goes through StateJsonContext. Re-read the store after Send (clone-on-dispatch).
-// A prefill stores JSON and an id. Confirm asks through IConfirmationService. The question
+// A prefill stores JSON and an id in FormSuggestionState under the submit action's key.
+// Confirm asks through IConfirmationService. The question
 // says the draft replaces unsaved changes on the form. Apply copies only the supplied
 // fields and does not move the baseline. An empty argument list and a set of unknown keys
-// are not a draft.
+// are not a draft. A change of principal (SessionChanged, empty when signed out) drops every
+// draft; the same principal keeps them.
 #endregion
 
 namespace ProfileState_;
@@ -18,6 +20,7 @@ namespace ProfileState_;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using TimeWarp.Architecture.Features.Analytics;
+using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Profiles;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Spa;
@@ -106,54 +109,81 @@ public class FetchAndUpdate_Should_
   {
     using ProfileSpa spa = new();
     using SpaTestScope scope = SpaTestScope.Create(spa);
+    string form = FormSuggestionState.KeyFor(typeof(ProfileState.UpdateProfileActionSet.Action));
 
-    await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action("""{"displayName":"Ada"}"""));
-    ProfileState stored = scope.Store.GetState<ProfileState>();
-    stored.ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Ada");
-    string firstId = stored.ProfileSuggestionId.ShouldNotBeNull();
-    stored.ProfileSuggestionAccepted.ShouldBeFalse();
-    stored.Profile.ShouldBeNull();
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(form, """{"displayName":"Ada"}"""));
+    FormSuggestion stored = scope.Store.GetState<FormSuggestionState>().For(form).ShouldNotBeNull();
+    stored.Json.ShouldContain("Ada");
+    string firstId = stored.Id.ShouldNotBeNull();
+    stored.Accepted.ShouldBeFalse();
+    scope.Store.GetState<ProfileState>().Profile.ShouldBeNull();
 
     spa.Confirmation.Answer = true;
-    await scope.Send(new ProfileState.ConfirmProfileSuggestionActionSet.Action());
-    stored = scope.Store.GetState<ProfileState>();
-    stored.ProfileSuggestionAccepted.ShouldBeTrue();
-    stored.ProfileSuggestionId.ShouldBe(firstId);
+    await scope.Send(new FormSuggestionState.ConfirmFormSuggestionActionSet.Action(form, "profile"));
+    stored = scope.Store.GetState<FormSuggestionState>().For(form).ShouldNotBeNull();
+    stored.Accepted.ShouldBeTrue();
+    stored.Id.ShouldBe(firstId);
     spa.Confirmation.Title.ShouldBe("Replace unsaved edits?");
     spa.Confirmation.Message.ShouldBe(
       "An agent drafted new profile values. Applying them replaces unsaved changes on this form.");
     spa.Confirmation.ConfirmLabel.ShouldBe("Apply draft");
     spa.Confirmation.CancelLabel.ShouldBe("Keep mine");
 
-    await scope.Send(new ProfileState.ClearProfileSuggestionActionSet.Action());
-    stored = scope.Store.GetState<ProfileState>();
-    stored.ProfileSuggestionJson.ShouldBeNull();
-    stored.ProfileSuggestionId.ShouldBeNull();
-    stored.ProfileSuggestionAccepted.ShouldBeFalse();
+    await scope.Send(new FormSuggestionState.ClearFormSuggestionActionSet.Action(form, firstId));
+    scope.Store.GetState<FormSuggestionState>().For(form).ShouldBeNull();
 
-    await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action("""{"displayName":"Grace"}"""));
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(form, """{"displayName":"Grace"}"""));
     spa.Confirmation.Answer = false;
-    await scope.Send(new ProfileState.ConfirmProfileSuggestionActionSet.Action());
-    stored = scope.Store.GetState<ProfileState>();
-    stored.ProfileSuggestionJson.ShouldBeNull();
-    stored.ProfileSuggestionAccepted.ShouldBeFalse();
+    await scope.Send(new FormSuggestionState.ConfirmFormSuggestionActionSet.Action(form, "profile"));
+    scope.Store.GetState<FormSuggestionState>().For(form).ShouldBeNull();
 
-    await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action("""{"displayName":"Ada"}"""));
-    firstId = scope.Store.GetState<ProfileState>().ProfileSuggestionId.ShouldNotBeNull();
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(form, """{"displayName":"Ada"}"""));
+    firstId = scope.Store.GetState<FormSuggestionState>().For(form).ShouldNotBeNull().Id;
     spa.Confirmation.Answer = true;
     spa.Confirmation.During = async () =>
-      await scope.Send(new ProfileState.SetProfileSuggestionActionSet.Action("""{"displayName":"Grace"}"""));
-    await scope.Send(new ProfileState.ConfirmProfileSuggestionActionSet.Action());
-    stored = scope.Store.GetState<ProfileState>();
-    stored.ProfileSuggestionAccepted.ShouldBeFalse();
-    stored.ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Grace");
-    stored.ProfileSuggestionId.ShouldNotBe(firstId);
+      await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(form, """{"displayName":"Grace"}"""));
+    await scope.Send(new FormSuggestionState.ConfirmFormSuggestionActionSet.Action(form, "profile"));
+    stored = scope.Store.GetState<FormSuggestionState>().For(form).ShouldNotBeNull();
+    stored.Accepted.ShouldBeFalse();
+    stored.Json.ShouldContain("Grace");
+    stored.Id.ShouldNotBe(firstId);
 
-    await scope.Send(new ProfileState.ClearProfileDataActionSet.Action());
-    stored = scope.Store.GetState<ProfileState>();
-    stored.Profile.ShouldBeNull();
-    stored.ProfileSuggestionJson.ShouldBeNull();
-    stored.ProfileSuggestionId.ShouldBeNull();
+    // Clearing an older id leaves the newer draft; another form's draft is separate.
+    await scope.Send(new FormSuggestionState.ClearFormSuggestionActionSet.Action(form, firstId));
+    scope.Store.GetState<FormSuggestionState>().For(form).ShouldNotBeNull().Json.ShouldContain("Grace");
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action("Other.Form", """{"name":"x"}"""));
+    await scope.Send(new FormSuggestionState.ClearFormSuggestionActionSet.Action(form, stored.Id));
+    scope.Store.GetState<FormSuggestionState>().For(form).ShouldBeNull();
+    scope.Store.GetState<FormSuggestionState>().For("Other.Form").ShouldNotBeNull();
+  }
+
+  public static async Task Suggestion_Should_Drop_When_PrincipalChanges()
+  {
+    using ProfileSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    string form = FormSuggestionState.KeyFor(typeof(ProfileState.UpdateProfileActionSet.Action));
+
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action("ada"));
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(form, """{"displayName":"Ada"}"""));
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action("Other.Form", """{"name":"x"}"""));
+
+    // A re-read for the same principal keeps the drafts.
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action("ada"));
+    scope.Store.GetState<FormSuggestionState>().Suggestions.Count.ShouldBe(2);
+
+    // The listener's signed-out path sends an empty id: every draft goes.
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action(""));
+    FormSuggestionState state = scope.Store.GetState<FormSuggestionState>();
+    state.Suggestions.ShouldBeEmpty();
+    state.SessionPrincipalId.ShouldBeEmpty();
+
+    // A sign-in as someone else drops a draft left on the circuit.
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action("ada"));
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(form, """{"displayName":"Ada"}"""));
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action("grace"));
+    state = scope.Store.GetState<FormSuggestionState>();
+    state.For(form).ShouldBeNull();
+    state.SessionPrincipalId.ShouldBe("grace");
   }
 
   public static Task Apply_Should_CopyOnlySuppliedFields_And_LeaveTheBaseline()
@@ -167,11 +197,11 @@ public class FetchAndUpdate_Should_
       Theme = "system",
       Notifications = true,
     };
-    UpdateProfile.Command baseline = ProfileFormDraft.Copy(command);
+    string baseline = JsonSerializer.Serialize(command, ContractSerializationDefaults.Options);
     Dictionary<string, string> filled = new(StringComparer.Ordinal);
 
     FormPrefill.TryNormalize(
-      typeof(UpdateProfile.Command),
+      typeof(IProfileDetails),
       """{"displayName":"Grace","email":null,"nope":1}""",
       out string suggestion,
       out string? error,
@@ -184,14 +214,14 @@ public class FetchAndUpdate_Should_
     command.Email.ShouldBeNull();
     command.Notifications.ShouldBeTrue();
     command.Language.ShouldBe("en-US");
-    ProfileFormDraft.Same(command, baseline).ShouldBeFalse();
-    baseline.DisplayName.ShouldBe("Ada");
+    JsonSerializer.Serialize(command, ContractSerializationDefaults.Options).ShouldNotBe(baseline);
+    baseline.ShouldContain("Ada");
     FormPrefill.Matches(command, nameof(UpdateProfile.Command.DisplayName), filled["DisplayName"]).ShouldBeTrue();
     command.DisplayName = "Ada";
     FormPrefill.Matches(command, nameof(UpdateProfile.Command.DisplayName), filled["DisplayName"]).ShouldBeFalse();
 
     FormPrefill.TryNormalize(
-      typeof(UpdateProfile.Command),
+      typeof(IProfileDetails),
       """{"displayName":null}""",
       out _,
       out error,
@@ -199,7 +229,7 @@ public class FetchAndUpdate_Should_
     error.ShouldNotBeNull().ShouldContain("cannot be null");
 
     FormPrefill.TryNormalize(
-      typeof(UpdateProfile.Command),
+      typeof(IProfileDetails),
       """{"notifications":"yes"}""",
       out _,
       out error,
@@ -207,7 +237,7 @@ public class FetchAndUpdate_Should_
     error.ShouldNotBeNull().ShouldContain("boolean");
 
     FormPrefill.TryNormalize(
-      typeof(UpdateProfile.Command),
+      typeof(IProfileDetails),
       "",
       out suggestion,
       out error,
@@ -223,7 +253,7 @@ public class FetchAndUpdate_Should_
     fields.ShouldBeEmpty();
 
     FormPrefill.TryNormalize(
-      typeof(UpdateProfile.Command),
+      typeof(IProfileDetails),
       """{"nope":1}""",
       out suggestion,
       out error,

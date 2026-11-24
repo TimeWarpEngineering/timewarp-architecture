@@ -46,6 +46,10 @@ public partial class CatalogAgent_Should
       "Feedback.ListMyFeedback",
       "Screenshot.CaptureScreenshot",
       "Prefill.Profile.UpdateProfile",
+      "Prefill.Role.CreateRole",
+      "Prefill.SiteSettings.UpdateAssistantName",
+      "Prefill.SiteSettings.UpdateSiteSettings",
+      "Prefill.SiteSettings.UpdateXaiByokMode",
       AgentNavigate.ToolName,
       AgentSiteMap.ToolName,
       PageAgentContext.ToolName,
@@ -263,7 +267,7 @@ public partial class CatalogAgent_Should
     offPage.OffPageRoute.ShouldBe("/Profile");
     offPage.RequiresApproval.ShouldBeFalse();
     offPage.Entry.ShouldNotBeNull().Name.ShouldBe("Profile.UpdateProfile");
-    home.ShouldNotContain(tool => tool.Name == "Profile.SetProfileSuggestion");
+    home.ShouldNotContain(tool => tool.Name == "FormSuggestion.SetFormSuggestion");
 
     using JsonDocument schema = JsonDocument.Parse(offPage.InputSchema);
     schema.RootElement.TryGetProperty("required", out _).ShouldBeFalse();
@@ -323,17 +327,17 @@ public partial class CatalogAgent_Should
     AgentSurfaceState surface = scope.Store.GetState<AgentSurfaceState>();
     surface.PendingToolName.ShouldBe("Prefill.Profile.UpdateProfile");
     surface.PendingArgumentsJson.ShouldNotBeNull().ShouldContain("displayName");
-    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+    ProfileDraft(scope).ShouldBeNull();
 
     await surface.ResolveApproval(callId, approved: true);
     string result = await invoke.WaitAsync(Timeout);
     result.ShouldContain("\"drafted\":true");
-    ProfileState stored = scope.Store.GetState<ProfileState>();
-    stored.Profile.ShouldBeNull();
-    stored.ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Ada");
-    stored.ProfileSuggestionJson.ShouldNotContain("extra");
-    stored.ProfileSuggestionId.ShouldNotBeNullOrWhiteSpace();
-    stored.ProfileSuggestionAccepted.ShouldBeFalse();
+    FormSuggestion stored = ProfileDraft(scope).ShouldNotBeNull();
+    scope.Store.GetState<ProfileState>().Profile.ShouldBeNull();
+    stored.Json.ShouldContain("Ada");
+    stored.Json.ShouldNotContain("extra");
+    stored.Id.ShouldNotBeNullOrWhiteSpace();
+    stored.Accepted.ShouldBeFalse();
   }
 
   public static async Task WebMcp_Prefill_Reject_Leaves_No_Draft()
@@ -348,7 +352,7 @@ public partial class CatalogAgent_Should
     string result = await invoke.WaitAsync(Timeout);
 
     result.ShouldContain("\"approved\":false");
-    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+    ProfileDraft(scope).ShouldBeNull();
     scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
   }
 
@@ -364,7 +368,7 @@ public partial class CatalogAgent_Should
     offer.ShouldContain("\"navigateTo\":\"/Profile\"");
     offer.ShouldContain("\"executed\":false");
     scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
-    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+    ProfileDraft(scope).ShouldBeNull();
 
     await scope.Send(new AgentSurfaceState.SetEditModeActionSet.Action(AgentEditMode.AutomaticallyEdit));
     navigation.NavigateTo("/Profile");
@@ -373,7 +377,7 @@ public partial class CatalogAgent_Should
       """{"email":null,"displayName":"Grace"}""").WaitAsync(Timeout);
     drafted.ShouldContain("\"drafted\":true");
     scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
-    string json = scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull();
+    string json = ProfileDraft(scope).ShouldNotBeNull().Json;
     json.ShouldContain("Grace");
     json.ShouldContain("null");
   }
@@ -411,7 +415,7 @@ public partial class CatalogAgent_Should
     result.Drafted.ShouldBeTrue();
     result.Fields.ShouldBe(["displayName", "notifications"]);
     scope.Store.GetState<ProfileState>().Profile.ShouldBeNull();
-    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Ada");
+    ProfileDraft(scope).ShouldNotBeNull().Json.ShouldContain("Ada");
   }
 
   public static async Task Prefill_With_No_Matching_Field_Does_Not_Store_A_Draft()
@@ -426,14 +430,14 @@ public partial class CatalogAgent_Should
     empty.ShouldContain("\"drafted\":false");
     empty.ShouldContain("displayName");
     empty.ShouldContain("notifications");
-    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+    ProfileDraft(scope).ShouldBeNull();
 
     string unknown = await dispatcher.InvokeTool(
       "Prefill.Profile.UpdateProfile",
       """{"nope":1}""").WaitAsync(Timeout);
     unknown.ShouldContain("\"drafted\":false");
     unknown.ShouldContain("Accepted keys");
-    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+    ProfileDraft(scope).ShouldBeNull();
 
     using CatalogAgentFunctions functions = CatalogAgentFunctions.Create
     (
@@ -446,6 +450,45 @@ public partial class CatalogAgent_Should
     result.Drafted.ShouldBeFalse();
     result.Error.ShouldNotBeNull().ShouldContain("email");
     result.Fields.ShouldBeEmpty();
-    scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldBeNull();
+    ProfileDraft(scope).ShouldBeNull();
   }
+
+  public static async Task WebMcp_Lists_A_Prefill_Tool_For_Every_Edit_Form()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    ClaimsPrincipal everyone = Principal([.. PermissionIds.All]);
+    (string Path, string[] OnPage)[] pages =
+    [
+      ("/Profile", ["Prefill.Profile.UpdateProfile"]),
+      ("/Admin/Roles/New", ["Prefill.Role.CreateRole"]),
+      ("/Admin/Roles/" + Guid.NewGuid().ToString("D"), ["Prefill.Role.UpdateRole"]),
+      ("/Admin/AI", ["Prefill.SiteSettings.UpdateAssistantName", "Prefill.SiteSettings.UpdateXaiByokMode"]),
+      ("/Admin/Authentication", ["Prefill.SiteSettings.UpdateSiteSettings"]),
+    ];
+
+    foreach ((string path, string[] onPage) in pages)
+    {
+      IReadOnlyList<WebMcpToolDescriptor> tools = await WebMcpPublisher.DescribeAsync
+      (
+        everyone, authorization, catalog, path, CancellationToken.None
+      );
+      string[] prefill = [.. Names(tools).Where(static name => name.StartsWith(FormPrefill.Prefix, StringComparison.Ordinal))];
+      foreach (string name in onPage)
+      {
+        prefill.ShouldContain(name);
+      }
+
+      Console.WriteLine($"PREFILL-PROOF path={path} tools={string.Join(",", prefill)}");
+    }
+
+    // Off the role detail page there is no static route to offer, so UpdateRole is not listed.
+    Names(await WebMcpPublisher.DescribeAsync(everyone, authorization, catalog, "/", CancellationToken.None))
+      .ShouldNotContain("Prefill.Role.UpdateRole");
+  }
+
+  private static FormSuggestion? ProfileDraft(SpaTestScope scope) =>
+    scope.Store.GetState<FormSuggestionState>()
+      .For(FormSuggestionState.KeyFor(typeof(ProfileState.UpdateProfileActionSet.Action)));
 }

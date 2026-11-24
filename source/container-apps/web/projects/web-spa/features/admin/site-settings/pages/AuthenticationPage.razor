@@ -27,6 +27,9 @@
   The assistant name is not on this page. Admin → AI owns it through UpdateAssistantName, so this
   save does not round-trip the name. Whose xAI key Ask uses is UpdateXaiByokMode on that same
   page, so this save does not round-trip the mode either.
+  The form sits in FormPrefillScope for UpdateSiteSettings, so Prefill.SiteSettings.UpdateSiteSettings
+  drafts the ISiteSettingsDetails fields (never Version) and each FormField shows the Agent
+  badge. The tenant entry drafts and lookups stay page-local and are not drafted.
 *@
 
 @code {
@@ -358,119 +361,121 @@
 
   @if (PolicySource is not null)
   {
-    <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="AuthenticationForm" novalidate>
-      <FluentValidator Validator="@SiteSettingsValidator" />
-      <FormSection Title="Microsoft 365 sign-in policy"
-                   Description="Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it."
-                   data-qa="AuthenticationSettings"
-                   data-policy-version="@Command.Version"
-                   data-entra-sign-in-enabled="@(Command.EntraSignInEnabled ? "true" : "false")"
-                   data-entra-allow-bootstrap="@(Command.EntraAllowBootstrap ? "true" : "false")"
-                   data-passkey-prompt="@Command.PasskeyPromptMode"
-                   data-tenant-mode="@Command.EntraTenantAcceptanceMode">
-        <FormGrid>
-          <FormField Label="Offer Microsoft 365 sign-in">
-            <FluentCheckbox @bind-Value=Details.EntraSignInEnabled
-                            AriaLabel="Offer Microsoft 365 sign-in"
-                            Disabled=@IsBusy />
-          </FormField>
-          <FormField Label="Allow first-time Microsoft 365 bootstrap">
-            <FluentCheckbox @bind-Value=Details.EntraAllowBootstrap
-                            AriaLabel="Allow first-time Microsoft 365 bootstrap"
-                            Disabled=@IsBusy />
-          </FormField>
-          <FormField Label="Accepted tenants">
-            <FluentSelect TOption="EntraTenantAcceptanceMode" TValue="EntraTenantAcceptanceMode"
-                          Items="@TenantAcceptanceModes"
-                          OptionText="@TenantAcceptanceLabel"
-                          @bind-Value="Details.EntraTenantAcceptanceMode"
-                          AriaLabel="Accepted tenants"
-                          Width="100%"
-                          Disabled=@IsBusy
-                          data-qa="TenantAcceptanceMode" />
-            <ValidationMessage For="@(() => Details.EntraTenantAcceptanceMode)" />
-          </FormField>
-          <FormField Label="Accepted tenant list">
-            <FluentTextInput @bind-Value="DomainDraft"
-                             AriaLabel="Customer domain"
-                             Placeholder="contoso.com"
-                             Disabled=@TenantEditorsDisabled
-                             Width="100%"
-                             data-qa="AcceptedTenantDomain" />
-            <FluentButton Type=ButtonType.Button
-                          Appearance=ButtonAppearance.Outline
-                          Disabled=@TenantEditorsDisabled
-                          OnClick=LookUpAsync
-                          data-qa="AcceptedTenantLookup">
-              Look up
-            </FluentButton>
-            <FluentTextInput @bind-Value="GuidDraft"
-                             AriaLabel="Known tenant id"
-                             Placeholder="Tenant id"
-                             Disabled=@TenantEditorsDisabled
-                             Width="100%"
-                             data-qa="AcceptedTenantGuid" />
-            <FluentButton Type=ButtonType.Button
-                          Appearance=ButtonAppearance.Outline
-                          Disabled=@TenantEditorsDisabled
-                          OnClick=AddTenant
-                          data-qa="AcceptedTenantAdd">
-              Add tenant id
-            </FluentButton>
-            <ul data-qa="AcceptedTenants">
-              @foreach (EntraAcceptedTenant tenant in Command.EntraAcceptedTenants)
+    <FormPrefillScope TSubmit="SiteSettingsState.UpdateSiteSettingsActionSet.Action" Model="Command" Noun="authentication">
+      <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="AuthenticationForm" novalidate>
+        <FluentValidator Validator="@SiteSettingsValidator" />
+        <FormSection Title="Microsoft 365 sign-in policy"
+                     Description="Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it."
+                     data-qa="AuthenticationSettings"
+                     data-policy-version="@Command.Version"
+                     data-entra-sign-in-enabled="@(Command.EntraSignInEnabled ? "true" : "false")"
+                     data-entra-allow-bootstrap="@(Command.EntraAllowBootstrap ? "true" : "false")"
+                     data-passkey-prompt="@Command.PasskeyPromptMode"
+                     data-tenant-mode="@Command.EntraTenantAcceptanceMode">
+          <FormGrid>
+            <FormField Label="Offer Microsoft 365 sign-in" Field="@nameof(ISiteSettingsDetails.EntraSignInEnabled)">
+              <FluentCheckbox @bind-Value=Details.EntraSignInEnabled
+                              AriaLabel="Offer Microsoft 365 sign-in"
+                              Disabled=@IsBusy />
+            </FormField>
+            <FormField Label="Allow first-time Microsoft 365 bootstrap" Field="@nameof(ISiteSettingsDetails.EntraAllowBootstrap)">
+              <FluentCheckbox @bind-Value=Details.EntraAllowBootstrap
+                              AriaLabel="Allow first-time Microsoft 365 bootstrap"
+                              Disabled=@IsBusy />
+            </FormField>
+            <FormField Label="Accepted tenants" Field="@nameof(ISiteSettingsDetails.EntraTenantAcceptanceMode)">
+              <FluentSelect TOption="EntraTenantAcceptanceMode" TValue="EntraTenantAcceptanceMode"
+                            Items="@TenantAcceptanceModes"
+                            OptionText="@TenantAcceptanceLabel"
+                            @bind-Value="Details.EntraTenantAcceptanceMode"
+                            AriaLabel="Accepted tenants"
+                            Width="100%"
+                            Disabled=@IsBusy
+                            data-qa="TenantAcceptanceMode" />
+              <ValidationMessage For="@(() => Details.EntraTenantAcceptanceMode)" />
+            </FormField>
+            <FormField Label="Accepted tenant list" Field="@nameof(ISiteSettingsDetails.EntraAcceptedTenants)">
+              <FluentTextInput @bind-Value="DomainDraft"
+                               AriaLabel="Customer domain"
+                               Placeholder="contoso.com"
+                               Disabled=@TenantEditorsDisabled
+                               Width="100%"
+                               data-qa="AcceptedTenantDomain" />
+              <FluentButton Type=ButtonType.Button
+                            Appearance=ButtonAppearance.Outline
+                            Disabled=@TenantEditorsDisabled
+                            OnClick=LookUpAsync
+                            data-qa="AcceptedTenantLookup">
+                Look up
+              </FluentButton>
+              <FluentTextInput @bind-Value="GuidDraft"
+                               AriaLabel="Known tenant id"
+                               Placeholder="Tenant id"
+                               Disabled=@TenantEditorsDisabled
+                               Width="100%"
+                               data-qa="AcceptedTenantGuid" />
+              <FluentButton Type=ButtonType.Button
+                            Appearance=ButtonAppearance.Outline
+                            Disabled=@TenantEditorsDisabled
+                            OnClick=AddTenant
+                            data-qa="AcceptedTenantAdd">
+                Add tenant id
+              </FluentButton>
+              <ul data-qa="AcceptedTenants">
+                @foreach (EntraAcceptedTenant tenant in Command.EntraAcceptedTenants)
+                {
+                  <li data-qa="AcceptedTenant">
+                    <span>@FormatAcceptedTenant(tenant)</span>
+                    <FluentButton Type=ButtonType.Button
+                                  Appearance=ButtonAppearance.Subtle
+                                  Disabled=@TenantEditorsDisabled
+                                  OnClick="@(() => RemoveTenant(tenant.TenantId))"
+                                  data-qa="AcceptedTenantRemove">
+                      Remove
+                    </FluentButton>
+                  </li>
+                }
+              </ul>
+              @if (TenantsMessage is not null)
               {
-                <li data-qa="AcceptedTenant">
-                  <span>@FormatAcceptedTenant(tenant)</span>
-                  <FluentButton Type=ButtonType.Button
-                                Appearance=ButtonAppearance.Subtle
-                                Disabled=@TenantEditorsDisabled
-                                OnClick="@(() => RemoveTenant(tenant.TenantId))"
-                                data-qa="AcceptedTenantRemove">
-                    Remove
-                  </FluentButton>
-                </li>
+                <span data-qa="AcceptedTenantsError">@TenantsMessage</span>
               }
-            </ul>
-            @if (TenantsMessage is not null)
-            {
-              <span data-qa="AcceptedTenantsError">@TenantsMessage</span>
-            }
-            <p data-qa="TenantAcceptanceHelp">
-              Look up the customer's primary domain. The server stores that domain with the tenant id.
-              A known tenant id can still be added by hand and is shown without a domain.
-              Restricted mode refuses any tenant that is not listed. Any Entra tenant accepts every non-empty tenant id that completes sign-in.
-              Personal Microsoft accounts are included only when the app registration allows them and Authentication:Entra:TenantId is common (or consumers).
-            </p>
-          </FormField>
-          <FormField Label="Passkey prompt">
-            <FluentSelect TOption="PasskeyPromptMode" TValue="PasskeyPromptMode"
-                          Items="@PasskeyPromptModes"
-                          OptionText="@PasskeyPromptLabel"
-                          @bind-Value="Details.PasskeyPromptMode"
-                          AriaLabel="Passkey prompt"
-                          Width="100%"
-                          Disabled=@IsBusy />
-            <ValidationMessage For="@(() => Details.PasskeyPromptMode)" />
-          </FormField>
-        </FormGrid>
-      </FormSection>
-      <FormActions>
-        <FluentButton Type=ButtonType.Button
-                      Appearance=ButtonAppearance.Subtle
-                      Disabled=@IsBusy
-                      OnClick=HandleCancel
-                      data-qa="AuthenticationCancel">
-          Cancel
-        </FluentButton>
-        <FluentButton Type=ButtonType.Submit
-                      Appearance=ButtonAppearance.Primary
-                      Disabled=@IsBusy
-                      data-qa="AuthenticationSave">
-          Save authentication settings
-        </FluentButton>
-      </FormActions>
-    </EditForm>
+              <p data-qa="TenantAcceptanceHelp">
+                Look up the customer's primary domain. The server stores that domain with the tenant id.
+                A known tenant id can still be added by hand and is shown without a domain.
+                Restricted mode refuses any tenant that is not listed. Any Entra tenant accepts every non-empty tenant id that completes sign-in.
+                Personal Microsoft accounts are included only when the app registration allows them and Authentication:Entra:TenantId is common (or consumers).
+              </p>
+            </FormField>
+            <FormField Label="Passkey prompt" Field="@nameof(ISiteSettingsDetails.PasskeyPromptMode)">
+              <FluentSelect TOption="PasskeyPromptMode" TValue="PasskeyPromptMode"
+                            Items="@PasskeyPromptModes"
+                            OptionText="@PasskeyPromptLabel"
+                            @bind-Value="Details.PasskeyPromptMode"
+                            AriaLabel="Passkey prompt"
+                            Width="100%"
+                            Disabled=@IsBusy />
+              <ValidationMessage For="@(() => Details.PasskeyPromptMode)" />
+            </FormField>
+          </FormGrid>
+        </FormSection>
+        <FormActions>
+          <FluentButton Type=ButtonType.Button
+                        Appearance=ButtonAppearance.Subtle
+                        Disabled=@IsBusy
+                        OnClick=HandleCancel
+                        data-qa="AuthenticationCancel">
+            Cancel
+          </FluentButton>
+          <FluentButton Type=ButtonType.Submit
+                        Appearance=ButtonAppearance.Primary
+                        Disabled=@IsBusy
+                        data-qa="AuthenticationSave">
+            Save authentication settings
+          </FluentButton>
+        </FormActions>
+      </EditForm>
+    </FormPrefillScope>
   }
   else
   {

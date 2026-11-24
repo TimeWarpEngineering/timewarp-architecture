@@ -37,7 +37,8 @@ public class ActionCatalog_Should
     "Feedback.ReplyAsFiler",
     "Feedback.SubmitFeedback",
     "Feedback.UploadFeedbackAttachment",
-    "Profile.SetProfileSuggestion",
+    // Agent, required arguments: the Prefill tools store a draft through it (FormPrefill).
+    "FormSuggestion.SetFormSuggestion",
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",

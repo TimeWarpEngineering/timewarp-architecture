@@ -6,7 +6,8 @@
 // UX rule: user actions dispatch state actions — they must not call Spa services that side-effect
 // auth/navigation outside the pipeline (task 104-034 follow-up).
 // Task 251: sign-out is a BROWSER request, identical in WebAssembly, Server and Auto:
-//   1. Reset ProfileState, AuthorizationState, CredentialsState, AgentLinksState (signed-out
+//   1. Reset ProfileState, AuthorizationState, CredentialsState, AgentLinksState, FeedbackState,
+//      and FormSuggestionState's agent drafts (signed-out
 //      chrome for the instant before the page unloads, and no stale data if the navigation fails)
 //   2. SignOutJsModule: the browser fetches an antiforgery token and form-POSTs
 //      SignOutBrowserSession.Path; the server ends the session (EndBrowserSession.Handler),
@@ -74,6 +75,7 @@ partial class ProfileState
         Store.GetState<CredentialsState>().Initialize();
         Store.GetState<AgentLinksState>().Initialize();
         Store.GetState<FeedbackState>().Initialize();
+        Store.GetState<FormSuggestionState>().Initialize();
 
         try
         {

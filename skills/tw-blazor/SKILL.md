@@ -169,6 +169,14 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   `PageAgentScope` matches the current path against them and decides which palette commands only
   execute on their page. There is no hand-written route list. An anonymous principal gets
   `navigate` and `site_map` only.
+- An edit form gets a `Prefill.<Action>` tool when its submit action is in the page's
+  `AgentActions` and the action's `Command` implements one `I*Details` interface (`FormPrefill`
+  derives it; the draft keys are that interface's properties). The page wraps the form in
+  `<FormPrefillScope TSubmit="…ActionSet.Action" Model="Command" Noun="role">` and gives each
+  `FormField` a `Field="@nameof(IRoleDetails.Name)"`. The scope applies the draft, asks before
+  replacing unsaved edits, and shows the `Agent` badge. Pass `Ready` when the working copy is a
+  placeholder until a fetch lands. `FormPrefillConvention_Should_` fails when a derived submit has
+  no scope.
 - Read-only tools are an explicit allow-list of catalog names in `CatalogAgentApproval` (never a
   name-prefix rule). Every other tool is wrapped in `ApprovalRequiredAIFunction`. WebMCP uses the
   same split: the shell's confirmation bar (`AgentSurfaceState`) gates dispatch, one call at a time,
