@@ -71,6 +71,7 @@ Acceptance:
   (the token did not exist yet). First Static shot showed the tooltip words inline because
   `fluent-tooltip` is not defined before Fluent's script loads; CSS now hides
   `fluent-tooltip:not(:defined)`, and the Playwright test checks for it.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session bb9ffa58-5215-45a6-aed6-150b57118364, max-turns 500, Done — 2026-11-24T07:11:17Z
 
 ## Results
 
