@@ -24,6 +24,26 @@ Background brief (Akili): 2026-10-12 dotnet-diagnostics intel evaluation (no loc
 4. **Decide.** Keep the MCP only if clearly better and faster, with a quarterly maintainer-health recheck.
    Otherwise remove it and keep the Microsoft tools plus the skill.
 
+## Goal (implementer restatement)
+
+Give agents working in this repo (and in generated apps, since `.config/`, `.mcp.json`, and
+`skills/` ship in the template) a dev-only way to answer "where does CPU / memory go" in a running
+service, and find out whether the third-party MCP earns a place next to Microsoft's own CLIs.
+
+Acceptance:
+
+- `dotnet-counters`, `dotnet-trace`, `dotnet-gcdump` pinned in `.config/dotnet-tools.json`; no
+  NuGet reference in product code.
+- `dotnet-diagnostics-mcp` pinned for the trial; all four licenses checked and written down here.
+- The MCP is registered next to the Aspire MCP for the trial.
+- A short skill says when and how to use each tool; AGENTS.md gets at most one table row pointing
+  at it.
+- One real question is answered twice against a live Architecture service, once through the MCP
+  and once through the CLIs, with time and output size recorded here.
+- The keep/remove rule is applied: keep the MCP only if it is clearly better **and** faster;
+  otherwise remove it from the manifest and `.mcp.json` and keep the CLIs plus the skill.
+- `dev build` green, `dev lint-skills` green, `ganda repo audit` green.
+
 ## Out of scope (until the trial passes)
 
 - BenchmarkDotNet diagnoser

@@ -6,6 +6,13 @@
         "agent",
         "mcp"
       ]
+    },
+    "dotnet-diagnostics": {
+      "command": "dotnet",
+      "args": [
+        "dotnet-diagnostics-mcp",
+        "--stdio"
+      ]
     }
   }
 }
