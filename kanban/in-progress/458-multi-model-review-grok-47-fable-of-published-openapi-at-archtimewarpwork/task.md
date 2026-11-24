@@ -66,6 +66,29 @@ skill).
 - Prefer fixes that generate the doc from contracts or add a build check over hand-patched doc
   text (AGENTS.md: "generate one from the other or add a build check").
 
+## Goal (implementer restatement)
+
+Review the OpenAPI document that the live reference app actually serves at
+`https://arch.timewarp.work/openapi/v1.json`, not the code diff that produced it. Two models
+review one frozen copy of that document independently, and the result is a verified, deduplicated
+list of problems, each with a decision and, when accepted, its own follow-on task.
+
+Acceptance criteria:
+
+1. `review/openapi-v1.snapshot.json` holds the fetched document, and a sibling metadata file
+   records the fetch time and whatever deployed version is exposed (commit if any).
+2. `review/review-brief.md` states the six lenses, the severity scale, the finding format (severity,
+   JSON pointer, evidence, fix with source owner), and the probing rules (unauthenticated GETs only,
+   no paid routes, no ceremonies).
+3. A linter run over the snapshot is attached under `review/`.
+4. `review/round-1/grok-4.7.md` and `review/round-1/fable.md` are written by those models from the
+   same brief and snapshot, each without seeing the other's output.
+5. `review/findings.md` is the deduplicated union, says which model found each item, marks the ones
+   both found, and records that each was checked against the snapshot or source by the merger.
+6. `disposition.md` accepts, rejects (with reason), or defers every finding; each accepted finding
+   links a follow-on kanban task created through `ganda kanban reserve`/`claim`.
+7. No product code changes on this task; fixes prefer generation or build checks over doc text.
+
 ## Checklist
 
 - [ ] Snapshot the published document into `review/`
