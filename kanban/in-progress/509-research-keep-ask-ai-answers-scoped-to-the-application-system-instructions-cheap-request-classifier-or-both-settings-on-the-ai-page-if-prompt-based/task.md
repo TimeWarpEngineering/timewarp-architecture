@@ -100,6 +100,7 @@ Acceptance:
 - 2026-11-25 implementer (task-work walk): measured all approaches live against xAI and Cloudflare
   Workers AI (`report/harness/`, raw data `report/data/`, about 1.10 USD of API spend). The app
   was not started; the before-state screenshot is rendered from the recorded relay reply.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3d586669-33f4-4a8a-aff4-c7be0fee03fc, max-turns 500, Done — 2026-11-24T19:25:18Z
 
 ## Results
 
