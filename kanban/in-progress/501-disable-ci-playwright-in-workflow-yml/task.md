@@ -44,11 +44,18 @@ Acceptance criteria:
 - 2026-11-24 implementer: removed the `playwright` matrix leg and the screenshot upload step;
   header comment and the `TestGroups` Design comment now say the group is local-only since 501.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4241ffd3-b42d-4a89-92fe-5f377f8b1f11, max-turns 500, Done — 2026-11-24T02:25:57Z
+- Review oracle: reviewed by reviewer-grok (grok, vendor xai, model grok-4.7), session 01a20b5f-d012-7c51-8126-f96ec33ed622, max-turns 80, effort 1 (general), clean — 2026-11-24
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20b5f-d012-7c51-8126-f96ec33ed622, max-turns 80, artifacts general.md, merged.md, disposition.md — 2026-11-24T02:30:05Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
 - Companion research task: **502** (evaluate Playwright suite value and long-term disposition).
 - Parent performance review: **500** (`kanban/to-do/500-walk-performance-review-for-tasks-499-483-494-and-498/report/analysis.md`).
+- Review: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -75,6 +82,13 @@ Gates:
   missing). `ganda repo audit --fix` created that gitignored local file; a second `--fix` pass
   shows the check PASS. Nothing committed from it.
 
+Review:
+
+- Round 1, effort 1, roster general. Reviewer did not re-run build, test, or audit.
+- Counts: bug 0, suggestion 0, nit 0; open 0, fixed 0, wontfix 0.
+- Disposition: **clean**. The goal restatement matches the original task. No misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke: on this branch's pull request, open the checks list; separately run
@@ -83,3 +97,10 @@ Smoke: on this branch's pull request, open the checks list; separately run
 Expect: the PR shows `ci (fast)`, `ci (integration)`, `ci (publish)` and the aggregate `ci`, with no
 `ci (playwright)`, and `ci` is green. The grep hits only the header comment lines. `dev test --help`
 still lists `playwright` as a `--group` value.
+
+### Evidence boundaries
+
+- **Proved:** none.
+- **Trusted assumptions:** GitHub Actions sets `needs.ci-group.result` to `success` when every matrix leg succeeds, and to `skipped` when the job `if` is false. Task 366 says the stable required check, when CI is required, is the aggregate `ci`, not `ci (playwright)`.
+- **Empirical checks:** recorded `./bin/dev build` (0 warnings, 0 errors); recorded `dotnet run --project tests/tools/dev-cli-tests -c Release --no-build` (343/343); recorded `ganda repo audit` (pass, one advisory `vscode-window-icon` cleared locally and not committed). Review read the matrix, the removed upload step, `TestGroups`, and the `ci` job condition. Review did not re-run those gates.
+- **Out of scope:** the live pull-request checks list (no pull request during this review). Whether the Playwright suite stays (task 502).
