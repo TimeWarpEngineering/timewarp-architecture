@@ -59,6 +59,8 @@ Acceptance:
 
 - Created: 2875948 (2026-11-24)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 82453250-7c5e-418e-b992-ca41b6d172e4, max-turns 500, Done — 2026-11-24T10:15:57Z
+- Review oracle: general (grok, vendor xai, model grok-4.7), session 01a20d0e-44c9-7df2-b28b-c8838c79be5e, effort 2, roster general, max-turns 120, round 1, clean — 2026-11-24
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20d0e-44c9-7df2-b28b-c8838c79be5e, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-24T10:24:48Z
 
 ## Results
 
@@ -114,6 +116,16 @@ Expect:
 - Second run: path substring selects dev-cli-tests, `total: 2`, exit 0.
 - Third run: exit 1, "--project 'no-such-tests' matches no test project. Test projects: …".
 - Fourth run: exit 1, "--project 'web-' matches several test projects: web-contracts-tests, …".
+
+### Review
+
+- Round 1, effort 2, roster general. Disposition: clean. The implementer restatement matches the original task; no misread.
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0/0/0; nit 0/0/0. Final open count: 0.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
