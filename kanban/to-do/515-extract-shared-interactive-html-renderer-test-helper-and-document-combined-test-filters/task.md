@@ -13,6 +13,10 @@ Walk performance analysis (Task 514, Item 6) found two repeated test-harness fri
 2. **Repeated Aspire + Postgres cold boots from chaining separate filtered `dotnet test` commands (`~3m` wasted on Task 490):**
    - Because neither `AGENTS.md` nor repo testing skills document how to combine multiple classes/methods into a single Microsoft.Testing.Platform (`--filter-class` / `--filter-method`) invocation, agents chain multiple separate `dotnet test` runs against Aspire integration test projects — paying a ~44s Aspire + Postgres boot on each call (`218s` across 5 calls on Task 490).
 
+## Depends on
+
+- 516
+
 ## Requirements
 
 1. **Shared `InteractiveHtmlRenderer` helper in `web-spa-integration-tests`:**
