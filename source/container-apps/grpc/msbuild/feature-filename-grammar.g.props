@@ -1,6 +1,6 @@
 <!--
   AUTO-GENERATED from source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json
-  Do not edit by hand. Edit the JSON and rebuild the convention-analyzers project (or run the generator).
+  Do not edit by hand. Edit feature-filename-grammar.json and run dev regenerate-generated.
   Registry edit ⇒ full rebuild (analyzer incremental staleness).
   Nesting of layer suffixes is rejected at generation time (dual-match prevention).
   Hybrid includes: GrpcFeatureTreeRoot (features/) and GrpcPlatformTreeRoot (platform/) from

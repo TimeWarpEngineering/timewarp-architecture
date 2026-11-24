@@ -1,19 +1,25 @@
 #region Purpose
-// Rewrites the checked-in ingress prefix golden from the two host compilations.
+// Rewrites the checked-in generated files: the feature filename grammar outputs and the ingress
+// prefix golden.
 #endregion
 
 #region Design
-// Builds yarp and the Aspire AppHost in Release, reads each WebServerApiRoutePrefixes.g.cs, and
+// First writes the feature filename grammar outputs (FeatureFilenameGrammarGenerator) from
+// feature-filename-grammar.json. A generated app has no source/analyzers/, so a missing JSON is a
+// skip, not a failure. A registry that breaks a grammar rule fails the command and writes nothing.
+// The grammar runs first so the host builds below compile against the fresh registry.
+// Then builds yarp and the Aspire AppHost in Release, reads each WebServerApiRoutePrefixes.g.cs, and
 // writes goldens/ingress only when those emits match. `dev workflow` runs this command after the fast
-// test group and fails on any diff or untracked file under goldens/ingress. A dirty diff means the golden was hand-edited, or a
-// web-contracts [ApiRoute] changed and the golden was not regenerated: re-run this command and
-// commit, or fix the generator if the new text is wrong.
+// test group and fails on any diff or untracked file under goldens/ingress or the grammar outputs.
+// A dirty diff means a file was hand-edited, or the grammar JSON or a web-contracts [ApiRoute]
+// changed without a regenerate: re-run this command and commit, or fix the generator if the new
+// text is wrong.
 // The Offerable offer-record generator is not rebuilt here. Task 282 removed it.
 #endregion
 
 namespace DevCli.Commands;
 
-[NuruRoute("regenerate-generated", Description = "Rewrite the checked-in ingress prefix golden from the generator")]
+[NuruRoute("regenerate-generated", Description = "Rewrite the checked-in feature filename grammar files and ingress prefix golden")]
 internal sealed class RegenerateGeneratedCommand : ICommand<Unit>
 {
   internal sealed class Handler : IRequestHandler<RegenerateGeneratedCommand, Unit>
@@ -32,6 +38,7 @@ internal sealed class RegenerateGeneratedCommand : ICommand<Unit>
       Ct = ct;
 
       if (!FindRepoRoot()) return Unit.Value;
+      if (!RegenerateGrammar()) return Unit.Value;
       if (!await RegenerateAsync()) return Unit.Value;
 
       return Unit.Value;
@@ -51,9 +58,38 @@ internal sealed class RegenerateGeneratedCommand : ICommand<Unit>
       return true;
     }
 
+    private bool RegenerateGrammar()
+    {
+      string jsonPath = Path.Combine(RepoRoot, FeatureFilenameGrammarGenerator.JsonRelativePath);
+      if (!File.Exists(jsonPath))
+      {
+        Terminal.WriteLine($"Skipping feature filename grammar: {FeatureFilenameGrammarGenerator.JsonRelativePath} not found.");
+        return true;
+      }
+
+      Terminal.WriteLine("Regenerating feature filename grammar...");
+      if (!FeatureFilenameGrammarGenerator.TryGenerate(
+            File.ReadAllText(jsonPath),
+            out IReadOnlyList<FeatureFilenameGrammarOutput> outputs,
+            out string error))
+      {
+        Terminal.WriteErrorLine($"{FeatureFilenameGrammarGenerator.JsonRelativePath}: {error}".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      FeatureFilenameGrammarGenerator.Write(RepoRoot, outputs);
+      foreach (FeatureFilenameGrammarOutput output in outputs)
+      {
+        Terminal.WriteLine($"Wrote {output.RelativePath}".Green());
+      }
+
+      return true;
+    }
+
     private async Task<bool> RegenerateAsync()
     {
-      Terminal.WriteLine("Regenerating ingress prefix golden...");
+      Terminal.WriteLine("\nRegenerating ingress prefix golden...");
       Dictionary<string, string> emits = new(StringComparer.Ordinal);
 
       foreach (string project in GeneratedIngressPrefixes.HostProjects)
