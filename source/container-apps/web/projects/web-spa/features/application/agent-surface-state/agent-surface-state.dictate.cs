@@ -3,16 +3,18 @@
 #endregion
 
 #region Design
-// One action. Idle or a microphone failure starts capture. Recording stops it. The clip is sent
-// only when its base64 fits TranscribeAgentAudio.MaxDataLength, the one copy of that limit. Past
-// it, the bytes are dropped and the too-long sentence is shown. Error with a stored clip sends
-// that clip again. The clip is kept only for a transport failure, 429, or 5xx. A 400, 413, or 422
-// clears it so the next press records. Error with a stored transcript inserts that text and does
-// not call the server. Transcribing ignores a second press. A result that arrives after the phase
-// has left Transcribing (Close or New conversation) is ignored. The handler does not dispatch. It
-// re-renders before the speech request so the button can show Transcribing. The key stays on the
-// server. InsertComposerText places the transcript at the caret when the insert epoch still
-// matches. A streaming turn does not start a recording; stop stays enabled when one is going.
+// One action. Idle or an error starts a dictation. Recording stops it. Task 505 made it a stream:
+// start opens the microphone and the dictation socket with AskVoiceStreamOptions (the one copy of
+// the path, rates, cap, and finalize time is TranscribeAgentAudio). While recording, ask-ai.ts
+// writes the partial transcript into the composer as a preview. Stop asks for the final text and
+// CommitComposerText replaces the preview with it. It does not send. There is no stored clip any
+// more: an error shows its sentence (AskVoiceCopy.ForCode) and the next press records again; the
+// preview text already in the composer stays. Error with a stored transcript (the composer could
+// not take it) inserts that text and does not record. A second press while busy is ignored. A
+// result that arrives after the phase left Transcribing (Close or New conversation) is ignored.
+// The handler does not dispatch; it re-renders before the stop so the button can show
+// Transcribing. The key stays on the server. A streaming turn does not start a recording; stop
+// stays enabled when one is going.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -30,8 +32,7 @@ partial class AgentSurfaceState
     (
       IStore store,
       Subscriptions subscriptions,
-      IJSRuntime jsRuntime,
-      IWebServerApiService api
+      IJSRuntime jsRuntime
     ) : BaseHandler<Action>(store)
     {
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
@@ -46,19 +47,13 @@ partial class AgentSurfaceState
         {
           if (AgentSurfaceState.VoicePhase == AskVoicePhase.Recording)
           {
-            await StopAndTranscribeAsync(cancellationToken);
+            await StopAndInsertAsync();
             return;
           }
 
           if (AgentSurfaceState.VoicePhase == AskVoicePhase.Error && AgentSurfaceState.VoiceTranscript is not null)
           {
             await InsertStoredAsync();
-            return;
-          }
-
-          if (AgentSurfaceState.VoicePhase == AskVoicePhase.Error && AgentSurfaceState.VoiceData is not null)
-          {
-            await TranscribeStoredAsync(cancellationToken);
             return;
           }
 
@@ -72,21 +67,26 @@ partial class AgentSurfaceState
 
       private async Task StartAsync()
       {
+        AgentSurfaceState.ClearVoice();
+        int epoch = AgentSurfaceState.VoiceEpoch;
         AskVoiceCaptureResult started = await AskAiJsModule.StartVoiceCaptureAsync
         (
           jsRuntime,
-          TranscribeAgentAudio.MaxDataLength
+          new AskVoiceStreamOptions { Epoch = epoch }
         );
-        if (!AgentSurfaceState.IsPanelOpen)
+        if (!AgentSurfaceState.IsPanelOpen || AgentSurfaceState.VoiceEpoch != epoch)
         {
           await AskAiJsModule.CancelVoiceCaptureAsync(jsRuntime);
-          AgentSurfaceState.ClearVoice();
+          if (!AgentSurfaceState.IsPanelOpen)
+          {
+            AgentSurfaceState.ClearVoice();
+          }
+
           return;
         }
 
         if (!string.IsNullOrEmpty(started.Error))
         {
-          AgentSurfaceState.ClearVoice();
           AgentSurfaceState.VoicePhase = AskVoicePhase.Error;
           AgentSurfaceState.VoiceError = StartError(started.Error);
           return;
@@ -95,8 +95,6 @@ partial class AgentSurfaceState
         AgentSurfaceState.VoicePhase = AskVoicePhase.Recording;
         AgentSurfaceState.VoiceStartedAt = DateTimeOffset.UtcNow;
         AgentSurfaceState.VoiceError = null;
-        AgentSurfaceState.VoiceMediaType = null;
-        AgentSurfaceState.VoiceData = null;
         subscriptions.ReRenderSubscribers<AgentSurfaceState>();
         if (!AgentSurfaceState.IsPanelOpen)
         {
@@ -104,110 +102,33 @@ partial class AgentSurfaceState
         }
       }
 
-      private async Task StopAndTranscribeAsync(CancellationToken cancellationToken)
+      private async Task StopAndInsertAsync()
       {
-        AgentSurfaceState.VoicePhase = AskVoicePhase.Transcribing;
-        AgentSurfaceState.VoiceStartedAt = null;
-        AgentSurfaceState.VoiceError = null;
-        subscriptions.ReRenderSubscribers<AgentSurfaceState>();
-        AskVoiceCaptureResult stopped = await AskAiJsModule.StopVoiceCaptureAsync(jsRuntime);
-        if (!StillTranscribing(AgentSurfaceState.VoiceEpoch))
-        {
-          return;
-        }
-
-        if (stopped.Error == "too-long")
-        {
-          RefuseClip(AskVoiceCopy.TooLong);
-          return;
-        }
-
-        string? data = stopped.Data;
-        if (!string.IsNullOrEmpty(stopped.Error) || string.IsNullOrWhiteSpace(data))
-        {
-          RefuseClip(AskVoiceCopy.Empty);
-          return;
-        }
-
-        if (data.Length > TranscribeAgentAudio.MaxDataLength)
-        {
-          RefuseClip(AskVoiceCopy.TooLong);
-          return;
-        }
-
-        AgentSurfaceState.VoiceMediaType = string.IsNullOrWhiteSpace(stopped.MediaType)
-          ? "audio/webm"
-          : stopped.MediaType;
-        AgentSurfaceState.VoiceData = data;
-        await TranscribeStoredAsync(cancellationToken);
-      }
-
-      private async Task TranscribeStoredAsync(CancellationToken cancellationToken)
-      {
-        string? mediaType = AgentSurfaceState.VoiceMediaType;
-        string? data = AgentSurfaceState.VoiceData;
-        if (string.IsNullOrWhiteSpace(mediaType) || string.IsNullOrWhiteSpace(data))
-        {
-          AgentSurfaceState.ClearVoice();
-          AgentSurfaceState.VoicePhase = AskVoicePhase.Error;
-          AgentSurfaceState.VoiceError = AskVoiceCopy.Empty;
-          return;
-        }
-
         AgentSurfaceState.VoicePhase = AskVoicePhase.Transcribing;
         AgentSurfaceState.VoiceStartedAt = null;
         AgentSurfaceState.VoiceError = null;
         subscriptions.ReRenderSubscribers<AgentSurfaceState>();
         int epoch = AgentSurfaceState.VoiceEpoch;
-        await AskAiJsModule.SetVoiceInsertEpochAsync(jsRuntime, epoch);
+        AskVoiceCaptureResult stopped = await AskAiJsModule.StopVoiceCaptureAsync(jsRuntime);
         if (!StillTranscribing(epoch))
         {
           return;
         }
 
-        OneOf<TranscribeAgentAudio.Response, FileResponse, SharedProblemDetails> response;
-        try
+        if (!string.IsNullOrEmpty(stopped.Error))
         {
-          response = await api.GetResponse<TranscribeAgentAudio.Response>
-          (
-            new TranscribeAgentAudio.Command { MediaType = mediaType, Data = data },
-            cancellationToken
-          );
-        }
-        catch (Exception)
-        {
-          if (!StillTranscribing(epoch))
-          {
-            return;
-          }
-
-          AgentSurfaceState.VoicePhase = AskVoicePhase.Error;
-          AgentSurfaceState.VoiceError = AskVoiceCopy.Failed;
+          Fail(AskVoiceCopy.ForCode(stopped.Error));
           return;
         }
 
-        if (!StillTranscribing(epoch))
+        if (string.IsNullOrWhiteSpace(stopped.Text))
         {
+          Fail(AskVoiceCopy.NoSpeech);
           return;
         }
 
-        if (response.IsT0)
-        {
-          AgentSurfaceState.VoiceTranscript = response.AsT0.Text;
-          AgentSurfaceState.VoiceData = null;
-          AgentSurfaceState.VoiceMediaType = null;
-          await InsertStoredAsync();
-          return;
-        }
-
-        string sentence = response.IsT2 ? FailureText(response.AsT2) : AskVoiceCopy.Failed;
-        if (!response.IsT2 || !KeepsClip(response.AsT2.Status))
-        {
-          AgentSurfaceState.ClearVoice();
-        }
-
-        AgentSurfaceState.VoicePhase = AskVoicePhase.Error;
-        AgentSurfaceState.VoiceError = sentence;
+        AgentSurfaceState.VoiceTranscript = stopped.Text;
+        await InsertStoredAsync();
       }
 
       private async Task InsertStoredAsync()
@@ -215,7 +136,7 @@ partial class AgentSurfaceState
         string? text = AgentSurfaceState.VoiceTranscript;
         if (string.IsNullOrWhiteSpace(text))
         {
-          RefuseClip(AskVoiceCopy.InsertFailed);
+          Fail(AskVoiceCopy.InsertFailed);
           return;
         }
 
@@ -230,7 +151,7 @@ partial class AgentSurfaceState
           return;
         }
 
-        bool inserted = await AskAiJsModule.InsertComposerTextAsync(jsRuntime, text, epoch);
+        bool inserted = await AskAiJsModule.CommitComposerTextAsync(jsRuntime, text, epoch);
         if (!StillTranscribing(epoch))
         {
           return;
@@ -249,51 +170,20 @@ partial class AgentSurfaceState
       private bool StillTranscribing(int epoch) =>
         AgentSurfaceState.VoicePhase == AskVoicePhase.Transcribing && AgentSurfaceState.VoiceEpoch == epoch;
 
-      /// <summary>Drops the clip. The next press records instead of sending the same bytes.</summary>
-      private void RefuseClip(string sentence)
+      /// <summary>Shows the sentence. The next press records again.</summary>
+      private void Fail(string sentence)
       {
         AgentSurfaceState.ClearVoice();
         AgentSurfaceState.VoicePhase = AskVoicePhase.Error;
         AgentSurfaceState.VoiceError = sentence;
       }
 
-      private static bool KeepsClip(int? status)
-      {
-        if (status is null)
-        {
-          return false;
-        }
-
-        int code = status.Value;
-        return code == 429 || code is >= 500 and <= 599;
-      }
-
-      private static string StartError(string error) => error switch
-      {
-        "denied" => AskVoiceCopy.Denied,
-        "unavailable" => AskVoiceCopy.Unavailable,
-        "empty" => AskVoiceCopy.Empty,
-        _ => AskVoiceCopy.StartFailed
-      };
-
-      private static string FailureText(SharedProblemDetails problem)
-      {
-        if (problem.Status == 503)
-        {
-          return AskVoiceCopy.NeedsKey;
-        }
-
-        if (!string.IsNullOrWhiteSpace(problem.Detail) && problem.Detail.Length <= 160)
-        {
-          return problem.Detail;
-        }
-
-        return AskVoiceCopy.Failed;
-      }
+      private static string StartError(string error) =>
+        error == "failed" ? AskVoiceCopy.StartFailed : AskVoiceCopy.ForCode(error);
     }
   }
 
-  /// <summary>Stops a live capture and forgets the clip. Idle close does not touch JavaScript.</summary>
+  /// <summary>Stops a live capture and forgets the transcript. Idle close does not touch JavaScript.</summary>
   internal ValueTask ReleaseVoiceCaptureAsync(IJSRuntime jsRuntime)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
@@ -329,8 +219,6 @@ partial class AgentSurfaceState
     VoicePhase = AskVoicePhase.Idle;
     VoiceError = null;
     VoiceStartedAt = null;
-    VoiceMediaType = null;
-    VoiceData = null;
     VoiceTranscript = null;
   }
 }

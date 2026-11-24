@@ -41,8 +41,8 @@ public static class XaiChatDefaults
   public const string DefaultEndpoint = "https://api.x.ai/v1";
 
   /// <summary>
-  /// Speech-to-text path on <see cref="DefaultEndpoint"/>. POST multipart.
-  /// Checked https://docs.x.ai/developers/model-capabilities/audio/speech-to-text on 2026-11-24.
+  /// Speech-to-text path on <see cref="DefaultEndpoint"/>. The streaming WebSocket is the same path
+  /// on wss (docs.x.ai stt-streaming.ws.json, checked 2026-11-24).
   /// </summary>
   public const string SpeechToTextPath = "/stt";
 

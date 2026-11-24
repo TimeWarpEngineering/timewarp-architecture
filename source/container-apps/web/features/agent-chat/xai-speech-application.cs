@@ -1,186 +1,200 @@
 #region Purpose
-// Builds the xAI speech-to-text request and maps its HTTP result. No network.
+// Builds the xAI streaming speech-to-text URI and reads its events. No network.
 #endregion
 
 #region Design
-// POST {endpoint}/stt, Authorization: Bearer, multipart. model is written before file because
-// the speech-to-text guide ignores fields that follow file on a streamable upload. Container
-// audio (webm from the browser) is not given audio_format; the server detects the container.
-// Map never copies the response body into a problem, so a refusal that echoes the key stays
-// off the client. A 2xx with no text is "no speech", not a success.
+// wss://api.x.ai/v1/stt (docs.x.ai stt-streaming.ws.json, checked 2026-11-24). The endpoint
+// option is the https API root; its scheme becomes wss (http becomes ws for a local fake). Query:
+// sample_rate, encoding=pcm (signed 16-bit little-endian), interim_results=true for the live
+// preview, and the model. Auth is the Authorization: Bearer header the server sets.
+// Upstream events: transcript.created (ready), transcript.partial with is_final and speech_final,
+// transcript.done, error. Observed on 2026-11-24: an interim partial carries the text of the
+// current chunk so far, a chunk final locks that chunk, an utterance final (speech_final) repeats
+// the whole utterance, and transcript.done arrives after audio.done with empty text. So the
+// transcript is built here (DictationTranscript), not read from transcript.done. Done text is used
+// only when nothing else arrived. An error event's message is not kept, so it cannot reach a log
+// or the browser.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
 
-using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
-using static TimeWarp.Architecture.Features.AgentChats.TranscribeAgentAudio;
 
-/// <summary>xAI speech-to-text request and response mapping.</summary>
+/// <summary>xAI streaming speech-to-text URI and event reading.</summary>
 public static class XaiSpeech
 {
-  private static readonly JsonSerializerOptions Json = new()
-  {
-    PropertyNameCaseInsensitive = true
-  };
+  /// <summary>Upstream type sent once the session can take audio.</summary>
+  public const string CreatedType = "transcript.created";
 
-  /// <summary>POST multipart for one clip. The caller disposes the message.</summary>
-  public static HttpRequestMessage CreateRequest
-  (
-    string? endpoint,
-    string apiKey,
-    string mediaType,
-    byte[] audio
-  )
+  /// <summary>Text message that asks the upstream to flush and finish.</summary>
+  public const string AudioDoneMessage = """{"type":"audio.done"}""";
+
+  /// <summary>Streaming URI for PCM16 mono at <paramref name="sampleRate"/>.</summary>
+  public static Uri StreamUri(string? endpoint, int sampleRate)
   {
-    ArgumentException.ThrowIfNullOrWhiteSpace(apiKey);
-    ArgumentException.ThrowIfNullOrWhiteSpace(mediaType);
-    ArgumentNullException.ThrowIfNull(audio);
-    string canonical = CanonicalMediaType(mediaType)
-      ?? throw new ArgumentException("MediaType is not a supported audio type.", nameof(mediaType));
+    if (!TranscribeAgentAudio.IsSupportedSampleRate(sampleRate))
+    {
+      throw new ArgumentOutOfRangeException(nameof(sampleRate), sampleRate, "Sample rate is not supported.");
+    }
+
     string root = string.IsNullOrWhiteSpace(endpoint)
       ? XaiChatDefaults.DefaultEndpoint
       : endpoint.TrimEnd('/');
-    HttpRequestMessage request = new(HttpMethod.Post, root + XaiChatDefaults.SpeechToTextPath);
-    bool armed = false;
-    try
+    string socketRoot;
+    if (root.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
     {
-      request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-      MultipartFormDataContent? form = new();
-      StringContent? model = null;
-      ByteArrayContent? file = null;
-      try
-      {
-        model = new StringContent(XaiChatDefaults.SpeechToTextModel);
-        form.Add(model, "model");
-        model = null;
-        file = new ByteArrayContent(audio);
-        file.Headers.ContentType = new MediaTypeHeaderValue(canonical);
-        form.Add(file, "file", FileName(canonical));
-        file = null;
-        request.Content = form;
-        form = null;
-      }
-      finally
-      {
-        model?.Dispose();
-        file?.Dispose();
-        form?.Dispose();
-      }
+      socketRoot = "ws://" + root["http://".Length..];
+    }
+    else if (root.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+    {
+      socketRoot = "wss://" + root["https://".Length..];
+    }
+    else
+    {
+      socketRoot = root;
+    }
 
-      armed = true;
-      return request;
-    }
-    finally
-    {
-      if (!armed)
-      {
-        request.Dispose();
-      }
-    }
+    string query =
+      "?sample_rate=" + sampleRate.ToString(System.Globalization.CultureInfo.InvariantCulture)
+      + "&encoding=pcm&interim_results=true&model=" + Uri.EscapeDataString(XaiChatDefaults.SpeechToTextModel);
+    return new Uri(socketRoot + XaiChatDefaults.SpeechToTextPath + query);
   }
 
-  /// <summary>Transcript, or a problem whose text does not include <paramref name="body"/>.</summary>
-  public static OneOf<string, SharedProblemDetails> Map(int status, string? body)
+  /// <summary>True when <paramref name="json"/> is the transcript.created event.</summary>
+  public static bool IsCreated(string json) => TypeOf(json) == CreatedType;
+
+  /// <summary>Reads one upstream event. Malformed JSON is an error.</summary>
+  public static SpeechEvent Parse(string json)
   {
-    if (status is >= 200 and <= 299)
-    {
-      if (TryReadText(body, out string? text))
-      {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-          return NoSpeech();
-        }
-
-        return text;
-      }
-
-      return UpstreamFailed();
-    }
-
-    if (status == 400)
-    {
-      return BadAudio();
-    }
-
-    if (status == 413)
-    {
-      return TooLong();
-    }
-
-    if (status == 429)
-    {
-      return AgentChatProblems.TooManyRequests();
-    }
-
-    return UpstreamFailed();
-  }
-
-  /// <summary>2xx with an empty transcript.</summary>
-  public static SharedProblemDetails NoSpeech() => new()
-  {
-    Title = "No speech recognized",
-    Status = 422,
-    Detail = "The recording had no speech."
-  };
-
-  /// <summary>The provider rejected the clip.</summary>
-  public static SharedProblemDetails BadAudio() => new()
-  {
-    Title = "Recording rejected",
-    Status = 400,
-    Detail = "The recording could not be transcribed."
-  };
-
-  /// <summary>The clip is over the provider's size limit.</summary>
-  public static SharedProblemDetails TooLong() => new()
-  {
-    Title = "Recording too long",
-    Status = 413,
-    Detail = "The recording is too long."
-  };
-
-  /// <summary>The provider failed, or the success body was not a transcript.</summary>
-  public static SharedProblemDetails UpstreamFailed() => new()
-  {
-    Title = "Voice request failed",
-    Status = 502,
-    Detail = "The recording could not be transcribed."
-  };
-
-  private static bool TryReadText(string? body, out string? text)
-  {
-    text = null;
-    if (string.IsNullOrWhiteSpace(body))
-    {
-      return true;
-    }
-
     try
     {
-      TranscriptBody? parsed = JsonSerializer.Deserialize<TranscriptBody>(body, Json);
-      text = parsed?.Text;
-      return true;
+      using var document = JsonDocument.Parse(json);
+      JsonElement root = document.RootElement;
+      if (root.ValueKind != JsonValueKind.Object)
+      {
+        return new SpeechEvent(SpeechEventKind.Error, string.Empty);
+      }
+
+      string? type = StringProperty(root, "type");
+      string text = StringProperty(root, "text") ?? string.Empty;
+      return type switch
+      {
+        "transcript.partial" when BoolProperty(root, "is_final") && BoolProperty(root, "speech_final") =>
+          new SpeechEvent(SpeechEventKind.UtteranceFinal, text),
+        "transcript.partial" when BoolProperty(root, "is_final") => new SpeechEvent(SpeechEventKind.ChunkFinal, text),
+        "transcript.partial" => new SpeechEvent(SpeechEventKind.Interim, text),
+        "transcript.done" => new SpeechEvent(SpeechEventKind.Done, text),
+        "error" => new SpeechEvent(SpeechEventKind.Error, string.Empty),
+        _ => new SpeechEvent(SpeechEventKind.Ignored, string.Empty)
+      };
     }
     catch (JsonException)
     {
-      return false;
+      return new SpeechEvent(SpeechEventKind.Error, string.Empty);
     }
   }
 
-  private static string FileName(string canonical) => canonical switch
+  private static string? TypeOf(string json)
   {
-    "audio/mpeg" or "audio/mp3" => "dictation.mp3",
-    "audio/wav" or "audio/wave" or "audio/x-wav" => "dictation.wav",
-    "audio/mp4" or "audio/m4a" or "audio/x-m4a" => "dictation.m4a",
-    "audio/ogg" or "audio/opus" => "dictation.ogg",
-    "audio/flac" => "dictation.flac",
-    "audio/aac" => "dictation.aac",
-    _ => "dictation.webm"
-  };
+    try
+    {
+      using var document = JsonDocument.Parse(json);
+      return document.RootElement.ValueKind == JsonValueKind.Object
+        ? StringProperty(document.RootElement, "type")
+        : null;
+    }
+    catch (JsonException)
+    {
+      return null;
+    }
+  }
 
-  private sealed class TranscriptBody
+  private static string? StringProperty(JsonElement element, string name) =>
+    element.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String
+      ? value.GetString()
+      : null;
+
+  private static bool BoolProperty(JsonElement element, string name) =>
+    element.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.True;
+}
+
+/// <summary>Builds one dictation's text from upstream events.</summary>
+public sealed class DictationTranscript
+{
+  private readonly List<string> Utterances = [];
+  private readonly List<string> Chunks = [];
+  private string Interim = string.Empty;
+  private string DoneText = string.Empty;
+
+  /// <summary>Applies one event. Returns true when the visible text changed.</summary>
+  public bool Apply(SpeechEvent speechEvent)
   {
-    public string? Text { get; set; }
+    string before = Text;
+    switch (speechEvent.Kind)
+    {
+      case SpeechEventKind.Interim:
+        Interim = speechEvent.Text;
+        break;
+      case SpeechEventKind.ChunkFinal:
+        Chunks.Add(speechEvent.Text);
+        Interim = string.Empty;
+        break;
+      case SpeechEventKind.UtteranceFinal:
+        Utterances.Add(speechEvent.Text);
+        Chunks.Clear();
+        Interim = string.Empty;
+        break;
+      case SpeechEventKind.Done:
+        Interim = string.Empty;
+        DoneText = speechEvent.Text;
+        break;
+      default:
+        return false;
+    }
+
+    return !string.Equals(before, Text, StringComparison.Ordinal);
+  }
+
+  /// <summary>Utterances, then locked chunks, then the interim text, one space apart.</summary>
+  public string Text
+  {
+    get
+    {
+      StringBuilder builder = new();
+      foreach (string part in Utterances)
+      {
+        Append(builder, part);
+      }
+
+      foreach (string part in Chunks)
+      {
+        Append(builder, part);
+      }
+
+      Append(builder, Interim);
+      if (builder.Length == 0)
+      {
+        Append(builder, DoneText);
+      }
+
+      return builder.ToString();
+    }
+  }
+
+  private static void Append(StringBuilder builder, string part)
+  {
+    string trimmed = part.Trim();
+    if (trimmed.Length == 0)
+    {
+      return;
+    }
+
+    if (builder.Length > 0)
+    {
+      builder.Append(' ');
+    }
+
+    builder.Append(trimmed);
   }
 }
