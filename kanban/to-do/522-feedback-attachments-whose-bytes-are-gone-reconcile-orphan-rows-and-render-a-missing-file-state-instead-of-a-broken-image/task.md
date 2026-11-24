@@ -13,9 +13,13 @@ Cause: before task 352 (filed 2026-10-14) attachment bytes lived only in
 restart dropped the bytes and kept the rows. 352 made new bytes durable but did not touch rows
 that had already lost theirs, and the UI has no state for an attachment whose file is gone.
 
-A host that knowingly runs without durable files (the in-memory warning in
-`feedback-attachment-blob-module-infrastructure.cs` allows it) hits the same shape after every
-restart, so this is a live code path, not only a one-time cleanup.
+After 352 the mode selection is Azure, then Postgres, then in-memory, so configuration can no
+longer produce durable rows over volatile bytes. The orphans are pre-352 data only. The
+in-memory feedback stores, and the `InMemoryBlobWarning` that guards a combination the code no
+longer produces, remain for tests, mock mode, and apps generated without the `postgres` flag.
+Decision (Steve, 2026-11-25): none of those needs a lossy store. Tests use the Postgres lane,
+mock mode is identity only, and a generated app without a database gets no feedback feature
+rather than one that discards filings on restart.
 
 ## Requirements
 
@@ -27,10 +31,16 @@ restart, so this is a live code path, not only a one-time cleanup.
 - A one-time reconcile for the two production items: either mark the rows as file-missing or
   remove the rows and strip the body image lines. Pick one and record why in `## Session`.
   Deleting the feedback items themselves is out of scope.
-- No feedback attachment can reach this state silently in future: when the blob store is
-  in-memory and the row store is durable, upload is refused with a problem detail that names
-  the configuration, or the existing startup warning is promoted to a startup failure outside
-  Development. Pick one and record why.
+- The in-memory feedback stores are deleted: `InMemoryFeedbackStore`,
+  `InMemoryFeedbackAttachmentStore`, `InMemoryFeedbackAttachmentBlobStore`,
+  `in-memory-feedback-stores-module-infrastructure.cs`, and `InMemoryBlobWarning`. Feedback
+  rows live in Postgres; bytes in Postgres or Azure Blob Storage.
+- The feedback slice compiles out when the `postgres` template flag is off, the same way the
+  EF stores do: `#if postgres` / `<!--#if (postgres)-->` on the slice's registration, routes,
+  nav entry, WebMCP tools, contracts, and tests (TWA0008 / TWA0010 regions stay intact). The
+  default variant and `dev template-smoke --matrix` with postgres off both build with 0 warnings.
+- Tests that used the in-memory stores move to the Postgres lane
+  (`skills/tw-feature-placement/references/co-located-jaribu-runfiles.md`).
 
 ## Checklist
 
@@ -40,8 +50,11 @@ restart, so this is a live code path, not only a one-time cleanup.
       image for a missing attachment renders that state too
 - [ ] Decide reconcile vs remove for existing orphan rows; implement as a startup or `dev` verb
       pass, not a hand SQL script; run it against arch.timewarp.work
-- [ ] Decide refuse-upload vs fail-startup for in-memory bytes over durable rows; implement
-- [ ] Jaribu tests: orphan row renders missing state; upload or startup behaves as decided
+- [ ] Delete the in-memory feedback stores, their module, and `InMemoryBlobWarning`; mode
+      selection becomes Azure, then Postgres
+- [ ] Gate the feedback slice on the `postgres` flag; `dev template-smoke --matrix` green
+- [ ] Move feedback tests off the in-memory stores to the Postgres lane
+- [ ] Jaribu tests: orphan row renders missing state
 - [ ] Screenshots of the two production items after the fix in `evidence/`
 - [ ] `dev build`, `ganda repo audit`
 
