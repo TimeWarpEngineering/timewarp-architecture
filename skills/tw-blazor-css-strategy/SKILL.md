@@ -87,8 +87,11 @@ release to remove it.
    mode gets its own value. A focus ring, a focused-field border, or a selection indicator is
    non-text UI that needs 3:1 on paper: it reads `--twe-focus-ring` (or `--twe-primary-text` for
    an active-tab underline), never `--twe-primary`, which is too dark on dark paper. Mixing into
-   `--twe-paper` (`color-mix(... var(--twe-paper))`) follows the mode by itself. The dark block
-   never overrides a brand key, so `/brand.css` stays the one brand source. The theme button dispatches `ApplicationState.ToggleTheme` (Fluent's
+   `--twe-paper` (`color-mix(... var(--twe-paper))`) follows the mode by itself. Brand colors are
+   role tokens only (`--twe-primary*`, `--twe-secondary*`, `--twe-highlight*`, `--twe-info`); never
+   read the hue palette (`--twe-purple*`, `--twe-blue*`, `--twe-green*`). `/brand.css` overrides the
+   roles and the three dark text roles from `BrandOptions`, so it stays the one brand source in
+   both modes (`tw-brand`). The theme button dispatches `ApplicationState.ToggleTheme` (Fluent's
    `IThemeService` stores the mode); no store keeps a second copy of the mode.
 
 ## Canonical in-repo example (the app shell)
@@ -114,12 +117,12 @@ with `display: contents`, and every rule is in `TimeWarpPage.razor.css`:
 
 /* Fluent roots (Wall A): anchor on the native root, ::deep to the child. */
 .twe-shell ::deep .twe-shell__layout { --layout-header-height: var(--twe-appbar-height) !important; }
-.twe-shell ::deep .fluent-layout-item[area=header] { background-color: var(--twe-purple); }
+.twe-shell ::deep .fluent-layout-item[area=header] { background-color: var(--twe-primary); }
 .twe-shell ::deep .twe-nav { background: var(--twe-paper-2); }
 
 /* Elements this component authors are stamped: plain isolated selectors. */
 .twe-appbar { display: flex; align-items: center; }
-.twe-breadcrumb__link { color: var(--twe-blue); }
+.twe-breadcrumb__link { color: var(--twe-link); }
 ```
 
 Other examples: `FormField.razor.css` (`.twe-form-field__control ::deep > fluent-text-input`),

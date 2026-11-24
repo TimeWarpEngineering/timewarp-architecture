@@ -20,7 +20,7 @@
 // The rail check uses a 1024x700 viewport: the nav is 68px, labels are clipped,
 // and the pinned card does not overlap the menu. Widening past 1279px drops the
 // link title, because that tooltip exists only in the rail.
-// Brand purple is --twe-purple (#55409c), the same value App.razor puts in data-theme-color.
+// Brand primary is --twe-primary (#55409c), the same value App.razor puts in data-theme-color.
 // GET /brand.css sends Cache-Control: no-cache and a strong ETag. A repeat with that tag,
 // and a repeat with the same tag weakened by a leading W/, are both 304.
 #endregion
@@ -265,7 +265,7 @@ public partial class FirstPaint_Given_PrerenderedShell
     IAPIResponse brandCss = await request.GetAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css");
     brandCss.Ok.ShouldBeTrue($"GET /brand.css returned {brandCss.Status}");
     string css = await brandCss.TextAsync();
-    css.ShouldContain("--twe-purple: #55409c;");
+    css.ShouldContain("--twe-primary: #55409c;");
     css.ShouldContain("--twe-logo-height: 48px;");
     css.ShouldNotContain("<");
     brandCss.Headers["cache-control"].ShouldBe("no-cache");

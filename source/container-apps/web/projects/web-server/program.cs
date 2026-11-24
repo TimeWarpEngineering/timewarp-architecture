@@ -46,7 +46,7 @@
 // WebServerHttpClients (service-discovery named clients, task 312), WebServerAuthentication
 // (schemes, policies, permission evaluation, the hosted prerender session state),
 // WebServerSettings (validated options), WebServerPaymentServices (TimeWarp.402 demos),
-// WebServerStateDevTools (server-side span export) and BrandStylesheetEndpoint. ConfigureServices
+// WebServerStateDevTools (server-side span export) and BrandEndpoints. ConfigureServices
 // keeps the registration order: the hosted session state goes after Web.Spa.Program.ConfigureServices
 // because the last AuthenticationStateProvider registration wins.
 // Task 335-002: browser (WASM) stores export from Web.Spa.Program.Main. The browser never sees the
@@ -346,7 +346,7 @@ public partial class Program : IAspNetProgram
 
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
-    BrandStylesheetEndpoint.Map(webApplication);
+    BrandEndpoints.Map(webApplication);
 
     webApplication.MapStaticAssets();
     WebMcpDiscoveryEndpoint.Map(webApplication);

@@ -36,7 +36,8 @@
             "tests/libraries/timewarp-402-tests/**",
             "tests/analyzers/**",
             "skills/**/analysis/**",
-            "documentation/**"
+            "documentation/**",
+            "source/container-apps/web/projects/web-spa/wwwroot/js/**"
           ]
         },
         {
@@ -161,14 +162,15 @@
     },
     "appNameKebab": {
       "type": "derived",
-      "description": "The app name as a DNS-1123 label (Contoso.Shop -> contoso-shop): the committed AppHost Parameters k8s-namespace, helm-release-name and registry-repository. Replaces the monorepo's own kebab name only where it is one of those three values (onlyIf), never in repository URLs or project names.",
+      "description": "The app name as a DNS-1123 label (Contoso.Shop -> contoso-shop): the committed AppHost Parameters k8s-namespace, helm-release-name and registry-repository, and the MCP server card serverInfo name (task 513). Replaces the monorepo's own kebab name only where it is one of those values (onlyIf), never in repository URLs or project names.",
       "valueSource": "name",
       "valueTransform": "dnsLabel",
       "replaces": "timewarp-architecture",
       "onlyIf": [
         { "after": "\"k8s-namespace\": \"" },
         { "after": "\"helm-release-name\": \"" },
-        { "after": "\"registry-repository\": \"" }
+        { "after": "\"registry-repository\": \"" },
+        { "after": "\"name\": \"" }
       ]
     },
     "ingressPort": {

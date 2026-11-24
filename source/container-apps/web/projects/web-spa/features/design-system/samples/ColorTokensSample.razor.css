@@ -8,9 +8,9 @@
   border: 2px solid color-mix(in srgb, var(--twe-ink) 55%, transparent);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--twe-ink) 14%, var(--twe-background));
 }
-.ds-swatch__chip[data-token="twe-purple"] { background: var(--twe-purple); }
-.ds-swatch__chip[data-token="twe-blue"] { background: var(--twe-blue); }
-.ds-swatch__chip[data-token="twe-green"] { background: var(--twe-green); }
+.ds-swatch__chip[data-token="twe-primary"] { background: var(--twe-primary); }
+.ds-swatch__chip[data-token="twe-secondary"] { background: var(--twe-secondary); }
+.ds-swatch__chip[data-token="twe-highlight"] { background: var(--twe-highlight); }
 .ds-swatch__chip[data-token="twe-ink"] { background: var(--twe-ink); }
 .ds-swatch__chip[data-token="twe-muted"] { background: var(--twe-muted); }
 .ds-swatch__chip[data-token="twe-background"] { background: var(--twe-background); }

@@ -181,7 +181,7 @@ public partial class TimeWarpPage_Should_
 
     html.ShouldContain("data-qa=\"BrandLogo\"");
     html.ShouldContain("src=\"images/timewarp-horizontal.svg\"");
-    html.ShouldContain("alt=\"TimeWarp Architecture\"");
+    html.ShouldContain("alt=\"TimeWarp.Architecture\"");
     html.ShouldContain("width=\"201\"");
     html.ShouldContain("height=\"48\"");
 

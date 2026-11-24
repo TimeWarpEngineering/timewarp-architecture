@@ -59,7 +59,7 @@
 
 .ds-catalog__list ::deep .ds-catalog__link[aria-current="page"] {
   background: var(--twe-paper);
-  box-shadow: inset 3px 0 0 var(--twe-purple);
+  box-shadow: inset 3px 0 0 var(--twe-primary);
   font-weight: 700;
 }
 

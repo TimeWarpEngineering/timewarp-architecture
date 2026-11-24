@@ -172,7 +172,7 @@ From a repo checkout, with Azure CLI logged in (`az login`):
 dev entra setup
 # when more than one tenant is visible:
 dev entra setup --tenant contoso.com
-# optional: --name “TimeWarp Architecture Dev” --public-origin https://arch.timewarp.work
+# optional: --name “My App Dev” --public-origin https://app.example.com
 #           --redirect-uri https://extra.example/signin-oidc --new-secret --dry-run
 dev entra status
 dev entra disable   # removes Microsoft365 from SignInOptions:Methods; does not change Azure
@@ -226,7 +226,7 @@ dotnet user-secrets set “Authentication:Entra:ClientId” “<app-id>” --pro
 dotnet user-secrets set “Authentication:Entra:ClientSecret” “<secret>” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:CallbackPath” “/signin-oidc” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:AllowBootstrap” “true” --project source/container-apps/web/projects/web-server
-dotnet user-secrets set “Authentication:Entra:PublicOrigin” “https://arch.timewarp.work” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:PublicOrigin” “https://app.example.com” --project source/container-apps/web/projects/web-server
 ```
 
 `Ingress:PublicUrl` (AppHost) is dashboard display only — do not treat it as a

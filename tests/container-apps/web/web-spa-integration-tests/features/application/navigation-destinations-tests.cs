@@ -303,7 +303,7 @@ public partial class Destinations_Should_
         "wwwroot",
         ".well-known",
         "agent-skills",
-        "timewarp-architecture-discovery",
+        "host-discovery",
         "SKILL.md"
       ),
     ];

@@ -1,0 +1,47 @@
+<link rel=icon href>: https://localhost:30500/images/brand/favicon.svg
+<title>: Design System
+
+/manifest.json:
+{
+  "name": "Northwind Traders",
+  "short_name": "Northwind Traders",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fafafb",
+  "theme_color": "#0b6e4f",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ]
+}
+
+/brand.css:
+:root {
+  --twe-primary: #0b6e4f;
+  --twe-primary-hover: #11865f;
+  --twe-primary-active: #06492f;
+  --twe-primary-soft: #a7e3c8;
+  --twe-on-primary: #ffffff;
+  --twe-secondary: #c2571a;
+  --twe-secondary-hover: #d86a2b;
+  --twe-secondary-active: #8a3a0d;
+  --twe-secondary-bright: #ff9a52;
+  --twe-highlight: #d4a017;
+  --twe-highlight-soft: #f7e3a1;
+  --twe-info: #1f6fb2;
+  --twe-logo-height: 40px;
+}
+body[data-theme="dark"] {
+  --twe-primary-text: #7fd8b0;
+  --twe-secondary-text: #ffb27d;
+  --twe-highlight-text: #f2c94c;
+}

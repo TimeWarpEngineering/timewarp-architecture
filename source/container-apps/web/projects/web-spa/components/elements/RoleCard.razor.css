@@ -32,12 +32,12 @@
 }
 
 .twe-role-card.is-selected {
-  border-color: var(--twe-purple);
-  background: color-mix(in srgb, var(--twe-purple) 8%, var(--twe-paper));
+  border-color: var(--twe-primary);
+  background: color-mix(in srgb, var(--twe-primary) 8%, var(--twe-paper));
 }
 
 .twe-role-card.is-selected:hover {
-  border-color: var(--twe-purple);
+  border-color: var(--twe-primary);
 }
 
 .twe-role-card__head {

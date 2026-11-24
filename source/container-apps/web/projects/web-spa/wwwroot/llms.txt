@@ -60,7 +60,7 @@ These paths are not operations in [/openapi/v1.json](/openapi/v1.json). The docu
 | Surface | Path | Notes |
 |---------|------|-------|
 | MCP Server Card | [/.well-known/mcp/server-card.json](/.well-known/mcp/server-card.json) | Alias: [/.well-known/mcp.json](/.well-known/mcp.json). `capabilities.tools=false`; do not call `/mcp` for tools yet. |
-| Agent Skills index | [/.well-known/agent-skills/index.json](/.well-known/agent-skills/index.json) | Live skill-md artifacts (`timewarp-identity`, `timewarp-architecture-discovery`). |
+| Agent Skills index | [/.well-known/agent-skills/index.json](/.well-known/agent-skills/index.json) | Live skill-md artifacts (`timewarp-identity`, `host-discovery`). |
 | A2A Agent Card | [/.well-known/agent-card.json](/.well-known/agent-card.json) | Alias: [/.well-known/agent.json](/.well-known/agent.json). Unsigned v1; skills map to REST identity + discovery. |
 
 ```bash

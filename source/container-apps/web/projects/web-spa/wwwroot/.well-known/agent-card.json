@@ -1,6 +1,6 @@
 {
   "name": "TimeWarp.Architecture Template Host",
-  "description": "Agent-ready .NET template host by TimeWarp Enterprises. Live: passkey and agent-key identity REST APIs, OpenAPI, discovery docs, and Agent Skills. Full A2A JSON-RPC task protocol is not hosted yet — this is an unsigned v1 discoverability card (signed cards later). Prefer REST identity ceremonies (/auth.md), OpenAPI (/openapi/v1.json), and /.well-known/agent-skills/ for operational use.",
+  "description": "Agent-ready .NET template host. Live: passkey and agent-key identity REST APIs, OpenAPI, discovery docs, and Agent Skills. Full A2A JSON-RPC task protocol is not hosted yet — this is an unsigned v1 discoverability card (signed cards later). Prefer REST identity ceremonies (/auth.md), OpenAPI (/openapi/v1.json), and /.well-known/agent-skills/ for operational use.",
   "supportedInterfaces": [
     {
       "url": "/openapi/v1.json",
@@ -13,10 +13,6 @@
       "protocolVersion": "1.0"
     }
   ],
-  "provider": {
-    "organization": "TimeWarp Enterprises",
-    "url": "https://timewarp.enterprises/"
-  },
   "version": "2.0.0-beta.14",
   "documentationUrl": "/llms.txt",
   "iconUrl": "/icon-192.png",

@@ -5,10 +5,8 @@ description: Agent-readable home page for the TimeWarp.Architecture template hos
 
 # TimeWarp.Architecture
 
-A distributed .NET reference application and **project template** by
-[TimeWarp Enterprises](https://timewarp.enterprises/). Clone it, generate an app
-with `dotnet new timewarp-architecture`, and build on the same batteries-included
-architecture the monorepo dogfoods.
+A distributed .NET application on a batteries-included architecture: Blazor, passkey and
+agent-key identity, x402 payments, and agent discovery documents.
 
 This file is the **markdown twin** of the HTML home page (`/`). Agents may also
 request `/` with `Accept: text/markdown` and receive this body (content

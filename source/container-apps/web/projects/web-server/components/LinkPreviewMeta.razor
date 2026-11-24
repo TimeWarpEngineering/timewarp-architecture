@@ -18,6 +18,8 @@
 
   [Inject] private IOptions<SiteMetadata> SiteMetadataAccessor { get; set; } = null!;
 
+  [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+
   [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = null!;
 
   [CascadingParameter] private HttpContext? HttpContext { get; set; }
@@ -27,6 +29,7 @@
   protected override void OnInitialized() =>
     Tags = LinkPreview.Resolve(
       SiteMetadataAccessor.Value,
+      BrandOptionsAccessor.Value,
       HttpContext?.Request ?? HttpContextAccessor.HttpContext?.Request);
 }
 

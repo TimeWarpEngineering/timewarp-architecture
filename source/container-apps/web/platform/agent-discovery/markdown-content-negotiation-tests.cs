@@ -149,7 +149,7 @@ namespace TimeWarp.Architecture.AgentDiscovery
       auth.ShouldContain("WebMCP");
       auth.ShouldContain("typeof navigator.modelContext");
 
-      string skill = await ReadOkAsync(client, "/.well-known/agent-skills/timewarp-architecture-discovery/SKILL.md");
+      string skill = await ReadOkAsync(client, "/.well-known/agent-skills/host-discovery/SKILL.md");
       skill.ShouldContain("WebMCP");
       skill.ShouldContain("document.modelContext");
       skill.ShouldContain("typeof navigator.modelContext");
