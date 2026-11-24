@@ -2,7 +2,7 @@
 
 ## Description
 
-Research only, size S, time-boxed. Pin the v0.7.10 tagged Linux binary of [antithesishq/bombadil](https://github.com/antithesishq/bombadil) (not `main`). Run one 15-minute `browser test` with default properties only against a local Architecture SPA run, `inspect` the output, and report real bugs vs false positives (dev-mode 404s, auth redirects) plus setup time (Chromium on twe-001 unverified). Try `shrink` only if a violation appears.
+Research only, time-boxed. Pin the v0.7.10 tagged Linux binary of [antithesishq/bombadil](https://github.com/antithesishq/bombadil) (not `main`). Run one 15-minute `browser test` with default properties only against a local Architecture SPA run, `inspect` the output, and report real bugs vs false positives (dev-mode 404s, auth redirects) plus setup time (Chromium on twe-001 unverified). Try `shrink` only if a violation appears.
 
 Source: [Bombadil eval](https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-16-bombadil.md) ([timewarp-intel PR #130](https://github.com/TimeWarpEngineering/timewarp-intel/pull/130)). Busara verdict: option A GREEN; B/C/D/E/G/I KILL; F/H/J folded in.
 
