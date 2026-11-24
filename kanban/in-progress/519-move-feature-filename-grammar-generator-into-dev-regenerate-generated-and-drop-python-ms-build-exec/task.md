@@ -80,6 +80,7 @@ Done means:
 - Boy-scout audit fixes from `ganda repo audit --fix`: `kanban-landed` landed task 515's drifted
   kitchen onto origin-home (another live walk's committed board edits); `vscode-window-icon` wrote
   the ignored local `.vscode/settings.json`.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ad1561c4-583c-4372-bdb6-452459f2f603, max-turns 500, Done — 2026-11-24T11:55:15Z
 
 ## Results
 
