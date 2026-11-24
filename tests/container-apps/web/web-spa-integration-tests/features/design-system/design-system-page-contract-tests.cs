@@ -106,7 +106,7 @@ public partial class DesignSystemPage_Should_
       "aria-label=\"Sample views\"",
       "aria-label=\"Sample period\"",
       "data-qa=\"DesignSystemPeriodStepper\"",
-      "href=\"/Profile\"",
+      "<button type=\"button\" class=\"twe-user-card\"",
       "data-qa=\"DesignSystemUserCard\"",
       "data-qa=\"DesignSystemSignInOne\"",
       "data-qa=\"ContinueWithPasskey\"",

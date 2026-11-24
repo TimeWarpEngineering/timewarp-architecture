@@ -10,7 +10,8 @@
   the principal detail page (task 328), which this links to, holds the rest of the profile.
   Without a name the raw principal id shows, still linked; the detail page hides the profile
   itself. A caller with admin.profiles.read and no name means the owner has no profile row, so
-  "no profile" is added. The link is a plain Href, so navigation needs no component method.
+  "no profile" is added. The link is a RouteLink, so a click is the RouteState.ChangeRoute action
+  (TWA0050).
 *@
 
 @code {
@@ -20,10 +21,10 @@
   [Parameter]
   public string? OwnerDisplayName { get; set; }
 
-  private string Href => $"/Admin/Principals/{OwnerPrincipalId:D}";
+  private string Route => $"/Admin/Principals/{OwnerPrincipalId:D}";
 }
 
-<FluentLink Href="@Href" data-qa="AdminFeedbackOwner">
+<RouteLink Route="@Route" data-qa="AdminFeedbackOwner">
   @if (OwnerDisplayName is { Length: > 0 } name)
   {
     @name
@@ -32,7 +33,7 @@
   {
     <code>@OwnerPrincipalId</code>
   }
-</FluentLink>
+</RouteLink>
 @if (OwnerDisplayName is not { Length: > 0 })
 {
   <AuthorizeView Policy="@PermissionIds.AdminProfilesRead">

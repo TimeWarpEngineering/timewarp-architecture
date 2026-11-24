@@ -440,7 +440,7 @@
       @if (FeedbackState.LastReceipt is { } receipt)
       {
         <p data-qa="FeedbackReceiptId">Filed as @receipt.FeedbackItemId</p>
-        <FluentLink Href="@receipt.Permalink" data-qa="FeedbackPermalink">@receipt.Permalink</FluentLink>
+        <RouteLink Route="@receipt.Permalink" data-qa="FeedbackPermalink">@receipt.Permalink</RouteLink>
       }
     </Section>
 
@@ -457,7 +457,7 @@
           @foreach (ListMyFeedback.Item item in FeedbackState.Items)
           {
             <li @attributes="RowMark(item)">
-              <FluentLink Href="@item.Permalink" data-qa="FeedbackList">@item.Title</FluentLink>
+              <RouteLink Route="@item.Permalink" data-qa="FeedbackList">@item.Title</RouteLink>
               <span>@item.Kind</span>
               <span data-qa="FeedbackListStatus">@item.Status</span>
             </li>

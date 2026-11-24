@@ -127,7 +127,7 @@
 
 <TimeWarpPage Title="Principal">
   <div class="twe-stack">
-    <FluentLink Href="/Admin/Principals" data-qa="AdminPrincipalBack">Back to principals</FluentLink>
+    <RouteLink Route="@PrincipalsPage.GetPageUrl()" data-qa="AdminPrincipalBack">Back to principals</RouteLink>
     <Section Title="Status" LoadingActionType="typeof(PrincipalState.OpenPrincipalActionSet.Action)">
       @if (PrincipalState.LoadError is not null)
       {

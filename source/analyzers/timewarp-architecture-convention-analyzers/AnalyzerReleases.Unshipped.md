@@ -9,8 +9,8 @@
 ; here. A rule that checks only C# file or name shape belongs in TimeWarp.SourceGenerators.
 ; TimeWarp.SourceGenerators 1.0.0-beta.13 reports the generic style rules with the same IDs:
 ; TWA0004, TWA0023, and TWA0038. Do not reuse those IDs here. IDs stay TWA*.
-; Next free id: TWA0050 (across this project and timewarp-architecture-analyzers).
-; History: task 486. Task 489-001 took TWA0047–TWA0049.
+; Next free id: TWA0051 (across this project and timewarp-architecture-analyzers).
+; History: task 486. Task 489-001 took TWA0047–TWA0049. Task 506 took TWA0050.
 
 ### New Rules
 
@@ -54,3 +54,4 @@ TWA0046 | Design | Warning | ContractSpaAgreementAnalyzer: SPA handler on IWebSe
 TWA0047 | Design | Error | DetailsCopyAnalyzer: mutable I*Details response Clone returns this, so a TimeWarp.State snapshot shares the instance
 TWA0048 | Design | Error | DetailsCopyAnalyzer: I*Details command or mutable response (or a containing type) is not partial, so From or Clone cannot be generated
 TWA0049 | Design | Error | DetailsCopyAnalyzer: partial I*Details command has no parameterless constructor, so From is not generated
+TWA0050 | Design | Error | ComponentLinkAnalyzer: component markup link (Href / href / To, NavLink, <a href>) navigates without a TimeWarp.State action

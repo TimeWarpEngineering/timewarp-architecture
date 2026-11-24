@@ -100,7 +100,7 @@
                 Agent
                 <AuthorizeView Policy="@PermissionIds.AdminPrincipalsRead">
                   <Authorized>
-                    <FluentLink Href="@($"/Admin/Principals/{item.AgentPrincipalId:D}")" data-qa="AgentPrincipalLink"><code>@item.AgentPrincipalId</code></FluentLink>
+                    <RouteLink Route="@($"/Admin/Principals/{item.AgentPrincipalId:D}")" data-qa="AgentPrincipalLink"><code>@item.AgentPrincipalId</code></RouteLink>
                   </Authorized>
                   <NotAuthorized>
                     <code data-qa="AgentPrincipalText">@item.AgentPrincipalId</code>

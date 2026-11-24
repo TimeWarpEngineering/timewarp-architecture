@@ -56,6 +56,9 @@
 // non-empty, non-whitespace reason suppresses TWA0026 in that scope. An empty or whitespace reason
 // does NOT opt out and is itself reported as TWA0027 on the attribute — a separate id so the
 // missing reason is visible even when the component has no remaining violation.
+//
+// TWA0050 (component-link-analyzer.cs, task 506) reads links in markup with the same gating,
+// component scope, generated-code rule and opt-out, so those four helpers are internal here.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -173,7 +176,7 @@ public sealed class ComponentSideEffectAnalyzer : DiagnosticAnalyzer
     });
   }
 
-  private static bool IsBlazorWebAssemblyCompilation(AnalyzerOptions options) =>
+  internal static bool IsBlazorWebAssemblyCompilation(AnalyzerOptions options) =>
     options.AnalyzerConfigOptionsProvider.GlobalOptions
       .TryGetValue(BlazorWasmSdkProperty, out string? value)
     && string.Equals(value?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
@@ -263,7 +266,7 @@ public sealed class ComponentSideEffectAnalyzer : DiagnosticAnalyzer
   private static bool HasAttributeNamed(ISymbol symbol, string attributeName) =>
     symbol.GetAttributes().Any(attribute => attribute.AttributeClass?.Name == attributeName);
 
-  private static bool IsInComponent(ISymbol? containingSymbol, INamedTypeSymbol componentBase)
+  internal static bool IsInComponent(ISymbol? containingSymbol, INamedTypeSymbol componentBase)
   {
     INamedTypeSymbol? type = null;
     for (ISymbol? current = containingSymbol; current is not null; current = current.ContainingSymbol)
@@ -283,7 +286,7 @@ public sealed class ComponentSideEffectAnalyzer : DiagnosticAnalyzer
     return false;
   }
 
-  private static bool HasOptOut(ISymbol? containingSymbol)
+  internal static bool HasOptOut(ISymbol? containingSymbol)
   {
     for (ISymbol? current = containingSymbol; current is not null; current = current.ContainingSymbol)
     {
@@ -325,7 +328,7 @@ public sealed class ComponentSideEffectAnalyzer : DiagnosticAnalyzer
     }
   }
 
-  private static bool IsExemptGeneratedCode(OperationAnalysisContext context)
+  internal static bool IsExemptGeneratedCode(OperationAnalysisContext context)
   {
     string path = context.Operation.Syntax.SyntaxTree.FilePath ?? string.Empty;
 

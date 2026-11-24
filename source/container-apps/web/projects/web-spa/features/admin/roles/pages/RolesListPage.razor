@@ -7,8 +7,11 @@
 
   Design: Task 206 — list is a list. Membership editing lives on RoleDetailPage
   (/Admin/Roles/{RoleId}). Summary chips are PermissionIds.PrefixesOf on stored grants, not drafts.
-  New Role stays RolePage (/Admin/Roles/New) via FluentAnchorButton (v5 Href is real;
-  FluentButton Href is unmatched and does not navigate). Save does not live on every row.
+  New Role is a FluentButton that dispatches RoleState.OpenNewRole, a catalogued action that
+  opens RolePage (/Admin/Roles/New), so Ctrl-K and Ask AI can start a role too (task 506,
+  TWA0050). The catalog entry carries admin.roles.manage, RolePage's own policy; the button
+  shows to every list reader, as the old link did, and RolePage refuses a reader.
+  A role name is a RouteLink to RoleDetailPage. Save does not live on every row.
   The shell location breadcrumb is Home / Roles. No per-page Back button.
   Document title comes from TimeWarpPage Title via TwPageTitle.
 *@
@@ -18,6 +21,8 @@
   public static string Title => "Roles";
 
   protected override async Task OnInitializedAsync() => await RoleState.GetRoles();
+
+  private Task OpenNewRoleAsync() => RoleState.OpenNewRole();
 }
 
 <TimeWarpPage Title="Roles">
@@ -28,9 +33,9 @@
       (empty permissions until you assign them on the role page).
     </p>
     <div>
-      <FluentAnchorButton Appearance="ButtonAppearance.Primary" Href="@RolePage.GetPageUrl()" data-qa="NewRole">
+      <FluentButton Appearance="ButtonAppearance.Primary" OnClick="OpenNewRoleAsync" data-qa="NewRole">
         New Role
-      </FluentAnchorButton>
+      </FluentButton>
     </div>
     <Section Title="Roles" LoadingActionType="typeof(RoleState.GetRolesActionSet.Action)">
       <table class="twe-table" data-qa="RolesTable">
@@ -48,7 +53,7 @@
               IReadOnlyList<string> prefixes = PermissionIds.PrefixesOf(role.Permissions);
               <tr @key="role.RoleId">
                 <Cell>
-                  <a href="@RoleDetailPage.GetPageUrl(role.RoleId)" data-qa="RoleDetail">@role.Name</a>
+                  <RouteLink Route="@RoleDetailPage.GetPageUrl(role.RoleId)" data-qa="RoleDetail">@role.Name</RouteLink>
                 </Cell>
                 <Cell>@role.Description</Cell>
                 <Cell>

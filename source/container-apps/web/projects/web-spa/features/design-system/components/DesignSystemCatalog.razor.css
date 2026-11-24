@@ -45,7 +45,7 @@
 
 .ds-catalog__heading { margin: 0 0 var(--twe-space-1); }
 
-.ds-catalog__link {
+.ds-catalog__list ::deep .ds-catalog__link {
   display: block;
   padding: var(--twe-space-1) var(--twe-space-2);
   line-height: 20px;
@@ -55,9 +55,9 @@
   text-decoration: none;
 }
 
-.ds-catalog__link:hover { background: var(--twe-paper); }
+.ds-catalog__list ::deep .ds-catalog__link:hover { background: var(--twe-paper); }
 
-.ds-catalog__link[aria-current="page"] {
+.ds-catalog__list ::deep .ds-catalog__link[aria-current="page"] {
   background: var(--twe-paper);
   box-shadow: inset 3px 0 0 var(--twe-purple);
   font-weight: 700;

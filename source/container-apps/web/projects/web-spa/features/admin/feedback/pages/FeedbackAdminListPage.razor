@@ -185,7 +185,7 @@
                 <TemplateColumn Title="Title" ColumnId="@nameof(FeedbackListSortColumn.Title)"
                   Sortable="true" SortBy="@TitleSort"
                   IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Title)" InitialSortDirection="@SortDirection">
-                  <FluentLink Href="@($"/Admin/Feedback/{context.FeedbackItemId:D}")" data-qa="AdminFeedbackRow" @attributes="RowMark(context)">@context.Title</FluentLink>
+                  <RouteLink Route="@($"/Admin/Feedback/{context.FeedbackItemId:D}")" data-qa="AdminFeedbackRow" @attributes="RowMark(context)">@context.Title</RouteLink>
                 </TemplateColumn>
                 <TemplateColumn Title="Kind" ColumnId="@nameof(FeedbackListSortColumn.Kind)"
                   Sortable="true" SortBy="@KindSort"

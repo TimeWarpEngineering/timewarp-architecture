@@ -19,6 +19,9 @@
 // http(s) links; rel already carries noopener noreferrer. Text in progress (an open **, a half
 // link, an open fence) is valid CommonMark input, so a streaming caller just passes the new text.
 // Each child renders inside its own region so the fixed sequence numbers diff correctly.
+// TWA0050 (task 506): OpenAnchor carries the one opt-out. The url is content, not app code; an
+// app link already goes through OnAppLinkClick when the caller sets it, and the default keeps a
+// plain anchor because feedback bodies link to attachment downloads the client router cannot take.
 #endregion
 
 namespace TimeWarp.Architecture.Components;
@@ -245,6 +248,7 @@ public sealed class SafeMarkdown : ComponentBase
     }
   }
 
+  [DirectComponentSideEffect("Links come from untrusted markdown content. An app-relative link is handed to OnAppLinkClick when the caller sets it, and the default anchor serves attachment downloads the client router cannot route.")]
   private void OpenAnchor(RenderTreeBuilder builder, string url)
   {
     builder.OpenElement(80, "a");

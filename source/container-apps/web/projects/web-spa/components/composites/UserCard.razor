@@ -3,23 +3,26 @@
 @*
   Purpose: Identity row pinned under the navigation menu.
 
-  Design: Native root so CSS isolation stamps the scope attribute. Href makes the
-  root an anchor; otherwise it is a div, so a person who cannot open a destination
-  still sees the name. The avatar is decorative. Class is appended on the root, and
-  unmatched attributes splat onto it. Detail renders only when it has text. This
-  card wires no events and reads no state. The shell passes the signed-in name.
+  Design: Native root so CSS isolation stamps the scope attribute. OnClick makes the
+  root a button; otherwise it is a div, so a person who cannot open a destination
+  still sees the name. Task 506 (TWA0050): the card was an anchor with Href, which
+  navigated outside the store. The caller now passes OnClick and dispatches its
+  navigate action (the shell's is RouteState.ChangeRoute to the profile). The avatar
+  is decorative. Class is appended on the root, and unmatched attributes splat onto
+  it. Detail renders only when it has text. This card reads no state. The shell
+  passes the signed-in name.
 *@
 
 @code {
   [Parameter, EditorRequired] public string Name { get; set; } = "";
   [Parameter] public string? Detail { get; set; }
-  [Parameter] public string? Href { get; set; }
+  [Parameter] public EventCallback OnClick { get; set; }
   [Parameter] public string? Class { get; set; }
   [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
   private bool HasDetail => !string.IsNullOrWhiteSpace(Detail);
 
-  private bool IsLink => !string.IsNullOrWhiteSpace(Href);
+  private bool IsAction => OnClick.HasDelegate;
 
   private string RootClass =>
     string.IsNullOrWhiteSpace(Class) ? "twe-user-card" : "twe-user-card " + Class;
@@ -36,9 +39,9 @@
   </text>;
 }
 
-@if (IsLink)
+@if (IsAction)
 {
-  <a class="@RootClass" href="@Href" @attributes="AdditionalAttributes">@Body</a>
+  <button type="button" class="@RootClass" @onclick="OnClick" @attributes="AdditionalAttributes">@Body</button>
 }
 else
 {

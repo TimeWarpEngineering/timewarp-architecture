@@ -204,15 +204,15 @@
   padding: 0 var(--twe-space-2);
   color: var(--twe-muted);
 }
-.twe-breadcrumb__link {
+.twe-breadcrumb ::deep .twe-breadcrumb__link {
   color: var(--twe-link);
   text-decoration: none;
 }
-.twe-breadcrumb__link:hover {
+.twe-breadcrumb ::deep .twe-breadcrumb__link:hover {
   color: var(--twe-link-hover);
   text-decoration: underline;
 }
-.twe-breadcrumb__link:focus-visible {
+.twe-breadcrumb ::deep .twe-breadcrumb__link:focus-visible {
   outline: 2px solid var(--twe-blue);
   outline-offset: 2px;
 }

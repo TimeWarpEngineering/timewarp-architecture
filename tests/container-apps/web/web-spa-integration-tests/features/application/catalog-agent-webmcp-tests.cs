@@ -44,6 +44,7 @@ public partial class CatalogAgent_Should
     [
       "Credentials.AddPasskey",
       "Feedback.ListMyFeedback",
+      "Role.OpenNewRole",
       "Screenshot.CaptureScreenshot",
       "Prefill.Profile.UpdateProfile",
       "Prefill.Role.CreateRole",

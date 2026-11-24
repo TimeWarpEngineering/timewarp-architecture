@@ -42,6 +42,8 @@ public class ActionCatalog_Should
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",
+    // Task 506: the Roles list's New Role button; Ctrl-K and Ask reach the form through it.
+    "Role.OpenNewRole",
     "Role.UpdateRole",
     "Screenshot.CaptureScreenshot",
     "SiteSettings.ResolveEntraTenant",

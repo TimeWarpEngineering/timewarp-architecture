@@ -16,6 +16,9 @@
 // Nothing is saved. RowBoxScript outlines each row and prints its height for the evidence shots,
 // taken light, then dark after an OS switch (nothing stored, so Fluent follows it). The
 // design-system shot needs developer.access, so the test grants it before that load.
+// Task 506: the walk starts on /Admin/Roles. New Role is a FluentButton that dispatches
+// RoleState.OpenNewRole (no Href, TWA0050); the list is shot, then the click must land on
+// /Admin/Roles/New.
 #endregion
 
 namespace RolePagesPlaywright_;
@@ -68,7 +71,19 @@ public class RolePages_Given_Wasm
 
     await DrawerCloseAsserts.SignInWithNewPasskeyAsync(page, context);
 
-    await PlaywrightPageLoad.GotoAsync(page, "/Admin/Roles/New");
+    await PlaywrightPageLoad.GotoAsync(page, "/Admin/Roles");
+    ILocator newRole = page.Locator("[data-qa=NewRole]");
+    await Assertions.Expect(newRole).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+    await Assertions.Expect(page.Locator("[data-qa=RoleDetail]").First).ToBeVisibleAsync(
+      new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+    (await newRole.GetAttributeAsync("href")).ShouldBeNull();
+    await page.ScreenshotAsync(new PageScreenshotOptions
+    {
+      Path = PlaywrightScreenshot.PathFor<RolePages_Given_Wasm>("admin-roles-list.png"),
+      FullPage = true,
+    });
+    await newRole.ClickAsync();
+    await page.WaitForURLAsync("**/Admin/Roles/New");
     await Assertions.Expect(page.Locator("[data-qa=RoleName] input")).ToBeVisibleAsync(
       new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
     await Assertions.Expect(page.Locator("[data-qa=RoleSave]")).ToBeVisibleAsync();

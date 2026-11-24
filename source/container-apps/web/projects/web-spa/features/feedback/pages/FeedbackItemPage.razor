@@ -56,7 +56,7 @@
       <h2>@item.Title</h2>
       <FeedbackBody Body="@item.Body" Attachments="@item.Attachments"
         BodyDataQa="FeedbackItemBody" AttachmentDataQa="FeedbackItemAttachment" />
-      <FluentLink Href="@item.Permalink" data-qa="FeedbackPermalink">@item.Permalink</FluentLink>
+      <RouteLink Route="@item.Permalink" data-qa="FeedbackPermalink">@item.Permalink</RouteLink>
       @if (FeedbackState.CurrentActivity.Count > 0)
       {
         <ul class="feedback-item-thread" data-qa="FeedbackThread">

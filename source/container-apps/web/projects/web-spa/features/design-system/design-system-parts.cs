@@ -227,7 +227,7 @@ internal static class DesignSystemParts
       "User card",
       Group.Identity,
       """
-      <UserCard Name="Ada Lovelace" Detail="ada@example.test" Href="@ProfilePage.GetPageUrl()" />
+      <UserCard Name="Ada Lovelace" Detail="ada@example.test" OnClick="OpenProfileAsync" />
       """,
       typeof(UserCardSample)
     ),

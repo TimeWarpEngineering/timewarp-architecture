@@ -1,4 +1,5 @@
 @namespace TimeWarp.Architecture.Components
+@attribute [DirectComponentSideEffect("A listed attachment is a file download from the API, not an SPA route: RouteState.ChangeRoute would hand the path to the client router, which has no page for it. The anchor stays a plain link.")]
 
 @*
   Purpose: One feedback body as safe markdown, then the attachments the body does not show
@@ -10,6 +11,8 @@
   out of the list below, so each attachment appears once. Listed images go through
   MarkdownImage for the same "image unavailable" placeholder. AttachmentDataQa keeps each page's existing test hook.
   Rendering is client-side (task 353): the server stores and returns the raw markdown.
+  Task 506: the listed attachment anchor is the one TWA0050 opt-out here (attribute above). A
+  download path is served by the API, so it cannot be a RouteLink.
 *@
 
 @code {
