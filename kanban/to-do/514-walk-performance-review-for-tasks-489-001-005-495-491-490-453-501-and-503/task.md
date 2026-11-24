@@ -11,7 +11,7 @@ Use this task to walk through each finding one by one and decide which follow-up
 ## Checklist
 
 - [x] Collect SigNoz OTEL traces, walk logs, agent transcripts, PR CI checks, and `ganda usage stats` for all 11 finished walks (`report/analysis.md`)
-- [ ] Item 1 (`timewarp-ganda`, P0 regression) — Investigate & fix missing SigNoz OTEL spans (`ganda` + `claude-code`) on headless `task work` walks after `ganda 393401fa` (`501` and `503` exported zero spans)
+- [x] Item 1 (`dotfiles` task **012**) — Root-caused: not a `ganda 393401fa` or profile bug; interactive Claude `Bash` strips `OTEL_*` and `BASH_ENV` was unset when launching `setsid -f bash -c ... ganda task work`. Filed `dotfiles` task **012** to export `BASH_ENV="$HOME/.bashrc"` in `bash/.bashrc`
 - [ ] Item 2 (`timewarp-ganda`) — Review Grok `grok-4.7-build` reasoning/API latency (`82–99%` of wall time, `~4h 40m` across 6 walks) vs Claude (`1.1–2.8m` review rounds, `6.6–24.8m` implementations) and decide provider/effort routing
 - [ ] Item 3 (`timewarp-ganda`) — Add provider 429 quota cooldown file (OpenCode Go weekly limit aborted Task 495 after `13m 38s` with 0 edits — 2nd occurrence in 2 days)
 - [ ] Item 4 (`timewarp-ganda` / `.githooks/`) — Eliminate redundant `post-commit` `self-install` + `repo attest` (`81–136s`/commit on `501`/`503`) and host `audit` + `merge` triple-audit (`52–54s` still live on `501`/`503`)
