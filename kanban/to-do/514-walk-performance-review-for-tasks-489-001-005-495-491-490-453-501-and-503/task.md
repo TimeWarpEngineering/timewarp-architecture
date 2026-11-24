@@ -19,7 +19,7 @@ Use this task to walk through each finding one by one and decide which follow-up
 - [x] Item 6 (`timewarp-architecture` task **515**) — Filed task **515** to extract a shared `InteractiveHtmlRenderer` + `InvokeAfterRenderAsync` test helper in `web-spa-integration-tests` and document combined MTP test-filter usage (skipping `StateJsonContext` since `489-003` already added `TypeInfoPropertyName` + comment)
 - [x] Item 7 (`timewarp-ganda` task **717**) — Filed `timewarp-ganda` task **717** to skip merge-commit subjects when `open-pr` picks a PR title and teach `task work --restart` to honor the branch's recorded `--into` feature base when checking predecessors
 - [x] Item 8 (`timewarp-ganda` task **718**) — Filed `timewarp-ganda` task **718** to exclude nested review substeps from `timing total`, keep `XmYs` precision on step lines, and separate pure `review` from `implement-fix` in `WalkRetroSuggestion`
-- [ ] Hand off to `/tw-correct` (`timewarp-architecture` & `timewarp-flow`) — Repeated agent mistakes: (A) `dotnet test` from repo root / parallel `obj` collisions (14+ times across 4 tasks), (B) piping `dev build` / `ganda repo audit` into `head`/`tail` (5 times across 4 tasks), (C) un-baselined analyzer suppressions (2 tasks)
+- [x] Hand off to `/tw-correct` — (A) Filed `timewarp-architecture` task **516** (`--project` + `--filter-class`/`--filter-method` on `dev test`), (B) Filed `timewarp-architecture` task **517** (`dev build` quiet by default with `--verbose`; `ganda repo audit` already covered by `timewarp-ganda` task **683**), (C) Skipped (`ganda repo audit`'s `AnalyzerSuppressionCheck` already enforces `.timewarp/suppression-baseline.json`)
 
 ## Session
 
