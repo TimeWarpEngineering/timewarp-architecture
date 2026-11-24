@@ -91,13 +91,14 @@ Acceptance criteria:
 
 ## Checklist
 
-- [ ] Snapshot the published document into `review/`
-- [ ] Write `review/review-brief.md` (lenses, severity scale, output format, probing rules)
-- [ ] Run linter, attach output
-- [ ] Grok 4.7 review → `review/round-1/grok-4.7.md`
-- [ ] Fable review → `review/round-1/fable.md`
-- [ ] Merge + verify → `review/findings.md`
-- [ ] Disposition with follow-on task links → `disposition.md`
+- [x] Snapshot the published document into `review/` (`openapi-v1.snapshot.json`, `snapshot-meta.md`)
+- [x] Write `review/review-brief.md` (lenses, severity scale, output format, probing rules)
+- [x] Run linter, attach output (`review/lint/`: Redocly 2.83.0, Spectral 6.17.1)
+- [x] Grok 4.7 review → `review/round-1/grok-4.7.md`
+- [x] Fable review → `review/round-1/fable.md`
+- [x] Merge + verify → `review/findings.md`
+- [ ] Disposition with follow-on task links → `disposition.md` (written; 11 tasks linked; M-01's
+      task waits on operator remediation, see `disposition.md` "M-01 (held)")
 
 ## Notes
 
@@ -110,3 +111,36 @@ Acceptance criteria:
 ## Session
 
 - Created: f542f9e6-afba-4597-8f76-ca55f50824db (2026-10-31)
+- Implement walk (Claude Opus 5.5, 2026-11-24): snapshot fetched 2026-11-24T20:15:44Z (OpenAPI
+  3.2.0, 64 paths, 79 operations; the deployed host moved from 3.1.1 since creation). Grok 4.7
+  (`grok -m grok-4.7`, headless) and Fable (`claude -p --model claude-fable-5-1`) ran in parallel
+  from the same brief, each writing to a scratch file outside the repo, and were copied into
+  `review/round-1/` after both ended. Merger verified every merged finding against the snapshot,
+  source, or an unauthenticated live `GET`.
+- Follow-on tasks reserved, claimed, specced, and published as children: 458-001 … 458-011.
+- Held: Fable F-001 (merged M-01) is a live-host security finding. This repository is public, so
+  its text, one sentence of Grok G-009, and its follow-on task are held outside the repo until the
+  operator remediates. The walk parks Blocked on that.
+- Audit: `kanban-landed` fails on task 315's kitchen. 315 is another live walk (claim alive, in its
+  review step) whose kitchen has not landed yet; landing it from here would interfere with that
+  walk, so it was left alone. This branch merged `origin/master` to clear its own drift.
+
+## Results
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Build | `./bin/dev build` | pass (exit 0, 0 warnings, 0 errors; client-name scan passed) |
+| Test files | none | no test file added or edited; no production code changed (kanban-only) |
+| Audit | `ganda repo audit` | first run: 1 failure `kanban-landed` (315 kitchen drift and this branch behind master); merged `origin/master`; rerun: 1 failure `kanban-landed` for task 315 only (foreign live walk, not landed by this task); 9 pass, 1 skip |
+
+Review outcome: 17 merged findings (1 blocker held, 9 major, 6 minor, 1 nit) plus one linter note;
+16 accepted, 1 rejected (M-17). Both models agreed on M-02, M-03, M-04, M-05, M-06, M-13, M-14, M-15.
+
+### How to validate
+
+- **Smoke:** `python3 -c "import json,hashlib;b=open('review/openapi-v1.snapshot.json','rb').read();print(hashlib.sha256(b).hexdigest(),len(json.loads(b)['paths']))"`
+  in this folder; then open `review/findings.md` and `disposition.md` and follow each 458-0NN link;
+  `ganda kanban show 458-001` … `458-011`.
+- **Expect:** hash `496a0506…9b98` and `64` paths (matches `review/snapshot-meta.md`); every
+  disposition row except M-01 (held) and M-17 (rejected) links an existing to-do child task; both
+  `review/round-1/grok-4.7.md` and `review/round-1/fable.md` exist and contain no secret values.
