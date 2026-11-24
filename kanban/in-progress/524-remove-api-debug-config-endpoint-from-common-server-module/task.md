@@ -71,7 +71,7 @@ Acceptance:
 - `./bin/dev test --no-build --project web-server-integration-tests --filter-class CommonServerModuleEndpoints_`
   (`common-server-module-endpoints-tests.cs`, a suite file in the csproj, not a standalone runfile:
   no `#if !JARIBU_MULTI` guard): passed, 1/1.
-- `ganda repo audit`: AUDIT_RESULT
+- `ganda repo audit`: passed (reused the recorded full pass for tree 2cb2418434cd from the commit hook).
 
 ### How to validate
 
