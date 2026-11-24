@@ -81,6 +81,8 @@ Done means:
   kitchen onto origin-home (another live walk's committed board edits); `vscode-window-icon` wrote
   the ignored local `.vscode/settings.json`.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ad1561c4-583c-4372-bdb6-452459f2f603, max-turns 500, Done — 2026-11-24T11:55:15Z
+- Reviewer: grok session 01a20d69-3125-7b32-8b69-5aba2c6dd85a (2026-11-24), effort 3, roster general, round 1, disposition clean
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20d69-3125-7b32-8b69-5aba2c6dd85a, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-24T12:04:21Z
 
 ## Results
 
@@ -111,6 +113,16 @@ The ingress golden did not change.
 - `./bin/dev template-smoke` — Template smoke SUCCEEDED.
 - `ganda repo audit` — first run failed (`kanban-landed` on task 515, `vscode-window-icon` warning);
   `ganda repo audit --fix` fixed both; rerun: Repository passes all audit checks.
+
+### Review
+
+Round 1, effort 3, roster general. Counts: bug 0, suggestion 0, nit 0 (open 0, fixed 0, wontfix 0). Disposition: clean. No misread between the goal restatement and the original task.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
