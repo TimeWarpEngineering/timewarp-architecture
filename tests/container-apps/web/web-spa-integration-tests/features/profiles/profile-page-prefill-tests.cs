@@ -4,10 +4,10 @@
 
 #region Design
 // HtmlRenderer's static host reports IsInteractive false, so ProfilePage would skip its fetch.
-// This host subclasses StaticHtmlRenderer and reports an interactive renderer, the same shape
-// as AiPage_Should_. That host cancels the display update, so the renderer never calls
-// OnAfterRenderAsync. The test calls it after the load settles and after each draft, which is
-// when an interactive circuit would. The profile read can wait on a gate, so the first call
+// The shared InteractiveHtmlRenderer (infrastructure/) reports an interactive renderer, the
+// same host AiPage_Should_ uses. StaticHtmlRenderer never calls OnAfterRenderAsync, so the test
+// calls InteractiveHtmlRenderer.InvokeAfterRenderAsync after the load settles and after each
+// draft, which is when an interactive circuit would. The profile read can wait on a gate, so the first call
 // is before CopyCommandFromProfile and the one after the gate is after it. A scripted
 // IConfirmationService records the replace question. The page's command is private, so the
 // tests read it by name. No Aspire host: the store and the rendered command are the facts.
@@ -20,7 +20,6 @@ using System.Reflection;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.HtmlRendering.Infrastructure;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web.HtmlRendering;
 using Microsoft.Extensions.Logging;
@@ -137,7 +136,7 @@ public class ProfilePage_Should_
         CommandOf(page).DisplayName.ShouldBeNull();
         scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Grace");
         spa.Confirmation.Calls.ShouldBe(0);
-        await PumpAfterRenderAsync(page);
+        await InteractiveHtmlRenderer.InvokeAfterRenderAsync(page);
         CommandOf(page).DisplayName.ShouldBeNull();
         scope.Store.GetState<ProfileState>().ProfileSuggestionJson.ShouldNotBeNull().ShouldContain("Grace");
         spa.Confirmation.Calls.ShouldBe(0);
@@ -178,11 +177,11 @@ public class ProfilePage_Should_
 
     await root.QuiescenceTask;
     ProfilePage page = capture.Page ?? throw new InvalidOperationException("ProfilePage did not render.");
-    await PumpAfterRenderAsync(page);
+    await InteractiveHtmlRenderer.InvokeAfterRenderAsync(page);
     if (afterOpen is not null)
     {
       await afterOpen(page);
-      await PumpAfterRenderAsync(page);
+      await InteractiveHtmlRenderer.InvokeAfterRenderAsync(page);
     }
 
     page.ReRender();
@@ -200,17 +199,6 @@ public class ProfilePage_Should_
       spa.Confirmation.Calls,
       spa.Confirmation.Message,
       scope.Store.GetState<ProfileState>().ProfileSuggestionJson);
-  }
-
-  private static async Task PumpAfterRenderAsync(ProfilePage page)
-  {
-    MethodInfo method = typeof(ProfilePage).GetMethod(
-      "OnAfterRenderAsync",
-      BindingFlags.Instance | BindingFlags.NonPublic)
-      ?? throw new InvalidOperationException("OnAfterRenderAsync");
-    Task task = (Task?)method.Invoke(page, [false])
-      ?? throw new InvalidOperationException("OnAfterRenderAsync");
-    await task;
   }
 
   private static UpdateProfile.Command CommandOf(ProfilePage page)
@@ -256,17 +244,6 @@ public class ProfilePage_Should_
       }));
       builder.CloseComponent();
     }
-  }
-
-  /// <summary>Static HTML rendering with <see cref="RendererInfo.IsInteractive"/> set.</summary>
-  private sealed class InteractiveHtmlRenderer : StaticHtmlRenderer
-  {
-    public InteractiveHtmlRenderer(IServiceProvider services, ILoggerFactory loggerFactory)
-      : base(services, loggerFactory)
-    {
-    }
-
-    protected override RendererInfo RendererInfo { get; } = new("Test", isInteractive: true);
   }
 
   private sealed class ProfileSpa : ISpaTestApplication, IDisposable

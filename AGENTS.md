@@ -46,7 +46,7 @@ and plain CSS (`tw-blazor-css-strategy`). Aspire. EF Core when `postgres` is on.
 | Contracts and browser-protocol endpoints | `tw-web-api-contracts` |
 | Razor, actions, outcomes | `tw-blazor`, `tw-blazor-layout` |
 | Aggregates | `tw-aggregate-pattern` |
-| Tests | `tw-jaribu` for the framework. Co-located runfiles, C-create / C-share, and host lanes: `skills/tw-feature-placement/references/co-located-jaribu-runfiles.md` |
+| Tests | `tw-jaribu` for the framework. Co-located runfiles, C-create / C-share, host lanes, the shared `InteractiveHtmlRenderer` page-test host, and selecting several classes in one run (one Aspire boot): `skills/tw-feature-placement/references/co-located-jaribu-runfiles.md` |
 | Deploy | `tw-deploy` |
 | Release cut | `tw-release`. Maintainer notes: `documentation/developer/guides/` (not packed). |
 | Diagnostics TWA / TWE / SG | The build message, plus `AnalyzerReleases.Unshipped.md` under `source/analyzers/timewarp-architecture-convention-analyzers/` and `source/analyzers/timewarp-architecture-analyzers/`. Retired ids are commented there. Generic style ids TWA0004, TWA0023, and TWA0038 are reported by `TimeWarp.SourceGenerators` (1.0.0-beta.13 and later; pin in `Directory.Packages.props`). The split rule and the next free TWA id are in the header of the convention analyzers' `AnalyzerReleases.Unshipped.md`. |

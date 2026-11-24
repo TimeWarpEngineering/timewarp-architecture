@@ -4,8 +4,8 @@
 
 #region Design
 // HtmlRenderer's static host reports IsInteractive false, so it never runs the page's fetch.
-// This host subclasses StaticHtmlRenderer and reports an interactive renderer, then renders
-// AiPage in the same scope that seeded the stale snapshot. The drafts are the form attributes
+// The shared InteractiveHtmlRenderer (infrastructure/) reports an interactive renderer and
+// renders AiPage in the same scope that seeded the stale snapshot. The drafts are the form attributes
 // data-assistant-version and data-xai-byok-version, not SiteSettings.Version: the bug was
 // the form keeping the sign-in token after state could already have been refreshed. The page
 // copies Command.From(SiteSettings) after the fetch. A later SiteSettingsState arrives through
@@ -28,7 +28,6 @@ using System.Reflection;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.HtmlRendering.Infrastructure;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web.HtmlRendering;
 using Microsoft.Extensions.Logging;
@@ -370,17 +369,6 @@ public class AiPage_Should_
       }));
       builder.CloseComponent();
     }
-  }
-
-  /// <summary>Static HTML rendering with <see cref="RendererInfo.IsInteractive"/> set.</summary>
-  private sealed class InteractiveHtmlRenderer : StaticHtmlRenderer
-  {
-    public InteractiveHtmlRenderer(IServiceProvider services, ILoggerFactory loggerFactory)
-      : base(services, loggerFactory)
-    {
-    }
-
-    protected override RendererInfo RendererInfo { get; } = new("Test", isInteractive: true);
   }
 
   private sealed class DraftSpa(IWebServerApiService server) : ISpaTestApplication, IDisposable

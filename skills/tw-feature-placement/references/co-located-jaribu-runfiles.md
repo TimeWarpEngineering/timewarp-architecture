@@ -151,3 +151,40 @@ family:
 4. A layer-suffix that would nest inside another registered suffix (dual-glob-match risk) is
    rejected at generation time — the generator fails the build rather than shipping an ambiguous
    registry. The nesting check covers `layers` **and** `unroutedLayers` together.
+
+## Page tests without a browser
+
+`web-spa-integration-tests` renders a page to HTML through
+`InteractiveHtmlRenderer` (`tests/container-apps/web/web-spa-integration-tests/infrastructure/interactive-html-renderer.cs`).
+It is a `StaticHtmlRenderer` that reports an interactive `RendererInfo`, so a page that fetches
+only when interactive runs that fetch. Use it; do not declare another one in a test class.
+
+`StaticHtmlRenderer` never calls `OnAfterRender` or `OnAfterRenderAsync`, even with that
+`RendererInfo`. When the page under test does work in `OnAfterRenderAsync`, call
+`await InteractiveHtmlRenderer.InvokeAfterRenderAsync(page)` after `QuiescenceTask` and after each
+action the test sends, which is when a circuit would run it. `firstRender` defaults to `false`.
+Example: `features/profiles/profile-page-prefill-tests.cs`.
+
+## One test run for several classes
+
+A suite that boots Aspire and Postgres (`web-spa-integration-tests`, `aspire-tests`) pays that boot
+once per `dotnet test` process. Separate runs for each class pay it again each time. Select every
+class you need in one run:
+
+```bash
+./bin/dev test --project web-spa-integration-tests --filter-class Draft_
+./bin/dev test --project web-spa-integration-tests --filter-class ProfilePagePrefill_ --filter-method Draft
+./bin/dev test --project web-spa-integration-tests
+```
+
+- `--filter-class` matches a substring of the class full name (namespace included) and
+  `--filter-method` a substring of the method name, both ignore-case. Each takes one value;
+  neither takes a list.
+- To run several classes, give one substring they all share: a namespace segment, a class-name
+  prefix, or a suffix. When the classes share none, run the whole project once with `--project`
+  and no filter. One project run still costs one boot.
+- Both options together keep the methods that match both.
+- A filter that selects no test fails the project run (MTP exit code 8). Pair a filter with
+  `--project`.
+- From a project directory, the same run is `dotnet test -c Release -- --filter-class <substring>`.
+  `./bin/dev test` is the usual form: it builds first and gives the run its own port base.
