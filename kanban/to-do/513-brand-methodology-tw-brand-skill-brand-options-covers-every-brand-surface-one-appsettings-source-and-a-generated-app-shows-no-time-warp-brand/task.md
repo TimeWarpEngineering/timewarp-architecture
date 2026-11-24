@@ -28,6 +28,10 @@ The 2026-11-24 inventory found the model leaks:
   (`--twe-primary`, `--twe-secondary`, `--twe-highlight`) already exist beside them.
 - No skill or document states the procedure.
 
+## Depends on
+
+- 506
+
 ## Requirements
 
 ### `tw-brand` skill
