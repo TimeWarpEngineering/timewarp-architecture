@@ -133,6 +133,7 @@ Acceptance, as I read it:
   testing: the configuration binder writes a getter's value back into the property, so a
   fallback inside a bound getter (LogoAlt from ProductName) froze at bind time; fallbacks are
   `Effective*` read-only properties instead.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 263ce09f-6e17-490e-a6fc-8f7bdd898405, max-turns 500, Done — 2026-11-24T18:20:14Z
 
 ## Results
 
