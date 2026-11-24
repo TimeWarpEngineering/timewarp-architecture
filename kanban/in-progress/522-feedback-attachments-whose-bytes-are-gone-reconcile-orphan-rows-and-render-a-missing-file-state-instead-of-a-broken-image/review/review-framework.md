@@ -2,19 +2,22 @@
 
 **Date:** 2026-11-25
 **Host task:** kanban/in-progress/522-feedback-attachments-whose-bytes-are-gone-reconcile-orphan-rows-and-render-a-missing-file-state-instead-of-a-broken-image/
-**Diff scope:** branch `task/522-feedback-attachments-whose-bytes-are-gone` vs merge-base `40d680e8` (`master...HEAD`): 83 files, +1595/−734. Uncommitted kitchen files under `review/` are this round.
-**Plan / brief:** Orphan feedback attachments (rows whose bytes were lost before task 352) report `IsFilePresent` from the byte store and render a missing-file state. In-memory feedback stores are removed. The feedback slice compiles out when the `postgres` template flag is off. Tests run on Postgres.
-**Effort:** 3 (by-diff; single axis)
+**Diff scope (round 1):** branch `task/522-feedback-attachments-whose-bytes-are-gone` vs merge-base `40d680e8` (`master...HEAD` at that round): 83 files, +1595/−734.
+**Diff scope (round 2):** product delta since round 1, commit `5bb8d4b3f` vs its parent. Product file: `documentation/developer/guides/feedback-attachments.md`. Kitchen files in that commit are the round-1 trail, not product.
+**Plan / brief:** Orphan feedback attachments (rows whose bytes were lost before task 352) report `IsFilePresent` from the byte store and render a missing-file state. In-memory feedback stores are removed. The feedback slice compiles out when the `postgres` template flag is off. Tests run on Postgres. Round 2 checks the M1 guide fix only.
+**Effort:** round 1 was 3 (by-diff; general). Round 2 is 1 (by-diff; general).
 **Reviewer roster:** general
-**Session IDs:** implementer claude `e556aad5-a349-4cf5-8ac5-947325901f05`; reviewer grok `01a20f5b-b48c-7613-8231-9dc945372089`
+**Session IDs:** implementer claude `e556aad5-a349-4cf5-8ac5-947325901f05`; reviewer grok round 1 `01a20f5b-b48c-7613-8231-9dc945372089`; reviewer grok round 2 `01a20f67-f107-7801-8ac3-611a1dcb3914`
 
 ## Budget (by-diff)
 
-- Lines changed: 2329
-- Effort: 3
+Round 1: 2329 lines, effort 3, turn cap 200. Round 2 (this launch):
+
+- Lines changed: 128
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
