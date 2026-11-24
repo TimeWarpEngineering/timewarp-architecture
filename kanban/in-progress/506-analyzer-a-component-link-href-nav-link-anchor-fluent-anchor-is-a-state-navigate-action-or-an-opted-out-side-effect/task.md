@@ -95,6 +95,8 @@ Acceptance:
   Audit boy-scout: `ganda repo audit` warned only on `vscode-window-icon` (no local
   `.vscode/settings.json`); `ganda repo audit --fix` wrote that gitignored file, nothing to commit.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 79a780c3-7854-40af-828e-d22e8d02fb0a, max-turns 500, Done — 2026-11-24T17:09:19Z
+- Review oracle: round 1 by general (grok, vendor xAI, model grok-4.7), session 01a20e88-ab8c-7c82-9685-ab8a738853ae, effort 3, roster general, turn cap 200, clean — 2026-11-25
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20e88-ab8c-7c82-9685-ab8a738853ae, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-24T17:25:08Z
 
 ## Results
 
@@ -193,6 +195,13 @@ Acceptance:
   with `error TWA0050: <a href> navigates without a TimeWarp.State action; dispatch
   RouteState.ChangeRoute …`. In the app, Ctrl-K "open new role" opens the form for an admin.
 
+### Review
+
+- Round 1, roster general, effort 3. Counts: bug 0, suggestion 0, nit 0. Open 0. Disposition: **clean**.
+- The implementer restatement matches the original task. No misread under Learnings.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Gates were not re-run. The implementer's `## Results` and `### How to validate` cover build 0/0, the analyzer and web-spa suites, `lint-skills`, and `ganda repo audit`. One targeted `ilspycmd` check of `ChangeRoute` and Blazor `navigateTo` confirmed an absolute RouteLink leaves the app.
+
 ### Follow-ups / risks
 
 - RouteLink prevents the default click, so Ctrl+click navigates in place; middle-click and the
@@ -201,3 +210,7 @@ Acceptance:
   compile error naming the parameter.
 - TWA0050 does not read `@attributes` splats or generic components whose parameters go through
   Razor's TypeInference helper (recorded in the analyzer Design region).
+
+## Review
+
+- Round 1: Done
