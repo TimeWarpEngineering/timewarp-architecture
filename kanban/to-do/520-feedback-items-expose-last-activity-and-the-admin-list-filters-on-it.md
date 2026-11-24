@@ -13,7 +13,7 @@ Origin: timewarp-jenzi task 013 (research: cross-repo kanban board and feedback 
 
 ## Requirements
 
-- `FeedbackItem` gets `LastActivityAt` (`DateTimeOffset`). It is set to `FiledAt` on filing and moves to the entry's `At` whenever a thread entry is added (status change, severity change, admin reply, filer reply, internal note). Store it in Postgres with an index, and in the in-memory store.
+- `FeedbackItem` gets `LastActivityAt` (`DateTimeOffset`). It is set to `FiledAt` on filing and moves to the entry's `At` whenever a thread entry is added (status change, severity change, admin reply, filer reply, internal note). Store it in Postgres with an index (Task 522 removes the in-memory feedback stores and gates the feedback slice on `postgres`).
 - The EF migration backfills existing rows with the newest thread entry's `At`, or `FiledAt` when there is none.
 - The admin list item and the admin detail return `LastActivityAt`.
 - `ListFeedback.Query` gets `ActivityFrom` (inclusive). It returns items whose `LastActivityAt` is at or after it, and it combines with the other filters as they combine today. `SortBy` gets `LastActivityAt`.
@@ -31,10 +31,14 @@ Origin: timewarp-jenzi task 013 (research: cross-repo kanban board and feedback 
 ## Checklist
 
 - [ ] Domain field and the thread-entry hook
-- [ ] EF configuration, migration and backfill; in-memory store
+- [ ] EF configuration, migration and backfill
 - [ ] Contracts: list item, detail, query filter, sort column
 - [ ] Tests
 - [ ] Gates
+
+## Depends on
+
+- 522
 
 ## Session
 
