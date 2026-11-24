@@ -12,6 +12,8 @@
 // A blank title still renders a set description or actions and omits the heading.
 // Scope attributes change when the stylesheet changes, so the empty-slot contract is that
 // structure, not a byte-for-byte snapshot.
+// HtmlRenderer reports RendererInfo.Name "Static", so the footer case pins the Static icon slot,
+// its aria-label, and the inline tooltip; RenderModeBadge_Should_ pins the other modes.
 #endregion
 
 namespace TimeWarpPageRender_;
@@ -308,6 +310,25 @@ public partial class TimeWarpPage_Should_
     html.ShouldContain("data-qa=\"SlotUserCard\"");
     html.ShouldContain("Slot person");
     html.ShouldNotContain("data-qa=\"ShellUserCard\"");
+  }
+
+  public static async Task Render_The_Render_Mode_As_An_Icon_With_A_Tooltip()
+  {
+    string html = await RenderAsync(new Dictionary<string, object> { ["Title"] = "Staff" });
+
+    int slotAt = html.IndexOf("data-qa=\"RenderMode\"", StringComparison.Ordinal);
+    slotAt.ShouldBeGreaterThan(-1, "footer rendered no render-mode slot");
+    int start = html.LastIndexOf('<', slotAt, StringComparison.Ordinal);
+    int close = html.IndexOf("</span>", slotAt, StringComparison.Ordinal);
+    string slot = html.Substring(start, close - start);
+    slot.ShouldContain("twe-footer__mode");
+    slot.ShouldNotContain("twe-footer__mode--fade");
+    slot.ShouldContain("data-mode=\"Static\"");
+    slot.ShouldContain("role=\"img\"");
+    slot.ShouldContain("aria-label=\"Rendering: Static. Pre-rendered page, not yet interactive.\"");
+    slot.ShouldContain("<svg");
+    html.ShouldContain("anchor=\"twe-render-mode\"");
+    html.ShouldContain("Pre-rendered page, not yet interactive.");
   }
 
   public static async Task Render_A_Static_User_Card_For_A_Signed_In_Person_Without_Profile_Permission()

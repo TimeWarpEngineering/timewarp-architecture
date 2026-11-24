@@ -115,6 +115,9 @@
   --twe-space-6: 24px;
   --twe-space-12: 48px;
 
+  /* Motion. --twe-duration-fast is a short state cross-fade (the footer render-mode icon). */
+  --twe-duration-fast: 150ms;
+
   /* KPI tile padding. 18px by 20px matches no spacing step (4, 8, 12, 24, 48). */
   --twe-kpi-pad: 18px 20px;
 

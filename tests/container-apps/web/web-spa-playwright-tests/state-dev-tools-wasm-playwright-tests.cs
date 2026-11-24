@@ -66,7 +66,7 @@ public class StateDevToolsWasm_Given_InspectorEndpoint
       IPage page = await context.NewPageAsync();
       await page.GotoAsync(InProcTestPorts.WebHostUrl, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
       await page.WaitForFunctionAsync(
-        "() => { const e = document.querySelector('.twe-footer__mode'); return e && e.textContent.trim() !== 'Static'; }",
+        "() => { const e = document.querySelector('[data-qa=RenderMode]'); return e && e.dataset.mode !== 'Static'; }",
         null,
         new PageWaitForFunctionOptions { Timeout = 120_000 });
 
