@@ -228,6 +228,13 @@ Implement pass:
 - `ganda repo audit`: pass with one advisory (`vscode-window-icon`, `.vscode/settings.json`
   missing). `ganda repo audit --fix` wrote that git-ignored local file; rerun: all checks pass.
 
+### Review disposition
+
+Rounds: 2. Roster: general. Effort: 2.
+Final counts: bug 2 fixed, suggestion 1 fixed, nit 0. Open: 0. Wontfix: 0.
+Disposition: clean.
+Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: grok-bot (2026-10-12)
@@ -238,7 +245,9 @@ Implement pass:
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session da67d941-9e83-4098-ae56-cac8b39ecc25, max-turns 500, Done — 2026-11-24T20:52:57Z
 - Review round 1: grok, session 01a20f55-6ee6-7e13-896f-e20bdede3a55 (2026-11-25). Effort 2, roster general. Open findings M1, M2, M3. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20f55-6ee6-7e13-896f-e20bdede3a55, max-turns 120, artifacts general.md, merged.md — 2026-11-24T21:02:34Z
+- Review round 2: grok, session 01a20f6a-8b0b-7e00-8c18-618ad7c4773d (2026-11-25). Effort 2, roster general. Re-verified M1, M2, M3 fixed on the fix delta. No new findings. Disposition clean. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
+- Round 2: Done
