@@ -1,5 +1,6 @@
 #region Purpose
-// Task 251: SignOutActionSet clears Profile/Authorization/Credentials/AgentLinks state and hands
+// Task 251: SignOutActionSet clears Profile/Authorization/Credentials/AgentLinks state (and, since
+// task 508, every agent form draft in FormSuggestionState) and hands
 // sign-out to the browser (sign-out.js form POST) — no server-side BFF call, no soft navigation.
 #endregion
 
@@ -24,6 +25,7 @@ using Microsoft.JSInterop;
 using System.Reflection;
 using System.Security.Claims;
 using TimeWarp.Architecture.Features.AgentLinks;
+using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Authorization;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Feedback;
@@ -41,7 +43,7 @@ public class SignOut_Should_
   {
     using SignOutSpa spa = new(jsThrows: false);
     using SpaTestScope scope = SpaTestScope.Create(spa);
-    Seed(scope.Store);
+    await Seed(scope);
 
     await scope.Send(new ProfileState.SignOutActionSet.Action());
 
@@ -63,7 +65,7 @@ public class SignOut_Should_
   {
     using SignOutSpa spa = new(jsThrows: true);
     using SpaTestScope scope = SpaTestScope.Create(spa);
-    Seed(scope.Store);
+    await Seed(scope);
 
     await scope.Send(new ProfileState.SignOutActionSet.Action());
 
@@ -74,8 +76,14 @@ public class SignOut_Should_
     A.CallTo(spa.ApiService).MustNotHaveHappened();
   }
 
-  private static void Seed(IStore store)
+  private static readonly string DraftForm =
+    FormSuggestionState.KeyFor(typeof(ProfileState.UpdateProfileActionSet.Action));
+
+  private static async Task Seed(SpaTestScope scope)
   {
+    // The agent draft goes first: Send clones state, so the reflection seeds below come after it.
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(DraftForm, """{"displayName":"Ada"}"""));
+    IStore store = scope.Store;
     SetProperty(
       store.GetState<ProfileState>(),
       nameof(ProfileState.Profile),
@@ -106,6 +114,7 @@ public class SignOut_Should_
       nameof(FeedbackState.LoadError),
       "stale");
     store.GetState<FeedbackState>().LoadError.ShouldBe("stale");
+    store.GetState<FormSuggestionState>().For(DraftForm).ShouldNotBeNull();
   }
 
   private static void AssertCleared(IStore store)
@@ -117,6 +126,7 @@ public class SignOut_Should_
     store.GetState<FeedbackState>().LoadError.ShouldBeNull();
     store.GetState<FeedbackState>().LastReceipt.ShouldBeNull();
     store.GetState<FeedbackState>().Items.ShouldBeEmpty();
+    store.GetState<FormSuggestionState>().Suggestions.ShouldBeEmpty();
   }
 
   private static void SetProperty(object target, string name, object? value)

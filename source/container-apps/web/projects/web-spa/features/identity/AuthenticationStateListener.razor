@@ -32,6 +32,9 @@
     await NoSubAskReferenceState.SessionChanged(AskReferenceState.PrincipalIdOf(user));
     // Task 346: the same for Ask's tag chips and sent tags.
     await NoSubAskTagState.SessionChanged(AskReferenceState.PrincipalIdOf(user));
+    // Task 508: agent form drafts belong to the principal too; a draft left after a sign-out would
+    // fill the next person's form on this circuit.
+    await NoSubFormSuggestionState.SessionChanged(AskReferenceState.PrincipalIdOf(user));
 
     if (user.Identity?.IsAuthenticated == true)
     {

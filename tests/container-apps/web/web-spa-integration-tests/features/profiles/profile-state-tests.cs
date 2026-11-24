@@ -11,7 +11,8 @@
 // Confirm asks through IConfirmationService. The question
 // says the draft replaces unsaved changes on the form. Apply copies only the supplied
 // fields and does not move the baseline. An empty argument list and a set of unknown keys
-// are not a draft.
+// are not a draft. A change of principal (SessionChanged, empty when signed out) drops every
+// draft; the same principal keeps them.
 #endregion
 
 namespace ProfileState_;
@@ -154,6 +155,35 @@ public class FetchAndUpdate_Should_
     await scope.Send(new FormSuggestionState.ClearFormSuggestionActionSet.Action(form, stored.Id));
     scope.Store.GetState<FormSuggestionState>().For(form).ShouldBeNull();
     scope.Store.GetState<FormSuggestionState>().For("Other.Form").ShouldNotBeNull();
+  }
+
+  public static async Task Suggestion_Should_Drop_When_PrincipalChanges()
+  {
+    using ProfileSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    string form = FormSuggestionState.KeyFor(typeof(ProfileState.UpdateProfileActionSet.Action));
+
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action("ada"));
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(form, """{"displayName":"Ada"}"""));
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action("Other.Form", """{"name":"x"}"""));
+
+    // A re-read for the same principal keeps the drafts.
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action("ada"));
+    scope.Store.GetState<FormSuggestionState>().Suggestions.Count.ShouldBe(2);
+
+    // The listener's signed-out path sends an empty id: every draft goes.
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action(""));
+    FormSuggestionState state = scope.Store.GetState<FormSuggestionState>();
+    state.Suggestions.ShouldBeEmpty();
+    state.SessionPrincipalId.ShouldBeEmpty();
+
+    // A sign-in as someone else drops a draft left on the circuit.
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action("ada"));
+    await scope.Send(new FormSuggestionState.SetFormSuggestionActionSet.Action(form, """{"displayName":"Ada"}"""));
+    await scope.Send(new FormSuggestionState.SessionChangedActionSet.Action("grace"));
+    state = scope.Store.GetState<FormSuggestionState>();
+    state.For(form).ShouldBeNull();
+    state.SessionPrincipalId.ShouldBe("grace");
   }
 
   public static Task Apply_Should_CopyOnlySuppliedFields_And_LeaveTheBaseline()

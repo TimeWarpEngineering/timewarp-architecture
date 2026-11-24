@@ -183,10 +183,27 @@ Gates (all foreground, this worktree):
 - Tests covering edited production code, same command: `AiPage_Should_` 9, `AuthenticationDraft_Should_` 7,
   `AuthenticationPage_Should_` 3, `AssistantSettingsPlacement_Should_` 2, `FormField_Should_` 2,
   `SignOut_Should_` 2, `DesignSystemPage_Should_` 6 — all passed.
+- Fix pass for review round 1 M1 (same command per class):
+  - `./bin/dev build` — succeeded, 0 warnings, 0 errors.
+  - `profile-state-tests.cs` — `FetchAndUpdate_Should_` — passed, 6 tests (new
+    `Suggestion_Should_Drop_When_PrincipalChanges`).
+  - `sign-out-state-tests.cs` — `SignOut_Should_` — passed, 2 tests (seeds a draft, expects it gone).
+  - `ganda repo audit` — repository passes, same 1 advisory `vscode-window-icon` warning as below.
 - `./bin/dev lint-skills` (skills/ changed) — 9 skills linted, 9 passed; eval spec valid.
 - `ganda repo audit` — repository passes, 1 advisory warning: `vscode-window-icon`
   (`.vscode/settings.json` is missing; that file is gitignored local state, so a fix would not
   reach the repo). Pre-existing, also noted on 490.
+
+### Review
+
+Round 1, effort 3, roster general. `review/review-framework.md`, `review/round-1/general.md`,
+`review/round-1/merged.md`. Counts: 1 open bug (M1), 0 fixed, 0 wontfix. Fix pass: M1 fixed.
+`FormSuggestionState.SessionChanged(principalId)` (`form-suggestion-state.session-changed.cs`)
+drops every draft when the principal id changes and keeps them for the same principal.
+`AuthenticationStateListener` dispatches it on every authentication change next to the Ask
+resets, so the signed-out path (empty id) and a sign-in as someone else both clear drafts.
+`Initialize` also forgets the principal. `FetchAndUpdate_Should_.Suggestion_Should_Drop_When_PrincipalChanges`
+pins it; `SignOut_Should_` seeds a draft and `AssertCleared` expects none.
 
 ## Depends on
 
@@ -202,3 +219,16 @@ Gates (all foreground, this worktree):
 - Created: 2026-11-24. 490 scope was generic; the implementer narrowed it to Profile without
   recording the deferral. Investigation table above is from the 2026-11-24 scope check.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 5f10deb9-8939-414b-8d64-765f03250951, max-turns 500, Done — 2026-11-24T15:12:09Z
+- Reviewer: Grok session 01a20e1d-6ad8-7190-a625-7d15a7f2d866 (2026-11-24). Round 1 general, effort 3. M1 open.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20e1d-6ad8-7190-a625-7d15a7f2d866, max-turns 200, artifacts general.md, merged.md — 2026-11-24T15:24:26Z
+
+- Implement-fix-2 oracle (Claude Code, claude-opus-5-5): M1 fixed, FormSuggestionState
+  SessionChanged wired into the authentication listener; tests extended. 2026-11-24
+
+## Learnings
+
+Misread: the original Evidence section requires a screenshot in `evidence/` for each wired page, taken from the running app via Ask AI. `## Goal (implementer restatement)` changed that to screenshots only when a signed-in app is available to the worker, with page tests standing in otherwise. The diff has no `evidence/` directory. Rendered-badge tests cover Profile and New Role. Role detail, AI, and Authentication do not. The checklist item is still open. Not filed as a finding: Results already name the AppHost limit, and a fix pass cannot take those shots in this worker.
+
+## Review
+
+- Round 1: Blocked — open M1
