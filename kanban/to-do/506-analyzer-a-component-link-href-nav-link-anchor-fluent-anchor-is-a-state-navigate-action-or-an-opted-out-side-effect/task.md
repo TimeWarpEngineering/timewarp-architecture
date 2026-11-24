@@ -19,6 +19,12 @@ analyzer must say the same thing.
 Found 2026-11-24 while validating 490: Ask AI could not find a create-role entry point because New
 Role is not an action.
 
+## Depends on
+
+- 510
+- 511
+- 512
+
 ## Requirements
 
 - New diagnostic **TWA0050** in `timewarp-architecture-convention-analyzers` (next free id per the
