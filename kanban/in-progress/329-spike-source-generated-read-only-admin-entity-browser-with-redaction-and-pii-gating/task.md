@@ -66,13 +66,75 @@ do not pick the final shape alone.
   is fine if it informs the design.
 - Public-safe wording in anything that might later move into a skill (no history or client names).
 
+## Goal (implementer restatement)
+
+Produce a design, not code, for a read-only admin view of every persisted entity, generated from
+the model instead of hand-built per entity. The design has to answer: which types are in scope
+(the anchor), how secrets stay hidden and PII stays behind its own permission (and how the build
+fails when a new secret-shaped field is not classified), what a generator would emit and where it
+runs given the project layering, how views are audited, what the permissions are, and when the
+generator beats hand-built pages. It ends with recommended options for Steve to decide; it picks
+nothing final.
+
+Acceptance criteria for this walk:
+
+- `design/inventory.md`: every persisted type re-verified against master's `PostgresDbContext`
+  and migration snapshot, with owning slice or package, columns, secret / PII / safe class per
+  column, and whether a curated admin page exists or is planned.
+- `design/options.md`: anchor options (a)–(d) with package-owned type handling; redaction model
+  and fail-closed check; generator shape (emitted artifacts, paging/sort/filter per 327, TWA0009
+  and generator composition, read-only by construction); audit; permissions and seed defaults;
+  cost/benefit and break-even; recommended options as open questions, no final decision.
+- No production code changes. The two "discussion" and "follow-up tasks" checklist items stay
+  open: they need Steve.
+
 ## Checklist
 
-- [ ] Inventory (`design/inventory.md`)
-- [ ] Options for anchor, redaction/analyzer, generator, audit, permissions (`design/options.md`)
+- [x] Inventory (`design/inventory.md`)
+- [x] Options for anchor, redaction/analyzer, generator, audit, permissions (`design/options.md`)
 - [ ] Discussion with Steve; decisions recorded as a dated decision log here
 - [ ] Follow-up implementation task(s) filed from the decisions
 
 ## Session
 
 - Created: 2026-10-12 (cockpit, per Steve)
+- 2026-11-25 (implementer, `ganda task work`): re-verified the inventory against master's
+  `PostgresDbContext` and migration snapshot (13 DbSets + 3 owned tables; `RolePermissionGrant` is
+  now owned by `Role`; identity types now live in the in-repo `timewarp-identity` library). Wrote
+  `design/inventory.md` and `design/options.md`. Stopped at recommendations for Steve; the
+  decision log and follow-up tasks stay open. No production code changed.
+
+## Results
+
+Design written; decisions pending with Steve.
+
+- `design/inventory.md`: every persisted column classed Secret / Personal / Text / Safe, with the
+  owning slice or package and the curated admin page that already reads it. Uncovered today:
+  `Credential` metadata, `AgentHumanLink`, per-user `ProtectedSecret` metadata.
+- `design/options.md`: ten codebase facts that constrain the design (layering means contracts
+  cannot see web-domain entities; EF mapping includes private members and owned tables; a log
+  data taxonomy already exists; no audit concern; no tenant concept), then options per concern and
+  nine recommendations to discuss: anchor (d) opt-out with mandatory classification; one taxonomy
+  for logs and the browser with `SensitiveData` split; fail closed and fail the gate; an `IModel`
+  completeness test as the gate plus an analyzer for secret-shaped names; a run-time `IModel`
+  catalog (G2) over a source generator; an audit platform port the curated PII pages also call;
+  `admin.data.read` plus each owning slice's existing permission for gated columns; platform admin
+  only for tenants; classification first, then audit, then the browser.
+- Side finding for a possible follow-up: the ASP.NET data-protection key ring is persisted as
+  plain XML (no `ProtectKeysWith*`), so database read access exposes the master key.
+
+### Gates
+
+- `./bin/dev build`: passed (client-name scan passed; build succeeded, 0 warnings, 0 errors).
+- Test files: none. The change adds no production code and no test file, so no test covers it.
+- `ganda repo audit`: passed (5 passed, 0 failed, 1 skipped: glossary has no entries).
+
+### How to validate
+
+- Smoke: read `design/inventory.md` and `design/options.md` in this task folder; spot-check the
+  inventory against `source/container-apps/web/platform/postgres/migrations/PostgresDbContextModelSnapshot.cs`
+  (`grep -n "ToTable(" …` lists 16 tables) and `postgres-db-context-infrastructure.cs` (13 DbSets).
+- Expect: every table in the snapshot appears in the inventory with each column classed; the
+  options file covers anchor, redaction and check, generator shape, audit, permissions, tenant
+  scope, cost/benefit, and ends with recommendations and open questions and no final decision;
+  `git diff origin/master --stat` touches only this task folder.
