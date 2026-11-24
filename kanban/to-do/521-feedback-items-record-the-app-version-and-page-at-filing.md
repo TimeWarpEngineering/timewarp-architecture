@@ -28,10 +28,14 @@ Origin: timewarp-jenzi task 013 (research: cross-repo kanban board and feedback 
 
 - [ ] Domain fields and `FeedbackItem.File` arguments
 - [ ] Submit contract (page path), validator, handler (version from the server)
-- [ ] EF configuration and migration; in-memory store
+- [ ] EF configuration and migration (Task 522 removes the in-memory feedback stores)
 - [ ] Admin contracts and view
 - [ ] Tests
 - [ ] Gates
+
+## Depends on
+
+- 520
 
 ## Session
 
