@@ -55,6 +55,7 @@ Busara gave these a KILL: B, C, D, E, G, I. F, H, and J were folded in. Do not e
   test against the local master AppHost run, triaged the trace, wrote Results. Did not start an
   AppHost from this worktree: every worktree shares the AppHost `UserSecretsId`, and a worker
   `dev run` has rewritten the shared postgres password before.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 8f1a9842-b49b-4c5f-9dce-89ceaf8bc136, max-turns 500, Done — 2026-11-24T20:28:40Z
 
 ## Results
 
