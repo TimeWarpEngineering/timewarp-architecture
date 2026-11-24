@@ -69,11 +69,13 @@ Acceptance:
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 096317c1-d66d-4d66-a125-3ad21261d284, max-turns 500, Done — 2026-11-24T03:09:34Z
 - Review oracle: general (grok, session 01a20b87-c057-7a43-b259-d149735018ca), effort 3, roster general, round 1, 2026-11-24. Open finding M1. Disposition not written.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20b87-c057-7a43-b259-d149735018ca, max-turns 200, artifacts general.md, merged.md — 2026-11-24T03:22:16Z
+- Review oracle: general (grok, session 01a20b9a-f6b7-75d3-b1d4-5220661fa30c), effort 2, roster general, round 2, 2026-11-24. M1 still fixed. No new findings. Disposition clean.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20b9a-f6b7-75d3-b1d4-5220661fa30c, max-turns 120, artifacts round-2/general.md, round-2/merged.md, disposition.md — 2026-11-24
 
 ## Review
 
 - Round 1: Blocked — open M1
-
+- Round 2: Done
 ## Notes
 
 - Reference patterns: `timewarp-nuru/.github/workflows/workflow.yml`, `timewarp-ganda/.github/workflows/workflow.yml`, and `timewarp-ganda/source/timewarp-ganda/templates/repo-baseline/github/workflows/workflow.yml.template`.
@@ -160,9 +162,11 @@ Implement pass:
 
 Round 1 (general, effort 3). Ledger: `review/round-1/merged.md`. M1 (bug) fixed in the fix pass: push `ci` comes from the push diff through `WorkflowPathClasses.Classify` and `PullRequestBuildClassifier.RequiresBuild`.
 
+Round 2 (general, effort 2, turn cap 120). Delta: commit `9ecb89ee7`. Ledger: `review/round-2/merged.md`. Framework: `review/review-framework.md`. Disposition: clean (`review/disposition.md`). M1 re-checked and still fixed. No new findings. Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0.
+
 ## Learnings
 
 - The original task says the composite action covers checkout. The restatement leaves checkout as one `actions/checkout` step per job, because a local action cannot load before the repo is checked out. The implementation follows the restatement. Not filed.
 - The original task sizes `workflow.yml` at about 180–220 lines. The restatement drops that figure. The file is 278 lines. Current `timewarp-nuru` `workflow.yml` is 397 lines and `timewarp-ganda` is 297, so the figure in the task is behind those references. Not filed.
-- The restatement treats `ci` as `PullRequestBuildClassifier.RequiresBuild` for every event. That call returns a full build for every event other than `pull_request`, so the push half of the deleted detect-paths `ci` regex is not in the restatement. That gap is M1.
+- The restatement originally treated `ci` as `PullRequestBuildClassifier.RequiresBuild` for every event. That call returns a full build for every event other than `pull_request`, so the push half of the deleted detect-paths `ci` regex was missing. That gap was M1. The restatement now says a push takes `ci` from its own diff with the pull request rule. Round 2 checked that sentence against the fix; it matches.
 
