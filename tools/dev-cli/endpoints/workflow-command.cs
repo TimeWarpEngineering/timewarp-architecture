@@ -26,8 +26,11 @@
 // no untracked file. A hand-edited golden, or a contract change that skipped regenerate, fails here.
 //
 // --phase classify is the whole of workflow.yml's classify job. It writes three outputs:
-//   ci        PullRequestBuildClassifier (TimeWarp.Nuru.DevCli) with this repo's additions in
-//             .timewarp/dev.jsonc pullRequestBuild. Every event but pull_request builds.
+//   ci        PullRequestBuildClassifier.RequiresBuild (TimeWarp.Nuru.DevCli) with this repo's
+//             additions in .timewarp/dev.jsonc pullRequestBuild, over the same changed paths. A
+//             push applies the pull request rule to its own diff (DecideAsync builds for every
+//             event but pull_request), so a skills-only push skips ci-group as a skills-only pull
+//             request does. An unreadable dev.jsonc on a push builds.
 //   skill     WorkflowPathClasses.IsSkillPath over the changed paths (gates skill-lint).
 //   template  WorkflowPathClasses.IsTemplatePath over the changed paths (gates template-smoke).
 // A pull request takes the classifier's base...head diff (the job checks out full history). A push
@@ -55,6 +58,8 @@
 #endregion
 
 namespace DevCli.Commands;
+
+using System.Text.Json;
 
 [NuruRoute("workflow", Description = "Execute full CI/CD pipeline (mode-aware)")]
 internal sealed class WorkflowCommand : ICommand<Unit>
@@ -153,9 +158,11 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         foreach (string path in changed) Terminal.WriteLine($"  {path}");
       }
 
-      bool skill = changed?.Any(WorkflowPathClasses.IsSkillPath) ?? true;
-      bool template = changed?.Any(WorkflowPathClasses.IsTemplatePath) ?? true;
-      (string Name, bool Value)[] outputs = [("ci", decision.RequiresBuild), ("skill", skill), ("template", template)];
+      (bool configRead, PullRequestBuildConfig? config) = changed is null ? (true, null) : await ReadBuildConfigAsync();
+      WorkflowJobs jobs = WorkflowPathClasses.Classify(
+        changed,
+        paths => !configRead || PullRequestBuildClassifier.RequiresBuild(paths, config));
+      (string Name, bool Value)[] outputs = [("ci", jobs.Ci), ("skill", jobs.Skill), ("template", jobs.Template)];
 
       string? outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
       foreach ((string name, bool value) in outputs)
@@ -165,6 +172,26 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         if (!string.IsNullOrEmpty(outputPath)) await File.AppendAllTextAsync(outputPath, line + "\n", Ct);
       }
     }
+
+    // pullRequestBuild from .timewarp/dev.jsonc, the same additions DecideAsync reads. False when
+    // the file exists but cannot be read: the caller then builds.
+    private async Task<(bool Read, PullRequestBuildConfig? Config)> ReadBuildConfigAsync()
+    {
+      string path = Path.Combine(RepoRoot, BuildConfigFile);
+      if (!File.Exists(path)) return (true, null);
+
+      try
+      {
+        return (true, RepoConfigService.Parse(await File.ReadAllTextAsync(path, Ct)).PullRequestBuild);
+      }
+      catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+      {
+        Terminal.WriteErrorLine($"{BuildConfigFile} could not be read ({exception.Message}). ci runs.");
+        return (false, null);
+      }
+    }
+
+    private const string BuildConfigFile = ".timewarp/dev.jsonc";
 
     // Pull request: the classifier's diff (empty with a build decision means it was not read).
     // Push: fetch before and after (the checkout is shallow) and diff their trees. Else unknown.

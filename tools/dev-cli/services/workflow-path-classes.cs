@@ -4,9 +4,11 @@
 #endregion
 
 #region Design
-// Pure string rules (no Amuru, no git), so dev-cli-tests Compile-include this file. The ci answer
-// is not here: it is PullRequestBuildClassifier (TimeWarp.Nuru.DevCli) plus .timewarp/dev.jsonc
-// pullRequestBuild, and every event but pull_request builds.
+// Pure string rules (no Amuru, no git), so dev-cli-tests Compile-include this file. Classify is
+// the whole classify decision: an unknown diff (null) turns on every job; a known diff takes ci
+// from the build rule the caller passes (PullRequestBuildClassifier.RequiresBuild with
+// .timewarp/dev.jsonc pullRequestBuild, content of TimeWarp.Nuru.DevCli that dev-cli-tests do not
+// compile) and skill and template from the rules below. Push and pull request use the same rule.
 // CI roots (.github/workflows/, .github/actions/) and tools/dev-cli/ turn on every job: they change
 // how CI itself runs, and dev lint-skills and dev template-smoke live in tools/dev-cli/.
 // Skill lint: SKILL.md or eval.yaml anywhere, .vally.yaml, evals/, skills/.
@@ -33,6 +35,18 @@ internal static class WorkflowPathClasses
 
   private static readonly string[] TemplateRootFiles =
     ["Directory.Build.props", "Directory.Packages.props", "timewarp-architecture.slnx"];
+
+  /// <summary>
+  /// The classify outputs. A null <paramref name="changed"/> (diff not read) turns on every job;
+  /// otherwise ci is <paramref name="requiresBuild"/> over the diff.
+  /// </summary>
+  internal static WorkflowJobs Classify(IReadOnlyList<string>? changed, Func<IReadOnlyList<string>, bool> requiresBuild)
+  {
+    ArgumentNullException.ThrowIfNull(requiresBuild);
+    if (changed is null) return new WorkflowJobs(Ci: true, Skill: true, Template: true);
+
+    return new WorkflowJobs(requiresBuild(changed), changed.Any(IsSkillPath), changed.Any(IsTemplatePath));
+  }
 
   /// <summary>True when <paramref name="path"/> should run the skill-lint job.</summary>
   internal static bool IsSkillPath(string path)
@@ -110,3 +124,6 @@ internal static class WorkflowPathClasses
   private static bool StartsWithAny(string path, string[] roots) =>
     roots.Any(root => path.StartsWith(root, StringComparison.Ordinal));
 }
+
+/// <summary>Which path-gated CI jobs run: ci-group, skill-lint, template-smoke.</summary>
+internal readonly record struct WorkflowJobs(bool Ci, bool Skill, bool Template);

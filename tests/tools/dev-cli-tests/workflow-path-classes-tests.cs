@@ -1,9 +1,12 @@
 #region Purpose
 // Guards `dev workflow --phase classify`: which changed paths turn on skill lint and template smoke,
-// and how a push event's before/after SHAs are read.
+// how a push event's before/after SHAs are read, and how a known or unknown diff becomes the ci,
+// skill, and template outputs.
 #endregion
 
 namespace WorkflowPathClasses_;
+
+using System.Text.Json;
 
 public class IsSkillPath_Given_
 {
@@ -135,5 +138,90 @@ public class TryReadPushShas_Given_
     WorkflowPathClasses.TryReadPushShas($$"""{ "before": "zz-not-a-sha", "after": "{{After}}" }""", out _, out _)
       .ShouldBeFalse();
     return Task.CompletedTask;
+  }
+}
+
+public class Classify_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Classify_Given_>();
+
+  private static readonly string[] SkillOnlyPush =
+  [
+    "skills/tw-deploy/SKILL.md",
+    "skills/tw-blazor/evals/eval.yaml",
+    "evals/readme.md",
+    ".vally.yaml",
+  ];
+
+  public static Task UnknownDiff_Should_RunEveryJob()
+  {
+    WorkflowJobs jobs = WorkflowPathClasses.Classify(
+      null,
+      _ => throw new InvalidOperationException("An unknown diff must not reach the build rule."));
+
+    jobs.ShouldBe(new WorkflowJobs(Ci: true, Skill: true, Template: true));
+    return Task.CompletedTask;
+  }
+
+  public static Task SkillOnlyDiff_Should_TakeCiFromTheBuildRule()
+  {
+    IReadOnlyList<string>? ruleInput = null;
+    WorkflowJobs jobs = WorkflowPathClasses.Classify(
+      SkillOnlyPush,
+      paths =>
+      {
+        ruleInput = paths;
+        return false;
+      });
+
+    ruleInput.ShouldBe(SkillOnlyPush);
+    jobs.ShouldBe(new WorkflowJobs(Ci: false, Skill: true, Template: false));
+    return Task.CompletedTask;
+  }
+
+  public static Task BuildDiff_Should_RunCiAndTemplateSmoke()
+  {
+    string[] changed = ["source/container-apps/web/projects/web-spa/program.cs", "timewarp-architecture.slnx"];
+    WorkflowJobs jobs = WorkflowPathClasses.Classify(changed, _ => true);
+
+    jobs.ShouldBe(new WorkflowJobs(Ci: true, Skill: false, Template: true));
+    return Task.CompletedTask;
+  }
+
+  // The build rule is PullRequestBuildClassifier.RequiresBuild (TimeWarp.Nuru.DevCli content, not
+  // compiled into this project). This repo's half of that rule is .timewarp/dev.jsonc: the skill
+  // paths on.push.paths starts a run for must be non-build there, and the CI setup action must build.
+  public static Task RepoBuildConfig_Should_SkipSkillPathsAndBuildTheSetupAction()
+  {
+    string path = Path.Combine(RepoRoot(), ".timewarp", "dev.jsonc");
+    using var document = JsonDocument.Parse(
+      File.ReadAllText(path),
+      new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+    JsonElement pullRequestBuild = document.RootElement.GetProperty("pullRequestBuild");
+
+    string[] nonBuild = Entries(pullRequestBuild, "nonBuildPaths");
+    nonBuild.ShouldContain("skills/**");
+    nonBuild.ShouldContain("evals/**");
+    nonBuild.ShouldContain(".vally.yaml");
+
+    string[] build = Entries(pullRequestBuild, "buildPaths");
+    build.ShouldContain(".github/actions/**");
+    build.ShouldContain("timewarp-templates/**");
+    return Task.CompletedTask;
+  }
+
+  private static string[] Entries(JsonElement pullRequestBuild, string name) =>
+    [.. pullRequestBuild.GetProperty(name).EnumerateArray().Select(entry => entry.GetString() ?? "")];
+
+  private static string RepoRoot()
+  {
+    DirectoryInfo? directory = new(AppContext.BaseDirectory);
+    while (directory is not null && !Path.Exists(Path.Combine(directory.FullName, ".git")))
+    {
+      directory = directory.Parent;
+    }
+
+    return directory.ShouldNotBeNull().FullName;
   }
 }

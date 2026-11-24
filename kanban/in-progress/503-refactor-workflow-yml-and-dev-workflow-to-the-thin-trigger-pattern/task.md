@@ -34,7 +34,9 @@ Acceptance:
   Checkout stays one step per job (a local action cannot load before the repo is checked out).
 - `dev workflow --phase classify` writes `ci`, `skill`, and `template` to `GITHUB_OUTPUT` for push
   and pull request; the inline PowerShell diff/regex step is gone. `.github/actions/**` counts as a
-  build, skill, and template path.
+  build, skill, and template path. `ci` for a push comes from the push diff with the pull request
+  rule (`PullRequestBuildClassifier.RequiresBuild` plus `pullRequestBuild`), so a skills-only or
+  evals-only push skips ci-group as it did before; an unreadable diff turns every job on (review M1).
 - `dev workflow --phase test --group fast` (and any run whose tests include the fast group) runs
   `regenerate-generated` and fails on a `goldens/ingress` diff or untracked file; the YAML step is gone.
 - `concurrency:` cancels superseded pull request runs and superseded pushes to the same ref;
@@ -65,6 +67,12 @@ Acceptance:
   then failed `kanban-landed`: no merge base). Repaired with `git fetch --unshallow origin`, and the
   classifier now fetches only missing commits and uses `--depth=1` only on an already-shallow checkout.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 096317c1-d66d-4d66-a125-3ad21261d284, max-turns 500, Done — 2026-11-24T03:09:34Z
+- Review oracle: general (grok, session 01a20b87-c057-7a43-b259-d149735018ca), effort 3, roster general, round 1, 2026-11-24. Open finding M1. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20b87-c057-7a43-b259-d149735018ca, max-turns 200, artifacts general.md, merged.md — 2026-11-24T03:22:16Z
+
+## Review
+
+- Round 1: Blocked — open M1
 
 ## Notes
 
@@ -108,8 +116,28 @@ Acceptance:
   `workflow --phase classify` `outputs.skill` (the `^tools/dev-cli/` regex is gone from YAML; the
   rule is tested on `WorkflowPathClasses`), and `LintSkillsCommand` is the `--file` form.
 - AGENTS.md and the RegenerateGenerated Design region now name `dev workflow` as the golden check.
+- **Fix pass, review round 1 M1:** `ClassifyAsync` no longer writes `ci` from the event-level
+  `decision.RequiresBuild` (always true for a push). New pure `WorkflowPathClasses.Classify(changed,
+  requiresBuild)` returns `WorkflowJobs(Ci, Skill, Template)`: a null diff turns on every job; a
+  known diff takes `ci` from `PullRequestBuildClassifier.RequiresBuild(paths, pullRequestBuild)`, the
+  same rule and `.timewarp/dev.jsonc` additions a pull request uses. A `dev.jsonc` that exists but
+  cannot be read makes a push build. `IsSkillPath` is unchanged. Four tests in
+  `workflow-path-classes-tests.cs` (`Classify_Given_`): unknown diff → all true without calling the
+  rule; skills-only diff → ci from the rule, skill true, template false; source/slnx diff → ci and
+  template true; `.timewarp/dev.jsonc` keeps `skills/**`, `evals/**`, `.vally.yaml` non-build and
+  `.github/actions/**` build (the classifier itself is DevCli content this test project does not compile).
 
 ### Gates
+
+Fix pass (review round 1 M1), after the last product edit:
+
+- `./bin/dev build` — Build succeeded, 0 Warning(s), 0 Error(s).
+- `dotnet run --file tools/dev-cli/dev.cs -- self-install` — dev CLI runfile compiles clean (it is not in the solution).
+- `tests/tools/dev-cli-tests/workflow-path-classes-tests.cs` — not a standalone runfile (csproj test project, no `#if !JARIBU_MULTI`); ran the built project: `tests/tools/dev-cli-tests/bin/Release/net11.0/dev-cli-tests` — 357 total, 357 succeeded, 0 failed (353 + 4 new `Classify_Given_`). CI runs it too.
+- Push smoke on b867613f6 (`skills/tw-blazor/SKILL.md` + a kanban file): `ci=false skill=true template=false`. Push smoke HEAD~3..HEAD (this branch): `ci=true skill=true template=true`. No GitHub env: every output true. Clone still not shallow.
+- `ganda repo audit` — exit 0, one advisory (`vscode-window-icon`: `.vscode/settings.json` is git-ignored local state).
+
+Implement pass:
 
 - `./bin/dev build` — Build succeeded, 0 Warning(s), 0 Error(s) (rerun after the last product edit).
 - `dotnet run --file tools/dev-cli/dev.cs -- self-install` — dev CLI (runfile, not in the solution) compiles clean under its analyzers.
@@ -122,9 +150,19 @@ Acceptance:
 ### How to validate
 
 - Smoke: `GITHUB_EVENT_NAME=push GITHUB_EVENT_PATH=<file with {"before":"<origin/master~2>","after":"<origin/master>"}> GITHUB_OUTPUT=/tmp/out ./bin/dev workflow --phase classify; cat /tmp/out`
-  Expect: changed paths listed, `ci=true`, and `skill`/`template` true only when a listed path matches; `git rev-parse --is-shallow-repository` still prints `false`.
+  Expect: changed paths listed; `ci` true only when a path builds under the pull request rule (`ci=false` for before=`b867613f6~1` after=`b867613f6`, a skills-plus-kanban push); `skill`/`template` true only when a listed path matches; `git rev-parse --is-shallow-repository` still prints `false`.
 - Smoke: `./bin/dev workflow --phase classify` with no GitHub env.
   Expect: "Changed paths unknown. Every path-gated job runs." and `ci=true skill=true template=true`.
 - Smoke: on this PR's checks.
   Expect: `classify` writes all three outputs; `ci (fast)` log shows `test (fast) -> ingress golden` and the regenerate step; no `aspire-*` artifacts on the run; `Lint skill specs` and `template-smoke` run (this PR changes `.github/` and `tools/dev-cli/`); `ci` green.
+
+### Review
+
+Round 1 (general, effort 3). Ledger: `review/round-1/merged.md`. M1 (bug) fixed in the fix pass: push `ci` comes from the push diff through `WorkflowPathClasses.Classify` and `PullRequestBuildClassifier.RequiresBuild`.
+
+## Learnings
+
+- The original task says the composite action covers checkout. The restatement leaves checkout as one `actions/checkout` step per job, because a local action cannot load before the repo is checked out. The implementation follows the restatement. Not filed.
+- The original task sizes `workflow.yml` at about 180–220 lines. The restatement drops that figure. The file is 278 lines. Current `timewarp-nuru` `workflow.yml` is 397 lines and `timewarp-ganda` is 297, so the figure in the task is behind those references. Not filed.
+- The restatement treats `ci` as `PullRequestBuildClassifier.RequiresBuild` for every event. That call returns a full build for every event other than `pull_request`, so the push half of the deleted detect-paths `ci` regex is not in the restatement. That gap is M1.
 
