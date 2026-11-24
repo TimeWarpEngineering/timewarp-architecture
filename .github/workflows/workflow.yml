@@ -2,7 +2,8 @@ name: CI/CD
 
 # Single canonical workflow. Jobs:
 #   - ci-group: PR/merge build/test/publish pipeline as parallel `dev workflow` phase/group jobs
-#     (task 366): ci (fast), ci (playwright), ci (integration), ci (publish)
+#     (task 366): ci (fast), ci (integration), ci (publish). The playwright group is off in CI
+#     (task 501) while task 502 weighs the suite; `dev test --group playwright` still runs it.
 #   - ci: one status over ci-group (the stable required-check name)
 #   - release: release/workflow_dispatch pipeline (pack, OIDC push) — one job, never parallel
 #   - skill-lint: vally skill/eval lint (former skill-lint.yaml; PR + path filter)
@@ -213,8 +214,6 @@ jobs:
         include:
           - name: fast
             args: --phase test --group fast
-          - name: playwright
-            args: --phase test --group playwright
           - name: integration
             args: --phase test --group integration
           - name: publish
@@ -299,18 +298,6 @@ jobs:
           name: coverage-${{ matrix.name }}
           path: artifacts/coverage
           if-no-files-found: warn
-
-      # Task 290: browser proof. The web-spa Playwright tests write screenshots and the prerendered
-      # HTML to their test output, <test bin>/playwright-screenshots/<test class>/ (task 316).
-      # Diagnostic upload, so retention-days: 1.
-      - name: Upload Playwright screenshots
-        if: always() && matrix.name == 'playwright'
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-${{ github.run_number }}
-          path: tests/container-apps/web/web-spa-playwright-tests/bin/**/playwright-screenshots/
-          if-no-files-found: warn
-          retention-days: 1
 
       # Task 070-003: generated Compose output is CI-only (never committed). The migration bundle is
       # a ~100 MB self-contained binary and is left out; the idempotent SQL script is the

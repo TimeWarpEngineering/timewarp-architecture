@@ -13,17 +13,72 @@ Measured baseline from Task 500 (`report/analysis.md` Item 2): `ci (playwright)`
 - Keep `tests/container-apps/web/web-spa-playwright-tests/` and `TestGroups.Playwright` (`tools/dev-cli/services/test-groups.cs`) intact so `dev test --group playwright` still runs locally and Task 502 can evaluate the suite.
 - Verify `ci` required-check status still passes cleanly with the remaining `fast`, `integration`, and `publish` matrix legs.
 
+## Goal (implementer restatement)
+
+Stop CI from running the Playwright browser tests on every push and pull request, so a PR stops
+waiting 10–15 minutes on `ci (playwright)`. The suite itself stays in the repo and still runs
+locally with `dev test --group playwright`; task 502 decides its long-term fate.
+
+Acceptance criteria:
+
+- `jobs.ci-group.strategy.matrix.include` in `.github/workflows/workflow.yml` has only `fast`,
+  `integration`, and `publish`.
+- The `Upload Playwright screenshots` step is gone, and the header comment lists only the three
+  remaining `ci-group` jobs and says why playwright is off.
+- `tests/container-apps/web/web-spa-playwright-tests/` and `TestGroups.Playwright` are unchanged in
+  behavior (only the `test-groups.cs` comment that said CI uploads its screenshots is corrected).
+- The `ci` aggregate job still passes: it needs `ci-group` to be `success` or `skipped`, and a
+  three-leg matrix reports `success` when those legs pass.
+- `./bin/dev build`, the dev-cli test files that read `workflow.yml` or cover `TestGroups`, and
+  `ganda repo audit` pass.
+
 ## Checklist
 
-- [ ] Remove `playwright` matrix entry and `Upload Playwright screenshots` step from `.github/workflows/workflow.yml`
-- [ ] Update header comment in `.github/workflows/workflow.yml`
-- [ ] Run `./bin/dev build`, `dev-cli-tests`, and `ganda repo audit`
+- [x] Remove `playwright` matrix entry and `Upload Playwright screenshots` step from `.github/workflows/workflow.yml`
+- [x] Update header comment in `.github/workflows/workflow.yml`
+- [x] Run `./bin/dev build`, `dev-cli-tests`, and `ganda repo audit`
 
 ## Session
 
 - Created: 2026-11-23 (from Task 500 walk performance review)
+- 2026-11-24 implementer: removed the `playwright` matrix leg and the screenshot upload step;
+  header comment and the `TestGroups` Design comment now say the group is local-only since 501.
 
 ## Notes
 
 - Companion research task: **502** (evaluate Playwright suite value and long-term disposition).
 - Parent performance review: **500** (`kanban/to-do/500-walk-performance-review-for-tasks-499-483-494-and-498/report/analysis.md`).
+
+## Results
+
+Changes:
+
+- `.github/workflows/workflow.yml`: `ci-group` matrix is `fast`, `integration`, `publish`. The
+  `Upload Playwright screenshots` step is removed. The header comment lists the three jobs and says
+  the playwright group is off in CI (task 501) while task 502 weighs the suite.
+- `tools/dev-cli/services/test-groups.cs`: comments only (Purpose and the playwright line in
+  Design). `TestGroups.Playwright`, `Names`, and the grouping logic are unchanged, so
+  `dev test --group playwright` still runs the suite locally.
+- The `ci` aggregate job needs `ci-group` to be `success` or `skipped`; a three-leg matrix reports
+  `success` when its legs pass, so the required check is unaffected. The `coverage` upload step's
+  `matrix.name != 'publish'` condition still fits.
+
+Gates:
+
+- `./bin/dev build`: succeeded, 0 warnings, 0 errors.
+- `dotnet run --project tests/tools/dev-cli-tests -c Release --no-build`: 343/343 passed. The
+  files that cover this change (`test-groups-tests.cs`, plus `skill-spec-lint-tests.cs` and
+  `aspire-run-tests.cs`, which read `workflow.yml`) are not standalone runfiles (no
+  `#if !JARIBU_MULTI` guard); they compile into `dev-cli-tests.csproj`, so the project ran them.
+- `ganda repo audit`: passed, with 1 advisory warning, `vscode-window-icon` (`.vscode/settings.json`
+  missing). `ganda repo audit --fix` created that gitignored local file; a second `--fix` pass
+  shows the check PASS. Nothing committed from it.
+
+### How to validate
+
+Smoke: on this branch's pull request, open the checks list; separately run
+`grep -n -i playwright .github/workflows/workflow.yml` and `./bin/dev test --help`.
+
+Expect: the PR shows `ci (fast)`, `ci (integration)`, `ci (publish)` and the aggregate `ci`, with no
+`ci (playwright)`, and `ci` is green. The grep hits only the header comment lines. `dev test --help`
+still lists `playwright` as a `--group` value.

@@ -1,5 +1,5 @@
 #region Purpose
-// The one definition of the `dev test --group` test groups that CI runs as parallel jobs.
+// The one definition of the `dev test --group` test groups; CI runs fast and integration as jobs.
 #endregion
 
 #region Design
@@ -8,7 +8,7 @@
 //   fast        — everything outside tests/container-apps/, plus container-app *-contracts-tests
 //                 and *-domain-tests (pure, no host): analyzers, sourcegen, foundation, libraries,
 //                 common, tools.
-//   playwright  — *-playwright-tests (browser proof; CI uploads its screenshots).
+//   playwright  — *-playwright-tests (browser proof; local only, CI skips it since task 501).
 //   integration — the rest of tests/container-apps/: *-integration-tests, aspire-tests,
 //                 *-infrastructure-tests (Testcontainers), *-jaribu-tests aggregators.
 // Every test project must match exactly one group. `dev test --group` refuses to run when one does
