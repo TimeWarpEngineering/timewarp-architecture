@@ -108,7 +108,11 @@ argument; each file was run as its class through the built test host with `--fil
 - `web-spa-playwright-tests --filter-class ShellNav` (shell-nav-playwright-tests.cs): 2/2 passed.
 - `web-spa-playwright-tests --filter-class DarkTheme_Given` (dark-theme-playwright-tests.cs): 4/4 passed.
 - `web-spa-playwright-tests --filter-class StateDevToolsWasm_Given` (state-dev-tools-wasm-playwright-tests.cs): 1/1 passed.
-- `ganda repo audit`: see the line below.
+- `ganda repo audit`: first run failed only on `kanban-landed` (task 511, another live walk's
+  kitchen differed from origin-home) and the `vscode-window-icon` warning; neither came from
+  this change. `ganda repo audit --fix` landed 511's kitchen and wrote the ignored
+  `.vscode/settings.json`. Result: "Repository passes — 1 advisory (non-blocking) warning"
+  (`kanban-landed`: claim 505 has no usable worktree).
 
 ### How to validate
 
