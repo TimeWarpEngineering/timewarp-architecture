@@ -19,8 +19,9 @@ and compiler-enforced layer direction are both required. Conventional .NET layou
 choice because they assume folder = project. Dropping that assumption — layer projects
 include files by filename-grammar globs — delivers both. Assembly splits later are a glob
 change, not a file move. SPA stays conventional (`web-spa/features/**`) because the Razor
-SDK asset/codegen pipeline does not warrant cross-folder globbing. Registry edits require a
-full rebuild (analyzer DLLs can go stale under incremental builds).
+SDK asset/codegen pipeline does not warrant cross-folder globbing. Registry edits require
+`dev regenerate-generated` and a full rebuild (analyzer DLLs can go stale under incremental
+builds).
 
 The litmus test for the fuzzy middle:
 
@@ -208,9 +209,10 @@ layout. When a hub or similar has one folder per message DIRECTION instead of pe
 }
 ```
 
-This JSON is the **single source of truth** and is itself family-agnostic. An MSBuild target on
-the convention-analyzers project regenerates it into a family-agnostic artifact plus one
-standalone artifact per family before every compile:
+This JSON is the **single source of truth** and is itself family-agnostic. `dev
+regenerate-generated` writes it into a family-agnostic artifact plus one standalone artifact per
+family. The outputs are committed, the build does not regenerate them, and CI fails when they
+drift from the JSON:
 
 - `feature-filename-grammar.g.cs` — analyzer constants (layers, function→layer map, longest-first
   match order) consumed by the TWA0015/TWA0016 analyzer. Generated once (family-agnostic).
@@ -386,8 +388,9 @@ namespaces don't change; only which project's glob claims them does.
   layer/function suffix — the membership guard and TWA0015/TWA0016 catch misplacement at build time,
   not at file-creation time, so a freshly created file with the wrong name compiles into
   whatever project's default globs happen to claim it until the next build.
-- **Extending the registry:** see Registry section above — edit the JSON, rebuild fully, never
-  hand-edit the generated `.g.cs`/`.g.props`.
+- **Extending the registry:** see Registry section above — edit the JSON, run `dev
+  regenerate-generated`, commit the outputs, rebuild fully, never hand-edit the generated
+  `.g.cs`/`.g.props`.
 
 ## Related skills and pointers
 

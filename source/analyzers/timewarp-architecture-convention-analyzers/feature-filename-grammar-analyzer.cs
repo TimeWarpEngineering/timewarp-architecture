@@ -7,8 +7,8 @@
 // Grammar: <name>[-<function>]-<layer>.cs under a family's feature-cohesive tree
 // (web/features/, api/features/, grpc/features/ — FeatureFilenameGrammar.Families, task 129).
 // Registry SSOT: feature-filename-grammar.json → FeatureFilenameGrammar.g.cs (no hand maps).
-// Family list is generated too (.g.cs Families constant, sourced from the convention-analyzers
-// csproj's Web <Exec> --families argument) — LayerProjectFeatureMarkers and the cohesive-tree
+// Family list is generated too (.g.cs Families constant, sourced from
+// FeatureFilenameGrammarGenerator.Families in tools/dev-cli, run by `dev regenerate-generated`) — LayerProjectFeatureMarkers and the cohesive-tree
 // absolute-path check are both derived from Families × Layers, not hand-listed per family.
 // web-spa is the one family-specific exception: a UI project outside the grammar's layer set
 // that only the web family has, so its marker stays a literal append.

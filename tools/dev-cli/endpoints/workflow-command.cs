@@ -22,9 +22,10 @@
 // that just ran. Publish outputs are files on the runner; CI uploads none of them and deploys
 // nothing (deploying is operator-run).
 //
-// Whenever the test step includes the fast group (the fast job, or a full local run), the ingress
-// prefix golden is regenerated from the two host builds and goldens/ingress must show no diff and
-// no untracked file. A hand-edited golden, or a contract change that skipped regenerate, fails here.
+// Whenever the test step includes the fast group (the fast job, or a full local run),
+// `dev regenerate-generated` rewrites the feature filename grammar outputs and the ingress prefix
+// golden, and goldens/ingress plus the four grammar outputs must show no diff and no untracked
+// file. A hand-edited output, or a grammar JSON or contract change that skipped regenerate, fails here.
 //
 // --phase classify is the whole of workflow.yml's classify job. It writes three outputs:
 //   ci        PullRequestBuildClassifier.RequiresBuild (TimeWarp.Nuru.DevCli) with this repo's
@@ -253,18 +254,20 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     private ShellBuilder GitCommand(params string[] arguments) =>
       Shell.Builder("git").WithArguments(arguments).WithWorkingDirectory(RepoRoot).WithNoValidation();
 
-    // Regenerates the ingress golden, then fails on any tracked diff or untracked file under it.
-    private async Task<bool> VerifyIngressGoldenAsync()
+    // Regenerates the checked-in generated files, then fails on any tracked diff or untracked file
+    // under them.
+    private async Task<bool> VerifyGeneratedFilesAsync()
     {
-      if (!await RunStepAsync("Regenerate ingress golden", new RegenerateGeneratedCommand.Handler(Terminal).Handle(new RegenerateGeneratedCommand(), Ct))) return false;
+      if (!await RunStepAsync("Regenerate generated files", new RegenerateGeneratedCommand.Handler(Terminal).Handle(new RegenerateGeneratedCommand(), Ct))) return false;
 
-      CommandOutput diff = await GitCommand("diff", "--exit-code", "--", IngressGoldenDirectory).PassthroughAsync(Ct);
-      CommandOutput status = await GitCommand("status", "--porcelain", "--", IngressGoldenDirectory).CaptureAsync(Ct);
+      string[] paths = [IngressGoldenDirectory, .. FeatureFilenameGrammarGenerator.OutputRelativePaths];
+      CommandOutput diff = await GitCommand(["diff", "--exit-code", "--", .. paths]).PassthroughAsync(Ct);
+      CommandOutput status = await GitCommand(["status", "--porcelain", "--", .. paths]).CaptureAsync(Ct);
       if (diff.Success && status.Success && string.IsNullOrWhiteSpace(status.Stdout)) return true;
 
-      Terminal.WriteErrorLine($"{IngressGoldenDirectory} changed after regenerate-generated. Run `dev regenerate-generated` and commit the golden.".Red());
+      Terminal.WriteErrorLine($"Generated files changed after regenerate-generated ({string.Join(", ", paths)}). Run `dev regenerate-generated` and commit the result.".Red());
       if (!string.IsNullOrWhiteSpace(status.Stdout)) Terminal.WriteErrorLine(status.Stdout);
-      Terminal.WriteErrorLine("\nPipeline FAILED — Ingress golden check failed".Red());
+      Terminal.WriteErrorLine("\nPipeline FAILED — Generated files check failed".Red());
       Environment.ExitCode = 1;
       return false;
     }
@@ -341,7 +344,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       bool publish = phase is PhaseAll or PhasePublish;
       bool golden = test && (group is null or TestGroups.Fast);
       const string publishSteps = "publish all";
-      string testSteps = (group is null ? "test" : $"test ({group})") + (golden ? " -> ingress golden" : "");
+      string testSteps = (group is null ? "test" : $"test ({group})") + (golden ? " -> generated files" : "");
       string steps = phase switch
       {
         PhaseTest => testSteps,
@@ -354,7 +357,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
       if (test && !await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand { NoBuild = true, Group = group }, Ct))) return;
-      if (golden && !await VerifyIngressGoldenAsync()) return;
+      if (golden && !await VerifyGeneratedFilesAsync()) return;
       if (publish && !await RunStepAsync("Publish all", new PublishAllCommand.Handler(Terminal).Handle(new PublishAllCommand { NoBuild = true }, Ct))) return;
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());

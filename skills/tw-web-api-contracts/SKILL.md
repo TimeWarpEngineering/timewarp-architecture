@@ -70,7 +70,7 @@ namespace root, folder casing, test project layout, and mock-service registratio
 | Namespace | **Plural** (does **not** track folder moves) | `{Root}.Features.Admin.Roles` |
 | Use-case folder | One folder per operation, contract beside its handler (see `tw-feature-placement`) | `create-role/create-role-contracts.cs`, `get-role/get-role-contracts.cs` |
 | Shared bindable shape | Separate file at slice root, not inside any use-case folder | `role-details-contracts.cs` (`IRoleDetails`) |
-| Registry | Function→layer SSOT (analyzer + membership guard) | `feature-filename-grammar.json` — edit ⇒ full rebuild |
+| Registry | Function→layer SSOT (analyzer + membership guard) | `feature-filename-grammar.json` — edit ⇒ `dev regenerate-generated`, then full rebuild |
 
 **Casing:** kebab-case paths are canonical; if the repo already uses PascalCase folders
 (`Features/Admin/Roles/`), match it. Never mix casings within one repo.

@@ -52,17 +52,25 @@ and plain CSS (`tw-blazor-css-strategy`). Aspire. EF Core when `postgres` is on.
 | Diagnostics TWA / TWE / SG | The build message, plus `AnalyzerReleases.Unshipped.md` under `source/analyzers/timewarp-architecture-convention-analyzers/` and `source/analyzers/timewarp-architecture-analyzers/`. Retired ids are commented there. Generic style ids TWA0004, TWA0023, and TWA0038 are reported by `TimeWarp.SourceGenerators` (1.0.0-beta.13 and later; pin in `Directory.Packages.props`). The split rule and the next free TWA id are in the header of the convention analyzers' `AnalyzerReleases.Unshipped.md`. |
 | Platform NuGet vs project reference | Root `Directory.Build.props`, `Directory.Packages.props`, and `msbuild/timewarp-platform-packages.props`. |
 
-## Generated ingress prefixes
+## Generated files
 
-`IngressRoutePrefixGenerator` emits `WebServerApiRoutePrefixes` when `yarp` and the Aspire AppHost
-compile. The checked-in copy is `goldens/ingress/WebServerApiRoutePrefixes.g.cs`. Refresh it with
-`dev regenerate-generated` (or `dotnet run tools/dev-cli/dev.cs -- regenerate-generated`) and commit
-the file. `dev workflow --phase test --group fast` (CI's `ci (fast)` job) runs that command, then
-fails on any diff or untracked file under `goldens/ingress`. A failure means the
-golden was edited by hand, or a web-contracts `[ApiRoute]` changed and the golden was not
-regenerated: re-run the command and commit, or fix the generator if the new text is wrong. Ordering
-is in the generator Design region. The `[Offerable]` offer-record generator was removed in task 282
-and has nothing to regenerate.
+`dev regenerate-generated` (or `dotnet run tools/dev-cli/dev.cs -- regenerate-generated`) rewrites
+two sets of checked-in files. Commit what it writes.
+
+- **Feature filename grammar.** From
+  `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json` it
+  writes `feature-filename-grammar.g.cs` beside it and
+  `source/container-apps/{web,api,grpc}/msbuild/feature-filename-grammar.g.props`. The generator is
+  `tools/dev-cli/services/feature-filename-grammar-generator.cs`. The build does not run it.
+- **Ingress prefixes.** `IngressRoutePrefixGenerator` emits `WebServerApiRoutePrefixes` when `yarp`
+  and the Aspire AppHost compile. The checked-in copy is
+  `goldens/ingress/WebServerApiRoutePrefixes.g.cs`. Ordering is in the generator Design region.
+
+`dev workflow --phase test --group fast` (CI's `ci (fast)` job) runs that command, then fails on
+any diff or untracked file under `goldens/ingress` or the four grammar outputs. A failure means a
+file was edited by hand, or the grammar JSON or a web-contracts `[ApiRoute]` changed without a
+regenerate: re-run the command and commit, or fix the generator if the new text is wrong. The
+`[Offerable]` offer-record generator was removed in task 282 and has nothing to regenerate.
 
 Repo skills under `skills/` ship in generated apps. `skills/*/analysis/` does not.
 `documentation/` is maintainer-only and is not packed. A live rule belongs in the skill that

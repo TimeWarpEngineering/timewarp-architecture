@@ -226,8 +226,8 @@ public class Should_Keep_Grammar_Registry_In_Sync
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Should_Keep_Grammar_Registry_In_Sync>();
 
-  // Family list must stay in sync with the convention-analyzers csproj's three <Exec> invocations
-  // (source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj).
+  // Family list must stay in sync with FeatureFilenameGrammarGenerator.Families
+  // (tools/dev-cli/services/feature-filename-grammar-generator.cs, run by `dev regenerate-generated`).
   // yarp is a single-project family (no concern trees) and is intentionally excluded (127 precedent).
   private static readonly (string Prefix, string Family)[] Families =
   [
@@ -288,7 +288,7 @@ public class Should_Keep_Grammar_Registry_In_Sync
       unroutedLayers.ShouldNotContain(pair.Value);
     }
 
-    // The .g.cs Families constant (sourced from the csproj's Web <Exec> --families argument)
+    // The .g.cs Families constant (sourced from FeatureFilenameGrammarGenerator.Families)
     // must agree with this test's own family list — the documented duplication (task 129
     // stage 1) is now a checked one rather than a silent hand-sync.
     FeatureFilenameGrammar.Families.OrderBy(static f => f, StringComparer.Ordinal)

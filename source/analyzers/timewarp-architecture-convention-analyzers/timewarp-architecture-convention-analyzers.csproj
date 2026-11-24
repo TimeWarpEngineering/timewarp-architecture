@@ -26,34 +26,13 @@
     <Compile Include="..\shared\details-copy-classification.cs" Link="shared\details-copy-classification.cs" />
   </ItemGroup>
 
-  <!-- Feature filename grammar SSOT: JSON → committed .g.cs + per-family msbuild .g.props (regenerate on change).
-       Family list (Web, Api, Grpc) must stay in sync with Should_Keep_Grammar_Registry_In_Sync's
-       family list (tests/analyzers/timewarp-architecture-analyzers-tests/feature-filename-grammar-analyzer-tests.cs).
-       yarp is a single-project family (no concern trees) and is intentionally excluded (127 precedent). -->
-  <PropertyGroup>
-    <_FeatureFilenameGrammarJson>$(MSBuildProjectDirectory)/feature-filename-grammar.json</_FeatureFilenameGrammarJson>
-    <_FeatureFilenameGrammarCs>$(MSBuildProjectDirectory)/feature-filename-grammar.g.cs</_FeatureFilenameGrammarCs>
-    <_FeatureFilenameGrammarWebProps>$(MSBuildProjectDirectory)/../../container-apps/web/msbuild/feature-filename-grammar.g.props</_FeatureFilenameGrammarWebProps>
-    <_FeatureFilenameGrammarApiProps>$(MSBuildProjectDirectory)/../../container-apps/api/msbuild/feature-filename-grammar.g.props</_FeatureFilenameGrammarApiProps>
-    <_FeatureFilenameGrammarGrpcProps>$(MSBuildProjectDirectory)/../../container-apps/grpc/msbuild/feature-filename-grammar.g.props</_FeatureFilenameGrammarGrpcProps>
-    <_FeatureFilenameGrammarGenerator>$(MSBuildProjectDirectory)/generate-feature-filename-grammar.py</_FeatureFilenameGrammarGenerator>
-  </PropertyGroup>
+  <!-- Feature filename grammar SSOT: feature-filename-grammar.json → committed feature-filename-grammar.g.cs
+       plus one source/container-apps/{web,api,grpc}/msbuild/feature-filename-grammar.g.props per family.
+       The build does not regenerate them. Edit the JSON and run `dev regenerate-generated`
+       (tools/dev-cli/services/feature-filename-grammar-generator.cs); `dev workflow` fails CI on drift. -->
   <ItemGroup>
     <None Include="feature-filename-grammar.json" />
-    <None Include="generate-feature-filename-grammar.py" />
     <!-- Keep generated C# in compile; it is the baked-in registry for the packaged analyzer. -->
     <Compile Update="feature-filename-grammar.g.cs" AutoGen="true" DesignTime="true" />
   </ItemGroup>
-  <Target Name="GenerateFeatureFilenameGrammar"
-          BeforeTargets="BeforeCompile;CoreCompile"
-          Inputs="$(_FeatureFilenameGrammarJson);$(_FeatureFilenameGrammarGenerator)"
-          Outputs="$(_FeatureFilenameGrammarCs);$(_FeatureFilenameGrammarWebProps);$(_FeatureFilenameGrammarApiProps);$(_FeatureFilenameGrammarGrpcProps)">
-    <!-- .g.cs is family-agnostic; emit it once, from the Web invocation. The families flag below
-         is the SSOT family list baked into the .g.cs Families constant TWA0015/TWA0016 derives
-         its per-family path markers from; keep in sync with Should_Keep_Grammar_Registry_In_Sync's
-         family list. -->
-    <Exec Command="python3 &quot;$(_FeatureFilenameGrammarGenerator)&quot; --json &quot;$(_FeatureFilenameGrammarJson)&quot; --family-prefix Web --families web,api,grpc --out-props &quot;$(_FeatureFilenameGrammarWebProps)&quot; --out-cs &quot;$(_FeatureFilenameGrammarCs)&quot;" />
-    <Exec Command="python3 &quot;$(_FeatureFilenameGrammarGenerator)&quot; --json &quot;$(_FeatureFilenameGrammarJson)&quot; --family-prefix Api --out-props &quot;$(_FeatureFilenameGrammarApiProps)&quot;" />
-    <Exec Command="python3 &quot;$(_FeatureFilenameGrammarGenerator)&quot; --json &quot;$(_FeatureFilenameGrammarJson)&quot; --family-prefix Grpc --out-props &quot;$(_FeatureFilenameGrammarGrpcProps)&quot;" />
-  </Target>
 </Project>
