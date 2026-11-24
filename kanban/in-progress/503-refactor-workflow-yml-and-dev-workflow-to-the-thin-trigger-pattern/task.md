@@ -64,6 +64,7 @@ Acceptance:
   `git fetch --depth=1` against the shared clone and made it shallow (the first `ganda repo audit`
   then failed `kanban-landed`: no merge base). Repaired with `git fetch --unshallow origin`, and the
   classifier now fetches only missing commits and uses `--depth=1` only on an already-shallow checkout.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 096317c1-d66d-4d66-a125-3ad21261d284, max-turns 500, Done — 2026-11-24T03:09:34Z
 
 ## Notes
 
