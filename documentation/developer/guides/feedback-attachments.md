@@ -8,18 +8,28 @@ features should follow the same shape.
 Azure Blob Storage is the real byte store. Cloudflare R2 is not used: the template already
 deploys to Azure, and an S3 client would be a second object stack nothing else uses.
 
-The store is chosen Azure, then Postgres:
+The byte store is chosen Azure, then Postgres, then a stand-in:
 
-| `FeedbackAttachments:ConnectionString` | Store |
-| --- | --- |
-| set | `AzureFeedbackAttachmentBlobStore` |
-| empty or missing | `EfFeedbackAttachmentBlobStore` (`feedback.feedback_attachment_bytes`, `bytea`) |
+| `FeedbackAttachments:ConnectionString` | Postgres connection | Byte store |
+| --- | --- | --- |
+| set | any | `AzureFeedbackAttachmentBlobStore` |
+| empty or missing | set | `EfFeedbackAttachmentBlobStore` (`feedback.feedback_attachment_bytes`, `bytea`) |
+| empty or missing | empty or missing | `UnavailableFeedbackStorage` (reads empty, writes refused) |
 
-`FeedbackModule` registers Azure when it is configured. `PostgresDbModule` runs after it and
-registers the row stores, and the Postgres byte store when Azure is not configured. There is no
-in-memory store (task 522). The feedback slice compiles only with the `postgres` template flag,
-so an app generated without a database has no feedback feature. With the flag on and no
-connection string, the feedback stores are not registered and the feedback endpoints fail.
+The Postgres connection is `PostgresDbOptions:ConnectionString`, or the Aspire-injected
+connection string for the database resource.
+
+`FeedbackModule` registers `UnavailableFeedbackStorage` for the row ports. For the byte port
+it registers Azure when Azure is configured, and the same stand-in otherwise. `PostgresDbModule` runs after it. When a
+Postgres connection is set, it replaces the row ports with the EF stores, and the byte port
+with the Postgres byte store unless Azure took it. There is no in-memory store (task 522). The
+feedback slice compiles only with the `postgres` template flag, so an app generated without a
+database has no feedback feature. With the flag on and no Postgres connection, the row ports
+stay `UnavailableFeedbackStorage`: reads return no items and no attachments, removes do
+nothing, and filing, updating, or uploading throws `InvalidOperationException` ("Feedback
+storage is not available on this host. Configure a Postgres connection string."). The byte port
+is the same stand-in unless Azure is configured. The stand-in keeps Development's build-time DI
+validation passing.
 
 `FeedbackAttachments:ContainerName` defaults to `feedback-attachments`. The name must be 3–63
 characters, lowercase letters, digits, and single hyphens, and must not start or end with a

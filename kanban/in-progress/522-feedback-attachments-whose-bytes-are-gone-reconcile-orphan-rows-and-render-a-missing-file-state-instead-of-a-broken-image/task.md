@@ -85,6 +85,8 @@ the body image) are in `evidence/`; `ganda repo audit` passes.
 
 ## Session
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e556aad5-a349-4cf5-8ac5-947325901f05, max-turns 500, Done — 2026-11-24T20:59:49Z
+- Reviewer: grok session 01a20f5b-b48c-7613-8231-9dc945372089 (2026-11-25), effort 3, roster general, round 1. Open finding M1 in `review/round-1/merged.md`. No disposition yet.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20f5b-b48c-7613-8231-9dc945372089, max-turns 200, artifacts general.md, merged.md — 2026-11-24T21:10:07Z
 
 ### 2026-11-25 — implementer (task-work walk)
 
@@ -136,6 +138,14 @@ long enough that the old click was dropped.
 
 **Boy scout / audit:** recorded under `## Results`.
 
+### 2026-11-25 — implementer fix pass (review round 1)
+
+M1 fixed in `documentation/developer/guides/feedback-attachments.md`. The store table gained a
+Postgres connection column and a row for `UnavailableFeedbackStorage`. The paragraph below it now
+describes the stand-in (registered by `FeedbackModule`, replaced by `PostgresDbModule` only when a
+Postgres connection is set; reads empty, removes no-ops, filing/updating/uploading throws) instead
+of saying the stores are unregistered. Doc-only; no product or test code changed.
+
 ## Results
 
 The server reports `IsFilePresent` per attachment from the byte store; `FeedbackBody` (filer and
@@ -170,6 +180,12 @@ WASM host over Postgres with both files' bytes deleted).
 - `./bin/dev template-smoke --matrix` — SUCCEEDED: SmokeDefault, SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, SmokeNoGrpc, SmokeNoYarp all built with 0 warnings; web-jaribu aggregator 494/494 (default) and 410/410 (postgres off).
 - `ganda repo audit` — first run failed: `kanban-landed` (Error: task 315's claim kitchen differed from origin-home; another task's claim) and `vscode-window-icon` (Warning: ignored `.vscode/settings.json` missing). `ganda repo audit --fix` fixed both (boy scout); its verification pass: 44 passed, 0 failed, 2 skipped. Nothing in this branch's tree changed.
 
+### Gates — fix pass (review round 1)
+
+- `./bin/dev build` — passed (Build completed successfully).
+- Test files: none. The fix edits only `documentation/developer/guides/feedback-attachments.md`; no production code or test file changed, so no test file covers it.
+- `ganda repo audit` — passed ("Repository passes all audit checks.").
+
 ### How to validate
 
 Smoke:
@@ -190,9 +206,20 @@ output's `playwright-screenshots/FeedbackMissingFile_Given_Wasm/`, matching `evi
 After deploy: `GET /api/admin/feedback/01a12f40-fd5d-77ca-beff-b33d0d65c964` shows
 `isFilePresent: false` on its attachment, and its item page shows the missing-file state.
 
+## Review
+
+- Round 1: Blocked — open M1
+- Round 1 fix pass: M1 fixed (guide states the `UnavailableFeedbackStorage` stand-in)
+
 ## Notes
 
 Verified 2026-11-24 through the agent API (`feedback:read`): `GET /api/admin/feedback/01a12f40-fd5d-77ca-beff-b33d0d65c964`
 and `/01a126d4-e055-7344-9b90-59b8e0749615` list attachments `01a12f40-f348-76b7-a1c5-9e0702feeb0e`
 (309049 B) and `01a126d4-7dc2-752f-aef1-8db79a34c205` (34330 B); both downloads return 404.
 Problem text lives in `feedback-problems-application.cs:40`. Store selection: `postgres-db-module-server.cs:146`.
+
+## Learnings
+
+### Misread — reconcile pass
+
+The checklist required an idempotent startup or `dev` verb pass to mark the orphan rows or to remove them. `## Goal (implementer restatement)` narrowed that to "one documented choice (mark vs. remove)" and did not restate the pass. The implementation follows the restatement: `IsFilePresent` is derived from `ExistsAsync` on every read, with no stored flag and no job. The rows still show "file no longer stored" on deploy, the file names stay, and the items are not deleted, so the user-visible requirement holds. Not filed as a finding.
