@@ -103,6 +103,7 @@ Acceptance criteria for this walk:
   now owned by `Role`; identity types now live in the in-repo `timewarp-identity` library). Wrote
   `design/inventory.md` and `design/options.md`. Stopped at recommendations for Steve; the
   decision log and follow-up tasks stay open. No production code changed.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1bbb57d0-6e90-4251-ac29-f37539ccdbbd, max-turns 500, Done — 2026-11-24T20:10:25Z
 
 ## Results
 
