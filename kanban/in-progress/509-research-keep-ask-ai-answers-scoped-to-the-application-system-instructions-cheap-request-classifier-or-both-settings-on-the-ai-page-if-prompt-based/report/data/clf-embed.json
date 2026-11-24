@@ -1,0 +1,219 @@
+{
+ "variant": "clf-embed",
+ "model": "BAAI/bge-small-en-v1.5",
+ "catalog_rows": 33,
+ "load_ms": 1602.8955669607967,
+ "measured": "2026-11-24T19:14:44Z",
+ "rows": [
+  {
+   "id": "I01",
+   "expected": "in",
+   "score": 0.7167867422103882,
+   "nearest": "Counter: /Counter [Demos] - Demo counter the agent can increment.",
+   "ms": 80.15991700813174
+  },
+  {
+   "id": "I02",
+   "expected": "in",
+   "score": 0.6746765971183777,
+   "nearest": "Services: /Services [Developer] - Debugger view of registered services.",
+   "ms": 82.05231511965394
+  },
+  {
+   "id": "I03",
+   "expected": "in",
+   "score": 0.9415172934532166,
+   "nearest": "List the feedback you have filed.",
+   "ms": 49.19616202823818
+  },
+  {
+   "id": "I04",
+   "expected": "in",
+   "score": 0.7794140577316284,
+   "nearest": "Rename the in-app assistant shown on the top-bar button, Ctrl-K, the panel and its greeting.",
+   "ms": 16.110137104988098
+  },
+  {
+   "id": "I05",
+   "expected": "in",
+   "score": 0.852493405342102,
+   "nearest": "AI: /Admin/AI [Admin] - Set the site xAI API key, whose key Ask uses, and the assistant name.",
+   "ms": 22.521673003211617
+  },
+  {
+   "id": "I06",
+   "expected": "in",
+   "score": 0.8442310094833374,
+   "nearest": "Create a passkey on this device and attach it to the signed-in account.",
+   "ms": 29.788309009745717
+  },
+  {
+   "id": "I07",
+   "expected": "in",
+   "score": 0.6451127529144287,
+   "nearest": "Create a new authorization role.",
+   "ms": 35.94897105358541
+  },
+  {
+   "id": "I08",
+   "expected": "in",
+   "score": 0.712297260761261,
+   "nearest": "Describe the page on screen: title, purpose, headings, controls, references, tags.",
+   "ms": 20.339475944638252
+  },
+  {
+   "id": "I09",
+   "expected": "in",
+   "score": 0.7701029777526855,
+   "nearest": "Sign the current user out of this browser session.",
+   "ms": 21.946886088699102
+  },
+  {
+   "id": "I10",
+   "expected": "in",
+   "score": 0.711918294429779,
+   "nearest": "Rename the in-app assistant shown on the top-bar button, Ctrl-K, the panel and its greeting.",
+   "ms": 23.686002008616924
+  },
+  {
+   "id": "I11",
+   "expected": "in",
+   "score": 0.739998996257782,
+   "nearest": "Weather Forecasts: /WeatherForecasts [Demos] - Sample weather forecast list.",
+   "ms": 18.345548072829843
+  },
+  {
+   "id": "I12",
+   "expected": "in",
+   "score": 0.8944801688194275,
+   "nearest": "Link a Microsoft 365 account to the signed-in account so it can sign in with Microsoft 365.",
+   "ms": 19.676439929753542
+  },
+  {
+   "id": "I13",
+   "expected": "in",
+   "score": 0.7387875914573669,
+   "nearest": "AI: /Admin/AI [Admin] - Set the site xAI API key, whose key Ask uses, and the assistant name.",
+   "ms": 25.88977012783289
+  },
+  {
+   "id": "I14",
+   "expected": "in",
+   "score": 0.671051025390625,
+   "nearest": "Chat: /Chat [Demos] - Developer chat demo.",
+   "ms": 27.05828589387238
+  },
+  {
+   "id": "I15",
+   "expected": "in",
+   "score": 0.7124016880989075,
+   "nearest": "Feedback: /Feedback - File feedback and review the filings you submitted.",
+   "ms": 30.260444851592183
+  },
+  {
+   "id": "O01",
+   "expected": "out",
+   "score": 0.6768902540206909,
+   "nearest": "File feedback (bug report, feature request, complaint, or other) and return its id and permalink.",
+   "ms": 28.13314087688923
+  },
+  {
+   "id": "O02",
+   "expected": "out",
+   "score": 0.5998992323875427,
+   "nearest": "Counter: /Counter [Demos] - Demo counter the agent can increment.",
+   "ms": 22.504284977912903
+  },
+  {
+   "id": "O03",
+   "expected": "out",
+   "score": 0.5664507150650024,
+   "nearest": "Chat: /Chat [Demos] - Developer chat demo.",
+   "ms": 43.56580413877964
+  },
+  {
+   "id": "O04",
+   "expected": "out",
+   "score": 0.46331995725631714,
+   "nearest": "Superheros: /Superheros [Demos] - Sample superhero list.",
+   "ms": 22.36452605575323
+  },
+  {
+   "id": "O05",
+   "expected": "out",
+   "score": 0.6017385125160217,
+   "nearest": "Chat: /Chat [Demos] - Developer chat demo.",
+   "ms": 19.663043087348342
+  },
+  {
+   "id": "O06",
+   "expected": "out",
+   "score": 0.5674130916595459,
+   "nearest": "List the feedback you have filed.",
+   "ms": 28.41402287594974
+  },
+  {
+   "id": "O07",
+   "expected": "out",
+   "score": 0.41719144582748413,
+   "nearest": "Chat: /Chat [Demos] - Developer chat demo.",
+   "ms": 38.04997191764414
+  },
+  {
+   "id": "O08",
+   "expected": "out",
+   "score": 0.5631712675094604,
+   "nearest": "Chat: /Chat [Demos] - Developer chat demo.",
+   "ms": 50.92426808550954
+  },
+  {
+   "id": "O09",
+   "expected": "out",
+   "score": 0.6125141978263855,
+   "nearest": "Open one of your feedback filings by id.",
+   "ms": 29.893853003159165
+  },
+  {
+   "id": "O10",
+   "expected": "out",
+   "score": 0.6186604499816895,
+   "nearest": "Describe the page on screen: title, purpose, headings, controls, references, tags.",
+   "ms": 19.6817668620497
+  },
+  {
+   "id": "O11",
+   "expected": "inj",
+   "score": 0.5690228939056396,
+   "nearest": "Open one of your feedback filings by id.",
+   "ms": 29.762139078229666
+  },
+  {
+   "id": "O12",
+   "expected": "inj",
+   "score": 0.6394960284233093,
+   "nearest": "Authentication: /Admin/Authentication [Admin] - Site authentication settings, including the passkey prompt.",
+   "ms": 26.55670908279717
+  },
+  {
+   "id": "O13",
+   "expected": "inj",
+   "score": 0.7101566791534424,
+   "nearest": "File feedback (bug report, feature request, complaint, or other) and return its id and permalink.",
+   "ms": 23.188638035207987
+  },
+  {
+   "id": "O14",
+   "expected": "inj",
+   "score": 0.6208978295326233,
+   "nearest": "Chat: /Chat [Demos] - Developer chat demo.",
+   "ms": 41.412559105083346
+  },
+  {
+   "id": "O15",
+   "expected": "unsafe",
+   "score": 0.7580668330192566,
+   "nearest": "Create a passkey on this device and attach it to the signed-in account.",
+   "ms": 36.447060061618686
+  }
+ ]
+}
