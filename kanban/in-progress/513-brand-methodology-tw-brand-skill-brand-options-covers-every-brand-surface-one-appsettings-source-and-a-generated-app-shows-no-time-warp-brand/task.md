@@ -138,6 +138,7 @@ Acceptance, as I read it:
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20ec9-9a9a-7713-a38f-1427674d18bd, max-turns 200, artifacts general.md, merged.md — 2026-11-24T18:30:29Z
 - Reviewer round 2: grok session 01a20ed8-08e5-7343-b16f-062062c524bd (2026-11-25). Effort 1, roster general. Re-reviewed the fix delta. Disposition clean in `review/disposition.md`.
 - Review oracle round 2: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7), session 01a20ed8-08e5-7343-b16f-062062c524bd, max-turns 80, artifacts `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md` — 2026-11-25
+- Installed ganda changed during this walk: was 56283880 bytes 1cd1879c976509334e49f487f033a8c0ad73ddfff1f97956fac0db1f4cb0de35; now 56313128 bytes 25d56c33690715de24086a6099184a161fb13107446b9b639b4c8c8ac7d31a13
 
 ## Learnings
 
