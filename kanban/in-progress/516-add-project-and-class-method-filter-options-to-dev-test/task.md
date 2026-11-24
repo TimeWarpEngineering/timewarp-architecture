@@ -26,17 +26,93 @@ Per `/tw-correct` Level 1 (Structure): give agents **one** repo-root command (`.
    - Add unit tests in `tools/dev-cli` tests covering `--project` selection (exact, substring, unknown error) and forwarding `--filter-class` / `--filter-method` into MTP arguments.
    - Rebuild `./bin/dev` (`dotnet run tools/dev-cli/dev.cs -- self-install`), run `./bin/dev build`, `./bin/dev test --project dev-cli-tests` (dogfooding the new flag), and `ganda repo audit`.
 
+## Goal (implementer restatement)
+
+Agents need one repo-root command for a targeted test run, so they stop falling back to raw
+`dotnet test <csproj>` (which fails on .NET 11 MTP from the repo root and races on `obj/`).
+
+Acceptance:
+
+- `dev test --project <name>` (`-p`, repeatable and comma-separated) runs only the matching
+  projects under `tests/`. A name matches by exact project stem first, else by a substring of the
+  stem or repo-relative path that hits exactly one project. No match fails with the list of test
+  projects; an ambiguous substring fails with the candidates.
+- With `--project` and no `--no-build`, the build phase builds only the selected projects, one at
+  a time, in Release; every `dotnet test` stays `--no-build --no-restore`, cwd = project directory,
+  one port base per worker.
+- `--filter-class <value>` and `--filter-method <value>` go after `--` to Microsoft.Testing.Platform
+  (Jaribu) for every selected project.
+- With none of the new options, `dev test` (and `--group`, `--quiet`, `--no-build`,
+  `--max-parallel`, `--max-integration`) behaves as before.
+- `AGENTS.md` shows one example; dev-cli-tests pin project selection (exact, substring, unknown,
+  ambiguous) and filter forwarding.
+
 ## Checklist
 
-- [ ] Add `--project` (`-p`), `--filter-class`, and `--filter-method` options to `tools/dev-cli/endpoints/test-command.cs`
-- [ ] Forward filter arguments cleanly to MTP and preserve serial build + per-project `cwd` + port isolation
-- [ ] Add unit tests for project selection and MTP filter argument forwarding
-- [ ] Add one-line usage example to `AGENTS.md` (and testing reference if applicable)
-- [ ] Run `self-install`, `./bin/dev build`, targeted `./bin/dev test`, and `ganda repo audit`
+- [x] Add `--project` (`-p`), `--filter-class`, and `--filter-method` options to `tools/dev-cli/endpoints/test-command.cs`
+- [x] Forward filter arguments cleanly to MTP and preserve serial build + per-project `cwd` + port isolation
+- [x] Add unit tests for project selection and MTP filter argument forwarding
+- [x] Add one-line usage example to `AGENTS.md` (and testing reference if applicable)
+- [x] Run `self-install`, `./bin/dev build`, targeted `./bin/dev test`, and `ganda repo audit`
 
 ## Session
 
 - Created: 2875948 (2026-11-24)
+
+## Results
+
+- `dev test` gains `--project` / `-p` (repeatable, comma-separated), `--filter-class`, and
+  `--filter-method` (`tools/dev-cli/endpoints/test-command.cs`).
+- Name matching is the new pure service `TestProjectSelection`
+  (`tools/dev-cli/services/test-project-selection.cs`): exact stem (case-insensitive, `.csproj`
+  suffix allowed) wins, else one unique substring of the stem or repo-relative path. No match fails
+  listing every test project; several matches fail listing the candidates. `--project` applies
+  after `--group`.
+- `DotNetTestArguments.PlatformArguments` appends `--filter-class` / `--filter-method` after the
+  coverage flags. `DotNetTestArguments.BuildPlan` decides the serial build phase: a `--project` run
+  without `--no-build` builds each selected project (Release, cwd = project dir) instead of the
+  whole solution; every `dotnet test` stays `--no-build --no-restore` with its own port base.
+  Without the new options the plan is the old one (solution unless `--no-build`, then
+  out-of-solution projects).
+- A filter that selects no test in a project fails that project (MTP exit code 8, "Zero tests
+  ran"): checked by hand with `--filter-class NoSuchClassAnywhere`. With several projects and a
+  filter, `dev test` prints a yellow note up front to narrow with `--project`.
+- `AGENTS.md` "Build, run, test" row shows the targeted-run example.
+  `skills/tw-feature-placement/references/co-located-jaribu-runfiles.md` does not mention targeted
+  runs, so it is unchanged.
+- Audit boy-scout: `vscode-window-icon` (advisory) failed on a missing `.vscode/settings.json`;
+  `ganda repo audit --fix` wrote it (gitignored, nothing to commit) and the rerun passes all checks.
+
+### Gates
+
+- `dotnet run --file tools/dev-cli/dev.cs -- self-install` (dev-cli changed): installed `./bin/dev`.
+- `./bin/dev build`: Build succeeded, 0 warnings, 0 errors.
+- `tests/tools/dev-cli-tests/test-project-selection-tests.cs` (new) and
+  `tests/tools/dev-cli-tests/dotnet-test-arguments-tests.cs` (edited) are compile items of
+  `dev-cli-tests.csproj`, not standalone runfiles (no `#if !JARIBU_MULTI` guard), so they ran as
+  that project: `./bin/dev test --project dev-cli-tests` → passed, total 385, failed 0.
+- `ganda repo audit`: passes (1 advisory `vscode-window-icon`); after `ganda repo audit --fix`, rerun
+  `ganda repo audit` → "Repository passes all audit checks."
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run --file tools/dev-cli/dev.cs -- self-install
+./bin/dev test --project dev-cli-tests --filter-class TestProjectSelection_
+./bin/dev test -p tools/dev-cli --no-build --filter-class BuildPlan_Given_ --filter-method SelectedRun
+./bin/dev test -p no-such-tests --no-build
+./bin/dev test -p web- --no-build
+```
+
+Expect:
+
+- First run: "Test projects: dev-cli-tests", "Building dev-cli-tests (selected, Release)...", no
+  solution build, MTP summary `total: 7`, `failed: 0`, exit 0.
+- Second run: path substring selects dev-cli-tests, `total: 2`, exit 0.
+- Third run: exit 1, "--project 'no-such-tests' matches no test project. Test projects: …".
+- Fourth run: exit 1, "--project 'web-' matches several test projects: web-contracts-tests, …".
 
 ## Notes
 
