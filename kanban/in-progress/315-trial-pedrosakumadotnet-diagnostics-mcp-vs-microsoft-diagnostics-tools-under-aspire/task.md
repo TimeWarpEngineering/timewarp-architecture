@@ -52,14 +52,139 @@ Acceptance:
 
 ## Checklist
 
-- [ ] Tools pinned in `.config/dotnet-tools.json`; MCP pinned; licenses recorded
-- [ ] MCP registered in `.mcp.json` next to Aspire MCP
-- [ ] Skill / brief AGENTS.md entry added
-- [ ] Trial run and results recorded
-- [ ] Keep/remove decision made and applied
+- [x] Tools pinned in `.config/dotnet-tools.json`; MCP pinned; licenses recorded
+- [x] MCP registered in `.mcp.json` next to Aspire MCP (trial commit a4ffa32c7)
+- [x] Skill / brief AGENTS.md entry added
+- [x] Trial run and results recorded
+- [x] Keep/remove decision made and applied (removed)
+
+## Licenses
+
+| Tool | Version | License |
+|------|---------|---------|
+| `dotnet-counters` | 10.0.750501 | MIT (nuspec license expression; dotnet/diagnostics) |
+| `dotnet-trace` | 10.0.750501 | MIT |
+| `dotnet-gcdump` | 10.0.750501 | MIT |
+| `dotnet-diagnostics-mcp` (pedrosakuma) | 0.34.2 | MIT (nuspec and GitHub repo license) |
+
+## Trial (2026-11-25)
+
+**Setup.** `api-server` Release build, `ASPNETCORE_ENVIRONMENT=Development`, run on its own with
+`dotnet bin/Release/net11.0/api-server.dll` on `127.0.0.1:5315`. Deviation from "under Aspire":
+the AppHost was not started, because every task worktree shares the master AppHost user-secrets
+id and a headless AppHost run has rewritten the postgres password before. An Aspire project
+resource is the same kind of process; both tool sets attach by pid. Load: 4 keep-alive clients on
+`GET /api/weatherforecast?days=50`, about 5,550 requests/s. The MCP was driven over stdio
+(`dotnet dotnet-diagnostics-mcp --stdio`) by a small JSON-RPC client, the same calls an agent
+makes, so wall time and reply size are measured.
+
+**Question.** Where do CPU and allocations go on the weather-forecast endpoint under load?
+
+**MCP (`dotnet-diagnostics-mcp` 0.34.2).**
+
+| Call | Wall | Reply |
+|------|------|-------|
+| start + `initialize` | 1.0 s | |
+| `tools/list` (13 tools) | 0.1 s | 268,899 bytes |
+| `inspect_process view=triage` (5 s window) | 6.7 s | 13 KB |
+| `collect_sample kind=cpu` (10 s) | 13.6-16.8 s | 13 KB; summary shows top 3 frames, all thread-start and wait frames |
+| `query_snapshot view=top-methods rankBy=exclusive` | <0.1 s | 29 KB |
+| `collect_sample kind=allocation` (10 s) | 10.8-11.2 s | 38-65 KB; types by bytes and count |
+| `query_snapshot` allocation `top-methods` | <0.1 s | 23 KB; full generic method names |
+
+Friction: `query_snapshot latestOfKind=cpu` returned `NotFound` right after a cpu capture in the
+same server process, so the explicit handle had to be passed; the allocation `call-tree` at
+depth 8 stopped at `HostingApplication.ProcessRequestAsync` before any application frame; every
+reply carries a ~2 KB safety block; the triage called a 2.3-core synthetic load "critical".
+
+**Microsoft CLIs (10.0.750501).**
+
+| Step | Wall | Output |
+|------|------|--------|
+| `dotnet-counters collect --duration 00:00:10 --format json` | 11.0 s | 69 KB JSON (needs a short parse for last values) |
+| `dotnet-trace collect --profile dotnet-sampled-thread-time` (10 s) | 11.0 s | 11 MB nettrace |
+| `dotnet-trace report topN -n 25` | 3.9 s | 3 KB table; long generic names cut (`__Canon]].MoveNext()`), `-v` does not restore them |
+| `dotnet-trace collect --profile gc-verbose` (8 s) + `report topN` | 12.4 s | 3 KB; allocating call sites by method, no types |
+| `dotnet-trace convert --format speedscope` | ~3 s | full frame names (`FluentValidationBehavior...`) |
+| `dotnet-gcdump collect` + `report` | 4.6 s + 2.4 s | 537 KB report, head -40 is the useful part; live heap 17 MB |
+
+**Answer (both tool sets agree).** About 2.3 cores, 68-96 MB/s allocated, gen0 only, GC pause
+about 1.4 % of time, 90-116 monitor contentions/s, thread-pool queue 0. Sampled CPU stacks are
+mostly idle thread-pool and socket waits; application-side frames are small:
+`AuthenticationServiceImpl.AuthenticateAsync` (~1 % inclusive), the DI scope's
+`Dictionary<ServiceCacheKey,…>.Resize`, `DebugLogger.Log` (Development debug logging),
+`HostingApplication.CreateContext`. Allocations after the response payload itself
+(`WeatherForecast` objects, arrays, strings) come from per-request FluentValidation rule building
+(`FluentValidationBehavior.Handle` -> `AbstractValidator.RuleFor` -> `PropertyRule.Create`,
+`PropertyChain.FromExpression`, `SplitPascalCase`), DI scope dictionary growth, tracing
+(`Activity`, `TagList`, `DiagNode`), and logger scopes (`ExtendedLogger.BeginScope`).
+
+**Comparison.**
+
+- Speed: the same. Both are bounded by the capture window (about 45 s each for the full answer).
+  For CPU the MCP uses the same EventPipe sample profiler as `dotnet-trace`, so it adds no new
+  signal; the hot-method lists match row for row.
+- Clarity: the MCP is clearer for allocations (types and call sites in one place, full names)
+  and its next-step hints are useful. The CLIs reach the same answer with `gc-verbose` + `topN` +
+  speedscope conversion, at 3 KB per table instead of 13-65 KB per reply.
+- Cost: registering the MCP adds a 269 KB tool catalog (about 67k tokens) to every session in a
+  harness that loads all MCP tools (OpenCode, Grok), whether or not the session profiles anything.
+- Health: pre-1.0, one maintainer, 27 stars, releases every few weeks (0.33.0 -> 0.34.2), fields
+  already deprecated for removal at 1.0, and a wide surface (HTTP bearer/OIDC, SQLite captures,
+  ptrace, dumps, dynamic method instrumentation).
+
+## Decision (2026-11-25)
+
+Remove the MCP. The rule was "keep only if clearly better and faster": it is not faster, and it
+is better only for allocation views that the CLIs also reach. Applied: `dotnet-diagnostics-mcp`
+removed from `.config/dotnet-tools.json` and `.mcp.json` (the trial state is commit a4ffa32c7).
+Kept: `dotnet-counters`, `dotnet-trace`, `dotnet-gcdump` with `rollForward: true` (the packages
+target net8.0 only, so a machine with only the .NET 11 runtime needs roll-forward), and the skill
+`skills/tw-dotnet-diagnostics`. No quarterly recheck is owed, since the MCP is not kept.
 
 ## Learnings
+
+- Per-request FluentValidation rule building is the largest application-side allocator on the
+  reference endpoint. `api-server/program.cs` registers validators with
+  `AddValidatorsFromAssemblyContaining` (scoped by default), so
+  `TimeWarp.Foundation.Behaviors.FluentValidationBehavior` gets a new validator per request and its
+  constructor runs `RuleFor` each time. A follow-up task could register them as singletons; it
+  needs its own benchmark (`tw-perf-sweep`).
+- `dotnet-trace report topN` on a `gc-verbose` trace ranks allocating call sites; Microsoft's docs
+  do not say so.
+
+## Results
+
+Files: `.config/dotnet-tools.json` (three CLIs pinned), `skills/tw-dotnet-diagnostics/SKILL.md`
+(new), `AGENTS.md` (one "Where to look" row). `.mcp.json` ends unchanged from master.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet tool restore
+dotnet dotnet-counters --version && dotnet dotnet-trace --version && dotnet dotnet-gcdump --version
+# with any service running under load:
+dotnet dotnet-trace ps | grep api-server
+dotnet dotnet-trace collect -p <pid> --profile gc-verbose --duration 00:00:00:10 -o /tmp/alloc.nettrace
+dotnet dotnet-trace report /tmp/alloc.nettrace topN -n 25
+```
+
+Expect: restore succeeds; each tool prints `10.0.750501+…`; `report` prints a "Top 25 Functions"
+table; `.mcp.json` lists only the `aspire` server.
+
+### Gates
+
+- `./bin/dev build`: pass, 0 warnings, 0 errors (25.7 s).
+- Test files: none added or edited. No C# changed (tool manifest, a skill, and AGENTS.md only), so
+  no test file covers the change. CI runs the full suite and the template smoke on the PR.
+- `./bin/dev lint-skills` (skills/ changed): pass, 11 skills including `tw-dotnet-diagnostics`.
+- `ganda repo audit`: pass with one advisory (`vscode-window-icon`, `.vscode/settings.json`
+  missing). `ganda repo audit --fix` wrote that git-ignored local file; rerun: all checks pass.
 
 ## Session
 
 - Created: grok-bot (2026-10-12)
+- 2026-11-25 implementer (claude, ganda task work): pinned tools, ran the trial on standalone
+  api-server, removed the MCP per the rule, added `tw-dotnet-diagnostics`.

@@ -21,28 +21,21 @@
       "commands": [
         "dotnet-counters"
       ],
-      "rollForward": false
+      "rollForward": true
     },
     "dotnet-trace": {
       "version": "10.0.750501",
       "commands": [
         "dotnet-trace"
       ],
-      "rollForward": false
+      "rollForward": true
     },
     "dotnet-gcdump": {
       "version": "10.0.750501",
       "commands": [
         "dotnet-gcdump"
       ],
-      "rollForward": false
-    },
-    "dotnet-diagnostics-mcp": {
-      "version": "0.34.2",
-      "commands": [
-        "dotnet-diagnostics-mcp"
-      ],
-      "rollForward": false
+      "rollForward": true
     }
   }
 }
