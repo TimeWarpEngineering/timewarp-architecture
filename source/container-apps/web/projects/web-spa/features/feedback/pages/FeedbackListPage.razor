@@ -9,6 +9,7 @@
 
   private static readonly FeedbackKind[] KindChoices = Enum.GetValues<FeedbackKind>();
   private static string Accept => string.Join(',', FeedbackAttachmentRules.AllowedContentTypes);
+  private const string ChooseFilesButtonId = "feedback-choose-files";
 
   private readonly SubmitFeedback.Command Draft = new() { Kind = FeedbackKind.Complaint };
   private readonly Dictionary<Guid, string> Previews = new();
@@ -372,43 +373,57 @@
               <ValidationMessage For="@(() => Draft.Body)" />
             </FormField>
             <FormField Label="Attachments">
-              <InputFile OnChange="OnFilesAsync" multiple accept="@Accept" class="feedback-file" aria-label="Attachments" data-qa="FeedbackFile" />
-              <div class="feedback-capture">
-                <FluentButton Type="ButtonType.Button"
-                  Appearance="ButtonAppearance.Outline"
-                  IconStart="@(new Icons.Regular.Size16.Camera())"
-                  Disabled="@IsBusy"
-                  data-qa="FeedbackCaptureScreenshot"
-                  OnClick="CaptureThisPageAsync">Capture this page</FluentButton>
-                @if (PageBehind is { } behind)
-                {
+              <FluentInputFile DragDropZoneVisible="false"
+                Mode="InputFileMode.Buffer"
+                Multiple="true"
+                Accept="@Accept"
+                AnchorId="@ChooseFilesButtonId"
+                OnInputFileChange="OnFilesAsync"
+                aria-label="Attachments"
+                data-qa="FeedbackFile" />
+              <div class="feedback-attachment-field">
+                <div class="feedback-attachment-actions">
+                  <FluentButton Id="@ChooseFilesButtonId"
+                    Type="ButtonType.Button"
+                    Appearance="ButtonAppearance.Outline"
+                    IconStart="@(new Icons.Regular.Size16.Attach())"
+                    data-qa="FeedbackChooseFiles">Choose files</FluentButton>
                   <FluentButton Type="ButtonType.Button"
                     Appearance="ButtonAppearance.Outline"
-                    IconStart="@(new Icons.Regular.Size16.Image())"
+                    IconStart="@(new Icons.Regular.Size16.Camera())"
                     Disabled="@IsBusy"
-                    data-qa="FeedbackAttachPageBehind"
-                    OnClick="@(() => AttachCaptureAsync(behind))">Attach capture of @behind.Path</FluentButton>
+                    data-qa="FeedbackCaptureScreenshot"
+                    OnClick="CaptureThisPageAsync">Capture this page</FluentButton>
+                  @if (PageBehind is { } behind)
+                  {
+                    <FluentButton Type="ButtonType.Button"
+                      Appearance="ButtonAppearance.Outline"
+                      IconStart="@(new Icons.Regular.Size16.Image())"
+                      Disabled="@IsBusy"
+                      data-qa="FeedbackAttachPageBehind"
+                      OnClick="@(() => AttachCaptureAsync(behind))">Attach capture of @behind.Path</FluentButton>
+                  }
+                </div>
+                @if (FeedbackState.DraftAttachments.Count > 0)
+                {
+                  <ul class="feedback-attachments">
+                    @foreach (FeedbackState.DraftAttachment draft in FeedbackState.DraftAttachments)
+                    {
+                      <li class="feedback-attachment" data-qa="FeedbackAttachment">
+                        @if (Previews.TryGetValue(draft.AttachmentId, out string? preview))
+                        {
+                          <img src="@preview" alt="" />
+                        }
+                        <span>@draft.FileName</span>
+                        <FluentButton Type="ButtonType.Button"
+                          Appearance="ButtonAppearance.Outline"
+                          data-qa="FeedbackAttachmentRemove"
+                          OnClick="@(() => RemoveAsync(draft.AttachmentId))">Remove</FluentButton>
+                      </li>
+                    }
+                  </ul>
                 }
               </div>
-              @if (FeedbackState.DraftAttachments.Count > 0)
-              {
-                <ul class="feedback-attachments">
-                  @foreach (FeedbackState.DraftAttachment draft in FeedbackState.DraftAttachments)
-                  {
-                    <li class="feedback-attachment" data-qa="FeedbackAttachment">
-                      @if (Previews.TryGetValue(draft.AttachmentId, out string? preview))
-                      {
-                        <img src="@preview" alt="" />
-                      }
-                      <span>@draft.FileName</span>
-                      <FluentButton Type="ButtonType.Button"
-                        Appearance="ButtonAppearance.Outline"
-                        data-qa="FeedbackAttachmentRemove"
-                        OnClick="@(() => RemoveAsync(draft.AttachmentId))">Remove</FluentButton>
-                    </li>
-                  }
-                </ul>
-              }
             </FormField>
             @if (FeedbackState.EmailCopyAvailable)
             {

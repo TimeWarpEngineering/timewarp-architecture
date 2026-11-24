@@ -14,6 +14,11 @@
 // Capture and upload stay two actions sequenced by the page: ScreenshotState (platform tier)
 // cannot reach Feedback's upload, a handler never dispatches another action, and the client-side
 // limits, preview and markdown link live in UploadOneAsync, shared with paste and the file picker.
+// File picker (task 511): a hidden FluentInputFile (no drop zone) opens from the outline
+// "Choose files" FluentButton through AnchorId, so the browser's own file widget never shows.
+// OnInputFileChange hands the native change event to OnFilesAsync, which skips FluentInputFile's
+// own reading; Mode is Buffer only so the component never tries a temporary folder. aria-label and
+// data-qa pass through to the hidden input, so tests still call setInputFiles on FeedbackFile.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
