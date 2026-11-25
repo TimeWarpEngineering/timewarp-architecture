@@ -146,6 +146,10 @@ Review outcome: 17 merged findings (1 blocker held, 9 major, 6 minor, 1 nit) plu
   disposition row except M-01 (held) and M-17 (rejected) links an existing to-do child task; both
   `review/round-1/grok-4.7.md` and `review/round-1/fable.md` exist and contain no secret values.
 
+## Blocked
+
+2026-11-24: The operator must fix the held live-host security finding first: rotate the exposed credentials and take the endpoint down (details in the walk log summary and ~/.local/state/timewarp/task-458-held/fable.md F-001). Then resume this walk to restore the F-001 text, file its follow-on task, and rerun ganda repo audit after task 315 lands its kitchen.
+
 ## Unblock update (2026-11-25)
 
 Operator remediation is complete:

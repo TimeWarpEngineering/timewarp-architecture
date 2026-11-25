@@ -11,7 +11,6 @@ global using Microsoft.AspNetCore.Http;
 global using Microsoft.AspNetCore.Mvc.ApplicationParts;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
-global using Microsoft.Extensions.Hosting;
 global using OneOf;
 global using Scalar.AspNetCore;
 global using System.Reflection;

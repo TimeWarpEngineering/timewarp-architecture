@@ -2,8 +2,9 @@
 // Template smoke: asserts on shipped content of a generated app (skills, kanban, deploy parameters, ingress port).
 #endregion
 #region Design
-// AssertSkillsShipped: generated apps must contain the ten skills/*/SKILL.md files and must not
-// contain any analysis/ directory under skills/ (pack exclude).
+// AssertSkillsShipped: generated apps must contain every skills/*/SKILL.md in requiredSkillFiles
+// (one entry per directory under skills/) and must not contain any analysis/ directory under
+// skills/ (pack exclude). Adding a skill adds its row here.
 // Task 318 / 491: AssertKanbanSkeletonShipped - generated apps get the empty board skeleton
 // (five column .gitkeep files, overview.md, task-template.md, readme.md) and nothing else under kanban/.
 // Task 288: AssertDeployParametersUseAppKebabName is the loud failure for an invalid kebab name.
@@ -56,6 +57,7 @@ internal sealed class TemplateSmokeGeneratedContent
       "tw-blazor/SKILL.md",
       "tw-brand/SKILL.md",
       "tw-deploy/SKILL.md",
+      "tw-dotnet-diagnostics/SKILL.md",
       "tw-feature-placement/SKILL.md",
       "tw-mock-response-factory/SKILL.md",
       "tw-slice-isolation/SKILL.md",
@@ -81,7 +83,7 @@ internal sealed class TemplateSmokeGeneratedContent
     }
 
     if (ok)
-      Terminal.WriteLine("Generated app contains skills/ (ten SKILL.md files; analysis/ excluded).");
+      Terminal.WriteLine($"Generated app contains skills/ ({requiredSkillFiles.Length} SKILL.md files; analysis/ excluded).");
 
     return ok;
   }

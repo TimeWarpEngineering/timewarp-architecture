@@ -15,6 +15,27 @@
         "dotnet-ef"
       ],
       "rollForward": false
+    },
+    "dotnet-counters": {
+      "version": "10.0.750501",
+      "commands": [
+        "dotnet-counters"
+      ],
+      "rollForward": true
+    },
+    "dotnet-trace": {
+      "version": "10.0.750501",
+      "commands": [
+        "dotnet-trace"
+      ],
+      "rollForward": true
+    },
+    "dotnet-gcdump": {
+      "version": "10.0.750501",
+      "commands": [
+        "dotnet-gcdump"
+      ],
+      "rollForward": true
     }
   }
 }
