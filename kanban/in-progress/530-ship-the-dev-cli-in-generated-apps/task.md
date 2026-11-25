@@ -56,6 +56,12 @@ Acceptance:
   through it, for the default variant and every `--matrix` variant.
 - readme and kanban/readme say what a generated app contains.
 
+Review round 1 fix pass (M1, M2): a refusal names the flag that is actually off. postgres lives
+under the web tree, so `dev deploy migrate` in a `--web false` app names web, not postgres; `dev
+deploy` refuses without web (its smoke paths are web-server's) as well as without yarp. The marker
+test fails when another flag's exclude also removes a marker that the feature does not declare as
+required. readme says the same.
+
 ## Checklist
 
 - [x] Confirm the gap first: generate from the packed template and list the output root.
@@ -65,6 +71,11 @@ Acceptance:
 - [x] `.timewarp/dev.jsonc` and anything else the CLI reads at the repo root ships too.
 - [x] `dev template-smoke` assertion and matrix coverage.
 - [x] `readme.md` and `kanban/readme.md`: what a generated app contains.
+- [x] Review round 1 M1 and M2 fixed.
+
+## Review
+
+- Round 1: Blocked — open M1, M2
 
 ## Notes
 
@@ -82,6 +93,13 @@ Acceptance:
   and no `.timewarp/`); CLI shipped; flag-off variants generated and their CLIs compiled by hand
   before template-smoke.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 6d4c1964-3d12-477f-a328-0e9a3b18524b, max-turns 500, Done — 2026-11-25T21:28:46Z
+- 2026-11-26 implement-fix-2 (review round 1 fix pass): M1 and M2 fixed, see Results › Review fix pass.
+- Review oracle: grok session 01a2149c-8f0e-7c20-a0c6-5ae91cc3abd7 (2026-11-26), effort 3, roster general, round 1
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2149c-8f0e-7c20-a0c6-5ae91cc3abd7, max-turns 200, artifacts general.md, merged.md — 2026-11-25T21:41:33Z
+
+## Learnings
+
+- No misread. The Goal restatement matches the original task (ship the dev CLI, drop template-only commands, refuse or exclude flag-off commands, smoke `dev build` on the default variant and `--matrix`). The Goal line says `dev db` is excluded without postgres; Results and the code also exclude it when web is off. That tighter coupling is finding M1, not a conflict with the task.
 
 ## Results (required before done)
 
@@ -113,9 +131,11 @@ the regions and TWA0010 checks the agreement. `.timewarp/dev.jsonc` uses the sam
 | workflow: release mode, classify skill/template/green-key outputs, generated-files check | Moved to `endpoints/workflow-template-repository.cs` (excluded); call sites are `templateRepository` regions. In an app, `--mode release` refuses and names `dev deploy`, classify writes `ci=` only, `--api-key` is gone. `green-key*.cs` and `workflow-path-classes.cs` are excluded |
 
 **Flag-off.** `services/app-features.cs` checks a marker path per feature (the paths `template.json`
-removes for that flag; `app-features-tests.cs` pins that agreement). Refusals: `dev entra *` without
-web, `dev open` and `dev deploy` without yarp (they address the `ingress` resource), `dev deploy
-migrate` without postgres. `dev run` skips the web-only xAI key warning without web. api and grpc
+removes for that flag; `app-features-tests.cs` pins that agreement). A feature may require another:
+postgres requires web, because `--web false` removes the postgres tree too, and the required one is
+checked first. Refusals: `dev entra *` without web, `dev open` without yarp (it addresses the
+`ingress` resource), `dev deploy` without yarp or web (its smoke requests web-server paths through
+the ingress), `dev deploy migrate` without postgres or web, each naming the flag that is off. `dev run` skips the web-only xAI key warning without web. api and grpc
 have no command of their own.
 
 **dev-cli-tests.** Not shipped. They compile-include template-only services and pin this
@@ -148,11 +168,40 @@ they ship. readme.md, kanban/readme.md and AGENTS.md say what a generated app co
   message; `dev workflow --mode release` refused; `dev workflow --phase classify` printed `ci=true`;
   `dev self-install` produced `bin/dev` (`Development CLI for def`).
 
+### Review
+
+Round 1 (general, effort 3): 1 bug, 1 suggestion, 0 nits, both fixed (disposition in `review/round-1/merged.md`). Framework: `review/review-framework.md`.
+
+### Review fix pass (round 1 → round 2)
+
+- M1: `AppFeature` gained `Requires`; `AppFeatures.Postgres` requires `Web`. `AppFeatures.FirstMissing`
+  walks required features first and `Require` reports that one, so `dev deploy migrate` in a
+  `--web false` app says "needs the web feature ... --web false". New test
+  `EachMarker_Should_BeRemovedOnlyByItsOwnOrARequiredFlag` reads every `template.json` modifier whose
+  exclude covers a marker and fails unless its condition's flags are the feature's own or required
+  ones (the old `(!postgres)`-only check missed the `(!web)` overlap). New test
+  `MissingRequiredFeature_Should_BeNamedFirst`. readme states `deploy migrate` without postgres or web.
+  `deploy-migrate-command.cs` stays compiled: `dev deploy` calls its handler.
+- M2: `dev deploy` checks web after yarp and refuses before any preflight.
+- Gates (fix pass):
+  - `dotnet run --file tools/dev-cli/dev.cs -- self-install`: installed (dev-cli changed).
+  - `./bin/dev build`: passed (0 warnings, 0 errors).
+  - `./bin/dev test tests/tools/dev-cli-tests/app-features-tests.cs`: 6/6 passed (not a standalone
+    runfile; it is a class in the dev-cli-tests project, no `#if !JARIBU_MULTI` guard).
+  - Manual: in an empty `git init` checkout, `bin/dev deploy migrate` refused naming web (exit 1);
+    with only `yarp.csproj` present, `bin/dev deploy --no-browser` refused naming web (exit 1).
+  - template-smoke not rerun: the fix changes no template.json or generated-file layout, and
+    `app-features.cs` is compiled unconditionally in every variant (round-1 matrix passed).
+  - `ganda repo audit`: passed all checks.
+
 ### How to validate (required before done)
 
 Smoke: `./bin/dev template-smoke` (add `--matrix` for every flag-off variant).
 Expect: each variant prints "Generated app ships the dev CLI without its template-only files." and
 "Generated dev CLI lists the app commands and `dev build` passed.", then "Template smoke SUCCEEDED".
+
+Smoke (flag-off refusals): generate with `--web false`, then in it `dev deploy migrate` and `dev deploy`.
+Expect: both exit 1 with "needs the web feature ... generated with --web false".
 
 Smoke (by hand): `dotnet new timewarp-architecture -n Shop` from the packed template, then in it
 `git init && dotnet run tools/dev-cli/dev.cs -- --help` and `-- self-install`.

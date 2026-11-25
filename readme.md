@@ -41,11 +41,12 @@ dotnet new timewarp-architecture -n MyTimeWarpApp
 - `kanban/`: an empty board.
 - `tools/dev-cli/`: the dev CLI, with `.timewarp/dev.jsonc` (its settings) and `.envrc` (puts
   `bin/` on `PATH`). Bootstrap it once with `dotnet run tools/dev-cli/dev.cs -- self-install`, then
-  `dev --help`. It has the app commands: `build`, `test`, `run`, `db` (with postgres), `publish`,
-  `deploy` (and `deploy migrate`), `open`, `deprovision`, `entra`, `workflow`, `clean`, `audit`.
-  This repository's own template, release and skill-lint commands are not in it. In an app generated
-  without a feature, a command that needs it (`entra` without web; `deploy` and `open` without yarp;
-  `deploy migrate` without postgres) stops and names the missing feature.
+  `dev --help`. It has the app commands: `build`, `test`, `run`, `db` (with postgres and web),
+  `publish`, `deploy` (and `deploy migrate`), `open`, `deprovision`, `entra`, `workflow`, `clean`,
+  `audit`. This repository's own template, release and skill-lint commands are not in it. In an app
+  generated without a feature, a command that needs it (`entra` without web; `open` without yarp;
+  `deploy` without yarp or web; `deploy migrate` without postgres or web) stops and names the flag
+  that is off.
 
 ### In-app Ask (xAI Grok)
 
