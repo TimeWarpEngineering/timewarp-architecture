@@ -229,6 +229,22 @@ and `/01a126d4-e055-7344-9b90-59b8e0749615` list attachments `01a12f40-f348-76b7
 (309049 B) and `01a126d4-7dc2-752f-aef1-8db79a34c205` (34330 B); both downloads return 404.
 Problem text lives in `feedback-problems-application.cs:40`. Store selection: `postgres-db-module-server.cs:146`.
 
+### CI fix pass (PR #688 — `template-smoke` failed on Docker-less `wslc`)
+
+PR #688 passed 6/7 checks (`ci`, `ci (fast)`, `ci (integration)`, `ci (publish)`, `classify`, `green-key`),
+and failed only `CI/CD/template-smoke`: 51/494 tests in the generated `web-jaribu-tests` failed with
+`DockerUnavailableException: Failed to connect to Docker endpoint at 'unix:///var/run/docker.sock'`.
+
+Root cause: `.github/workflows/workflow.yml` runs `template-smoke` on `["self-hosted", "twe-001", "wslc"]`
+(which has no Docker socket — compare `ci (integration)` line 151: `hosted: true # Testcontainers and aspire-tests need Docker; wslc has no socket`).
+Because this task moved the co-located feedback tests (compiled into `web-jaribu-tests`, which `template-smoke`
+executes) onto Testcontainers Postgres, `template-smoke` now requires Docker just like `ci (integration)`.
+
+Fix:
+1. Update `.github/workflows/workflow.yml` so `template-smoke` runs on `ubuntu-latest` (matching `ci (integration)`'s Docker/Testcontainers requirement; `wslc` has no Docker socket).
+2. Check `tools/dev-cli/services/green-key.cs` and `tests/tools/dev-cli-tests/` and update any runner-assumption comments or tests if `template-smoke` moving to `ubuntu-latest` affects them.
+3. Merge `origin/master` if needed, verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests`, `./bin/dev template-smoke`, and `ganda repo audit`, then push so PR #688 goes green and merges.
+
 ## Learnings
 
 ### Misread — reconcile pass
