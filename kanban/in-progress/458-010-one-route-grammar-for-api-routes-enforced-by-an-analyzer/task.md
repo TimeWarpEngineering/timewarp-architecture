@@ -49,6 +49,10 @@ Acceptance:
 - [x] Implement the requirements above
 - [x] Tests or document checks named above pass
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -68,6 +72,8 @@ Acceptance:
 - 2026-11-26 implement: TWA0051 `ApiRouteGrammarAnalyzer`, route renames, golden regenerated, tests
   and skill examples updated (commit 1656c0642).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0bdd8fa3-217a-4457-b276-5c6d62b9806d, max-turns 500, Done — 2026-11-25T17:07:03Z
+- Review oracle round 1: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7), session 01a213ac-f39c-7d62-876f-ebedea64e08e, max-turns 120, artifacts `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md` — 2026-11-26
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a213ac-f39c-7d62-876f-ebedea64e08e, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-25T17:15:04Z
 
 ## Results
 
@@ -116,4 +122,12 @@ Acceptance:
 - Expect: the build fails with TWA0051 naming the contract, the route, and the broken segment; the test
   class passes 15/15. With the renamed routes the build is clean, and `goldens/ingress/WebServerApiRoutePrefixes.g.cs`
   lists only lowercase prefixes including `api/analytics`.
+
+### Review disposition
+
+Disposition is **clean** after one round. Round 1 was effort 2, roster general, and raised no findings. Final counts: bug 0; suggestion 0; nit 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- No misread. The `## Goal (implementer restatement)` matches the task: one kebab grammar under `api/` in `route-grammar.md`, a new analyzer id recorded in `AnalyzerReleases.Unshipped.md`, the non-conforming routes renamed, the ingress golden regenerated, and SPA callers following the contract route. The specific new paths (`api/admin/roles`, `api/analytics/events`, `api/users/current`, `api/weather-forecasts`) are the restatement of "rename the non-conforming routes"; the task did not pin those spellings. `/identity/sign-out` stays with task 458-007, as the task and the grooming note say.
 
