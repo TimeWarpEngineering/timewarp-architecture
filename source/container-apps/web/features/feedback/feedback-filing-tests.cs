@@ -36,6 +36,7 @@ namespace TimeWarp.Architecture.Features.Feedback
   using TimeWarp.Architecture.Features.Profiles.Application;
   using TimeWarp.Architecture.Features.Profiles.Domain;
   using TimeWarp.Architecture.Mail;
+  using TimeWarp.Architecture.Versioning;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
@@ -376,7 +377,8 @@ namespace TimeWarp.Architecture.Features.Feedback
           Sender,
           new FixedBaseUrl(new Uri("https://app.example")),
           NullLogger<SubmitHandler>.Instance,
-          Attachments);
+          Attachments,
+          new NoVersion());
 
       public GetHandler GetAs(PrincipalId? principal) =>
         new(new StubCurrentPrincipalAccessor(principal), Feedback, Attachments, Stores.Blobs);
@@ -439,6 +441,11 @@ namespace TimeWarp.Architecture.Features.Feedback
     {
       public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default) =>
         throw new InvalidOperationException("Mail transport is down");
+    }
+
+    private sealed class NoVersion : IAppVersionAccessor
+    {
+      public string? GetVersion() => null;
     }
 
     private sealed class FixedBaseUrl : IAppBaseUrlAccessor

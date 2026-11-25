@@ -123,6 +123,7 @@
             "tests/container-apps/web/web-server-integration-tests/features/feedback/**",
             "tests/common/timewarp-testing/postgres-web-host.cs",
             "tests/container-apps/web/web-spa-integration-tests/features/feedback/feedback-details-layout-tests.cs",
+            "tests/container-apps/web/web-spa-integration-tests/features/feedback/feedback-page-path-tests.cs",
             "tests/container-apps/web/web-spa-integration-tests/features/admin/feedback-admin-state-tests.cs",
             "tests/container-apps/web/web-spa-integration-tests/features/application/ask-tag-tests.cs",
             "tests/container-apps/web/web-spa-integration-tests/features/application/ask-tag-test-fixture.cs",

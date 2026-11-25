@@ -26,7 +26,9 @@
 // independent. A 400 lists the unavailable ids (pre-check and lost race) so the client can
 // drop them from its draft. EmailCopySent is true only
 // when the profile already has an email, the filer opted in, and the send completed. No profile
-// row is created. The permalink in the response is the relative path; the message body uses an
+// row is created. Task 521: AppVersion comes from IAppVersionAccessor (the web-server
+// assembly's informational version), never from the client; PagePath passes through from the
+// validated command, empty meaning absent. A version longer than the column is cut, not refused. The permalink in the response is the relative path; the message body uses an
 // absolute URL when IAppBaseUrlAccessor returns a public origin.
 #endregion
 
@@ -35,6 +37,7 @@ namespace TimeWarp.Architecture.Features.Feedback.Application;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using TimeWarp.Architecture.Mail;
+using TimeWarp.Architecture.Versioning;
 using static TimeWarp.Architecture.Features.Feedback.SubmitFeedback;
 using DomainKind = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackKind;
 
@@ -65,6 +68,7 @@ public sealed class SubmitFeedback
     private readonly IAppBaseUrlAccessor AppBaseUrlAccessor;
     private readonly ILogger<Handler> Logger;
     private readonly IFeedbackAttachmentStore AttachmentStore;
+    private readonly IAppVersionAccessor AppVersionAccessor;
 
     public Handler(
       ICurrentPrincipalAccessor currentPrincipalAccessor,
@@ -73,7 +77,8 @@ public sealed class SubmitFeedback
       IEmailSender emailSender,
       IAppBaseUrlAccessor appBaseUrlAccessor,
       ILogger<Handler> logger,
-      IFeedbackAttachmentStore attachmentStore)
+      IFeedbackAttachmentStore attachmentStore,
+      IAppVersionAccessor appVersionAccessor)
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       FeedbackStore = feedbackStore;
@@ -82,6 +87,7 @@ public sealed class SubmitFeedback
       AppBaseUrlAccessor = appBaseUrlAccessor;
       Logger = logger;
       AttachmentStore = attachmentStore;
+      AppVersionAccessor = appVersionAccessor;
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
@@ -140,7 +146,9 @@ public sealed class SubmitFeedback
         kind,
         request.Title,
         request.Body,
-        DateTimeOffset.UtcNow);
+        DateTimeOffset.UtcNow,
+        appVersion: AppVersion(),
+        pagePath: string.IsNullOrEmpty(request.PagePath) ? null : request.PagePath);
       await FeedbackStore.AddAsync(item, cancellationToken).ConfigureAwait(false);
       FeedbackAttachmentId? lost = await LinkAllOrRollBackAsync(principalId.Value.Value, item.Id, attachments)
         .ConfigureAwait(false);
@@ -161,6 +169,15 @@ public sealed class SubmitFeedback
         body: item.Body,
         emailCopySent: emailCopySent,
         attachmentIds: attachments.ConvertAll(attachment => attachment.Id.Value));
+    }
+
+    /// <summary>The server's version, cut to the column length so an unusual build string cannot refuse a filing.</summary>
+    private string? AppVersion()
+    {
+      string? version = AppVersionAccessor.GetVersion()?.Trim();
+      return version is { Length: > FeedbackItem.MaxAppVersionLength }
+        ? version[..FeedbackItem.MaxAppVersionLength]
+        : version;
     }
 
     /// <summary>Links every attachment, or rolls the filing back and returns the id that was lost.</summary>

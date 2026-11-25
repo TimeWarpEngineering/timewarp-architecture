@@ -10,7 +10,8 @@
 // severity changes, and it nulls author ids. AdminThread keeps every entry and author.
 // AdminViewAsync loads attachments, severity, and the filer's email presence (not the address)
 // for FeedbackAdminView, and the filer's display name through FeedbackOwnerNames (null without
-// admin.profiles.read). Enums, including severity, map by name.
+// admin.profiles.read). Enums, including severity, map by name. AppVersion and PagePath (task 521)
+// copy straight across; FilerThread's contracts do not carry them.
 // Project is the one attachment projection (task 479): AttachmentsAsync and the upload handler
 // wrap it into their own contract types with named arguments. AttachmentsAsync also asks the
 // byte store whether each file is still stored (task 522), one Exists call per attachment; an
@@ -140,7 +141,9 @@ internal static class FeedbackContractMap
       attachments: attachments,
       activity: AdminThread(item),
       ownerDisplayName: ownerDisplayName,
-      severity: ToContract(item.Severity));
+      severity: ToContract(item.Severity),
+      appVersion: item.AppVersion,
+      pagePath: item.PagePath);
   }
 
   private static FeedbackActivityEntry ToEntry(FeedbackActivity entry, bool includeAuthor) =>

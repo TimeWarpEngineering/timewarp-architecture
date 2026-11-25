@@ -14,6 +14,15 @@
 // When some ids cannot be filed (expired after FeedbackAttachmentRules.PendingLifetime,
 // removed, or filed elsewhere), the 400 problem lists them under the
 // UnavailableAttachmentIdsExtension key so the client can drop exactly those from its draft.
+// Task 521: PagePath is the app path the filer was on when they opened the form. It is optional
+// (null or empty files without it). The validator refuses anything that is not app-relative:
+// it must start with exactly one '/', and a query string, fragment, backslash, whitespace or
+// control character is refused rather than stripped, so a query value (a token, an email) can
+// never reach storage and an absolute or protocol-relative URL is never stored as a page.
+// IsPagePath is the rule; the client calls it to drop a path the server would refuse.
+// FeedbackItem.IsAppRelativePath is the domain copy and MaxPagePathLength duplicates
+// FeedbackItem.MaxPagePathLength (a test locks both). The app version is not on the command:
+// the server reads its own.
 // GetMockResponseFactory keeps mock mode deterministic with a fixed id.
 #endregion
 
@@ -29,6 +38,7 @@ public static partial class SubmitFeedback
 {
   public const int MaxTitleLength = IFeedbackItemDetails.MaxTitleLength;
   public const int MaxBodyLength = IFeedbackItemDetails.MaxBodyLength;
+  public const int MaxPagePathLength = 512;
 
   /// <summary>Problem extension key listing the attachment ids that could not be filed.</summary>
   public const string UnavailableAttachmentIdsExtension = "unavailableAttachmentIds";
@@ -43,6 +53,31 @@ public static partial class SubmitFeedback
     public string Body { get; set; } = null!;
     public bool EmailCopy { get; set; }
     public List<Guid> AttachmentIds { get; set; } = [];
+    /// <summary>The app path the filer was on (path only, no query string or fragment). Optional.</summary>
+    public string? PagePath { get; set; }
+  }
+
+  /// <summary>
+  /// True when <paramref name="path"/> starts with exactly one '/' and holds no query, fragment,
+  /// backslash, whitespace or control character, within <see cref="MaxPagePathLength"/>.
+  /// </summary>
+  public static bool IsPagePath(string? path)
+  {
+    if (string.IsNullOrEmpty(path) || path.Length > MaxPagePathLength || path[0] != '/'
+      || (path.Length > 1 && path[1] == '/'))
+    {
+      return false;
+    }
+
+    foreach (char character in path)
+    {
+      if (character is '?' or '#' or '\\' || char.IsWhiteSpace(character) || char.IsControl(character))
+      {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public sealed class Validator : AbstractValidator<Command>
@@ -55,6 +90,10 @@ public static partial class SubmitFeedback
         .NotNull()
         .Must(ids => ids.Count <= FeedbackAttachmentRules.MaxPerItem)
         .Must(ids => ids.Distinct().Count() == ids.Count);
+      RuleFor(command => command.PagePath)
+        .Must(IsPagePath)
+        .When(command => !string.IsNullOrEmpty(command.PagePath))
+        .WithMessage("Page path must be an app-relative path (starting with '/') with no query string or fragment, at most 512 characters.");
     }
   }
 

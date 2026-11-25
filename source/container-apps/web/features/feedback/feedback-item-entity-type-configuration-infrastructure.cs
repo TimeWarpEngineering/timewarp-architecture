@@ -14,6 +14,8 @@
 // A severity activity row stores From/To severity and leaves status null; a status row does the reverse.
 // LastActivityAt (task 520) is required and indexed alone: the poll filter ActivityFrom is a range
 // on it, and the LastActivityAt sort reads it. The migration backfills it from the last thread entry.
+// AppVersion and PagePath (task 521) are optional filing columns, bounded by the domain lengths.
+// No index: nothing filters on them. Rows filed before the migration keep null.
 // The thread is OwnsMany into "feedback_activity", keyed by (FeedbackItemId, Sequence) so two
 // writers appending the same position collide. Field access on ActivityList because the
 // Activity getter returns a sorted copy. IsVisibleToFiler is derived and not mapped.
@@ -59,6 +61,8 @@ public sealed class FeedbackItemEntityTypeConfiguration : IEntityTypeConfigurati
       .IsRequired();
 
     builder.Property(item => item.FiledAt).IsRequired();
+    builder.Property(item => item.AppVersion).HasMaxLength(FeedbackItem.MaxAppVersionLength);
+    builder.Property(item => item.PagePath).HasMaxLength(FeedbackItem.MaxPagePathLength);
     builder.Property(item => item.LastActivityAt).IsRequired();
     builder.HasIndex(item => item.LastActivityAt);
 

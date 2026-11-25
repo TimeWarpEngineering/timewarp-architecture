@@ -46,6 +46,14 @@ public class Map
       index => index.Properties.Count == 1 && index.Properties[0] == lastActivityAt,
       "ActivityFrom filters on LastActivityAt (task 520)");
 
+    // Task 521: filing context columns are nullable so rows filed before them keep null.
+    IProperty appVersion = entityType.FindProperty(nameof(FeedbackItem.AppVersion)).ShouldNotBeNull();
+    appVersion.IsNullable.ShouldBeTrue();
+    appVersion.GetMaxLength().ShouldBe(FeedbackItem.MaxAppVersionLength);
+    IProperty pagePath = entityType.FindProperty(nameof(FeedbackItem.PagePath)).ShouldNotBeNull();
+    pagePath.IsNullable.ShouldBeTrue();
+    pagePath.GetMaxLength().ShouldBe(FeedbackItem.MaxPagePathLength);
+
     IProperty version = entityType.FindProperty(nameof(FeedbackItem.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);

@@ -9,12 +9,18 @@
 #:include feedback-triage-world-tests.cs
 #:include feedback-postgres-stores-tests.cs
 
-// Co-located Jaribu: owner display name on the admin feedback list rows and detail view.
+// Co-located Jaribu: who filed and where from on the admin feedback views: the owner display name
+// (task 336) and the app version and page path recorded at filing (task 521).
 // Run standalone:  dotnet run source/container-apps/web/features/feedback/feedback-owner-name-tests.cs
 
 #region Purpose
 // Jaribu runfile for task 336: the owner display name on list rows and the admin view (set only
 // with admin.profiles.read, null for a missing profile, one directory batch per page).
+// Task 521 (FeedbackFilingContext_Given_): a filing stores the server's version (never the
+// client's) and the submitted page path; a filing without a path still succeeds; the validator
+// refuses a path with a query, a fragment, an absolute or protocol-relative URL, whitespace, or
+// over the limit; the contract rule matches the domain copy; and the admin list, detail and
+// mutation views return both.
 #endregion
 
 //-:cnd:noEmit
@@ -27,8 +33,11 @@ namespace TimeWarp.Architecture.Features.Feedback
 {
 
   using System.Text.Json;
+  using FluentValidation.Results;
+  using Microsoft.Extensions.Logging.Abstractions;
   using Shouldly;
   using TimeWarp.Architecture.Features.Feedback.Domain;
+  using TimeWarp.Architecture.Versioning;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
@@ -40,8 +49,11 @@ namespace TimeWarp.Architecture.Features.Feedback
   using ContractKind = TimeWarp.Architecture.Features.Feedback.FeedbackKind;
   using ContractSeverity = TimeWarp.Architecture.Features.Feedback.FeedbackSeverity;
   using ContractStatus = TimeWarp.Architecture.Features.Feedback.FeedbackStatus;
+  using DomainKind = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackKind;
   using FilerGetContract = TimeWarp.Architecture.Features.Feedback.GetFeedback;
   using SetSeverityContract = TimeWarp.Architecture.Features.Feedback.SetFeedbackSeverity;
+  using SubmitContract = TimeWarp.Architecture.Features.Feedback.SubmitFeedback;
+  using SubmitHandler = TimeWarp.Architecture.Features.Feedback.Application.SubmitFeedback.Handler;
 
   [TestTag("Handler")]
   public class FeedbackOwnerName_Given_
@@ -220,6 +232,190 @@ namespace TimeWarp.Architecture.Features.Feedback
       JsonSerializer.Deserialize<FeedbackAdminView>(viewJson, ContractSerializationDefaults.Options)
         .ShouldNotBeNull().OwnerDisplayName.ShouldBe("Ada Lovelace");
       return Task.CompletedTask;
+    }
+  }
+
+  [TestTag("Handler")]
+  public class FeedbackFilingContext_Given_
+  {
+    private const string ServerVersion = "9.8.7-test+0123abc";
+
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<FeedbackFilingContext_Given_>();
+
+    public static async Task Submit_Should_StoreTheServerVersionAndThePagePath()
+    {
+      TriageWorld world = new();
+      SubmitContract.Command command = Complaint("Counter stuck");
+      command.PagePath = "/Counter";
+      SubmitContract.Response response = await SubmitAsync(world, command, ServerVersion);
+
+      FeedbackItem stored = (await world.Feedback.FindAsync(FeedbackItemId.From(response.FeedbackItemId))).ShouldNotBeNull();
+      stored.AppVersion.ShouldBe(ServerVersion);
+      stored.PagePath.ShouldBe("/Counter");
+    }
+
+    public static async Task SubmitWithoutPagePath_Should_FileWithNoPath()
+    {
+      TriageWorld world = new();
+      SubmitContract.Response withNull = await SubmitAsync(world, Complaint("No page"), ServerVersion);
+      SubmitContract.Command empty = Complaint("Empty page");
+      empty.PagePath = "";
+      SubmitContract.Response withEmpty = await SubmitAsync(world, empty, ServerVersion);
+
+      foreach (Guid id in new[] { withNull.FeedbackItemId, withEmpty.FeedbackItemId })
+      {
+        FeedbackItem stored = (await world.Feedback.FindAsync(FeedbackItemId.From(id))).ShouldNotBeNull();
+        stored.PagePath.ShouldBeNull();
+        stored.AppVersion.ShouldBe(ServerVersion);
+      }
+    }
+
+    public static async Task SubmitWithAnOverlongServerVersion_Should_StillFile()
+    {
+      TriageWorld world = new();
+      string longVersion = "1.0.0+" + new string('a', FeedbackItem.MaxAppVersionLength);
+      SubmitContract.Response response = await SubmitAsync(world, Complaint("Long version"), longVersion);
+
+      FeedbackItem stored = (await world.Feedback.FindAsync(FeedbackItemId.From(response.FeedbackItemId))).ShouldNotBeNull();
+      stored.AppVersion.ShouldBe(longVersion[..FeedbackItem.MaxAppVersionLength]);
+    }
+
+    public static async Task AppVersionAndPagePath_Should_ReachTheAdminListAndDetail()
+    {
+      TriageWorld world = new();
+      SubmitContract.Command command = Complaint("Counter is stuck");
+      command.PagePath = "/Counter";
+      Guid recordedId = (await SubmitAsync(world, command, ServerVersion)).FeedbackItemId;
+      FeedbackItem older = await world.AddAsync(world.Filer.Value, day: 1);
+
+      AdminListContract.Response list = await world.ListAsync(new AdminListContract.Query());
+      AdminListContract.Item listed = list.Items.Single(item => item.FeedbackItemId == recordedId);
+      listed.AppVersion.ShouldBe(ServerVersion);
+      listed.PagePath.ShouldBe("/Counter");
+      AdminListContract.Item legacy = list.Items.Single(item => item.FeedbackItemId == older.Id.Value);
+      legacy.AppVersion.ShouldBeNull();
+      legacy.PagePath.ShouldBeNull();
+
+      AdminGetContract.Response detail = (await world.AdminGet().Handle(
+          new AdminGetContract.Query { FeedbackItemId = recordedId }, CancellationToken.None))
+        .Match(ok => ok, _ => throw new InvalidOperationException("Expected admin get success"));
+      detail.Item.AppVersion.ShouldBe(ServerVersion);
+      detail.Item.PagePath.ShouldBe("/Counter");
+
+      // A status change returns the same view, and the filing fields stay as filed.
+      ChangeStatusContract.Response changed = await world.ChangeStatusAsync(recordedId, ContractStatus.UnderReview);
+      changed.Item.AppVersion.ShouldBe(ServerVersion);
+      changed.Item.PagePath.ShouldBe("/Counter");
+      FeedbackItem stored = (await world.Feedback.FindAsync(FeedbackItemId.From(recordedId))).ShouldNotBeNull();
+      stored.AppVersion.ShouldBe(ServerVersion);
+      stored.PagePath.ShouldBe("/Counter");
+    }
+
+    public static Task AdminView_Should_RoundTripVersionAndPath()
+    {
+      FeedbackAdminView view = FeedbackAdminView.Sample(Guid.Parse("11111111-1111-1111-1111-111111111111"));
+      string json = JsonSerializer.Serialize(new AdminGetContract.Response(view), ContractSerializationDefaults.Options);
+      json.ShouldContain("\"pagePath\":\"/Counter\"");
+      AdminGetContract.Response parsed = JsonSerializer
+        .Deserialize<AdminGetContract.Response>(json, ContractSerializationDefaults.Options)
+        .ShouldNotBeNull();
+      parsed.Item.AppVersion.ShouldBe(view.AppVersion);
+      parsed.Item.PagePath.ShouldBe(view.PagePath);
+      return Task.CompletedTask;
+    }
+
+    public static Task Validator_Should_AcceptAnAppPathOrNone()
+    {
+      foreach (string? path in new[] { null, "", "/", "/Counter", "/Feedback/11111111-1111-1111-1111-111111111111", "/a%20b" })
+      {
+        SubmitContract.Command command = Complaint("Path");
+        command.PagePath = path;
+        new SubmitContract.Validator().Validate(command).IsValid.ShouldBeTrue($"'{path}' is an app path or absent");
+      }
+
+      return Task.CompletedTask;
+    }
+
+    public static Task Validator_Should_RefuseAPathThatIsNotAnAppPath()
+    {
+      string[] refused =
+      [
+        "/Counter?token=secret",
+        "/Counter#section",
+        "https://evil.example/Counter",
+        "//evil.example/Counter",
+        "Counter",
+        "/Count er",
+        " ",
+        "/a\\b",
+        "/" + new string('a', SubmitContract.MaxPagePathLength),
+      ];
+      foreach (string path in refused)
+      {
+        SubmitContract.Command command = Complaint("Path");
+        command.PagePath = path;
+        ValidationResult result = new SubmitContract.Validator().Validate(command);
+        result.IsValid.ShouldBeFalse($"'{path}' must be refused");
+        result.Errors.ShouldContain(error => error.PropertyName == nameof(SubmitContract.Command.PagePath));
+      }
+
+      return Task.CompletedTask;
+    }
+
+    public static Task PagePathRule_Should_MatchTheDomainCopy()
+    {
+      SubmitContract.MaxPagePathLength.ShouldBe(FeedbackItem.MaxPagePathLength);
+      string[] samples = ["/", "/Counter", "/a/b/c", "/Counter?x=1", "/Counter#y", "//host/x", "https://host/x", "x", "/a b", "/a\tb", "/a\\b"];
+      foreach (string sample in samples)
+      {
+        SubmitContract.IsPagePath(sample).ShouldBe(FeedbackItem.IsAppRelativePath(sample), sample);
+      }
+
+      Should.Throw<ArgumentException>(() => FeedbackItem.File(
+        Guid.NewGuid(), DomainKind.Other, "Title", "Body", DateTimeOffset.UtcNow, pagePath: "/Counter?token=secret"));
+      Should.Throw<ArgumentOutOfRangeException>(() => FeedbackItem.File(
+        Guid.NewGuid(), DomainKind.Other, "Title", "Body", DateTimeOffset.UtcNow,
+        pagePath: "/" + new string('a', FeedbackItem.MaxPagePathLength)));
+      FeedbackItem blank = FeedbackItem.File(
+        Guid.NewGuid(), DomainKind.Other, "Title", "Body", DateTimeOffset.UtcNow, appVersion: "  ", pagePath: " ");
+      blank.AppVersion.ShouldBeNull();
+      blank.PagePath.ShouldBeNull();
+      return Task.CompletedTask;
+    }
+
+    private static SubmitContract.Command Complaint(string title) => new()
+    {
+      Kind = ContractKind.Complaint,
+      Title = title,
+      Body = $"Body for {title}",
+    };
+
+    private static async Task<SubmitContract.Response> SubmitAsync(
+      TriageWorld world,
+      SubmitContract.Command command,
+      string? serverVersion)
+    {
+      SubmitHandler handler = new(
+        new TriagePrincipalAccessor(world.Filer),
+        world.Feedback,
+        world.Lookup,
+        world.Mail,
+        new TriageBaseUrl(null),
+        NullLogger<SubmitHandler>.Instance,
+        world.Attachments,
+        new FixedVersion(serverVersion));
+      return (await handler.Handle(command, CancellationToken.None))
+        .Match(ok => ok, problem => throw new InvalidOperationException($"Expected submit success: {problem.Detail}"));
+    }
+
+    private sealed class FixedVersion : IAppVersionAccessor
+    {
+      private readonly string? Version;
+
+      public FixedVersion(string? version) => Version = version;
+
+      public string? GetVersion() => Version;
     }
   }
 

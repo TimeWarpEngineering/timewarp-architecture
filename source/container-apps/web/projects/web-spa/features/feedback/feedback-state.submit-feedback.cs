@@ -14,6 +14,8 @@
 // A 400 that lists UnavailableAttachmentIdsExtension (a pending upload expired or was removed)
 // drops exactly those ids from DraftAttachments before the problem notification is published,
 // so the next submit files the rest. The notification text says to attach the file again.
+// Task 521: GetRequest sends PagePath, the page the filer was on (FeedbackPagePath: the current
+// page, or the newest route before the feedback pages). The app version is the server's.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -58,6 +60,7 @@ partial class FeedbackState
     internal sealed class Handler : DefaultApiHandler<Action, Command, Response>
     {
       private readonly AgentCallOutcome AgentCallOutcome;
+      private readonly NavigationManager NavigationManager;
 
       public Handler
       (
@@ -66,11 +69,13 @@ partial class FeedbackState
         ILogger<Handler> logger,
         IPublisher<ClientPipeline> publisher,
         AgentCallOutcome agentCallOutcome,
+        NavigationManager navigationManager,
         IValidator<Command>? validator = null,
         AuthenticationStateProvider? authenticationStateProvider = null
       ) : base(store, webServerApiService, logger, publisher, validator, authenticationStateProvider)
       {
         AgentCallOutcome = agentCallOutcome;
+        NavigationManager = navigationManager;
       }
 
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
@@ -85,6 +90,10 @@ partial class FeedbackState
           Body = action.Body,
           EmailCopy = action.EmailCopy,
           AttachmentIds = attachmentIds,
+          PagePath = FeedbackPagePath.From(
+            new Uri(NavigationManager.BaseUri),
+            new Uri(NavigationManager.Uri),
+            RouteState.Routes.Select(route => route.Url)),
         });
       }
 

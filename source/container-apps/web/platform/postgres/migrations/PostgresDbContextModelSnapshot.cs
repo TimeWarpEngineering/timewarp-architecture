@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261125015554_AddFeedbackLastActivity";
+    public override string LastMigrationId => "20261125130740_AddFeedbackFilingContext";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -165,6 +165,10 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.Property<Guid>("Id")
                     .HasColumnType("uuid");
 
+                b.Property<string>("AppVersion")
+                    .HasMaxLength(128)
+                    .HasColumnType("character varying(128)");
+
                 b.Property<string>("Body")
                     .IsRequired()
                     .HasMaxLength(8000)
@@ -183,6 +187,10 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
 
                 b.Property<Guid>("OwnerPrincipalId")
                     .HasColumnType("uuid");
+
+                b.Property<string>("PagePath")
+                    .HasMaxLength(512)
+                    .HasColumnType("character varying(512)");
 
                 b.Property<string>("Severity")
                     .IsRequired()

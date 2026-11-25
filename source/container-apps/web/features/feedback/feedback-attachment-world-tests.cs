@@ -11,6 +11,7 @@ namespace TimeWarp.Architecture.Features.Feedback
   using TimeWarp.Architecture.Features.Feedback.Application;
   using TimeWarp.Architecture.Features.Feedback.Domain;
   using TimeWarp.Architecture.Mail;
+  using TimeWarp.Architecture.Versioning;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Identity;
   using ContractKind = TimeWarp.Architecture.Features.Feedback.FeedbackKind;
@@ -151,7 +152,8 @@ namespace TimeWarp.Architecture.Features.Feedback
         new AttachmentNoMail(),
         new AttachmentNoBaseUrl(),
         NullLogger<SubmitHandler>.Instance,
-        attachmentStore ?? Attachments);
+        attachmentStore ?? Attachments,
+        new AttachmentNoVersion());
 
     private GetHandler GetAs(PrincipalId principal) =>
       new(new AttachmentStubCurrentPrincipalAccessor(principal), Feedback, Attachments, Blobs);
@@ -358,5 +360,10 @@ namespace TimeWarp.Architecture.Features.Feedback
   internal sealed class AttachmentNoBaseUrl : IAppBaseUrlAccessor
   {
     public Uri? GetBaseUrl() => null;
+  }
+
+  internal sealed class AttachmentNoVersion : IAppVersionAccessor
+  {
+    public string? GetVersion() => null;
   }
 }

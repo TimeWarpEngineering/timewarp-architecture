@@ -14,6 +14,8 @@
 // owner display name.
 // Task 520: the feedback:read token lists with ActivityFrom (no extra scope). A bound before the
 // filing returns the item with LastActivityAt; a bound an hour ahead does not.
+// Task 521: the same token reads AppVersion (the web-server assembly's informational version,
+// set by the server) and PagePath (sent by the filer) on the list item and the detail.
 // One token that holds all four feedback scopes lists Status = New, reads the item, sets
 // severity, adds a note, and moves status off New. The next Status = New list omits it.
 #endregion
@@ -21,6 +23,7 @@
 namespace AdminFeedbackAuthorization_;
 
 using System.Net;
+using System.Reflection;
 using System.Text.Json;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Feedback;
@@ -54,8 +57,13 @@ public class Agent_Returns_
     Guid itemId;
     using (HttpClient filer = Client(Web, filerCookie))
     {
-      itemId = await FileFeedbackAsync(filer, "Agent triage target");
+      itemId = await FileFeedbackFromPageAsync(filer, "Agent triage target", "/Counter");
     }
+
+    string? serverVersion = typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly
+      .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+      ?.InformationalVersion;
+    serverVersion.ShouldNotBeNullOrWhiteSpace();
 
     string readToken = await IssueTokenAsync(Web, AgentScopes.FeedbackRead);
     string noteToken = await IssueTokenAsync(Web, AgentScopes.FeedbackNote);
@@ -78,6 +86,13 @@ public class Agent_Returns_
       ListFeedback.Response later = await ReadAsync<ListFeedback.Response>(await reader.GetAsync(
         new ListFeedback.Query { ActivityFrom = DateTimeOffset.UtcNow.AddHours(1) }.GetRouteWithQueryString()));
       later.Items.ShouldNotContain(item => item.FeedbackItemId == itemId);
+      ListFeedback.Item listed = changed.Items.Single(item => item.FeedbackItemId == itemId);
+      listed.AppVersion.ShouldBe(serverVersion);
+      listed.PagePath.ShouldBe("/Counter");
+      GetFeedbackForAdmin.Response detail = await ReadAsync<GetFeedbackForAdmin.Response>(
+        await reader.GetAsync($"api/admin/feedback/{itemId}"));
+      detail.Item.AppVersion.ShouldBe(serverVersion);
+      detail.Item.PagePath.ShouldBe("/Counter");
       (await PostNoteAsync(reader, itemId, "from read")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
       (await PutSeverityAsync(reader, itemId, FeedbackSeverity.Low)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
       (await PutStatusAsync(reader, itemId, FeedbackStatus.UnderReview)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
