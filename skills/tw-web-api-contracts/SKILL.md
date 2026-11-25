@@ -466,8 +466,9 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 - **Living anchor (timewarp-architecture template):** `web/features/admin/roles/` — every
   operation carries `[Operation]` and a kind interface (`IQuery`, `ICommand`, `IIdempotentCommand`);
   `role-details-contracts.cs` (`IRoleDetails` + validator, shared at slice root),
-  `create-role/create-role-contracts.cs`, `get-roles/get-roles-contracts.cs` (attribute auth +
-  open-data), `get-role/get-role-contracts.cs` (manual auth, `I*Details` Response). Each
+  `create-role/create-role-contracts.cs`, `get-roles/get-roles-contracts.cs` (`Search` is the only
+  query parameter), `get-role/get-role-contracts.cs` (the route id is the whole request:
+  `IAuthApiRequest`, no caller property, `I*Details` Response). Each
   contract sits beside its handler in the same use-case folder
   (`create-role/create-role-handler-application.cs`); layer projects compose via static
   `*-{layer}.cs` globs regardless of folder.

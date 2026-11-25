@@ -53,6 +53,10 @@ Acceptance:
 - [x] Implement the requirements above
 - [x] Tests or document checks named above pass
 
+## Review
+
+- Round 1: M1 fixed in the fix pass (skill canonical-examples line)
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -129,6 +133,12 @@ Acceptance:
   `ganda repo audit --fix` landed the 527 kitchen and set the local, git-ignored
   `.vscode/settings.json` window title. Rerun: `ganda repo audit` — passed, all checks.
 
+Fix pass (review round 1, skill text only):
+
+- `./bin/dev build` — passed, build completed successfully.
+- No test file covers skill prose; `./bin/dev lint-skills` (skills/ changed) — passed, 11/11 skills and `tw-web-api-contracts/evals/eval.yaml` valid.
+- `ganda repo audit` — passed, all checks.
+
 ### How to validate
 
 - **Smoke:** `./bin/dev test --no-build --project web-server-integration-tests --filter-class OpenApiUnreadRequestMembers_`
@@ -137,7 +147,19 @@ Acceptance:
 - **Post-deploy:** fetch `https://arch.timewarp.work/openapi/v1.json`; `/paths/~1api~1admin~1roles/get/parameters`
   holds only `search`, and no operation carries `userId`.
 
+### Review
+
+Round 1 (effort 3, roster general): one suggestion, M1, in `review/round-1/merged.md`: the skill canonical-examples line still called GetRoles "attribute auth + open-data" and GetRole "manual auth". Fixed: `skills/tw-web-api-contracts/SKILL.md` Canonical examples now says GetRoles' `Search` is the only query parameter and GetRole's route id is the whole request (`IAuthApiRequest`, no caller property). M1 disposition is `fixed` in merged.md. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Learnings
+
+- No misread. The task text still names `GET /api/Roles` and `GET`/`DELETE /api/Roles/{roleId}` from the 2026-11-24 OpenAPI snapshot. Those routes already live at `/api/admin/roles` and `/api/admin/roles/{roleId}`. The restatement follows the living routes and the same unread `userId` and OData members.
+- The handler-read check was skipped because a sound check has to follow the request into stores and services. That matches the requirement's clause "if that can be done without inference". The OpenAPI name scan is the substitute recorded in Results, not a silent drop of the requirement.
+
 ## Session
 
 - Created: 2227132 (2026-11-24)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a55ae55e-9096-452b-a518-4425f1fe25cd, max-turns 500, Done — 2026-11-25T18:24:38Z
+- Reviewer: grok session 01a213f4-0f56-78d2-90e2-6f5e9bcb0d5c (2026-11-26), effort 3, roster general, round 1 open (M1)
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a213f4-0f56-78d2-90e2-6f5e9bcb0d5c, max-turns 200, artifacts general.md, merged.md — 2026-11-25T18:32:18Z
+- Fix pass (review round 1): implementer-claude (claude-opus-5-5), M1 fixed in `skills/tw-web-api-contracts/SKILL.md`; build, lint-skills, audit passed — 2026-11-26
