@@ -33,7 +33,7 @@ template-only
 - Runners default to `ubuntu-latest`. The self-hosted wslc labels are this repo's; an instance opts
   in with a repository variable, not an edit.
 - Green key: decide whether the instance workflow carries the classify key and the `green-key`
-  marker job (task 504). Backlog task 416 covers enabling the skip on this repo. Say which in Results.
+  marker job (task 504). Task 504 (`kanban/done/504-*`) already enabled the green-key skip on this repo. Say which in Results.
 - `setup-ci` ships as is and is the same file in both places: one source, used by this repo's
   workflow and packed for the instance.
 - The instance workflow does not run in this repo. Keep it outside `.github/workflows/` here and map
@@ -41,7 +41,7 @@ template-only
 - Flag-off output is valid: with api, grpc, yarp or postgres off the workflow has no job or phase
   that needs the missing project.
 - `dev template-smoke` asserts both files are present in the generated app and that the workflow
-  parses (actionlint or the equivalent already used here).
+  parses (note: neither `actionlint` nor a YAML parser is currently installed or used in this repo; use a YAML parse check or structural assertions matching `tests/tools/dev-cli-tests/`).
 - The deploy job is not part of this task. Task 529 adds it to this file.
 
 ## Checklist
