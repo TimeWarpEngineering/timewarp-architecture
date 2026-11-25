@@ -51,6 +51,8 @@ Acceptance:
 
 - Created: 3163313 (2026-11-24)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 970ee484-a715-4332-9d37-9e0ed7254053, max-turns 500, Done — 2026-11-24T23:53:06Z
+- Review oracle: grok, session 01a20ffa-57ea-7711-a899-b092956ce284, effort 1, roster general, round 1, 2026-11-25
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20ffa-57ea-7711-a899-b092956ce284, max-turns 80, artifacts general.md, merged.md, disposition.md — 2026-11-25T00:04:56Z
 
 ## Results
 
@@ -79,6 +81,28 @@ Acceptance:
 Smoke: `./bin/dev test --project web-server-integration-tests --filter-class CommonServerModuleEndpoints_`
 Expect: 1 test passes; the log shows `GET http://localhost/api/debug-config - 404`. Also
 `grep -rn GetDebugView source` prints nothing.
+
+### Review
+
+- Round 1, effort 1, roster general (grok session 01a20ffa-57ea-7711-a899-b092956ce284, 2026-11-25).
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count 0.
+- Disposition: clean (`review/disposition.md`).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Gates were not re-run. Build, the filtered test, and audit stay on the implementer record above.
+
+## Learnings
+
+### Misread — no remaining `debug-config` string
+
+`## Goal (implementer restatement)` says no `debug-config` or `GetDebugView` reference remains under `source/`, `tests/`, or `skills/`. The original task requires the regression test to request `GET /api/debug-config`. The test keeps that route string. Product code under those trees has neither token. Not filed as a finding.
+
+### Misread — `ci (fast)` and `template-smoke`
+
+The original task says the test stays Docker-free so it runs in `ci (fast)` and `template-smoke`. The restatement drops that sentence and keeps the tiny `UseTestServer` host. The test follows the cited file in `web-server-integration-tests`. `TestGroups` places that project in the integration group, so `ci (integration)` runs it on pull requests. Nightly `template-smoke --app-tests` runs generated test projects, including this one. `ci (fast)` does not include integration projects. The pull-request `template-smoke` job runs tiers 1–3 only. `tests/foundation/**` is excluded from the template, so a foundation suite would miss `template-smoke`. The cited pattern and the two lane names do not meet in one existing project. The regression still runs on the pull-request integration job and on the nightly generated-app test pass. Not filed as a finding.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
