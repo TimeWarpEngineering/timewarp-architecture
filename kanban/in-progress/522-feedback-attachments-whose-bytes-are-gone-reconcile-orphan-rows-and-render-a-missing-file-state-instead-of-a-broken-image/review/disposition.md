@@ -2,12 +2,12 @@
 
 **Date:** 2026-11-25
 **Outcome:** clean
-**Rounds:** 2
+**Rounds:** 3
 **Final open count:** 0
 
 ## Summary
 
-Round 1 raised one bug: the developer guide described a host with the postgres flag and no connection string as having the feedback stores unregistered. The fix pass rewrote that section. Round 2 re-read the guide against `FeedbackModule`, `PostgresDbModule`, and `UnavailableFeedbackStorage` and confirmed the stand-in, the replacement rule, and the exception text. No new findings. The fix-pass `## Results` record covers the doc-only delta (build and audit; no test file changed). Gates were not re-run in this round.
+Round 1 raised one bug: the developer guide described a host with the postgres flag and no connection string as having the feedback stores unregistered. The fix pass rewrote that section. Round 2 confirmed the rewrite. Round 3 re-read the branch against `master` (the feature, the guide, and the template-smoke move to `ubuntu-latest`) and confirmed M1 still holds. No new findings. This round did not re-run build, test, or audit; the recorded `## Results` cover those gates, including the doc-only fix and the CI runner change.
 
 ## Exception log (if accepted-exceptions)
 

@@ -89,7 +89,10 @@ the body image) are in `evidence/`; `ganda repo audit` passes.
 - Review oracle round 1: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20f5b-b48c-7613-8231-9dc945372089, max-turns 200, artifacts general.md, merged.md — 2026-11-24T21:10:07Z
 - Reviewer round 2: grok session 01a20f67-f107-7801-8ac3-611a1dcb3914 (2026-11-25), effort 1, roster general. M1 re-verified fixed. Disposition clean (`review/disposition.md`).
 - Review oracle round 2: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20f67-f107-7801-8ac3-611a1dcb3914, max-turns 80, artifacts round-2/general.md, round-2/merged.md, disposition.md — 2026-11-25
+- Reviewer round 3: grok session 01a21052-115e-7190-8c29-c9fa76ca9513 (2026-11-25), effort 3, roster general. Re-read the branch vs `master`, including the template-smoke runner change. M1 still fixed. No new findings. Disposition clean (`review/disposition.md`).
+- Review oracle round 3: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21052-115e-7190-8c29-c9fa76ca9513, max-turns 200, artifacts round-3/general.md, round-3/merged.md, disposition.md — 2026-11-25
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 38a83b56-e1cc-4486-b78c-d7de169f9d9a, max-turns 500, Done — 2026-11-25T01:28:54Z
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21052-115e-7190-8c29-c9fa76ca9513, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T01:37:12Z
 
 ### 2026-11-25 — implementer (task-work walk)
 
@@ -223,18 +226,20 @@ After deploy: `GET /api/admin/feedback/01a12f40-fd5d-77ca-beff-b33d0d65c964` sho
 
 ### Review disposition
 
-- Rounds: 2. Roster: general. Round 1 effort 3 (2329 lines). Round 2 effort 1 (128-line delta since round 1).
+- Rounds: 3. Roster: general. Round 1 effort 3 (2329 lines). Round 2 effort 1 (128-line delta since round 1). Round 3 effort 3 (2127-line branch vs `master`).
 - Round 1 raised M1 (bug, now fixed): `documentation/developer/guides/feedback-attachments.md` said the feedback stores are unregistered when the postgres flag is on and no connection string is set. The fix pass states `UnavailableFeedbackStorage` (reads empty, removes no-op, filing/updating/uploading throws).
-- Round 2 re-read that guide against `FeedbackModule`, `PostgresDbModule`, and `UnavailableFeedbackStorage`. M1 holds as fixed. No new findings. This round did not re-run build, test, or audit; the fix-pass record covers the doc-only change.
+- Round 2 re-read that guide against `FeedbackModule`, `PostgresDbModule`, and `UnavailableFeedbackStorage`. M1 holds as fixed. No new findings. That round did not re-run build, test, or audit; the fix-pass record covers the doc-only change.
+- Round 3 re-read the branch vs `master`: `IsFilePresent` from `ExistsAsync` on the filer read and every admin view, `FeedbackBody` / `MissingFile` for a missing file in the list and in the body, in-memory stores removed, `UnavailableFeedbackStorage` when no connection string is set, and `template-smoke` on `ubuntu-latest`. M1 still fixed. No new findings. This round did not re-run build, test, or audit; the recorded gates cover the feature, the doc fix, and the runner change.
 - Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0.
-- Outcome: clean. No wontfix and no escalation.
-- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Outcome: clean. No wontfix and no escalation. The checklist-versus-restatement mismatch on the reconcile pass stays a misread under `## Learnings`.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: one open bug, M1 (guide described the stores as unregistered)
 - Round 1 fix pass: M1 fixed in the guide
 - Round 2: Done
+- Round 3: Done
 ## Notes
 
 Verified 2026-11-24 through the agent API (`feedback:read`): `GET /api/admin/feedback/01a12f40-fd5d-77ca-beff-b33d0d65c964`
