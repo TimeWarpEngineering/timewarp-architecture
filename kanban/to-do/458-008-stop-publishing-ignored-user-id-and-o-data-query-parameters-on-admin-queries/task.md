@@ -24,7 +24,6 @@ Owner: contracts (`get-roles-contracts.cs` and siblings); `source/foundation/fou
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -36,6 +35,8 @@ Owner: contracts (`get-roles-contracts.cs` and siblings); `source/foundation/fou
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
+- Grooming note: removing `IAuthApiRequest.UserId` from the wire affects `open-api-delete-request-body-tests.cs` (which asserts `userId` on `DELETE`/`GET /api/Roles/{roleId}`), up to 16 `[AuthApiRequest]` contracts, SPA `role-state` callers, `EndpointAuthPostureAnalyzer` (`TWA0014`), and `skills/tw-web-api-contracts/SKILL.md`.
 
 ## Session
 
