@@ -1,6 +1,7 @@
 #region Purpose
 // Web.Server project-resource wiring that needs no other resource: run-mode exposure and the State
-// DevTools inspector, the published Entra parameters, and the mock-authentication opt-in.
+// DevTools inspector, the published Entra parameters, the mock-authentication opt-in, and its public
+// exposure on Azure Container Apps when there is no YARP ingress.
 #endregion
 
 #region Design
@@ -20,6 +21,17 @@
 // TimeWarp__State__DevTools__CorsOrigins on the inspector, because the browser loads the SPA from there.
 // Order matters to callers: program.cs calls Configure before the api, grpc and Postgres references,
 // so the environment AddEFMigrations snapshots onto ef-tool-web-migrations is the one it always saw.
+// Exposure rule (task 527). Run mode: web-server is external on every target (the dashboard links
+// straight to it). Publish mode with the yarp flag: never external; the ingress is the one public app.
+// Publish mode without the yarp flag: external on aca and aca-neon only. ACA's managed ingress is
+// the edge there, so a web-only app needs no YARP in front, and the container app is otherwise
+// unreachable. Compose and Kubernetes stay without a host port or Ingress (the operator's edge
+// proxy, or YARP, is the front door there). On ACA the public host is
+// web-server.<environment default domain>, added to WebAuthnOptions:AllowedRpIds from the
+// environment output (PublishTarget.ContainerAppPublicHost), the same way the ingress block adds
+// ingress.<domain>; referencing web-server's own endpoint would make it reference itself.
+// program.cs calls PublishAsContainerAppsEdge in the slot IngressResource.Add takes with yarp on,
+// after AddEFMigrations, so ef-tool-web-migrations does not copy the RP-ID variable.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -47,8 +59,9 @@ internal static class WebServerResource
     IResourceBuilder<DotnetProjectResource> webServer
   )
   {
-    // External in run mode only (dashboard links straight to Web.Server). Published, the ingress is
-    // the single host-exposed service; an external web-server would publish its own host port.
+    // External in run mode here (dashboard links straight to Web.Server). Published, the ingress is
+    // the single host-exposed service; an external web-server would publish its own host port. The
+    // one published exception is aca/aca-neon without the yarp flag (PublishAsContainerAppsEdge).
     // Task 335-002: null in publish mode; the ingress block adds its origins to the inspector's CORS list.
     if (!builder.ExecutionContext.IsRunMode)
     {
@@ -62,6 +75,28 @@ internal static class WebServerResource
     IResourceBuilder<ExecutableResource> stateDevTools = builder.AddTimeWarpStateDevTools();
     webServer.WithTimeWarpStateDevTools(stateDevTools);
     return stateDevTools;
+  }
+
+  /// <summary>
+  /// Without the yarp flag: on aca and aca-neon, makes web-server the one external container app and
+  /// allows its public host as a passkey RP ID. Every other target and run mode are unchanged.
+  /// </summary>
+  internal static void PublishAsContainerAppsEdge
+  (
+    PublishTarget publishTarget,
+    IResourceBuilder<DotnetProjectResource> webServer
+  )
+  {
+    // Task 527: ContainerAppPublicHost is null outside aca/aca-neon, which also covers run mode
+    // (PublishTarget reads Publish:Target in publish mode only).
+    if (publishTarget.ContainerAppPublicHost(WebServerProjectResourceName) is not { } webServerHost)
+    {
+      return;
+    }
+
+    webServer
+      .WithExternalHttpEndpoints()
+      .WithEnvironment("WebAuthnOptions__AllowedRpIds__0", webServerHost);
   }
 
   private static void AddPublishedEntraSettings

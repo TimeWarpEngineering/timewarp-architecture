@@ -10,7 +10,8 @@
 // The handler runs that list through RunAsync. Each step delegate returns an exit code.
 // The first non-zero code stops the run, and later steps are not called.
 // A failure names the verb that retries that step and does not imply a later step ran.
-// Smoke is the two anonymous paths the Neon guide documents. It retries transport failures
+// Smoke is the two anonymous paths the Neon guide documents (web-server's own /alive in place of
+// the ingress's /web-server/alive when web-server is the public aca app). It retries transport failures
 // and HTTP 5xx inside a budget so a Neon wake-up or a scale-to-zero start can finish.
 // It never requests /api/health. Secrets are not part of these strings.
 // After smoke succeeds, FollowUpAfterSmoke says whether to open the browser.
@@ -34,6 +35,16 @@ internal static class DeployPipeline
 
   /// <summary>Anonymous ingress checks. Not <c>/api/health</c> (that opens Postgres and would keep Neon awake).</summary>
   internal static readonly string[] SmokePaths = ["/web-server/alive", "/api/identity/sign-in-methods"];
+
+  /// <summary>
+  /// The same checks straight on web-server, the public app on aca and aca-neon without the yarp flag
+  /// (task 527): <c>/web-server/alive</c> is an ingress route rewritten to web-server's <c>/alive</c>.
+  /// </summary>
+  internal static readonly string[] WebServerSmokePaths = ["/alive", "/api/identity/sign-in-methods"];
+
+  /// <summary>The smoke paths for the public container app <paramref name="publicApp"/>: web-server's own, else the ingress's.</summary>
+  internal static IReadOnlyList<string> SmokePathsFor(string publicApp) =>
+    string.Equals(publicApp, DeployOperate.WebServerResourceName, StringComparison.Ordinal) ? WebServerSmokePaths : SmokePaths;
 
   /// <summary>How long smoke may retry a cold ingress or a waking Neon database.</summary>
   internal static readonly TimeSpan SmokeBudget = TimeSpan.FromMinutes(4);

@@ -194,8 +194,8 @@ public partial class AcaPublish_Given_
     await Task.CompletedTask;
   }
 
-  // Exists only with web and yarp: without them there is no web-server or ingress host to check
-  // (Jaribu JARIBU1002 refuses a test that reaches no assertion).
+  // Exists only with web: without it there is no web-server to check (Jaribu JARIBU1002 refuses a
+  // test that reaches no assertion). With yarp the public host is the ingress; without, web-server.
 #if web
 #if yarp
   public static async Task Publish_Should_AllowTheIngressHostForPasskeys()
@@ -205,6 +205,16 @@ public partial class AcaPublish_Given_
     ContainerApp webServer = ContainerApps.Single(app => app.Name == WebServerApp);
     webServer.Text.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
     webServer.Text.ShouldContain("ingress.${aca_env_outputs_azure_container_apps_environment_default_domain}");
+    await Task.CompletedTask;
+  }
+#else
+  public static async Task Publish_Should_AllowTheWebServerHostForPasskeys()
+  {
+    // Task 527: without the yarp flag web-server is the public app; its host is
+    // web-server.<environment domain>, from the environment output, not its own endpoint.
+    ContainerApp webServer = ContainerApps.Single(app => app.Name == WebServerApp);
+    webServer.Text.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
+    webServer.Text.ShouldContain("web-server.${aca_env_outputs_azure_container_apps_environment_default_domain}");
     await Task.CompletedTask;
   }
 #endif

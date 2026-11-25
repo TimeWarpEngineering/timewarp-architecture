@@ -23,6 +23,15 @@ public partial class AppHostAgreement_Given_
     constants["IngressPortParameterName"].ShouldBe(DeployOperate.IngressPortParameter);
     constants["PasskeyRpHostParameterName"].ShouldBe(AspireDeployParameters.PasskeyRpHostParameter);
     DeployOperate.PostgresStatefulSet.ShouldBe($"statefulset/{constants["PostgresResourceName"]}-statefulset");
+
+    // Task 527: WebServerProjectResourceName aliases ServiceNames.WebServiceName, so read that literal.
+    File.ReadAllText(Path.Combine(appHost, "constants.cs"))
+      .ShouldContain("WebServerProjectResourceName = ServiceNames.WebServiceName;");
+    string serviceNames = File.ReadAllText(Path.GetFullPath(Path.Combine(
+      appHost, "..", "..", "..", "..", "foundation", "foundation-contracts", "configuration", "service-names.cs")));
+    ConstantPattern().Matches(serviceNames)
+      .Single(match => match.Groups[1].Value == "WebServiceName")
+      .Groups[2].Value.ShouldBe(DeployOperate.WebServerResourceName);
     return Task.CompletedTask;
   }
 

@@ -24,7 +24,7 @@ Azure, while the Helm chart runs on any cluster.
 - A Container Apps environment `aca-env` with its own registry, Log Analytics workspace and managed
   identity, and **no Aspire dashboard** (`WithDashboard(false)`).
 - Container apps for ingress, web-server, api-server and grpc-server; **only the ingress is
-  external**.
+  external**. Without the yarp flag there is no ingress app and **only web-server is external**.
 - **Azure Database for PostgreSQL Flexible Server** with password authentication. The admin user
   and password are the `postgres-username` / `postgres-password` parameters (the password is a
   secret). The connection string is stored in a Key Vault (`postgres-kv`) and web-server reads it
@@ -42,7 +42,9 @@ Azure, while the Helm chart runs on any cluster.
 **Deploy.** One command. Set `Azure:Location` and `Azure:ResourceGroup` first so Aspire does not
 prompt and smoke can read the ingress host. Passkeys accept the ingress host on the first deploy
 (`ingress.<environment domain>` is added to `WebAuthnOptions:AllowedRpIds`). A custom domain also
-needs `Parameters:passkey-rp-host` set to that bare DNS name.
+needs `Parameters:passkey-rp-host` set to that bare DNS name. An app without the yarp flag has no
+ingress: web-server is the external container app, smoke and `dev open` use its FQDN, and
+`web-server.<environment domain>` is the allowed passkey host.
 
 ```bash
 az login                                    # and az account set --subscription <id>

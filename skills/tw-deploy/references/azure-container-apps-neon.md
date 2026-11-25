@@ -205,7 +205,9 @@ string, and it does not refuse.
 One command, after `az login` and the two Neon secrets. Set `Azure:Location` and
 `Azure:ResourceGroup` as well. Passkeys accept the ingress host on the first deploy
 (`ingress.<environment domain>` is added to `WebAuthnOptions:AllowedRpIds`). A custom domain also
-needs `Parameters:passkey-rp-host` set to that bare DNS name.
+needs `Parameters:passkey-rp-host` set to that bare DNS name. An app without the yarp flag has no
+ingress: web-server is the external container app, smoke and `dev open` use its FQDN, and
+`web-server.<environment domain>` is the allowed passkey host.
 
 ```bash
 dev deploy --target aca-neon   # publish, deploy, migrate, smoke, open the app (--no-browser prints the URL)
