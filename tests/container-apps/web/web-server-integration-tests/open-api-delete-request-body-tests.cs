@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// The role id is the path parameter. UserId is the mock-mode caller id and travels on the query
-// string, matching GetRole and HttpApiService. A bodyless DELETE (clear xAI key) stays bodyless.
+// The role id is the path parameter and the whole request: no body and no query parameter (task
+// 458-008 removed the unread UserId), matching GetRole. A bodyless DELETE (clear xAI key) stays
+// bodyless.
 // Two probe DELETE endpoints in this file cover the other transformer branches: nullable leftover
 // scalars become optional query parameters, and a leftover collection keeps the body with
 // required false. The host is the OpenAPI pipeline only: FastEndpoints discovers the generated
@@ -82,7 +83,7 @@ public class DeleteRoles_Given_
     }
   }
 
-  public static async Task DeleteRole_Should_Omit_RequestBody_And_Publish_UserId_Query()
+  public static async Task DeleteRole_Should_Omit_RequestBody_And_Publish_Only_The_Path_Id()
   {
     JsonElement operation = await OperationAsync("/api/admin/roles/{roleId}", "delete");
     operation.TryGetProperty("requestBody", out _).ShouldBeFalse();
@@ -91,19 +92,14 @@ public class DeleteRoles_Given_
     roleId.TryGetProperty("required", out JsonElement roleRequired).ShouldBeTrue();
     roleRequired.GetBoolean().ShouldBeTrue();
 
-    JsonElement userId = Parameter(operation, "userId", "query");
-    userId.TryGetProperty("required", out JsonElement userRequired).ShouldBeTrue();
-    userRequired.GetBoolean().ShouldBeTrue();
-    string format = userId.GetProperty("schema").GetProperty("format").GetString()!;
-    format.ShouldBe("uuid");
+    ParameterNames(operation).ShouldBe(["path:roleId"]);
   }
 
-  public static async Task GetRole_Should_Keep_UserId_On_The_Query_String()
+  public static async Task GetRole_Should_Publish_Only_The_Path_Id()
   {
     JsonElement operation = await OperationAsync("/api/admin/roles/{roleId}", "get");
     operation.TryGetProperty("requestBody", out _).ShouldBeFalse();
-    Parameter(operation, "userId", "query");
-    Parameter(operation, "roleId", "path");
+    ParameterNames(operation).ShouldBe(["path:roleId"]);
   }
 
   public static async Task ClearUserXaiApiKey_Should_Stay_Without_A_Body()
@@ -129,6 +125,10 @@ public class DeleteRoles_Given_
     IsRequired(requestBody).ShouldBeFalse();
     Parameter(operation, "id", "path");
   }
+
+  private static List<string> ParameterNames(JsonElement operation) =>
+    [.. operation.GetProperty("parameters").EnumerateArray()
+      .Select(static item => $"{item.GetProperty("in").GetString()}:{item.GetProperty("name").GetString()}")];
 
   // The OpenAPI writer omits required when it is false.
   private static bool IsRequired(JsonElement element) =>

@@ -26,7 +26,6 @@ public static partial class SetRoleAgentScopes
   [Operation("roles.set-agent-scopes", Description = "Replace a role's agent scopes.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public List<string> Scopes { get; set; } = [];
   }
 
@@ -34,7 +33,6 @@ public static partial class SetRoleAgentScopes
   {
     public Validator()
     {
-      RuleFor(command => command).SetValidator(new AuthApiRequestValidator());
       RuleFor(command => command.RoleId).NotEmpty();
       RuleFor(command => command.Scopes).NotNull();
       RuleForEach(command => command.Scopes)

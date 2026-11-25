@@ -60,7 +60,7 @@ namespace TimeWarp.Architecture.Features.Identity
 
       RevokeHandler revoke = new(store, new StubCurrentPrincipalAccessor(owner));
       OneOf.OneOf<RevokeCredential.Response, SharedProblemDetails> revoked =
-        await revoke.Handle(new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = target.Id.Value }, CancellationToken.None);
+        await revoke.Handle(new RevokeCredential.Command { CredentialId = target.Id.Value }, CancellationToken.None);
       revoked.IsT0.ShouldBeTrue();
 
       bool written = await recorder.RecordAsync(store, preRevokeSnapshot);
@@ -80,7 +80,7 @@ namespace TimeWarp.Architecture.Features.Identity
 
       RevokeHandler revoke = new(interleaving, new StubCurrentPrincipalAccessor(owner));
       OneOf.OneOf<RevokeCredential.Response, SharedProblemDetails> result =
-        await revoke.Handle(new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = target.Id.Value }, CancellationToken.None);
+        await revoke.Handle(new RevokeCredential.Command { CredentialId = target.Id.Value }, CancellationToken.None);
 
       result.IsT0.ShouldBeTrue("one stale conflict caused by the stamp is absorbed by the revoke retry loop");
       interleaving.StampWritten.ShouldBeTrue();
@@ -97,7 +97,7 @@ namespace TimeWarp.Architecture.Features.Identity
       (InMemoryPrincipalStore store, PrincipalId owner, Credential target) = await SeedAsync();
       var recorder = new CredentialUsageRecorder(new ManualClock(T0));
       RevokeHandler revoke = new(store, new StubCurrentPrincipalAccessor(owner));
-      (await revoke.Handle(new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = target.Id.Value }, CancellationToken.None)).IsT0.ShouldBeTrue();
+      (await revoke.Handle(new RevokeCredential.Command { CredentialId = target.Id.Value }, CancellationToken.None)).IsT0.ShouldBeTrue();
 
       (await recorder.RecordCoalescedAsync(store, target.Id)).ShouldBeFalse();
       (await store.GetCredentialAsync(target.Id))!.Version.ShouldBe(1);
@@ -187,7 +187,7 @@ namespace TimeWarp.Architecture.Features.Identity
         new InMemorySiteSettingsStore()
       );
       OneOf.OneOf<GetCredentials.Response, SharedProblemDetails> result =
-        await handler.Handle(new GetCredentials.Query { UserId = Guid.NewGuid() }, CancellationToken.None);
+        await handler.Handle(new GetCredentials.Query(), CancellationToken.None);
 
       result.IsT0.ShouldBeTrue();
       GetCredentials.CredentialSummary usedRow = result.AsT0.Credentials.Single(row => row.Id == used.Id);

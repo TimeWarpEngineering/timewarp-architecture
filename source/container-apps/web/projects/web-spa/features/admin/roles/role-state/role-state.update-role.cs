@@ -5,7 +5,6 @@
 #region Design
 // Action ctor takes UpdateRole.Command so the dispatch method is RoleState.UpdateRole(Command).
 // RoleEditForm binds IRoleDetails (the Command) and submits via that method.
-// UserId is IAuthApiRequest mock-mode only; stamp it here so the form never sees it.
 // UpdateRole.Response is empty, so success builds a new GetRole.Response from the command.
 // Submitted is the command GetRequest built and sent. The form's command stays editable
 // while the request is in flight, so HandleSuccess reads the sent copy.
@@ -52,7 +51,6 @@ partial class RoleState
       {
         Command submitted = new()
         {
-          UserId = Guid.NewGuid(),
           RoleId = action.Command.RoleId,
           Name = action.Command.Name,
           Description = action.Command.Description

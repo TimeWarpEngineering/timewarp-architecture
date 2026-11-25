@@ -173,7 +173,7 @@ public class GetCredentialsAvailability_Returns_
   private static Task<HttpResponseMessage> RevokeAsync(HttpClient client, Guid credentialId)
   {
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
-    var revoke = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = credentialId };
+    var revoke = new RevokeCredential.Command { CredentialId = credentialId };
     return testApiService.GetHttpResponseMessage(revoke, CancellationToken.None);
   }
 
@@ -194,7 +194,6 @@ public class GetCredentialsAvailability_Returns_
         await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
       var addCommand = new AddPasskey.Command
       {
-        UserId = Guid.NewGuid(),
         CredentialId = credentialId,
         ClientDataJson = clientDataJson,
         AttestationObject = attestationObject
@@ -258,7 +257,7 @@ public class GetCredentialsAvailability_Returns_
 
   private static async Task<GetCredentials.Response> ListAsync(HttpClient client, bool includeRevoked = false)
   {
-    var query = new GetCredentials.Query { UserId = Guid.NewGuid(), IncludeRevoked = includeRevoked };
+    var query = new GetCredentials.Query { IncludeRevoked = includeRevoked };
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     GetCredentials.Response? parsed =

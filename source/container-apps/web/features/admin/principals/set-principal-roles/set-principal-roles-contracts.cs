@@ -27,7 +27,6 @@ public static partial class SetPrincipalRoles
   [ApiRoute("api/admin/principals/{PrincipalId:guid}/roles", HttpVerb.Put)]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public List<Guid> RoleIds { get; set; } = [];
   }
 
@@ -35,7 +34,6 @@ public static partial class SetPrincipalRoles
   {
     public Validator()
     {
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
       RuleFor(x => x.PrincipalId).NotEmpty();
       RuleFor(x => x.RoleIds).NotNull();
       // Fully qualify product RoleIds — Command.RoleIds property would otherwise shadow the type.

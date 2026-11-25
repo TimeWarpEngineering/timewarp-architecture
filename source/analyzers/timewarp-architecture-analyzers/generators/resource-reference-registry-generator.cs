@@ -9,10 +9,8 @@
 // gated on the compilation declaring the hand-written ResourceReferenceType (the SPA), and the
 // generated list lives in that type's namespace. Each entry calls ResourceReferenceType.Create
 // with the prefix, display name, id type name, the [EndpointAuthorize] Policy, and lambdas that
-// build the Query (Search set; UserId stamped with a fresh Guid when the query is an
-// IAuthApiRequest, so such a handler must not rely on it; see ReferenceableResourceShape), list
-// the Response items, and read the id
-// and label. Contracts whose shape is wrong (ReferenceableResourceShape, TWA0033 in contracts)
+// build the Query (Search set; see ReferenceableResourceShape), list the Response items, and
+// read the id and label. Contracts whose shape is wrong (ReferenceableResourceShape, TWA0033 in contracts)
 // are skipped. A repeated prefix keeps the first contract by name; TWA0034 reports it in
 // contracts. Entries are sorted by prefix for deterministic output.
 #endregion
@@ -81,13 +79,7 @@ public sealed class ResourceReferenceRegistryGenerator : IIncrementalGenerator
       sb.Append("      ").Append(Literal(shape.DisplayName)).Append(",\n");
       sb.Append("      ").Append(Literal(shape.IdTypeName)).Append(",\n");
       sb.Append("      ").Append(shape.Policy is null ? "null" : Literal(shape.Policy)).Append(",\n");
-      sb.Append("      static search => new ").Append(shape.QueryType).Append(" { Search = search");
-      if (shape.QuerySetsUserId)
-      {
-        sb.Append(", UserId = global::System.Guid.NewGuid()");
-      }
-
-      sb.Append(" },\n");
+      sb.Append("      static search => new ").Append(shape.QueryType).Append(" { Search = search },\n");
       sb.Append("      static response => response.").Append(shape.ItemsProperty).Append(",\n");
       sb.Append("      static item => item.").Append(shape.IdProperty).Append(".ToString(),\n");
       sb.Append("      static item => item.").Append(shape.LabelProperty).Append('\n');

@@ -6,7 +6,7 @@
 // Names match ActionCatalogParameter.Name, case-insensitive. JsonElement and other JSON values
 // become the parameter's CLR type so ActionCatalogArguments.Get receives a real instance:
 // it converts scalars, and it does not deserialize arbitrary complex objects.
-// Missing optional trailing arguments are omitted. UserId is not filled here; handlers stamp it.
+// Missing optional trailing arguments are omitted.
 // Options derive from ContractSerializationDefaults (camelCase, PascalCase string enums with
 // integers refused), so a nested enum binds from the member name the schema advertises. The copy
 // only adds case-insensitive property reads, because a model may echo a property in another case.

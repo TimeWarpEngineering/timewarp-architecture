@@ -1,42 +1,24 @@
 #region Purpose
-// Marks a request as requiring an authenticated user and carries the caller's UserId.
+// Marks a request whose endpoint serves an authenticated caller.
 #endregion
 
 #region Design
-// UserId duplicates the token's NameIdentifier claim by design: the server still validates the
-// token as the source of truth, while the explicit property lets the MockAPI produce
-// user-specific responses without any real authentication in play.
-// The validator targets the interface, so one NotEmpty rule covers every auth request; concrete
-// request validators Include this validator instead of restating the rule.
+// Task 458-008: the interface carries no members. It used to carry a required Guid UserId that
+// published as a required query or body field on every auth contract, while no hosted handler read
+// it: the server takes the caller from the session or bearer principal (ICurrentPrincipalAccessor)
+// and [EndpointAuthorize] secures the route. A generated client had to invent a Guid to call these
+// endpoints, so UserId left the wire and AuthApiRequestValidator went with it. A request never names
+// its caller; handlers read the principal.
+// The marker stays so EndpointAuthPostureAnalyzer (TWA0014) can flag an [EndpointAllowAnonymous]
+// contract whose Query/Command says it serves an authenticated caller.
+// A client-only contract that needs a user id for mock responses declares its own property
+// (GetCurrentUser.Query.UserId); it never reaches a server.
 #endregion
 
 namespace TimeWarp.Foundation.Features;
 
 /// <summary>
-/// API request that carries the caller's <see cref="UserId"/> for authenticated operations.
+/// API request whose endpoint serves an authenticated caller. The server reads the caller from the
+/// session or bearer principal; the request does not carry it.
 /// </summary>
-public interface IAuthApiRequest : IApiRequest
-{
-  /// <summary>
-  /// The User Id of the current user.
-  /// </summary>
-  /// <remarks>This should match the NameIdentifier claim.
-  /// The Server must always validate the token before trusting any claim.
-  /// The UserId should equal the NameIdentifier is a secondary check.</remarks>
-  /// <remarks>This facilitates The MockAPI to give better responses to exercise the UX.</remarks>
-  public Guid UserId { get; set; }
-}
-
-/// <summary>
-/// Shared FluentValidation rules for every <see cref="IAuthApiRequest"/>.
-/// </summary>
-public sealed class AuthApiRequestValidator : AbstractValidator<IAuthApiRequest>
-{
-  /// <summary>
-  /// Requires a non-empty <see cref="IAuthApiRequest.UserId"/>.
-  /// </summary>
-  public AuthApiRequestValidator()
-  {
-    RuleFor(r => r.UserId).NotEmpty();
-  }
-}
+public interface IAuthApiRequest : IApiRequest;

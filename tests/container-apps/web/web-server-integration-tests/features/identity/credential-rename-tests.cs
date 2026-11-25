@@ -52,7 +52,7 @@ public class Returns_
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
-    var command = new RenameCredential.Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid(), Nickname = "x" };
+    var command = new RenameCredential.Command { CredentialId = Guid.NewGuid(), Nickname = "x" };
 
     HttpResponseMessage response = await testApiService.GetHttpResponseMessage(command, CancellationToken.None);
 
@@ -71,7 +71,7 @@ public class Returns_
     GetCredentials.CredentialSummary target = before.Credentials.Single();
     target.Nickname.ShouldBeNull();
 
-    var command = new RenameCredential.Command { UserId = Guid.NewGuid(), CredentialId = target.Id.Value, Nickname = "  Work laptop " };
+    var command = new RenameCredential.Command { CredentialId = target.Id.Value, Nickname = "  Work laptop " };
     HttpResponseMessage response = await testApiService.GetHttpResponseMessage(command, CancellationToken.None);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -92,7 +92,7 @@ public class Returns_
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     GetCredentials.CredentialSummary target = (await ListAsync(client)).Credentials.Single();
-    var command = new RenameCredential.Command { UserId = Guid.NewGuid(), CredentialId = target.Id.Value, Nickname = "ci-runner" };
+    var command = new RenameCredential.Command { CredentialId = target.Id.Value, Nickname = "ci-runner" };
 
     HttpResponseMessage response = await testApiService.GetHttpResponseMessage(command, CancellationToken.None);
 
@@ -111,7 +111,6 @@ public class Returns_
 
     var command = new RenameCredential.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = target.Id.Value,
       Nickname = new string('x', Credential.MaxNicknameLength + 1)
     };
@@ -135,10 +134,10 @@ public class Returns_
     var testApiService = new TestApiService(attacker, ContractSerializationDefaults.Options, bearerToken: null);
 
     HttpResponseMessage crossPrincipal = await testApiService.GetHttpResponseMessage(
-      new RenameCredential.Command { UserId = Guid.NewGuid(), CredentialId = victimCredential.Id.Value, Nickname = "hijacked" },
+      new RenameCredential.Command { CredentialId = victimCredential.Id.Value, Nickname = "hijacked" },
       CancellationToken.None);
     HttpResponseMessage unknown = await testApiService.GetHttpResponseMessage(
-      new RenameCredential.Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid(), Nickname = "ghost" },
+      new RenameCredential.Command { CredentialId = Guid.NewGuid(), Nickname = "ghost" },
       CancellationToken.None);
 
     // Same status AND same body shape — no existence oracle (RevokeCredential's rule, reused).
@@ -150,7 +149,7 @@ public class Returns_
 
   private static async Task<GetCredentials.Response> ListAsync(HttpClient client)
   {
-    var query = new GetCredentials.Query { UserId = Guid.NewGuid(), IncludeRevoked = true };
+    var query = new GetCredentials.Query { IncludeRevoked = true };
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     GetCredentials.Response? parsed =

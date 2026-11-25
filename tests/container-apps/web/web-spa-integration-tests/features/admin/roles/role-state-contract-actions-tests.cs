@@ -42,7 +42,6 @@ public class RoleState_Contract_Actions_Should
     state.RoleList.ShouldNotBeNull().Select(role => role.RoleId).ShouldBe([RoleId]);
     state.RoleSnapshot.ShouldBeNull();
     GetRoles.Query sent = server.Requests.OfType<GetRoles.Query>().ShouldHaveSingleItem();
-    sent.UserId.ShouldNotBe(Guid.Empty);
   }
 
   public static async Task GetRole_Should_Store_The_Response()
@@ -61,7 +60,6 @@ public class RoleState_Contract_Actions_Should
     stored.AgentScopes.ShouldBe(["scope.read"]);
     GetRole.Query sent = server.Requests.OfType<GetRole.Query>().ShouldHaveSingleItem();
     sent.RoleId.ShouldBe(RoleId);
-    sent.UserId.ShouldNotBe(Guid.Empty);
 
     UpdateRole.Command copy = UpdateRole.Command.From(stored);
     copy.RoleId.ShouldBe(RoleId);
@@ -89,7 +87,6 @@ public class RoleState_Contract_Actions_Should
     UpdateRole.Command sent = server.Requests.OfType<UpdateRole.Command>().ShouldHaveSingleItem();
     sent.ShouldNotBeSameAs(page);
     sent.Name.ShouldBe("Copy editor");
-    sent.UserId.ShouldNotBe(Guid.Empty);
     page.Name.ShouldBe("Copy editor");
   }
 
@@ -144,7 +141,6 @@ public class RoleState_Contract_Actions_Should
     SetRolePermissions.Command sent = server.Requests.OfType<SetRolePermissions.Command>().ShouldHaveSingleItem();
     sent.RoleId.ShouldBe(RoleId);
     sent.PermissionIds.ShouldBe([PermissionIds.AdminRolesRead, PermissionIds.AdminRolesManage], ignoreOrder: true);
-    sent.UserId.ShouldNotBe(Guid.Empty);
     sent.ShouldNotBeSameAs(page);
     page.PermissionIds.Count.ShouldBe(2);
     RoleState state = scope.Store.GetState<RoleState>();

@@ -1,14 +1,13 @@
 #region Purpose
-// Endpoint-centric contract for listing roles with OData-style paging/sorting.
+// Endpoint-centric contract for listing roles, optionally filtered by a name search.
 #endregion
 
 #region Design
-// Uses the [AuthApiRequest] and [OpenDataQueryParameters] attributes (not the interfaces)
-// so the source generator emits both the auth members and the paging members onto the
-// partial Query; GetRouteWithQueryString then merges the two generated parameter sets into
-// one query string. RoleDto is a flat read model separate from IRoleDetails because list
-// rows are display-only, and Response derives from ListResponse to carry TotalCount for
-// paging. Permissions on RoleDto (task 182-004 / 206) feed list summary chips and
+// Search is the only query parameter, because it is the only member the handler reads (task
+// 458-008 removed the unread UserId and the OData Top/Skip/Filter/OrderBy/ReturnTotalCount: the
+// role catalog is small and the handler returns every match ordered by name). RoleDto is a flat
+// read model separate from IRoleDetails because list rows are display-only, and Response derives
+// from ListResponse to carry TotalCount (the match count). Permissions on RoleDto (task 182-004 / 206) feed list summary chips and
 // RoleDetailPage drafts — fine for the small product role catalog (RoleIds.All + demo creates).
 // AgentScopes on RoleDto (task 466) is the separate agent-scope list the same page edits.
 // GetMockResponseFactory serves the SPA's MockWebApiService offline.
@@ -16,7 +15,6 @@
 // roles split (manage is Create/Update/Delete/SetRolePermissions). Server
 // PermissionRequirementHandler evaluates via IPermissionEvaluator; SPA pages use
 // PermissionIds.AdminRolesRead (182-003 claim policies).
-// [AuthApiRequest] on the Query remains a client-facing/mock-mode identity signal only.
 // AuthenticationSchemes (task 158 / 161): identity-session + mock-identity-session so the
 // generated FastEndpoint's AuthSchemes(...) invokes the mock handler under closed-box ingress
 // tests. PermissionIds policies have no AddAuthenticationSchemes; Policies(...) alone would
@@ -45,9 +43,7 @@ public static partial class GetRoles
 
   [ApiRoute("api/admin/roles", HttpVerb.Get)]
   [Operation("roles.list", Description = "List roles, optionally filtered by a name search.", Group = "admin.roles")]
-  [OpenDataQueryParameters]
-  [AuthApiRequest]
-  public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public string? Search { get; set; }
 
@@ -55,8 +51,6 @@ public static partial class GetRoles
     {
       var collection = new NameValueCollection
       {
-        GetAuthQueryParameters(),
-        GetOpenDataQueryParameters(),
         { nameof(Search), string.IsNullOrWhiteSpace(Search) ? null : Search.Trim() },
       };
       return $"{GetRoute()}?{this.GetQueryString(collection)}";
@@ -67,7 +61,6 @@ public static partial class GetRoles
   {
     public Validator()
     {
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
       RuleFor(x => x.Search).MaximumLength(MaxSearchLength);
     }
   }

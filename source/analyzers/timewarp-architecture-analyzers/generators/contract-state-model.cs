@@ -38,7 +38,6 @@ internal sealed record ContractStateModel
 /// <param name="IsDestructive">The request or contract carries [Destructive]: Confirm…Async is required.</param>
 /// <param name="RequestIsOptional">A Query with a public parameterless constructor: the dispatch overload defaults it.</param>
 /// <param name="CopiedMembers">Public settable request properties copied into the request that is sent.</param>
-/// <param name="StampsUserId">The request is an auth request with a settable Guid UserId: a new id is stamped.</param>
 internal sealed record ContractActionModel
 (
   string Name,
@@ -48,8 +47,7 @@ internal sealed record ContractActionModel
   bool IsDraft,
   bool IsDestructive,
   bool RequestIsOptional,
-  EquatableArray<string> CopiedMembers,
-  bool StampsUserId
+  EquatableArray<string> CopiedMembers
 )
 {
   public string ActionSetName => Name + "ActionSet";

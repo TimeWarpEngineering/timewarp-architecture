@@ -49,7 +49,7 @@ public class Returns_
 
     OneOf<RevokeCredential.Response, SharedProblemDetails> result = await handler.Handle
     (
-      new RevokeCredential.Command { CredentialId = target.Id.Value, UserId = Guid.NewGuid() },
+      new RevokeCredential.Command { CredentialId = target.Id.Value },
       CancellationToken.None
     );
 
@@ -79,7 +79,7 @@ public class Returns_
 
     OneOf<RevokeCredential.Response, SharedProblemDetails> result = await handler.Handle
     (
-      new RevokeCredential.Command { CredentialId = target.Id.Value, UserId = Guid.NewGuid() },
+      new RevokeCredential.Command { CredentialId = target.Id.Value },
       CancellationToken.None
     );
 

@@ -6,7 +6,7 @@
 #region Design
 // Task 110: the generator's fail-open default (no marker -> AllowAnonymous()) let an [ApiEndpoint]
 // contract's real auth intent go unstated — including contracts that themselves declare
-// IAuthApiRequest/[AuthApiRequest]. The fix flips the default to fail-closed (no marker -> emit
+// IAuthApiRequest. The fix flips the default to fail-closed (no marker -> emit
 // NOTHING, so FastEndpoints requires authentication by default) and makes anonymous a STATED
 // choice: every [ApiEndpoint] contract now carries exactly one of [EndpointAuthorize] or this
 // attribute (TWA0013 enforces the pairing; TWA0014 flags both-present or a contradiction with

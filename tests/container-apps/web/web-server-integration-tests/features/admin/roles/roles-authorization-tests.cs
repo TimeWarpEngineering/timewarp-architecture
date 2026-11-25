@@ -96,7 +96,7 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-    var query = new GetRoles.Query { UserId = Guid.NewGuid() };
+    var query = new GetRoles.Query();
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -130,7 +130,7 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-    var query = new GetRoles.Query { UserId = Guid.NewGuid() };
+    var query = new GetRoles.Query();
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -167,7 +167,7 @@ public class Returns_
       using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
       client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-      var query = new GetRoles.Query { UserId = Guid.NewGuid() };
+      var query = new GetRoles.Query();
       HttpResponseMessage getResponse = await client.GetAsync(query.GetRouteWithQueryString());
       getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 

@@ -11,7 +11,7 @@
   not copy on every render. A membership save keeps name and description, so an unsaved
   name edit stays. Blazilla FluentValidator takes the same RoleDetailsValidator as create,
   so only Name and Description are validated. RoleId is copied inside From (CopyBeyondDetails).
-  UserId is stamped in the handler. A failed save does not throw. Copying from the
+  A failed save does not throw. Copying from the
   unchanged snapshot puts the form back.
   The form sits in FormPrefillScope for UpdateRole, so Prefill.Role.UpdateRole drafts Name and
   Description onto the working copy (never RoleId) and each FormField shows the Agent badge.

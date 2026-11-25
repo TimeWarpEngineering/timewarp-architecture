@@ -136,7 +136,6 @@ public class PrincipalActions_Should_
     seen.ShouldNotBeNull();
     seen.RoleIds.ShouldBe([RoleIds.Administrator]);
     seen.ShouldNotBeSameAs(page);
-    seen.UserId.ShouldNotBe(Guid.Empty);
     page.RoleIds.ShouldBe([RoleIds.Administrator]);
     scope.Store.GetState<PrincipalState>().LastSetPrincipalRolesSucceeded.ShouldBeTrue();
   }
@@ -183,7 +182,6 @@ public class PrincipalActions_Should_
     seen.ShouldNotBeNull();
     seen.Scopes.ShouldBe([AgentScopes.FeedbackRead]);
     seen.ShouldNotBeSameAs(page);
-    seen.UserId.ShouldNotBe(Guid.Empty);
     page.Scopes.ShouldBe([AgentScopes.FeedbackRead]);
     scope.Store.GetState<PrincipalState>().LastSetPrincipalAgentScopesSucceeded.ShouldBeTrue();
   }

@@ -21,9 +21,8 @@ The shape, which **TWA0033** enforces:
   constructor, and has a public settable `string? Search`. No member other than `Search` may be
   `required`. Match case-insensitively, treat a blank term as "everything", carry it in
   `GetRouteWithQueryString()`, and cap its length in the `Validator`.
-- An `IAuthApiRequest` query needs a public `UserId` setter. The `@` search stamps a fresh
-  `Guid` there, not the user's id, so its handler must resolve the user from the authenticated
-  principal and never read `UserId`.
+- The `@` search sets `Search` only. The query does not name the caller, so its handler
+  resolves the user from the authenticated principal.
 - The nested `Response` is a public class or record class with an enumerable items property
   (`Items` by default; set `ItemsProperty` otherwise). The item type is public.
 - Each item has `IdProperty` (a `[TypedId]` struct, or `Guid` when the slice's typed id lives

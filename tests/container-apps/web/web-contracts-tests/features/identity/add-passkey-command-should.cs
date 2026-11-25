@@ -18,7 +18,6 @@ public class AddPasskey_Command_Should
   {
     AddPasskey.Command command = new()
     {
-      UserId = Guid.NewGuid(),
       CredentialId = "AQIDBA",
       ClientDataJson = "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIn0",
       AttestationObject = "o2NmbXRkbm9uZQ",
@@ -42,7 +41,6 @@ public class AddPasskey_Command_Should
   {
     AddPasskey.Command command = new()
     {
-      UserId = Guid.NewGuid(),
       CredentialId = "AQIDBA",
       ClientDataJson = "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIn0",
       AttestationObject = "o2NmbXRkbm9uZQ"

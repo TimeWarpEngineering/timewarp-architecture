@@ -1,6 +1,6 @@
 #region Purpose
 // Verifies the Ask @ registry generator: marked list queries become entries (policy, id type,
-// search, UserId stamp), bad shapes and repeated prefixes are skipped, and nothing is emitted
+// search), bad shapes and repeated prefixes are skipped, and nothing is emitted
 // without the ResourceReferenceType host.
 #endregion
 
@@ -19,7 +19,7 @@ public class ResourceReferenceRegistryGenerator_Tests
     namespace TimeWarp.Foundation.Features
     {
       public interface IApiRequest { }
-      public interface IAuthApiRequest : IApiRequest { System.Guid UserId { get; set; } }
+      public interface IAuthApiRequest : IApiRequest { }
     }
     namespace TimeWarp.Architecture.Attributes
     {
@@ -75,7 +75,6 @@ public class ResourceReferenceRegistryGenerator_Tests
         public sealed class Query : TimeWarp.Foundation.Features.IAuthApiRequest
         {
           public string? Search { get; set; }
-          public System.Guid UserId { get; set; }
         }
         public sealed class Response
         {
@@ -145,9 +144,10 @@ public class ResourceReferenceRegistryGenerator_Tests
     generated.ShouldContain("static item => item.WidgetId.ToString(),");
     generated.ShouldContain("static item => item.Name");
 
-    // An IAuthApiRequest query gets a stamped UserId (its handler must not rely on it).
+    // An IAuthApiRequest query sets Search only: the request does not name its caller.
     generated.ShouldContain("\"gadget\",\n      \"Gadgets\",\n      \"Guid\",\n      \"gadgets.read\",");
-    generated.ShouldContain("{ Search = search, UserId = global::System.Guid.NewGuid() }");
+    generated.ShouldContain("static search => new global::MyApp.Features.Widgets.ListGadgets.Query { Search = search },");
+    generated.ShouldNotContain("UserId");
     generated.ShouldContain("static response => response.Gadgets,");
 
     // Sorted by prefix.

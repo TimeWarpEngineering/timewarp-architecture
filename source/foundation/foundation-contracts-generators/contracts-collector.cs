@@ -1,13 +1,12 @@
 #region Purpose
 // Collector for ContractsGenerator: turns one attributed partial class into a ContractTarget,
-// reads [Operation] and its hint attributes, parses route templates, and merges the three
-// attribute pipelines into one target per type.
+// reads [Operation] and its hint attributes, parses route templates, and merges duplicate
+// targets for one type.
 #endregion
 
 namespace TimeWarp.Foundation.Contracts.Generators;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -17,8 +16,6 @@ using System.Text.RegularExpressions;
 internal static partial class ContractsCollector
 {
   internal const string RouteName = "ApiRoute";
-  internal const string AuthName = "AuthApiRequest";
-  internal const string OpenDataName = "OpenDataQueryParameters";
   internal const string OperationPartKind = "Operation";
   private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
   private const string DestructiveAttributeFullName = "TimeWarp.Contracts.DestructiveAttribute";
@@ -28,15 +25,10 @@ internal static partial class ContractsCollector
   [GeneratedRegex(@"\{(\w+)(?:\s*:\s*(\w+(?:\(\d+\))?))?\}")]
   private static partial Regex RouteParam();
 
-  internal static ImmutableArray<ContractTarget> MergeTargets(
-    ImmutableArray<ContractTarget> routes,
-    ImmutableArray<ContractTarget> auths,
-    ImmutableArray<ContractTarget> openData)
+  internal static ImmutableArray<ContractTarget> MergeTargets(ImmutableArray<ContractTarget> routes)
   {
     Dictionary<string, ContractTarget> byHint = new(StringComparer.Ordinal);
     AppendTargets(byHint, routes);
-    AppendTargets(byHint, auths);
-    AppendTargets(byHint, openData);
 
     ImmutableArray<ContractTarget>.Builder builder = ImmutableArray.CreateBuilder<ContractTarget>(byHint.Count);
     foreach (ContractTarget target in byHint.Values.OrderBy(static t => t.HintBase, StringComparer.Ordinal))
@@ -81,7 +73,7 @@ internal static partial class ContractsCollector
 
   private static ContractTarget OrderParts(ContractTarget target)
   {
-    ImmutableArray<ContractPart> parts = DedupeKind(WithAuthQueryHelperWhenOpenData(target.Parts), OperationPartKind);
+    ImmutableArray<ContractPart> parts = DedupeKind(target.Parts, OperationPartKind);
     if (parts.Length <= 1)
       return target with { Parts = parts };
 
@@ -89,31 +81,11 @@ internal static partial class ContractsCollector
     return target with { Parts = ordered };
   }
 
-  private static ImmutableArray<ContractPart> WithAuthQueryHelperWhenOpenData(ImmutableArray<ContractPart> parts)
-  {
-    bool hasOpenData = false;
-    bool hasAuth = false;
-    foreach (ContractPart part in parts)
-    {
-      if (part.Kind == OpenDataName)
-        hasOpenData = true;
-      else if (part.Kind == AuthName)
-        hasAuth = true;
-    }
-
-    if (!hasOpenData || !hasAuth)
-      return parts;
-
-    return [.. parts.Select(static p => p.Kind == AuthName ? p with { Body = ContractsEmitter.AuthBody(includeQueryHelper: true) } : p)];
-  }
-
   private static int KindOrder(string kind) => kind switch
   {
     RouteName => 0,
-    AuthName => 1,
-    OpenDataName => 2,
-    OperationPartKind => 3,
-    _ => 4
+    OperationPartKind => 1,
+    _ => 2
   };
 
   internal static ContractTarget? Transform(GeneratorAttributeSyntaxContext context, string kind)
@@ -124,13 +96,7 @@ internal static partial class ContractsCollector
     ImmutableArray<ContractPart>.Builder parts = ImmutableArray.CreateBuilder<ContractPart>();
     foreach (AttributeData attr in context.Attributes)
     {
-      ContractPart? part = kind switch
-      {
-        RouteName => BuildRoute(attr),
-        AuthName => new ContractPart(AuthName, "global::TimeWarp.Foundation.Features.IAuthApiRequest", ContractsEmitter.AuthBody(WantsAuthQueryHelper(context))),
-        OpenDataName => new ContractPart(OpenDataName, "global::TimeWarp.Foundation.Features.IOpenDataQueryParameters", ContractsEmitter.OpenDataBody()),
-        _ => null
-      };
+      ContractPart? part = kind == RouteName ? BuildRoute(attr) : null;
       if (part is not null)
       {
         parts.Add(part.Value);
@@ -300,58 +266,6 @@ internal static partial class ContractsCollector
     }
 
     return verbArgument.Value?.ToString();
-  }
-
-  private static bool WantsAuthQueryHelper(GeneratorAttributeSyntaxContext context)
-  {
-    if (HasQueryStringRouteProvider(context))
-      return true;
-
-    if (context.TargetSymbol is not INamedTypeSymbol symbol)
-      return false;
-
-    foreach (AttributeData attributeData in symbol.GetAttributes())
-    {
-      INamedTypeSymbol? attributeClass = attributeData.AttributeClass;
-      if (attributeClass is null)
-      {
-        continue;
-      }
-
-      if (attributeClass.ContainingNamespace?.ToDisplayString() == ContractsGenerator.AttributeNamespace
-        && attributeClass.Name == "OpenDataQueryParametersAttribute")
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool HasQueryStringRouteProvider(GeneratorAttributeSyntaxContext context)
-  {
-    if (context.TargetSymbol is INamedTypeSymbol symbol)
-    {
-      foreach (INamedTypeSymbol iface in symbol.AllInterfaces)
-      {
-        if (iface.Name == "IQueryStringRouteProvider")
-          return true;
-      }
-    }
-
-    if (context.TargetNode is ClassDeclarationSyntax { BaseList: { } baseList })
-    {
-      foreach (BaseTypeSyntax baseType in baseList.Types)
-      {
-        if (baseType.Type.ToString() is string typeName
-          && typeName.EndsWith("IQueryStringRouteProvider", StringComparison.Ordinal))
-        {
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   private static string MapConstraintToClrType(string constraint)

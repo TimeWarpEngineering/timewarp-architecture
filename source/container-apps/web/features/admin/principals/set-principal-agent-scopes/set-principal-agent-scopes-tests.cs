@@ -38,7 +38,6 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
     {
       SetPrincipalAgentScopes.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         PrincipalId = Guid.NewGuid(),
         Scopes = [AgentScopes.DemoInvoke],
       };
@@ -52,7 +51,6 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
     {
       SetPrincipalAgentScopes.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         PrincipalId = Guid.NewGuid(),
         Scopes = [],
       };
@@ -66,7 +64,6 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
     {
       SetPrincipalAgentScopes.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         PrincipalId = Guid.NewGuid(),
         Scopes = ["not-a-scope"],
       };

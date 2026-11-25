@@ -1,5 +1,5 @@
 #region Purpose
-// Validator tests: the contract's composed rules (shared RoleDetailsValidator + auth) hold.
+// Validator tests: the contract's composed rules (shared RoleDetailsValidator) hold.
 #endregion
 
 namespace CreateRoleRequestValidator_;
@@ -17,7 +17,6 @@ public class Validate_Should
   {
     var command = new Command
     {
-      UserId = Guid.NewGuid(),
       Name = "Auditor",
       Description = "Read-only access."
     };
@@ -34,21 +33,9 @@ public class Validate_Should
 
   {
     TestValidationResult<Command> result =
-      new Validator().TestValidate(new Command { UserId = Guid.NewGuid(), Name = "", Description = "x" });
+      new Validator().TestValidate(new Command { Name = "", Description = "x" });
 
     result.ShouldHaveValidationErrorFor(command => command.Name);
-
-    return Task.CompletedTask;
-
-  }
-
-  public static Task Have_Error_When_UserId_Is_Empty()
-
-  {
-    TestValidationResult<Command> result =
-      new Validator().TestValidate(new Command { Name = "Auditor", Description = "x" });
-
-    result.ShouldHaveValidationErrorFor(command => command.UserId);
 
     return Task.CompletedTask;
 

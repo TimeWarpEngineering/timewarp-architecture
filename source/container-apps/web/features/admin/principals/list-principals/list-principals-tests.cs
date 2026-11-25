@@ -108,11 +108,10 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
     public static Task Validator_Should_RejectUndefinedSortAndLongSearch()
     {
       ListPrincipals.Validator validator = new();
-      Guid userId = Guid.NewGuid(); // AuthApiRequestValidator requires the session user id.
-      validator.Validate(new ListPrincipals.Query { UserId = userId }).IsValid.ShouldBeTrue();
-      validator.Validate(new ListPrincipals.Query { UserId = userId, SortBy = (PrincipalListSortColumn)99 }).IsValid.ShouldBeFalse();
-      validator.Validate(new ListPrincipals.Query { UserId = userId, Search = new string('x', 254) }).IsValid.ShouldBeTrue();
-      validator.Validate(new ListPrincipals.Query { UserId = userId, Search = new string('x', 255) }).IsValid.ShouldBeFalse();
+      validator.Validate(new ListPrincipals.Query()).IsValid.ShouldBeTrue();
+      validator.Validate(new ListPrincipals.Query { SortBy = (PrincipalListSortColumn)99 }).IsValid.ShouldBeFalse();
+      validator.Validate(new ListPrincipals.Query { Search = new string('x', 254) }).IsValid.ShouldBeTrue();
+      validator.Validate(new ListPrincipals.Query { Search = new string('x', 255) }).IsValid.ShouldBeFalse();
       return Task.CompletedTask;
     }
 

@@ -3,9 +3,8 @@
 #endregion
 
 #region Design
-// DefaultApiHandler owns transport + toast-on-error. UserId is client FluentValidation / mock
-// signal only (server uses session principal). Prefer signed-in claim; Guid.NewGuid() fallback
-// matches RoleState when claim resolution fails (AuthApiRequestValidator needs non-empty UserId).
+// DefaultApiHandler owns transport + toast-on-error. The query does not name the caller; the
+// server reads the session principal (task 458-008).
 // AuthenticationStateListener fetches on sign-in so RFC 219 D8 AddPasskeyPrompt has a snapshot
 // without visiting Settings. Task 169 + 219-003.
 // HandleSuccess stores GetCredentials.Response.CanLinkMicrosoft365 beside the credentials (one
@@ -43,7 +42,6 @@ partial class CredentialsState
 
     internal sealed class Handler : DefaultApiHandler<Action, Query, Response>
     {
-      private readonly AuthenticationStateProvider AuthenticationStateProvider;
 
       public Handler
       (
@@ -53,15 +51,10 @@ partial class CredentialsState
       IPublisher<ClientPipeline> publisher,
         AuthenticationStateProvider authenticationStateProvider
       ) : base(store, webServerApiService, logger, publisher, authenticationStateProvider: authenticationStateProvider)
-      {
-        AuthenticationStateProvider = authenticationStateProvider;
-      }
+      { }
 
-      protected override async Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
-      {
-        Guid userId = await ResolveUserIdAsync();
-        return new Query { IncludeRevoked = action.IncludeRevoked, UserId = userId };
-      }
+      protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken) =>
+        Task.FromResult<Query?>(new Query { IncludeRevoked = action.IncludeRevoked });
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
@@ -69,18 +62,6 @@ partial class CredentialsState
         CredentialsState.CanLinkMicrosoft365 = response.CanLinkMicrosoft365;
         CredentialsState.CeremonyFailed = false;
         return Task.CompletedTask;
-      }
-
-      private async Task<Guid> ResolveUserIdAsync()
-      {
-        try
-        {
-          return await AuthenticationStateProvider.GetUserIdAsync();
-        }
-        catch (InvalidOperationException)
-        {
-          return Guid.NewGuid();
-        }
       }
     }
   }

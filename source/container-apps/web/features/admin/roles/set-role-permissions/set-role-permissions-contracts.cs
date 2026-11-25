@@ -30,7 +30,6 @@ public static partial class SetRolePermissions
   [Operation("roles.set-permissions", Description = "Replace a role's permission ids.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public List<string> PermissionIds { get; set; } = [];
   }
 
@@ -38,7 +37,6 @@ public static partial class SetRolePermissions
   {
     public Validator()
     {
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
       RuleFor(x => x.RoleId).NotEmpty();
       RuleFor(x => x.PermissionIds).NotNull();
       // Fully qualify product PermissionIds — Command.PermissionIds property would otherwise shadow.

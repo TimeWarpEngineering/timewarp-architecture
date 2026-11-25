@@ -433,7 +433,7 @@ public partial class IngressSmoke_Given_
     // Header name SSOT: MockAuthenticationDefaults.MockPrincipalIdHeader (Web.Spa)
     httpClient.DefaultRequestHeaders.Add("X-TimeWarp-Mock-Principal-Id", principalId.ToString());
 
-    HttpResponseMessage response = await httpClient.GetAsync($"/api/admin/roles?UserId={principalId:D}");
+    HttpResponseMessage response = await httpClient.GetAsync("/api/admin/roles");
 
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
   }

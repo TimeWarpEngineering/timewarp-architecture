@@ -9,8 +9,7 @@
 // GetMockResponseFactory lets the SPA's MockWebApiService serve this endpoint with no
 // backend running; the response echoes a well-known RoleIds constant for determinism.
 // [EndpointAuthorize] (task 182-002): admin.roles.manage (PermissionIds) — write half of the
-// roles split; list/get use admin.roles.read. [AuthApiRequest] on Command remains a
-// client-facing/mock-mode identity signal only; this attribute gates the server.
+// roles split; list/get use admin.roles.read. This attribute gates the server.
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
 // AuthenticationSchemeNames' Design region.
 // [Operation] names it roles.create for every transport. ICommand, not IIdempotentCommand:
@@ -31,7 +30,6 @@ public static partial class CreateRole
   [Operation("roles.create", Description = "Create a role.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IRoleDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
   }
@@ -41,7 +39,6 @@ public static partial class CreateRole
     public Validator()
     {
       RuleFor(x => x).SetValidator(new RoleDetailsValidator());
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
     }
   }
 

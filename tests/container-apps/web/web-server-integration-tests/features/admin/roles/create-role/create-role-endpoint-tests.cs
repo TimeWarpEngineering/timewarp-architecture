@@ -6,12 +6,12 @@
 // CreateRole carries [EndpointAuthorize(Policy=PermissionIds.AdminRolesManage)] (task 182-002) — Administrator,
 // not any authenticated principal (task 110's identity-session-only posture is retired). An
 // anonymous real-HTTP call 401s before FluentValidation ever runs; a Member-only passkey session
-// 403s. ValidationError_Given_Empty_Name/UserId use ConfirmEndpointValidationError, which IS real
+// 403s. ValidationError_Given_Empty_Name uses ConfirmEndpointValidationError, which IS real
 // HTTP (unlike Ok_With_RoleId_Given_Valid_Command's .Send(), which bypasses the ASP.NET Core auth
 // pipeline entirely — see Roles_Authorization_Tests.cs's Design region for why .Send() could never
-// have caught the pre-110 fail-open bug). Both validation tests mint a real passkey session via
-// EnsureAuthenticatedAsync() and grant Administrator through IPrincipalRoleStore so the policy
-// admits them into the FluentValidation path. Ceremony runs through WebTestServerApplication
+// have caught the pre-110 fail-open bug). The validation test mints a real passkey session via
+// EnsureAuthenticatedAsync() and grants Administrator through IPrincipalRoleStore so the policy
+// admits it into the FluentValidation path. Ceremony runs through WebTestServerApplication
 // GetResponse (the SAME underlying HttpClient ConfirmEndpointValidationError uses), so the
 // resulting Set-Cookie lands in that HttpClient's ambient cookie jar automatically — no manual
 // cookie extraction/attachment needed here; this class never asserts on session state, only on
@@ -58,7 +58,6 @@ public class Returns_
 
   private static Command CreateValidCommand() => new()
   {
-    UserId = Guid.NewGuid(),
     Name = "Auditor",
     Description = "Read-only access to financial modules."
   };
@@ -88,18 +87,6 @@ public class Returns_
     command.Name = "";
 
     await Web.ConfirmEndpointValidationError<Response>(command, nameof(command.Name));
-  }
-
-  public static async Task ValidationError_Given_Empty_UserId()
-  {
-
-    Command command = CreateValidCommand();
-
-    // AuthApiRequestValidator composes into the same server-side validation pass.
-    await EnsureAuthenticatedAsync();
-    command.UserId = Guid.Empty;
-
-    await Web.ConfirmEndpointValidationError<Response>(command, nameof(command.UserId));
   }
 
   private static async Task EnsureAuthenticatedAsync()

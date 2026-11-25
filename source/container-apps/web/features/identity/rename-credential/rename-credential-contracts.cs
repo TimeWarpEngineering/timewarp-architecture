@@ -5,8 +5,8 @@
 
 #region Design
 // POST + /rename on a route-identified resource, mirroring RevokeCredential exactly (same
-// {CredentialId:guid} generated route member, same UserId client/mock-mode signal the server never
-// trusts, same [EndpointAuthorize] policy + dual scheme). Nickname is the ONLY body field the server
+// {CredentialId:guid} generated route member, no caller id on the command, same
+// [EndpointAuthorize] policy + dual scheme). Nickname is the ONLY body field the server
 // reads: 1–64 characters after trimming (Credential.MaxNicknameLength) — the validator rejects
 // whitespace-only and oversize input before the handler runs, and the domain's Credential.Rename
 // re-applies the same rule so a non-HTTP caller cannot bypass it.
@@ -32,7 +32,6 @@ public static partial class RenameCredential
   [ApiRoute("api/identity/credentials/{CredentialId:guid}/rename", HttpVerb.Post)]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public string Nickname { get; set; } = null!;
   }
 
@@ -45,7 +44,6 @@ public static partial class RenameCredential
         .NotEmpty()
         .Must(nickname => nickname is not null && nickname.Trim().Length is >= 1 and <= Credential.MaxNicknameLength)
         .WithMessage($"Nickname must be 1 to {Credential.MaxNicknameLength} characters after trimming.");
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
     }
   }
 

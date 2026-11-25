@@ -58,7 +58,7 @@ public class List_And_Set_Roles_Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-    var query = new ListPrincipals.Query { UserId = Guid.NewGuid() };
+    var query = new ListPrincipals.Query();
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -76,7 +76,7 @@ public class List_And_Set_Roles_Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-    var query = new ListPrincipals.Query { UserId = Guid.NewGuid() };
+    var query = new ListPrincipals.Query();
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -213,7 +213,7 @@ public class List_And_Set_Roles_Returns_
       using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
       client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-      var query = new ListPrincipals.Query { UserId = Guid.NewGuid() };
+      var query = new ListPrincipals.Query();
       HttpResponseMessage listResponse = await client.GetAsync(query.GetRouteWithQueryString());
       listResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 

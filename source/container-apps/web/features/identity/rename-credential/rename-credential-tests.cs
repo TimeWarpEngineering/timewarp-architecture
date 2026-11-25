@@ -71,7 +71,7 @@ namespace TimeWarp.Architecture.Features.Identity
     }
 
     private static Command Command(string nickname) =>
-      new() { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid(), Nickname = nickname };
+      new() { CredentialId = Guid.NewGuid(), Nickname = nickname };
   }
 
   [TestTag("Handler")]
@@ -86,7 +86,7 @@ namespace TimeWarp.Architecture.Features.Identity
       RenameHandler handler = new(store, new StubCurrentPrincipalAccessor(owner));
 
       OneOf.OneOf<Response, SharedProblemDetails> result =
-        await handler.Handle(new Command { UserId = Guid.NewGuid(), CredentialId = credential.Id.Value, Nickname = "  Work laptop " }, CancellationToken.None);
+        await handler.Handle(new Command { CredentialId = credential.Id.Value, Nickname = "  Work laptop " }, CancellationToken.None);
 
       result.IsT0.ShouldBeTrue();
       Credential? stored = await store.GetCredentialAsync(credential.Id);
@@ -102,7 +102,7 @@ namespace TimeWarp.Architecture.Features.Identity
       RenameHandler handler = new(store, new StubCurrentPrincipalAccessor(PrincipalId.New()));
 
       SharedProblemDetails problem = (await handler.Handle(
-          new Command { UserId = Guid.NewGuid(), CredentialId = credential.Id.Value, Nickname = "hijack" }, CancellationToken.None))
+          new Command { CredentialId = credential.Id.Value, Nickname = "hijack" }, CancellationToken.None))
         .Match(_ => throw new InvalidOperationException("Expected not-found problem"), p => p);
 
       problem.Status.ShouldBe(404);
@@ -115,7 +115,7 @@ namespace TimeWarp.Architecture.Features.Identity
       RenameHandler handler = new(store, new StubCurrentPrincipalAccessor(owner));
 
       SharedProblemDetails problem = (await handler.Handle(
-          new Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid(), Nickname = "ghost" }, CancellationToken.None))
+          new Command { CredentialId = Guid.NewGuid(), Nickname = "ghost" }, CancellationToken.None))
         .Match(_ => throw new InvalidOperationException("Expected not-found problem"), p => p);
 
       problem.Status.ShouldBe(404);
@@ -128,7 +128,7 @@ namespace TimeWarp.Architecture.Features.Identity
       RenameHandler handler = new(store, new StubCurrentPrincipalAccessor(null));
 
       SharedProblemDetails problem = (await handler.Handle(
-          new Command { UserId = Guid.NewGuid(), CredentialId = credential.Id.Value, Nickname = "x" }, CancellationToken.None))
+          new Command { CredentialId = credential.Id.Value, Nickname = "x" }, CancellationToken.None))
         .Match(_ => throw new InvalidOperationException("Expected unauthenticated problem"), p => p);
 
       problem.Status.ShouldBe(401);
@@ -143,7 +143,7 @@ namespace TimeWarp.Architecture.Features.Identity
       RenameHandler handler = new(store, new StubCurrentPrincipalAccessor(owner));
 
       OneOf.OneOf<Response, SharedProblemDetails> result =
-        await handler.Handle(new Command { UserId = Guid.NewGuid(), CredentialId = credential.Id.Value, Nickname = "Old phone" }, CancellationToken.None);
+        await handler.Handle(new Command { CredentialId = credential.Id.Value, Nickname = "Old phone" }, CancellationToken.None);
 
       result.IsT0.ShouldBeTrue();
       Credential stored = (await store.GetCredentialAsync(credential.Id))!;

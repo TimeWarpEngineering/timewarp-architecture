@@ -32,8 +32,7 @@ internal static class ContractsGeneratorTestFixture
 
     public static partial class GetRoles
     {
-        [OpenDataQueryParameters]
-        [AuthApiRequest]
+        [ApiRoute("api/Roles", HttpVerb.Get)]
         public sealed partial class Query { }
     }
     """;

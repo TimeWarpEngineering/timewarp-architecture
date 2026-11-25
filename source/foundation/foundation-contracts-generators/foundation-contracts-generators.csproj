@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Roslyn source generator for [ApiRoute]/[AuthApiRequest]/[OpenDataQueryParameters] (task 053).
+  <!-- Roslyn source generator for [ApiRoute] (task 053; auth and OData mixins removed in 458-008).
        Targets net11.0 (inherited from Directory.Build.props, matching timewarp-architecture-analyzers)
        and ships as an analyzer asset inside the TimeWarp.Foundation.Contracts package. We do NOT
        target netstandard2.0 — that only matters for hosts running Roslyn on .NET Framework (Visual

@@ -6,7 +6,7 @@
 // Only supplied properties are stored, so an omitted bool is not false. Unknown keys are
 // ignored when at least one key matches. No match, including an empty object, is not a draft:
 // the caller stores nothing and the error lists the accepted keys. Explicit null is kept
-// only for a nullable property. UserId is never part of a draft. Canonical JSON for a field
+// only for a nullable property. Canonical JSON for a field
 // is the contract serializer, so a later edit hides the agent mark.
 #endregion
 
@@ -206,11 +206,6 @@ partial class FormPrefill
     foreach (PropertyInfo property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
     {
       if (property.GetMethod is null || property.GetMethod.GetParameters().Length > 0 || property.SetMethod is null)
-      {
-        continue;
-      }
-
-      if (property.Name == "UserId")
       {
         continue;
       }

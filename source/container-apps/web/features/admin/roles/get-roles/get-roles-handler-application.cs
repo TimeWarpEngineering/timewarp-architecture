@@ -6,8 +6,8 @@
 // Task 473: one IRoleStore.ListAsync read loads every Role with both child sets (the list is
 // small: four product roles plus admin-created ones), so there is no per-row grant query.
 // Ordering by name keeps the list stable for UI and tests. Search (task 345) keeps roles whose
-// name contains the trimmed term, ignoring case. TotalCount equals the number of matching rows —
-// the handler does not implement the contract's OpenData paging parameters. The members
+// name contains the trimmed term, ignoring case. TotalCount equals the number of matching rows;
+// the list is not paged, so the contract publishes no paging parameters (task 458-008). The members
 // come from RoleContractMap.Project, the projection GetRole shares (task 479); the handler wraps
 // it with named arguments.
 #endregion

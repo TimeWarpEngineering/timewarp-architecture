@@ -5,8 +5,7 @@
 #region Design
 // Each constructor parameter becomes one property. The catalog's JsonSchema is used when the
 // generator emitted one (primitives). A complex parameter is one object level of public
-// properties, camelCase, because v1 of the catalog stores only the CLR type name. UserId is
-// left out: handlers stamp that mock-mode auth signal and it is not a tool argument.
+// properties, camelCase, because v1 of the catalog stores only the CLR type name.
 // Enums, top-level or one level down, are strings with an `enum` list of member names: the
 // binder uses the contract seam's string-enum converter, which refuses integers.
 // Follow-up is a timewarp-state schema for complex parameters (design.md item 1).
@@ -97,11 +96,6 @@ public static class CatalogAgentSchema
     foreach (PropertyInfo property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
     {
       if (property.GetMethod is null || property.GetMethod.GetParameters().Length > 0)
-      {
-        continue;
-      }
-
-      if (property.Name == "UserId")
       {
         continue;
       }

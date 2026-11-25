@@ -31,7 +31,6 @@ public static partial class UpdateRole
   [Operation("roles.update", Description = "Replace a role's name and description.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IRoleDetails, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
 
@@ -50,7 +49,6 @@ public static partial class UpdateRole
     {
       RuleFor(x => x.RoleId).NotEmpty();
       RuleFor(x => x).SetValidator(new RoleDetailsValidator());
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
     }
   }
 

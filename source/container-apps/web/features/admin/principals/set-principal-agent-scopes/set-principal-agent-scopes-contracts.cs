@@ -29,7 +29,6 @@ public static partial class SetPrincipalAgentScopes
     Group = "admin.principals")]
   public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public List<string> Scopes { get; set; } = [];
   }
 
@@ -37,7 +36,6 @@ public static partial class SetPrincipalAgentScopes
   {
     public Validator()
     {
-      RuleFor(command => command).SetValidator(new AuthApiRequestValidator());
       RuleFor(command => command.PrincipalId).NotEmpty();
       RuleFor(command => command.Scopes).NotNull();
       RuleForEach(command => command.Scopes)

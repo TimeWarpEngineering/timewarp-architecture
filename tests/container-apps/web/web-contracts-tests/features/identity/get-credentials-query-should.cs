@@ -16,11 +16,10 @@ public class GetCredentials_Query_Should
 
   public static Task SerializeAndDeserialize_Including_Generated_RouteProperty()
   {
-    GetCredentials.Query query = new() { UserId = Guid.NewGuid(), IncludeRevoked = true };
+    GetCredentials.Query query = new() { IncludeRevoked = true };
 
     GetCredentials.Query parsed = ContractSerialization.RoundTrip(query);
 
-    parsed.UserId.ShouldBe(query.UserId);
     parsed.IncludeRevoked.ShouldBeTrue();
     return Task.CompletedTask;
   }

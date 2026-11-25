@@ -54,7 +54,7 @@ public class Returns_
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
-    var command = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid() };
+    var command = new RevokeCredential.Command { CredentialId = Guid.NewGuid() };
 
     HttpResponseMessage response = await testApiService.GetHttpResponseMessage(command, CancellationToken.None);
 
@@ -70,7 +70,7 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
-    var command = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid() };
+    var command = new RevokeCredential.Command { CredentialId = Guid.NewGuid() };
 
     HttpResponseMessage response = await testApiService.GetHttpResponseMessage(command, CancellationToken.None);
 
@@ -92,7 +92,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = credentialId,
       ClientDataJson = clientDataJson,
       AttestationObject = attestationObject
@@ -103,11 +102,11 @@ public class Returns_
       JsonSerializer.Deserialize<AddPasskey.Response>(await addResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
     addResult.ShouldNotBeNull();
 
-    var revokeCommand = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = addResult.CredentialId.Value };
+    var revokeCommand = new RevokeCredential.Command { CredentialId = addResult.CredentialId.Value };
     HttpResponseMessage revokeResponse = await testApiService.GetHttpResponseMessage(revokeCommand, CancellationToken.None);
     revokeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-    var listQuery = new GetCredentials.Query { UserId = Guid.NewGuid(), IncludeRevoked = true };
+    var listQuery = new GetCredentials.Query { IncludeRevoked = true };
     HttpResponseMessage listResponse = await client.GetAsync(listQuery.GetRouteWithQueryString());
     GetCredentials.Response? list =
       JsonSerializer.Deserialize<GetCredentials.Response>(await listResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -130,14 +129,14 @@ public class Returns_
     var secondKey = new IntegrationSoftwareAgentKey();
     (string publicKey, string challenge, string signature) =
       await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(Web, secondKey);
-    var addCommand = new AddAgentKey.Command { UserId = Guid.NewGuid(), PublicKey = publicKey, Challenge = challenge, Signature = signature };
+    var addCommand = new AddAgentKey.Command { PublicKey = publicKey, Challenge = challenge, Signature = signature };
     HttpResponseMessage addResponse = await testApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);
     addResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
     AddAgentKey.Response? addResult =
       JsonSerializer.Deserialize<AddAgentKey.Response>(await addResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
     addResult.ShouldNotBeNull();
 
-    var revokeCommand = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = addResult.CredentialId.Value };
+    var revokeCommand = new RevokeCredential.Command { CredentialId = addResult.CredentialId.Value };
     HttpResponseMessage revokeResponse = await testApiService.GetHttpResponseMessage(revokeCommand, CancellationToken.None);
 
     revokeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -151,7 +150,7 @@ public class Returns_
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
     using HttpClient ownerClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     ownerClient.DefaultRequestHeaders.Add("Cookie", ownerCookie);
-    var ownerListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var ownerListQuery = new GetCredentials.Query();
     HttpResponseMessage ownerListResponse = await ownerClient.GetAsync(ownerListQuery.GetRouteWithQueryString());
     GetCredentials.Response? ownerList =
       JsonSerializer.Deserialize<GetCredentials.Response>(await ownerListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -164,7 +163,7 @@ public class Returns_
     attackerClient.DefaultRequestHeaders.Add("Cookie", attackerCookie);
     var attackerApiService = new TestApiService(attackerClient, ContractSerializationDefaults.Options, bearerToken: null);
 
-    var revokeCommand = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = ownersCredentialId.Value };
+    var revokeCommand = new RevokeCredential.Command { CredentialId = ownersCredentialId.Value };
     HttpResponseMessage revokeResponse = await attackerApiService.GetHttpResponseMessage(revokeCommand, CancellationToken.None);
 
     revokeResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -178,7 +177,7 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
-    var command = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid() };
+    var command = new RevokeCredential.Command { CredentialId = Guid.NewGuid() };
 
     HttpResponseMessage response = await testApiService.GetHttpResponseMessage(command, CancellationToken.None);
 
@@ -195,14 +194,14 @@ public class Returns_
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
-    var listQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var listQuery = new GetCredentials.Query();
     HttpResponseMessage listResponse = await client.GetAsync(listQuery.GetRouteWithQueryString());
     GetCredentials.Response? list =
       JsonSerializer.Deserialize<GetCredentials.Response>(await listResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
     list.ShouldNotBeNull();
     CredentialId onlyCredentialId = list.Credentials.Single().Id;
 
-    var revokeCommand = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = onlyCredentialId.Value };
+    var revokeCommand = new RevokeCredential.Command { CredentialId = onlyCredentialId.Value };
     HttpResponseMessage response = await testApiService.GetHttpResponseMessage(revokeCommand, CancellationToken.None);
 
     response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -223,7 +222,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = credentialId,
       ClientDataJson = clientDataJson,
       AttestationObject = attestationObject
@@ -233,7 +231,7 @@ public class Returns_
       JsonSerializer.Deserialize<AddPasskey.Response>(await addResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
     addResult.ShouldNotBeNull();
 
-    var revokeCommand = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = addResult.CredentialId.Value };
+    var revokeCommand = new RevokeCredential.Command { CredentialId = addResult.CredentialId.Value };
     HttpResponseMessage firstRevokeResponse = await testApiService.GetHttpResponseMessage(revokeCommand, CancellationToken.None);
     firstRevokeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 

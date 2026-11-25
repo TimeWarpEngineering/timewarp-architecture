@@ -45,7 +45,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       SetRolePermissions.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         PermissionIds = [PermissionIds.AdminAccess, PermissionIds.ProfileRead]
       };
 
@@ -54,7 +53,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
         JsonSerializer.Deserialize<SetRolePermissions.Command>(json, ContractSerializationDefaults.Options);
 
       parsed.ShouldNotBeNull();
-      parsed.UserId.ShouldBe(command.UserId);
       parsed.PermissionIds.ShouldBe(command.PermissionIds);
       return Task.CompletedTask;
     }
@@ -63,7 +61,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       SetRolePermissions.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         RoleId = RoleIds.Member,
         PermissionIds = []
       };
@@ -77,7 +74,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       SetRolePermissions.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         RoleId = RoleIds.Member,
         PermissionIds = ["not.a.permission"]
       };
@@ -91,7 +87,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       SetRolePermissions.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         RoleId = Guid.Empty,
         PermissionIds = [PermissionIds.ProfileRead]
       };

@@ -16,13 +16,11 @@
 //   (a) BOTH [EndpointAuthorize] and [EndpointAllowAnonymous] present — contradictory on their
 //       face; the generator picks a deterministic winner ([EndpointAuthorize]), but the contract
 //       author must resolve the contradiction, not rely on that tiebreak.
-//   (b) [EndpointAllowAnonymous] present while the nested Query/Command declares
-//       IAuthApiRequest — either the manual interface form (: IAuthApiRequest, detected via
-//       AllInterfaces by SIMPLE NAME) or the [AuthApiRequest] attribute form (FQN
-//       TimeWarp.Foundation.Features.AuthApiRequestAttribute). A contract
-//       whose Query/Command says "I carry an authenticated user's identity" but whose endpoint
-//       says "anyone may call this anonymously" is the contradiction task 110 surfaces —
-//       IAuthApiRequest is a CLIENT/mock-mode identity signal only and does not secure the server.
+//   (b) [EndpointAllowAnonymous] present while the nested Query/Command implements the
+//       IAuthApiRequest marker (detected via AllInterfaces by SIMPLE NAME). A contract whose
+//       Query/Command says "I serve an authenticated caller" but whose endpoint says "anyone may
+//       call this anonymously" is the contradiction task 110 surfaces. IAuthApiRequest carries no
+//       members (task 458-008) and does not secure the server; [EndpointAuthorize] does.
 // TWA0020 — [ApiEndpoint] + [ClientOnlyContract] (outer or nested Query/Command): generators skip
 // ClientOnly contracts (not hosted), so the generation opt-in contradicts the client-only opt-out.
 // Location = the [ApiEndpoint] attribute application — the contract's own declaration is where an
@@ -70,7 +68,7 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
       Category,
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
-      description: "Either both [EndpointAuthorize] and [EndpointAllowAnonymous] are present on the same contract, or [EndpointAllowAnonymous] is paired with a nested Query/Command that declares IAuthApiRequest (interface or [AuthApiRequest] attribute) — an auth-intent request marked anonymous at the endpoint. Resolve the contradiction; do not rely on the generator's [EndpointAuthorize]-wins tiebreak."
+      description: "Either both [EndpointAuthorize] and [EndpointAllowAnonymous] are present on the same contract, or [EndpointAllowAnonymous] is paired with a nested Query/Command that implements IAuthApiRequest — an auth-intent request marked anonymous at the endpoint. Resolve the contradiction; do not rely on the generator's [EndpointAuthorize]-wins tiebreak."
     );
 
   private static readonly DiagnosticDescriptor ClientOnlyContradiction =
@@ -163,12 +161,6 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
     }
   }
 
-  private static bool DeclaresAuthApiRequest(INamedTypeSymbol requestType)
-  {
-    bool implementsInterface = requestType.AllInterfaces.Any(static i => i.Name == "IAuthApiRequest");
-    bool hasAuthApiRequestAttribute = requestType.GetAttributes()
-      .Any(static a => HostedRouteDiscovery.IsAuthApiRequestAttribute(a));
-
-    return implementsInterface || hasAuthApiRequestAttribute;
-  }
+  private static bool DeclaresAuthApiRequest(INamedTypeSymbol requestType) =>
+    requestType.AllInterfaces.Any(static i => i.Name == "IAuthApiRequest");
 }

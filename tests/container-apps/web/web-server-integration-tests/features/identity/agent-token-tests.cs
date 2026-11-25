@@ -90,7 +90,7 @@ public class Returns_
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", issued.AsT0.AccessToken);
-    var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var query = new GetCredentials.Query();
     (await client.GetAsync(query.GetRouteWithQueryString())).StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
     (await client.GetAsync(query.GetRouteWithQueryString())).StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
 

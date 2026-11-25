@@ -4,13 +4,9 @@
 #endregion
 
 #region Design
-// Uses [AuthApiRequest] (not the manual interface) so the source generator emits UserId +
-// GetAuthQueryParameters() for query-string composition (this is a GET with no body); IncludeRevoked
-// is a hand-declared bool merged into the same query string, matching GetRoles.cs's pattern of
-// merging a generated parameter set with an additional one. UserId here is a client/mock-mode
-// identity signal ONLY (see the web-api-contracts skill's three-state truth table) — the server
-// NEVER trusts it; the handler resolves the real caller via ICurrentPrincipalAccessor and ignores
-// this field entirely. Load-bearing IDOR rule (task 104-005): whose credentials this endpoint
+// GET with no body: IncludeRevoked and Search travel on the query string. The request does not
+// name its caller (task 458-008 removed the unread UserId); the handler resolves the caller via
+// ICurrentPrincipalAccessor. Load-bearing IDOR rule (task 104-005): whose credentials this endpoint
 // returns is decided ENTIRELY server-side — there is no "list someone else's credentials" shape to
 // even request.
 // CredentialSummary deliberately omits Handle and PublicMaterial (Credential's secret-ish binary
@@ -39,8 +35,7 @@
 // parameter, default null, like LastUsedAt.
 // [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf via IPermissionEvaluator.
 // Dual schemes (identity-session + agent-token): humans get the grant from SelfServicePermissions;
-// agents need scope credential:manage → AgentScopePermissionSeed. [AuthApiRequest] on the Query
-// remains client/mock identity signal only.
+// agents need scope credential:manage → AgentScopePermissionSeed.
 // Server-owned availability (task 282): the server decides which actions are valid now and ships
 // the answer as typed flags — CredentialSummary.CanRevoke / CanRename per row and
 // Response.CanLinkMicrosoft365 for the page — all computed from Identity's CredentialRules, the same
@@ -80,8 +75,7 @@ public static partial class GetCredentials
   public const int MaxSearchLength = 200;
 
   [ApiRoute("api/identity/credentials", HttpVerb.Get)]
-  [AuthApiRequest]
-  public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public bool IncludeRevoked { get; set; }
     public string? Search { get; set; }
@@ -90,7 +84,6 @@ public static partial class GetCredentials
     {
       var collection = new NameValueCollection
       {
-        GetAuthQueryParameters(),
         { nameof(IncludeRevoked), IncludeRevoked.ToString() },
         { nameof(Search), string.IsNullOrWhiteSpace(Search) ? null : Search.Trim() },
       };
@@ -102,7 +95,6 @@ public static partial class GetCredentials
   {
     public Validator()
     {
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
       RuleFor(x => x.Search).MaximumLength(MaxSearchLength);
     }
   }

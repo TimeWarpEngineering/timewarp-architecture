@@ -26,8 +26,8 @@ public class ContractsGenerator_Core_Tests
     generated.ShouldContain("namespace TimeWarp.Foundation.Features;");
     generated.ShouldContain("public sealed class ApiRouteAttribute : System.Attribute");
     generated.ShouldContain("public ApiRouteAttribute(string RouteTemplate, global::TimeWarp.Foundation.Features.HttpVerb HttpVerb)");
-    generated.ShouldContain("public sealed class AuthApiRequestAttribute : System.Attribute");
-    generated.ShouldContain("public sealed class OpenDataQueryParametersAttribute : System.Attribute");
+    generated.ShouldNotContain("AuthApiRequestAttribute");
+    generated.ShouldNotContain("OpenDataQueryParametersAttribute");
     generated.ShouldNotContain("internal sealed class ApiRouteAttribute");
     generated.ShouldNotContain("namespace TimeWarp.Architecture");
     return Task.CompletedTask;
@@ -58,16 +58,18 @@ public class ContractsGenerator_Core_Tests
     return Task.CompletedTask;
   }
 
-  public static Task Should_Generate_Interface_Members()
+  // Task 458-008: the generator publishes no member a handler did not ask for — no caller id and
+  // no paging members. Route parameters are the only generated properties.
+  public static Task Should_Not_Emit_Caller_Or_Paging_Members()
   {
     string generated = RunAndConcat("TimeWarp.Architecture");
 
-    generated.ShouldContain("global::TimeWarp.Foundation.Features.IAuthApiRequest");
-    generated.ShouldContain("public global::System.Guid UserId { get; set; }");
-    generated.ShouldContain("GetAuthQueryParameters()");
-    generated.ShouldContain("global::TimeWarp.Foundation.Features.IOpenDataQueryParameters");
-    generated.ShouldContain("public int? Top { get; set; }");
-    generated.ShouldContain("public bool ReturnTotalCount { get; set; }");
+    generated.ShouldNotContain("IAuthApiRequest");
+    generated.ShouldNotContain("UserId");
+    generated.ShouldNotContain("GetAuthQueryParameters");
+    generated.ShouldNotContain("IOpenDataQueryParameters");
+    generated.ShouldNotContain("Top");
+    generated.ShouldNotContain("ReturnTotalCount");
     return Task.CompletedTask;
   }
 
@@ -174,16 +176,12 @@ public class ContractsGenerator_Core_Tests
     hintNames.ShouldContain("Test.Features.Admin.Roles.GetRole.Query.g.cs");
     hintNames.ShouldContain("Test.Features.Admin.Roles.GetRoles.Query.g.cs");
     hintNames.Any(static name => name.Contains(".ApiRoute.", StringComparison.Ordinal)).ShouldBeFalse();
-    hintNames.Any(static name => name.Contains(".AuthApiRequest.", StringComparison.Ordinal)).ShouldBeFalse();
-    hintNames.Any(static name => name.Contains(".OpenDataQueryParameters.", StringComparison.Ordinal)).ShouldBeFalse();
 
     string getRoles = result.Results
       .SelectMany(static r => r.GeneratedSources)
       .Single(static s => s.HintName == "Test.Features.Admin.Roles.GetRoles.Query.g.cs")
       .SourceText.ToString();
-    getRoles.ShouldContain("IAuthApiRequest");
-    getRoles.ShouldContain("IOpenDataQueryParameters");
-    getRoles.ShouldContain("GetAuthQueryParameters()");
+    getRoles.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
     return Task.CompletedTask;
   }
 
