@@ -51,6 +51,10 @@ Acceptance:
 - [x] `dev template-smoke --matrix` green for the new variant.
 - [x] Publish smoke green for the new variant on `aca` and `aca-neon`.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - One combination, not the full power set. We are the consumer; this is the shape our first instance uses.
@@ -58,11 +62,14 @@ Acceptance:
 - Task 527 changes what the Azure publish output looks like with yarp off (web-server becomes the
   external app). Whichever of the two lands second updates the expectation. No hard dependency.
 - Note: task 071 is already in `kanban/done/`; no edit to `done/071` is needed.
+- Review: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md` (round 1, clean).
 
 ## Session
 
 - Created: f7eccb81-87c9-4fb4-a0c4-0fb7417d4a2f (2026-11-25)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 9ed4eca8-118b-4161-a5bf-46b6515adb34, max-turns 500, Done — 2026-11-25T23:09:09Z
+- Review oracle: general (grok, model grok-4.7), session 01a214f8-7953-7ee1-929d-42ae433fbde6, effort 2, roster general, max-turns 120, round 1, clean — 2026-11-26
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a214f8-7953-7ee1-929d-42ae433fbde6, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-25T23:17:22Z
 
 ## Results (required before done)
 
@@ -114,3 +121,10 @@ Gates:
   `Template smoke SUCCEEDED`.
 - Smoke: `./bin/dev template-smoke --variant Nope`.
 - Expect: `Unknown --variant 'Nope'. Known: SmokeDefault, …, SmokeWebOnly` and exit 1.
+
+### Review disposition
+
+- Round 1, roster general, effort 2. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count 0.
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- The goal restatement matches the original task. No `## Learnings` misread.
