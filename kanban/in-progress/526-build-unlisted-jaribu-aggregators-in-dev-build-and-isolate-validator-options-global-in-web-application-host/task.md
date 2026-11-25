@@ -102,6 +102,8 @@ Acceptance:
 - `./bin/dev template-smoke` (default variant): SUCCEEDED. Generated web-jaribu-tests 496/496, api-jaribu-tests 9/9, timewarp-testing-tests 18/18.
 - `ganda repo audit`: first run failed `analyzer-suppressions` (copied NoWarn, fixed above). Rerun passes;
   the one advisory is `vscode-window-icon` (warning, non-blocking; `.vscode/settings.json` is git-ignored).
+  The commit hook's attest then failed `runfile-executable` (the new runfile had no executable bit).
+  Set +x in git; the audit rerun after that fix passes.
 
 ### How to validate
 
