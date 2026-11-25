@@ -85,6 +85,16 @@ Done when:
 - No webhook or push is wanted (task 331 ruled them out). This keeps intake pull-only.
 - Related: 331, 378, 521; timewarp-ganda 687 (board) and the intake plugin task there.
 
+### CI fix pass (PR #692 — `web-jaribu-tests` compile error)
+
+PR #692 passed `ci (fast)`, `ci (publish)`, and `classify`, but failed `ci (integration)` and `template-smoke` on the same compile error in an unlisted Jaribu aggregator runfile:
+
+`source/container-apps/web/features/feedback/feedback-owner-name-tests.cs(213,120): error CS1503: Argument 7: cannot convert from 'string' to 'System.DateTimeOffset' [tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj]`
+
+Fix:
+1. Update the missed constructor call site(s) in `source/container-apps/web/features/feedback/feedback-owner-name-tests.cs` (line 213) and verify no other co-located `*-tests.cs` files under `source/container-apps/web/` have stale constructor calls.
+2. Verify `dotnet build tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj` (0 warnings, 0 errors), run `dotnet run --file source/container-apps/web/features/feedback/feedback-owner-name-tests.cs`, run `./bin/dev build` and `ganda repo audit`, then commit and push so PR #692 goes green and merges.
+
 ## Results
 
 What changed:
