@@ -52,6 +52,11 @@ request, because CI no longer runs Playwright there. So `dev test` takes test fi
   `template-smoke --matrix --app-tests`, not on pull requests (task 502). AGENTS.md Tests row
   gets one sentence.
 
+Fix pass for review round 1 M1: Jaribu's `--filter-class` is a contains match, so `Ns.Equality`
+also selects `Ns.Equality_Operators` and the shorter class cannot run alone. `dev test <file>`
+must refuse that file before starting `dotnet test`, with an error naming the file, the class,
+and the other class; a mapping test pins the `Equality` / `Equality_Operators` pair.
+
 Done when: the dark-theme file runs only `DarkTheme_Given_Shell` and passes; a helper file and
 a stray file fail naming the file; a co-located runfile runs through `dotnet run --file`; pure
 mapping tests sit in `tests/tools/dev-cli-tests/`; `dev build` and `ganda repo audit` are clean.
@@ -71,6 +76,13 @@ mapping tests sit in `tests/tools/dev-cli-tests/`; `dev build` and `ganda repo a
 - [x] Comment and AGENTS.md updates
 - [x] Tests
 - [x] Gates
+
+## Review
+
+- Round 1: Blocked — open M1
+- Fix pass (round 2): M1 fixed. A class whose `--filter-class` value is an ordinal ignore-case
+  substring of another registered class's FullName in the same project now fails the file before
+  any run, naming the file, the class, and the other class.
 
 ## Notes
 
@@ -125,11 +137,35 @@ mapping tests sit in `tests/tools/dev-cli-tests/`; `dev build` and `ganda repo a
 - `ganda repo audit` → passes (one advisory `vscode-window-icon`); `ganda repo audit --fix` →
   fixed it, "Repository passes all audit checks."
 
+### Fix pass (review round 1 M1)
+
+- `test-file-selection.cs`: `TestClasses` returns each registered class's FullName (nesting from
+  indentation, joined with `+`) and its filter. Per project, `ProjectTestClasses` holds the
+  registered names and every registered class's FullName. A file whose class filter is an ordinal
+  ignore-case substring of another FullName in that project gets one error per collision, and the
+  file adds no run. `ClassFilters` was folded into `TestClasses`.
+- `test-file-selection-tests.cs`: `ClassWhoseFilterIsInAnotherClassName_Should_FailNamingFileClassAndOtherClass`
+  (same project and namespace, `Equality` and `Equality_Operators`) and
+  `LongerClassName_Should_StillRunAlone`.
+- Gates:
+  - `dotnet run --file tools/dev-cli/dev.cs -- self-install` then `./bin/dev build` → succeeded, 0 warnings, 0 errors.
+  - `tests/tools/dev-cli-tests/test-file-selection-tests.cs` (not a standalone runfile) →
+    `./bin/dev test tests/tools/dev-cli-tests/test-file-selection-tests.cs` → 13/13 passed.
+  - `./bin/dev test tests/foundation/foundation-domain-tests/entity-tests.cs --no-build` → refused
+    before any run: "…entity-tests.cs: test class TimeWarp.Architecture.Foundation.Domain.Tests.Equality
+    cannot run alone … also selects TimeWarp.Architecture.Foundation.Domain.Tests.Equality_Operators in
+    foundation-domain-tests."
+  - `./bin/dev test tests/foundation/foundation-domain-tests/enumeration-tests.cs --no-build --quiet` → 14 of 14 class runs passed.
+  - `ganda repo audit` → "Repository passes all audit checks."
+
 ### How to validate
 
 Smoke: refresh the AOT binary (`dotnet run --file tools/dev-cli/dev.cs -- self-install`), then run
 `./bin/dev test tests/container-apps/web/web-spa-playwright-tests/dark-theme-playwright-tests.cs`,
 then `./bin/dev test tests/container-apps/web/web-spa-playwright-tests/drawer-page-asserts.cs`.
+
+Collision smoke: `./bin/dev test tests/foundation/foundation-domain-tests/entity-tests.cs` exits 1
+before any run, naming `entity-tests.cs`, class `…Domain.Tests.Equality`, and `…Domain.Tests.Equality_Operators`.
 
 Expect: the first builds web-spa-playwright-tests, runs one row
 `web-spa-playwright-tests [DarkThemePlaywright_.DarkTheme_Given_Shell]` (4 tests) and passes;
@@ -139,3 +175,5 @@ file instead."
 ## Session
 
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session da2cde51-352e-4f81-9fba-e3223c82937e, max-turns 500, Done — 2026-11-25T19:07:20Z
+- Review oracle: Grok, session 01a2141b-1557-72b3-8bda-73ac5306b0b0 (2026-11-26). Effort 2, roster general. Round 1 open: M1. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2141b-1557-72b3-8bda-73ac5306b0b0, max-turns 120, artifacts general.md, merged.md — 2026-11-25T19:20:15Z

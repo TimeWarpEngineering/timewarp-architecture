@@ -22,8 +22,14 @@
 // already forwards. It takes exactly one substring of the class FullName, so `dev test` runs the
 // project once per class. The value is `Namespace.Class` for a top-level class and `+Class` for a
 // nested one (FullName joins nesting with '+'). A class is nested when its declaration is indented
-// deeper than the file's least-indented class. A substring can still match a longer class name in
-// the same project (`Ns.Foo` matches `Ns.FooBar`); test class names here do not collide that way.
+// deeper than the file's least-indented class; its enclosing class is the nearest earlier
+// declaration indented less.
+// The filter is an ordinal ignore-case contains match, so `Ns.Foo` also selects `Ns.FooBar`, and
+// no filter value can select the shorter class alone (task 523 review M1: entity-tests.cs `Equality`
+// and enumeration-tests.cs `Equality_Operators` share a namespace). Before any run, each filter is
+// checked against the FullName of every other class the project's sources register; a match fails
+// the file with an error naming the file, the class, and the other class. Sources under a nested
+// test project folder count too, so that check can refuse a run the nested split would allow.
 // Classes are found by declaration text, not Roslyn: the dev CLI is AOT and does not carry Roslyn.
 // A comment line that starts with `//` never matches the declaration pattern, and raw string
 // literals (`"""…"""`, often test fixture text) are removed before either scan.
@@ -60,7 +66,7 @@ internal static partial class TestFileSelection
     List<string> runfiles = [];
     List<TestFileProjectRun> projectRuns = [];
     List<string> errors = [];
-    Dictionary<string, HashSet<string>> registeredByProject = new(StringComparer.Ordinal);
+    Dictionary<string, ProjectTestClasses> classesByProject = new(StringComparer.Ordinal);
 
     foreach (string file in files)
     {
@@ -88,20 +94,30 @@ internal static partial class TestFileSelection
         continue;
       }
 
-      if (!registeredByProject.TryGetValue(project, out HashSet<string>? registered))
+      string projectName = Path.GetFileNameWithoutExtension(project);
+      if (!classesByProject.TryGetValue(project, out ProjectTestClasses? projectClasses))
       {
-        registered = Registered(projectSources(Path.GetDirectoryName(project) ?? string.Empty));
-        registeredByProject[project] = registered;
+        projectClasses = ProjectTestClasses.From(projectSources(Path.GetDirectoryName(project) ?? string.Empty));
+        classesByProject[project] = projectClasses;
       }
 
-      string[] classes = ClassFilters(text, registered);
-      if (classes.Length == 0)
+      TestClass[] testClasses = TestClasses(text, projectClasses.Registered);
+      if (testClasses.Length == 0)
       {
         errors.Add(
           $"{shown} declares no test class (no class in it is registered with RegisterTests<T>() in " +
-          $"{Path.GetFileNameWithoutExtension(project)}). It looks like a helper; pass the test class file instead.");
+          $"{projectName}). It looks like a helper; pass the test class file instead.");
         continue;
       }
+
+      string[] collisions = [.. testClasses.SelectMany(testClass => Collisions(testClass, projectClasses.FullNames, shown, projectName))];
+      if (collisions.Length > 0)
+      {
+        errors.AddRange(collisions);
+        continue;
+      }
+
+      string[] classes = [.. testClasses.Select(testClass => testClass.Filter).Distinct(StringComparer.Ordinal)];
 
       int index = projectRuns.FindIndex(run => run.Project == project);
       if (index < 0)
@@ -130,10 +146,10 @@ internal static partial class TestFileSelection
       .FirstOrDefault();
 
   /// <summary>
-  /// The <c>--filter-class</c> value for each class <paramref name="text"/> declares whose name is in
-  /// <paramref name="registered"/>, in declaration order.
+  /// Each class <paramref name="text"/> declares whose name is in <paramref name="registered"/>, with
+  /// its FullName and its <c>--filter-class</c> value, in declaration order.
   /// </summary>
-  internal static string[] ClassFilters(string text, IReadOnlySet<string> registered)
+  internal static TestClass[] TestClasses(string text, IReadOnlySet<string> registered)
   {
     ArgumentNullException.ThrowIfNull(registered);
     text = WithoutRawStrings(text);
@@ -143,20 +159,38 @@ internal static partial class TestFileSelection
     if (declarations.Length == 0) return [];
 
     int topIndent = declarations.Min(d => d.Groups["indent"].Length);
-    return
-    [
-      .. declarations
-        .Where(d => registered.Contains(d.Groups["name"].Value))
-        .Select(d => d.Groups["indent"].Length > topIndent
-          ? "+" + d.Groups["name"].Value
-          : ns is null ? d.Groups["name"].Value : $"{ns}.{d.Groups["name"].Value}")
-        .Distinct(StringComparer.Ordinal),
-    ];
+    List<(int Indent, string Name)> enclosing = [];
+    List<TestClass> classes = [];
+    foreach (Match declaration in declarations)
+    {
+      int indent = declaration.Groups["indent"].Length;
+      string name = declaration.Groups["name"].Value;
+      enclosing.RemoveAll(outer => outer.Indent >= indent);
+      enclosing.Add((indent, name));
+      if (!registered.Contains(name)) continue;
+
+      string typeName = string.Join('+', enclosing.Select(outer => outer.Name));
+      string fullName = ns is null ? typeName : $"{ns}.{typeName}";
+      string filter = indent > topIndent ? "+" + name : fullName;
+      classes.Add(new(name, fullName, filter));
+    }
+
+    return [.. classes];
   }
 
   /// <summary>Every type name passed to <c>RegisterTests&lt;T&gt;()</c> in <paramref name="sources"/>.</summary>
   internal static HashSet<string> Registered(IEnumerable<string> sources) =>
     [.. sources.SelectMany(source => RegisterTestsCall().Matches(WithoutRawStrings(source)).Select(m => m.Groups["name"].Value))];
+
+  // Jaribu selects every class whose FullName contains the filter (ordinal ignore-case).
+  private static IEnumerable<string> Collisions(TestClass testClass, IReadOnlySet<string> fullNames, string shown, string projectName) =>
+    fullNames
+      .Where(other => !string.Equals(other, testClass.FullName, StringComparison.Ordinal)
+        && other.Contains(testClass.Filter, StringComparison.OrdinalIgnoreCase))
+      .Order(StringComparer.Ordinal)
+      .Select(other =>
+        $"{shown}: test class {testClass.FullName} cannot run alone. Jaribu's --filter-class '{testClass.Filter}' " +
+        $"is a substring match and also selects {other} in {projectName}. Rename one class so neither name contains the other.");
 
   // A raw string literal (test fixture text) may hold class declarations and RegisterTests calls.
   private static string WithoutRawStrings(string text) => RawStringLiteral().Replace(text, "\"\"");
@@ -177,6 +211,21 @@ internal static partial class TestFileSelection
 
   [GeneratedRegex(@"RegisterTests<\s*(?:[\w.]+\.)?(?<name>[A-Za-z_]\w*)\s*>", RegexOptions.CultureInvariant)]
   private static partial Regex RegisterTestsCall();
+}
+
+/// <summary>A test class a file declares: its simple name, its FullName, and its <c>--filter-class</c> value.</summary>
+internal sealed record TestClass(string Name, string FullName, string Filter);
+
+/// <summary>The registered test class names of one project, and the FullName of each registered class it declares.</summary>
+internal sealed record ProjectTestClasses(HashSet<string> Registered, HashSet<string> FullNames)
+{
+  internal static ProjectTestClasses From(IEnumerable<string> sources)
+  {
+    string[] texts = [.. sources];
+    HashSet<string> registered = TestFileSelection.Registered(texts);
+    HashSet<string> fullNames = new(texts.SelectMany(text => TestFileSelection.TestClasses(text, registered)).Select(testClass => testClass.FullName), StringComparer.Ordinal);
+    return new(registered, fullNames);
+  }
 }
 
 /// <summary>One test project and the <c>--filter-class</c> values to run in it, one run each.</summary>

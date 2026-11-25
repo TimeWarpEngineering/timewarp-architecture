@@ -1,6 +1,7 @@
 #region Purpose
 // Pins `dev test <file…>` mapping: a runfile runs alone, a csproj test file maps to its project and
-// one --filter-class per declared test class, and a helper or stray file fails naming the file.
+// one --filter-class per declared test class, a helper or stray file fails naming the file, and a
+// class whose filter also selects another class in its project fails naming both.
 #endregion
 
 #region Design
@@ -18,7 +19,8 @@ public class Select_Given_
   private static readonly string Root = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "repo"));
   private static readonly string PlaywrightDirectory = Path.Combine(Root, "tests/container-apps/web/web-spa-playwright-tests");
   private static readonly string Playwright = Path.Combine(PlaywrightDirectory, "web-spa-playwright-tests.csproj");
-  private static readonly string Web = Path.Combine(Root, "tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj");
+  private static readonly string WebDirectory = Path.Combine(Root, "tests/container-apps/web/web-jaribu-tests");
+  private static readonly string Web = Path.Combine(WebDirectory, "web-jaribu-tests.csproj");
   private static readonly string Nested = Path.Combine(PlaywrightDirectory, "nested/nested-tests.csproj");
   private static readonly string[] Projects = [Playwright, Web, Nested];
 
@@ -115,6 +117,28 @@ public class Select_Given_
     }
     """";
 
+  // Mirrors foundation-domain-tests: entity-tests.cs `Equality` and enumeration-tests.cs
+  // `Equality_Operators` in one namespace (task 523 review M1).
+  private const string EntityEquality =
+    """
+    namespace Domain.Tests;
+
+    public class Equality
+    {
+      internal static void Register() => RegisterTests<Equality>();
+    }
+    """;
+
+  private const string EnumerationEquality =
+    """
+    namespace Domain.Tests;
+
+    public class Equality_Operators
+    {
+      internal static void Register() => RegisterTests<Equality_Operators>();
+    }
+    """;
+
   private static readonly string Runfile =
     $"#!/usr/bin/env -S dotnet --\n  {TestFileSelection.RunfileGuard}  \nreturn await TimeWarp.Jaribu.TestRunner.RunAllTests();\n";
 
@@ -129,6 +153,8 @@ public class Select_Given_
     [Path.Combine(PlaywrightDirectory, "fixture-text-tests.cs")] = WithFixtureText,
     [Path.Combine(Root, "source/container-apps/web/platform/abuse/abuse-rate-limiting-tests.cs")] = Runfile,
     [Path.Combine(Root, "tools/stray.cs")] = DarkTheme,
+    [Path.Combine(WebDirectory, "entity-tests.cs")] = EntityEquality,
+    [Path.Combine(WebDirectory, "enumeration-tests.cs")] = EnumerationEquality,
   };
 
   public static Task PlaywrightFile_Should_RunItsProjectFilteredToItsClass()
@@ -191,6 +217,28 @@ public class Select_Given_
 
     result.Errors.ShouldBeEmpty();
     result.ProjectRuns[0].ClassFilters.ShouldBe(["Fixtures_.Fixtures_Given_"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task ClassWhoseFilterIsInAnotherClassName_Should_FailNamingFileClassAndOtherClass()
+  {
+    TestFileSelectionResult result = Select("tests/container-apps/web/web-jaribu-tests/entity-tests.cs");
+
+    result.ProjectRuns.ShouldBeEmpty();
+    result.Errors.Length.ShouldBe(1);
+    result.Errors[0].ShouldContain("tests/container-apps/web/web-jaribu-tests/entity-tests.cs");
+    result.Errors[0].ShouldContain("Domain.Tests.Equality cannot run alone");
+    result.Errors[0].ShouldContain("also selects Domain.Tests.Equality_Operators in web-jaribu-tests");
+    return Task.CompletedTask;
+  }
+
+  public static Task LongerClassName_Should_StillRunAlone()
+  {
+    TestFileSelectionResult result = Select("tests/container-apps/web/web-jaribu-tests/enumeration-tests.cs");
+
+    result.Errors.ShouldBeEmpty();
+    result.ProjectRuns[0].Project.ShouldBe(Web);
+    result.ProjectRuns[0].ClassFilters.ShouldBe(["Domain.Tests.Equality_Operators"]);
     return Task.CompletedTask;
   }
 
