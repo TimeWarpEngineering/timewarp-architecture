@@ -33,8 +33,6 @@ template-only
 - [ ] Nightly job picks the variant up (matrix list or name filter in the workflow, if it has one).
 - [ ] `dev template-smoke --matrix` green for the new variant.
 - [ ] Publish smoke green for the new variant on `aca` and `aca-neon`.
-- [ ] Check off the multi-flag item on task 071 ("spot-check a couple multi-flag-off combos") or note
-      there that this task covers one of them.
 
 ## Notes
 
@@ -42,6 +40,7 @@ template-only
 - Task 373 added the single-flag web, grpc and yarp variants. Task 395 fixed the NoYarp publish failures.
 - Task 527 changes what the Azure publish output looks like with yarp off (web-server becomes the
   external app). Whichever of the two lands second updates the expectation. No hard dependency.
+- Note: task 071 is already in `kanban/done/`; no edit to `done/071` is needed.
 
 ## Session
 
