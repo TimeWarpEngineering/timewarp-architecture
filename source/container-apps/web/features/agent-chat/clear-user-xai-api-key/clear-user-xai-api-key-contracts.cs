@@ -24,7 +24,7 @@ using TimeWarp.Identity;
 public static partial class ClearUserXaiApiKey
 {
   /// <summary>No body. The caller is the authenticated user.</summary>
-  [ApiRoute("api/Users/Current/xai-api-key", HttpVerb.Delete)]
+  [ApiRoute("api/users/current/xai-api-key", HttpVerb.Delete)]
   [NotAggregate("Grouped under profile for hosts; the key is a protected secret row (UserXaiApiKey), not Profile state.")]
   [Destructive]
   [Operation("user-xai-api-key.clear", Description = "Clear the current user's xAI API key.", Group = "profile")]

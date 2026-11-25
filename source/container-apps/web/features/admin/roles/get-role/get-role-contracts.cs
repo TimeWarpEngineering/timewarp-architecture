@@ -30,7 +30,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 )]
 public static partial class GetRole
 {
-  [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Get)]
+  [ApiRoute("api/admin/roles/{RoleId:guid}", HttpVerb.Get)]
   [Operation("roles.get", Description = "Get one role with its stored permission ids.", Group = "admin.roles")]
   public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {

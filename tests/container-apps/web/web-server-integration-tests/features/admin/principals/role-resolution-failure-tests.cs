@@ -54,7 +54,7 @@ public class Returns_
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
 
-    HttpResponseMessage response = await client.GetAsync("api/Roles");
+    HttpResponseMessage response = await client.GetAsync("api/admin/roles");
 
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
@@ -66,7 +66,7 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-    HttpResponseMessage response = await client.GetAsync("api/Roles");
+    HttpResponseMessage response = await client.GetAsync("api/admin/roles");
 
     response.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
     response.StatusCode.ShouldNotBe(HttpStatusCode.Unauthorized);

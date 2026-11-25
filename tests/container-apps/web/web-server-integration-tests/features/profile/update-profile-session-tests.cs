@@ -6,7 +6,7 @@
 #region Design
 // Task 205-003: GET GetProfile is AllowAnonymous (dual-mode demo) so handler-only and GET
 // session tests never hit FastEndpoints auth on PUT. This suite sends PUT
-// api/Users/Current/Profile on an isolated client. Register+authenticate+isolated-cookie
+// api/users/current/profile on an isolated client. Register+authenticate+isolated-cookie
 // matches get-profile-session-tests.cs. Persistence is proven by a follow-up GET with the
 // same cookie (store-backed fields, not the anonymous mock). Fixture: C-create per class.
 #endregion

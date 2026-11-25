@@ -94,11 +94,11 @@ become hosted FastEndpoints.
 The FastEndpoint generator matches `TimeWarp.Foundation.Features.ApiRouteAttribute` by fully qualified metadata
 name; the contracts generator emits that public type, so it ignores the generated app's RootNamespace.
 
-#### `[ApiRoute]` parameter constraint grammar
+#### `[ApiRoute]` route grammar
 
-Tokens are `{Name}` or `{Name:constraint}`; a type starts **only** after a colon, so bare `{Date}`/`{LocationId}` stay
-full identifiers typed `string`. `guid` → `Guid`, `datetime` → `DateTime`, `min(n)`/`max(n)` → `int`, other tokens as
-written. Full constraint table and unsupported forms: [route-grammar.md](references/route-grammar.md).
+Templates start with `api/`; each literal segment is lowercase kebab (`api/admin/roles/{RoleId:guid}`), enforced by
+TWA0051. Tokens are `{Name}` or `{Name:constraint}`; a type starts **only** after a colon, so bare `{Date}` stays `string`.
+`guid` → `Guid`, `datetime` → `DateTime`, `min(n)`/`max(n)` → `int`, other tokens as written. Full grammar: [route-grammar.md](references/route-grammar.md).
 
 ### FastEndpoint generation (on the outer operation class)
 
@@ -188,7 +188,7 @@ Every operation is a `public static partial class` named for the operation:
 ```csharp
 public static partial class CreateRole
 {
-  [ApiRoute("api/Roles", HttpVerb.Post)]
+  [ApiRoute("api/admin/roles", HttpVerb.Post)]
   [Operation("roles.create", Description = "Create a role.", Group = "admin.roles")]
   public sealed partial class Command
     : IAuthApiRequest, IRoleDetails, ICommand<OneOf<Response, SharedProblemDetails>>

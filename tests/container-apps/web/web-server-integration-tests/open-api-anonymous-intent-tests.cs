@@ -87,13 +87,13 @@ public class Document_Given_
 
   public static async Task Profile_Get_Should_State_Anonymous_Intent()
   {
-    JsonElement operation = await OperationAsync("/api/Users/Current/Profile", "get");
+    JsonElement operation = await OperationAsync("/api/users/current/profile", "get");
     AssertAnonymous(operation, "dual-mode");
   }
 
   public static async Task Profile_Put_Should_Document_Unauthorized_And_Forbidden()
   {
-    JsonElement operation = await OperationAsync("/api/Users/Current/Profile", "put");
+    JsonElement operation = await OperationAsync("/api/users/current/profile", "put");
     AssertProtected(operation);
   }
 
@@ -112,7 +112,7 @@ public class Document_Given_
   public static async Task Audited_Public_Gets_Should_State_Anonymous_Intent()
   {
     JsonElement document = await DocumentRootAsync();
-    AssertAnonymous(Operation(document, "/api/Hello", "get"), "no security surface");
+    AssertAnonymous(Operation(document, "/api/hello", "get"), "no security surface");
     AssertAnonymous(Operation(document, "/api/identity/entra/choice", "get"), "no session yet");
     AssertAnonymous(Operation(document, "/api/identity/session", "get"), "IsAuthenticated=false");
     AssertAnonymous(Operation(document, "/api/identity/sign-in-methods", "get"), "sign-in methods");

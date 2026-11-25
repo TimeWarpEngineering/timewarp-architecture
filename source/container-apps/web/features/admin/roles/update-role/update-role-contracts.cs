@@ -27,7 +27,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 )]
 public static partial class UpdateRole
 {
-  [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Put)]
+  [ApiRoute("api/admin/roles/{RoleId:guid}", HttpVerb.Put)]
   [Operation("roles.update", Description = "Replace a role's name and description.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IRoleDetails, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {

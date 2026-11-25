@@ -25,7 +25,7 @@ namespace TimeWarp.Architecture.Features.Feedback;
 )]
 public static partial class GetFeedback
 {
-  [ApiRoute("api/Feedback/{FeedbackItemId:guid}", HttpVerb.Get)]
+  [ApiRoute("api/feedback/{FeedbackItemId:guid}", HttpVerb.Get)]
   [Operation("feedback.get", Description = "Get one of the current user's feedback items with its visible thread.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 

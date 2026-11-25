@@ -101,7 +101,7 @@ public partial class Document_Given_
 
   public static async Task Contract_Operation_Should_Publish_Response_And_Problem_Json()
   {
-    JsonElement responses = (await OperationAsync("/Analytics/TrackEvent", "post")).GetProperty("responses");
+    JsonElement responses = (await OperationAsync("/api/analytics/events", "post")).GetProperty("responses");
 
     SchemaRef(responses.GetProperty("200"), "application/json")
       .ShouldEndWith("TrackEvent_Response");

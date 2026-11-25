@@ -26,7 +26,7 @@ public static partial class DownloadFeedbackAttachment
   public static string DownloadPath(Guid attachmentId) =>
     "/" + new Query { AttachmentId = attachmentId }.GetRoute();
 
-  [ApiRoute("api/Feedback/attachments/{AttachmentId:guid}", HttpVerb.Get)]
+  [ApiRoute("api/feedback/attachments/{AttachmentId:guid}", HttpVerb.Get)]
   [Operation("feedback.download-attachment", Description = "Download a feedback attachment's bytes.", Group = "feedback")]
   [NotAggregate("Reads a FeedbackAttachment's bytes from the attachment store, not FeedbackItem state.")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;

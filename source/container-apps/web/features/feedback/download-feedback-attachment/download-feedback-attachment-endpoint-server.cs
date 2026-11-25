@@ -22,7 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Foundation.Features;
 
-/// <summary>GET api/Feedback/attachments/{id}</summary>
+/// <summary>GET api/feedback/attachments/{id}</summary>
 public sealed class DownloadFeedbackAttachmentEndpoint
   : BaseFastEndpoint<DownloadFeedbackAttachment.Query, DownloadFeedbackAttachment.Response>
 {

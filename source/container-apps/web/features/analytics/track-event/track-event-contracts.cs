@@ -4,8 +4,8 @@
 
 #region Design
 // [ApiEndpoint] opts the operation into FastEndpoint generation on web-server; [ApiRoute] owns the
-// wire path so client and server cannot drift. Route string is the historical path without an
-// `api/` prefix (Analytics/TrackEvent) — preserve exactly; do not "normalize" it.
+// wire path so client and server cannot drift. The route follows the route grammar (TWA0051):
+// `api/analytics/events` (task 458-010 moved it from `Analytics/TrackEvent`).
 // Response is an empty BaseResponse: the caller only needs success/problem typing for a
 // fire-and-forget write. GetMockResponseFactory keeps SPA mock-mode from falling through
 // MockWebApiService to the real API.
@@ -23,7 +23,7 @@ namespace TimeWarp.Architecture.Features.Analytics;
 [EndpointAllowAnonymous("Analytics ingestion carries no PII and must capture pre-auth traffic (e.g. page views before sign-in).")]
 public static partial class TrackEvent
 {
-  [ApiRoute("Analytics/TrackEvent", HttpVerb.Post)]
+  [ApiRoute("api/analytics/events", HttpVerb.Post)]
   public sealed partial class Command : ICommand<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
     public string EventName { get; set; } = null!;

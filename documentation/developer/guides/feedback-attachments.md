@@ -87,7 +87,7 @@ Contracts do not reference the domain.
 
 ## HTTP
 
-`POST api/Feedback/attachments` sends the file as the body, not JSON. The media type is the
+`POST api/feedback/attachments` sends the file as the body, not JSON. The media type is the
 file's type, with no charset. The file name is the percent-encoded `X-File-Name` header.
 `HttpApiService` does this for any `IFileUploadRequest`. The server decodes the header and
 keeps only the last path segment. A name with a control character, such as a decoded line
@@ -100,7 +100,7 @@ body limit is one byte over the cap, so an
 oversize body gets the handler's `application/problem+json` 413. A body that Kestrel stops
 first gets the same 413 problem.
 
-`GET api/Feedback/attachments/{id}` writes the bytes. Images use `Content-Disposition: inline`.
+`GET api/feedback/attachments/{id}` writes the bytes. Images use `Content-Disposition: inline`.
 PDF and text use `attachment`. `filename=` is an ASCII fallback in which every character
 outside printable ASCII is `_`. The real name is in `filename*=UTF-8''…`. The response sets `X-Content-Type-Options: nosniff` and
 `Cache-Control: private, no-store`. The `Content-Type` is the allow-list spelling.
@@ -119,7 +119,7 @@ leaves no item with only some of its files. If a rollback step itself throws, th
 logged at Error and the item can stay filed, possibly with some of its files; that needs two
 store failures in a row.
 
-`DELETE api/Feedback/attachments/{id}` is the generated JSON endpoint. Upload and download are
+`DELETE api/feedback/attachments/{id}` is the generated JSON endpoint. Upload and download are
 hand-written endpoints because the generated one always writes JSON.
 
 ## Client

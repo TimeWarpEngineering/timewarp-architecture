@@ -107,7 +107,7 @@ public class FeedbackAttachment_Given_Wasm
       Timeout = 30_000,
     });
     string body = await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").InputValueAsync();
-    body.ShouldContain("/api/Feedback/attachments/");
+    body.ShouldContain("/api/feedback/attachments/");
     await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-paste.png") });
 
     await page.Locator("[data-qa=FeedbackSubmit]").ClickAsync();
@@ -124,7 +124,7 @@ public class FeedbackAttachment_Given_Wasm
       Timeout = 30_000,
     });
     (await page.Locator("[data-qa=FeedbackItemBody] img").CountAsync()).ShouldBe(1);
-    (await page.Locator("img[src*='/api/Feedback/attachments/']").CountAsync()).ShouldBe(1);
+    (await page.Locator("img[src*='/api/feedback/attachments/']").CountAsync()).ShouldBe(1);
     (await page.Locator("[data-qa=FeedbackItemBody] a", new PageLocatorOptions { HasText = "notes.txt" }).CountAsync()).ShouldBe(1);
     (await page.Locator("[data-qa=FeedbackItemBody]").InnerTextAsync()).ShouldNotContain("![");
     (await page.Locator("[data-qa=FeedbackItemAttachment]").CountAsync()).ShouldBe(0);

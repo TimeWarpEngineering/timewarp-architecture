@@ -43,7 +43,7 @@ public static partial class SubmitFeedback
   /// <summary>Problem extension key listing the attachment ids that could not be filed.</summary>
   public const string UnavailableAttachmentIdsExtension = "unavailableAttachmentIds";
 
-  [ApiRoute("api/Feedback", HttpVerb.Post)]
+  [ApiRoute("api/feedback", HttpVerb.Post)]
   [Operation("feedback.submit", Description = "File a feedback item for the current user.", Group = "feedback")]
   public sealed partial class Command
     : IApiRequest, IFeedbackItemDetails, ICommand<OneOf<Response, SharedProblemDetails>>

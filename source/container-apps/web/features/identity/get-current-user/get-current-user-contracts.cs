@@ -19,7 +19,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 
 public static partial class GetCurrentUser
 {
-  [ApiRoute(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]
+  [ApiRoute(RouteTemplate: "api/users/current", HttpVerb.Get)]
   [ClientOnlyContract("Served by SPA mock mode; no server grants endpoint in the template.")]
   public sealed partial class Query : IAuthApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>
   {

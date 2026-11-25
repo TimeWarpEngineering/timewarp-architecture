@@ -20,6 +20,30 @@ nothing enforces a style.
 
 Owner: contracts (`[ApiRoute]`), skill `tw-web-api-contracts`, convention analyzers.
 
+## Goal (implementer restatement)
+
+Every `[ApiRoute]` template follows one grammar: it starts with `api/`, and every literal segment
+is lowercase kebab (`[a-z0-9]+(-[a-z0-9]+)*`). Parameter tokens (`{Name}` / `{Name:constraint}`)
+keep their existing grammar. A new convention analyzer, TWA0051, reports any `[ApiRoute]` string
+that breaks the grammar, so the style cannot drift again.
+
+Acceptance:
+
+- `route-grammar.md` in `tw-web-api-contracts` states the segment grammar beside the parameter
+  grammar and names TWA0051.
+- TWA0051 is in `AnalyzerReleases.Unshipped.md` (next free id moves to TWA0052) and has analyzer
+  tests (clean kebab route, PascalCase segment, missing `api/` prefix, leading slash, constant
+  route, parameter tokens ignored).
+- Every non-conforming route is renamed: `api/Feedback` -> `api/feedback`, `api/Hello` ->
+  `api/hello`, `api/Roles` -> `api/admin/roles` (beside `api/admin/principals`),
+  `api/Users/Current/...` -> `api/users/current/...`, `api/GetCurrentUser` -> `api/users/current`,
+  `api/TodoItems` -> `api/todo-items`, `Analytics/TrackEvent` -> `api/analytics/events`,
+  `api/weatherforecast` -> `api/weather-forecasts` (run-together words the analyzer cannot see).
+- The ingress golden is regenerated; tests and comments that hard-code the old paths are updated.
+  SPA callers go through contract `GetRoute`/`RouteTemplate`, so they follow the rename.
+- `dev build` is 0 warnings (the analyzer runs on the real contracts, so a missed rename fails it).
+- Browser sign-out (`/identity/sign-out*`) is not an `[ApiRoute]`; it stays with task 458-007.
+
 ## Checklist
 
 - [ ] Implement the requirements above

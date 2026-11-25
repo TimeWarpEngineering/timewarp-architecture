@@ -337,7 +337,7 @@ public class HttpApiService_GetResponse
     public Stream Content { get; }
     public string FileName { get; }
     public string ContentType { get; }
-    public string GetRoute() => "/api/Feedback/attachments";
+    public string GetRoute() => "/api/feedback/attachments";
     public HttpVerb GetHttpVerb() => HttpVerb.Post;
   }
 }

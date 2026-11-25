@@ -20,7 +20,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 [EndpointAllowAnonymous("Public demo data with no security surface; the template's reference contract is meant to be reachable with zero setup.")]
 public static partial class GetWeatherForecasts
 {
-  [ApiRoute("api/weatherforecast", HttpVerb.Get)]
+  [ApiRoute("api/weather-forecasts", HttpVerb.Get)]
   public sealed partial class Query : IQuery<OneOf<Response, SharedProblemDetails>>, IQueryStringRouteProvider,
     IApiRequest
   {

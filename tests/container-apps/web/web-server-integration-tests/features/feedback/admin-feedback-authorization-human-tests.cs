@@ -92,7 +92,7 @@ public class Human_Returns_
     (await PostAsync(admin, $"api/admin/feedback/{itemId}/notes", new { body = "Secret triage note" }))
       .StatusCode.ShouldBe(HttpStatusCode.OK);
 
-    HttpResponseMessage own = await filer.GetAsync($"api/Feedback/{itemId}");
+    HttpResponseMessage own = await filer.GetAsync($"api/feedback/{itemId}");
     own.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await own.Content.ReadAsStringAsync();
     json.ShouldContain("\"status\":\"Planned\"");
@@ -101,10 +101,10 @@ public class Human_Returns_
     json.Contains("severity", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
 
     (await PutSeverityAsync(admin, itemId, FeedbackSeverity.High)).StatusCode.ShouldBe(HttpStatusCode.OK);
-    HttpResponseMessage afterReview = await filer.GetAsync($"api/Feedback/{itemId}");
+    HttpResponseMessage afterReview = await filer.GetAsync($"api/feedback/{itemId}");
     (await afterReview.Content.ReadAsStringAsync()).Contains("severity", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
 
-    (await PostAsync(filer, $"api/Feedback/{itemId}/replies", new { body = "Thank you!" }))
+    (await PostAsync(filer, $"api/feedback/{itemId}/replies", new { body = "Thank you!" }))
       .StatusCode.ShouldBe(HttpStatusCode.OK);
     (await PostAsync(filer, $"api/admin/feedback/{itemId}/replies", new { body = "Pretending to be admin" }))
       .StatusCode.ShouldBe(HttpStatusCode.Forbidden);

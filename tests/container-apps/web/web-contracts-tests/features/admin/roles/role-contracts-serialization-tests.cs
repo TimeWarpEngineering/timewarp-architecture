@@ -74,7 +74,7 @@ public class GetRole_Query_Should
 
   public static Task SerializeAndDeserialize_Including_Generated_RouteProperty()
   {
-    // RoleId is not declared in get-role.cs — [ApiRoute("api/Roles/{RoleId:guid}")] generates it.
+    // RoleId is not declared in get-role.cs — [ApiRoute("api/admin/roles/{RoleId:guid}")] generates it.
     Guid roleId = Guid.NewGuid();
     GetRole.Query query = new() { RoleId = roleId, UserId = Guid.NewGuid() };
 

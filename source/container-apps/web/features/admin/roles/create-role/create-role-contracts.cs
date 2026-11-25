@@ -27,7 +27,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 )]
 public static partial class CreateRole
 {
-  [ApiRoute("api/Roles", HttpVerb.Post)]
+  [ApiRoute("api/admin/roles", HttpVerb.Post)]
   [Operation("roles.create", Description = "Create a role.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IRoleDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
