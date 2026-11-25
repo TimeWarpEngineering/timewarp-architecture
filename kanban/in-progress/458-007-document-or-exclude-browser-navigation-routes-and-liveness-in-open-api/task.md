@@ -79,6 +79,7 @@ Acceptance:
   Boy-scout for `ganda repo audit`: `kanban-landed` failed on task 528's unlanded review kitchen
   (claim held by this identity, session dead), fixed with `ganda kanban reconcile --task-id 528`;
   `vscode-window-icon` fixed with `ganda repo audit --fix` (writes the ignored `.vscode/settings.json`).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c7c6a331-e2ec-40a6-99c8-e7b374561a0e, max-turns 500, Done — 2026-11-25T23:37:41Z
 
 ## Results
 
