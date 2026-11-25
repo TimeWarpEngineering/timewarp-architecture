@@ -2,15 +2,16 @@
 
 **Date:** 2026-11-26
 **Host task:** kanban/in-progress/523-dev-test-runs-the-classes-in-a-test-file-so-walk-gates-run-playwright-classes/
-**Diff scope:** branch `task/523-dev-test-runs-the-classes-in-a-test-file-so-walk` vs merge-base `d27ec05f8` (master). Product diff: `dev test` file arguments, mapping tests, playwright comments, AGENTS.md Tests row. Kanban move is in the same range.
-**Plan / brief:** task.md Requirements and Goal (implementer restatement). `dev test` takes test file paths: runfile guard runs `dotnet run --file`; a file under `tests/` runs its project filtered to the test classes that file declares; helper and stray files fail naming the file; `--group`, `--project`, and `--filter-class` are refused with files.
-**Effort:** 2 (by-diff, 767 lines). Roster axes: general only.
+**Diff scope (round 1):** branch `task/523-dev-test-runs-the-classes-in-a-test-file-so-walk` vs merge-base `d27ec05f8` (master). Product diff: `dev test` file arguments, mapping tests, playwright comments, AGENTS.md Tests row. Kanban move is in the same range. By-diff 767 lines.
+**Diff scope (round 2):** fix delta `1378d535f` since round 1. Product files: `tools/dev-cli/services/test-file-selection.cs`, `tests/tools/dev-cli-tests/test-file-selection-tests.cs`. Re-verify M1. By-diff 250 lines.
+**Plan / brief:** task.md Requirements and Goal (implementer restatement). `dev test` takes test file paths: runfile guard runs `dotnet run --file`; a file under `tests/` runs its project filtered to the test classes that file declares; helper and stray files fail naming the file; `--group`, `--project`, and `--filter-class` are refused with files. A class whose filter also selects another registered class fails the file before any run (round 1 M1).
+**Effort:** 2 (by-diff). Roster axes: general only.
 **Reviewer roster:** general
-**Session IDs:** review oracle Grok session 01a2141b-1557-72b3-8bda-73ac5306b0b0 (2026-11-26). Implementer session da2cde51-352e-4f81-9fba-e3223c82937e (2026-11-25).
+**Session IDs:** review round 1 Grok session 01a2141b-1557-72b3-8bda-73ac5306b0b0 (2026-11-26). Review round 2 Grok session 01a2142c-f7f0-76c2-b949-ab6cbc99068b (2026-11-26). Implementer session da2cde51-352e-4f81-9fba-e3223c82937e (2026-11-25).
 
 ## Budget (by-diff)
 
-- Lines changed: 767
+- Lines changed: 250
 - Effort: 2
 - TCB hits: none
 - Roster axes: general

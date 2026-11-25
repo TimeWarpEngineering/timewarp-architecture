@@ -80,10 +80,11 @@ mapping tests sit in `tests/tools/dev-cli-tests/`; `dev build` and `ganda repo a
 ## Review
 
 - Round 1: Blocked — open M1
-- Fix pass (round 2): M1 fixed. A class whose `--filter-class` value is an ordinal ignore-case
+- Fix pass: M1 fixed. A class whose `--filter-class` value is an ordinal ignore-case
   substring of another registered class's FullName in the same project now fails the file before
   any run, naming the file, the class, and the other class.
-
+- Review round 2: clean. M1 re-verified fixed. No new findings. Disposition `review/disposition.md`.
+- Round 2: Done
 ## Notes
 
 - Origin: task 502, Recommendation 2.
@@ -172,8 +173,16 @@ Expect: the first builds web-spa-playwright-tests, runs one row
 the second exits 1 with "…/drawer-page-asserts.cs declares no test class … pass the test class
 file instead."
 
+### Review disposition
+
+- Rounds: 2. Roster: general. Effort: 2.
+- Counts: bug 1 fixed, 0 open; suggestion 0; nit 0.
+- Disposition: clean (`review/disposition.md`). Round 1 M1 is fixed. Round 2 found no new issues.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session da2cde51-352e-4f81-9fba-e3223c82937e, max-turns 500, Done — 2026-11-25T19:07:20Z
 - Review oracle: Grok, session 01a2141b-1557-72b3-8bda-73ac5306b0b0 (2026-11-26). Effort 2, roster general. Round 1 open: M1. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2141b-1557-72b3-8bda-73ac5306b0b0, max-turns 120, artifacts general.md, merged.md — 2026-11-25T19:20:15Z
+- Review round 2: Grok 4.7, session 01a2142c-f7f0-76c2-b949-ab6cbc99068b (2026-11-26). Effort 2, roster general. M1 re-verified fixed. No new findings. Disposition: clean. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
