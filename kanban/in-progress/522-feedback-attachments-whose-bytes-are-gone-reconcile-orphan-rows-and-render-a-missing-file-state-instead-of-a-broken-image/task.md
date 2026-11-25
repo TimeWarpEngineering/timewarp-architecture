@@ -188,6 +188,18 @@ WASM host over Postgres with both files' bytes deleted).
 - Test files: none. The fix edits only `documentation/developer/guides/feedback-attachments.md`; no production code or test file changed, so no test file covers it.
 - `ganda repo audit` — passed ("Repository passes all audit checks.").
 
+### Gates — CI fix pass (PR #688 `template-smoke`)
+
+- Change: `template-smoke` in `.github/workflows/workflow.yml` runs on `ubuntu-latest` on every
+  event (the generated app's `web-jaribu-tests` file feedback against Testcontainers Postgres; the
+  wslc runner has no Docker socket). Header and eviction comments and the `green-key.cs` Design
+  region now name template-smoke beside ci (integration) as hosted-only. No dev-cli test asserts the
+  runner. Merged `origin/master` (109 commits; only conflict was this task file, kept the branch copy).
+- `./bin/dev build` — passed.
+- `./bin/dev test --project dev-cli-tests` — 399/399 passed (compiles `green-key.cs`).
+- `./bin/dev template-smoke` — SUCCEEDED: SmokeDefault 0 warnings; web-jaribu 494/494, api-jaribu 9/9, timewarp-testing 14/14 (local Docker).
+- `ganda repo audit` — passed ("Repository passes all audit checks.").
+
 ### How to validate
 
 Smoke:
