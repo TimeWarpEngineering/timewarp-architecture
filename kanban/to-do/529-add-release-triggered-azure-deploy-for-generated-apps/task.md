@@ -13,6 +13,10 @@ Give a generated app that path: a workflow job that runs on a published release 
 dispatch), logs in to Azure with GitHub OIDC, and runs the same `dev deploy --target <t>` an operator
 runs. Change the skill to say so.
 
+## Depends on
+
+- 531
+
 ## Propagation
 
 likely
@@ -29,11 +33,9 @@ likely
 - `aca-neon` gets `neon-pooled-connection-string` and `neon-direct-connection-string` from GitHub
   Actions secrets. Nothing secret is written to a file or echoed.
 - The job runs in a GitHub `Production` environment, so an instance can add required reviewers.
-- The job reaches a generated app. `.github/` is not in the template pack today
-  (`timewarp-templates/source/timewarp-architecture-template/*.csproj`), and this repo's
-  `workflow.yml` is the template's own CI and NuGet release. Ship the instance workflow as template
-  content under a path that lands at `.github/workflows/` in the generated app, without it running in
-  this repo.
+- The job is added to the instance workflow that task 531 ships (`.github/workflows/workflow.yml` in
+  a generated app), and uses the shared `setup-ci` action. It is not a second workflow file, and it
+  does not go in this repo's own `workflow.yml`.
 - The federated credential subject is documented. A `release` event runs on a tag ref, and a
   credential that trusts only `refs/heads/master` refuses it. The first instance worked around this
   with a master-subject dispatch; prefer an `environment:Production` subject, which covers both
@@ -48,14 +50,12 @@ likely
 
 ## Checklist
 
-- [ ] Instance deploy workflow file, packed to `.github/workflows/` in a generated app.
-- [ ] Confirm `tools/dev-cli` and `bin/dev` are available to that job in a generated app, and build
-      the dev CLI in the job if not.
-- [ ] Pinned Aspire CLI install in the job, matching `<AspireVersion>` (same as the CI jobs).
+- [ ] Deploy job in the instance workflow from task 531.
+- [ ] Pinned Aspire CLI install in the job through `setup-ci` (`aspire-cli: true`).
 - [ ] `dev deploy` runs non-interactively under OIDC (no `az login` prompt, no browser).
 - [ ] `tw-deploy` skill text and `references/azure-container-apps-neon.md` updated.
 - [ ] Prerequisite setup documented, with the federated credential subject.
-- [ ] `dev template-smoke` asserts the workflow file is present in the generated app.
+- [ ] `dev template-smoke` asserts the deploy job is present in the generated workflow.
 - [ ] `dev lint-skills` passes.
 
 ## Notes
@@ -67,8 +67,8 @@ likely
   command to read from: its `.github/workflows/workflow.yml` deploy job and
   `tools/dev-cli/endpoints/` `deploy` and `bootstrap-oidc` commands. Its own task 057 moves that job
   from push-to-master to release-only.
-- A generated app ships no CI workflow at all today. This task adds the deploy job only. A CI
-  workflow for instances is a separate question.
+- Task 531 ships the instance CI workflow this job lives in. Task 530 ships the dev CLI the job
+  calls. 531 depends on 530, so this task waits on both.
 - Task 527 makes a web-only (yarp off) app reachable on the Azure targets. A web-only instance needs
   it before this job is useful, but this task does not depend on it.
 
