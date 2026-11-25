@@ -46,8 +46,8 @@ Acceptance:
 
 ## Checklist
 
-- [ ] Implement the requirements above
-- [ ] Tests or document checks named above pass
+- [x] Implement the requirements above
+- [x] Tests or document checks named above pass
 
 ## Notes
 
@@ -65,3 +65,54 @@ Acceptance:
 ## Session
 
 - Created: 2227132 (2026-11-24)
+- 2026-11-26 implement: TWA0051 `ApiRouteGrammarAnalyzer`, route renames, golden regenerated, tests
+  and skill examples updated (commit 1656c0642).
+
+## Results
+
+- Grammar: `skills/tw-web-api-contracts/references/route-grammar.md` now opens with a segment
+  grammar (`api/` first, lowercase kebab literal segments, whole-segment tokens, admin-only under
+  `api/admin/`). `SKILL.md` points at it (line count kept at 499 for the 500-line skill lint).
+- Analyzer: `source/analyzers/timewarp-architecture-convention-analyzers/api-route-grammar-analyzer.cs`
+  reports TWA0051 (Warning, so the build fails) on any `[ApiRoute]` value that breaks the grammar,
+  hosted or `[ClientOnlyContract]`, const routes included. Recorded in `AnalyzerReleases.Unshipped.md`;
+  next free id is TWA0052.
+- Renames: `api/Feedback` -> `api/feedback`, `api/Hello` -> `api/hello`, `api/Roles` -> `api/admin/roles`,
+  `api/Users/Current/{profile,xai-api-key}` -> `api/users/current/...`, `api/GetCurrentUser` ->
+  `api/users/current`, `api/TodoItems` -> `api/todo-items`, `Analytics/TrackEvent` -> `api/analytics/events`,
+  `api/weatherforecast` -> `api/weather-forecasts`. SPA callers use contract `GetRoute`/`RouteTemplate`,
+  so no SPA edit was needed. Ingress golden now lists `api/analytics`, `api/feedback`, `api/hello`,
+  `api/users` and drops the PascalCase prefixes.
+- Not changed: `/identity/sign-out*` is not an `[ApiRoute]` (task 458-007). Source-generator test
+  fixtures keep their synthetic `api/Roles` strings; TWA0051 does not run in those generator tests.
+- Breaking: external callers of the old demo paths get 404 (accepted by the task).
+- Follow-up: after deploy, re-fetch `https://arch.timewarp.work/openapi/v1.json` and confirm every
+  path is under `/api/` and lowercase kebab.
+
+### Gates
+
+- `./bin/dev build` — pass (0 warnings, 0 errors; TWA0051 runs on the real contracts).
+- `./bin/dev test --project timewarp-architecture-analyzers-tests --filter-class Should_Enforce_Route_Grammar`
+  (new `tests/analyzers/timewarp-architecture-analyzers-tests/api-route-grammar-analyzer-tests.cs`) — 15/15 pass.
+- `dotnet run --file source/container-apps/web/features/feedback/feedback-filing-tests.cs` — 18/18 pass.
+- `dotnet run --file source/container-apps/web/features/feedback/feedback-attachment-submit-tests.cs` — 9/9 pass.
+- `./bin/dev test --project web-server-integration-tests` (covers the edited roles, feedback, identity,
+  profile, and `open-api-*` test files; not standalone runfiles) — 444/444 pass.
+- `./bin/dev test --project web-contracts-tests` (role and SharedProblemDetails serialization files) — 48/48 pass.
+- `./bin/dev test --project foundation-contracts-tests` (`http-api-service-tests.cs`) — 25/25 pass.
+- `./bin/dev test --project web-spa-integration-tests --filter-class SafeMarkdown_Should_` — 17/17 pass.
+- `./bin/dev test --project aspire-tests --filter-class GeneratedIngressRoutes_Given_` — 1/1 pass.
+- `./bin/dev test --project yarp-integration-tests --filter-class Smoke_Given_` — 12/12 pass.
+- Not run locally, CI runs them: `aspire-tests` `IngressSmoke_Given_` (boots the full AppHost) and the
+  three edited `web-spa-playwright-tests` files (string-only path updates). None is a standalone runfile.
+- `./bin/dev lint-skills` — pass (skills changed).
+- `ganda repo audit` — pass.
+
+### How to validate
+
+- Smoke: change any `[ApiRoute]` to `"api/Widgets"` (or `"Analytics/TrackEvent"`) and run `./bin/dev build`;
+  then run `./bin/dev test --project timewarp-architecture-analyzers-tests --filter-class Should_Enforce_Route_Grammar`.
+- Expect: the build fails with TWA0051 naming the contract, the route, and the broken segment; the test
+  class passes 15/15. With the renamed routes the build is clean, and `goldens/ingress/WebServerApiRoutePrefixes.g.cs`
+  lists only lowercase prefixes including `api/analytics`.
+
