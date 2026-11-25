@@ -70,6 +70,7 @@ Done when:
   column, index, last migration id and the ProductVersion annotation). Worth a dev-cli follow-up if
   it repeats.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 2d2de821-6660-468a-b3f1-24d064a261c6, max-turns 500, Blocked — 2026-11-25T02:06:51Z
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ab5a7dd3-497c-4fce-9029-6669b97b5c28, max-turns 500, Done — 2026-11-25T08:53:07Z
 
 ## Notes
 
