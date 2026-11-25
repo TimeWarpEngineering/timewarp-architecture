@@ -22,7 +22,6 @@ Owner: transformer in `source/foundation/foundation-server/`; typed-id generator
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -34,6 +33,7 @@ Owner: transformer in `source/foundation/foundation-server/`; typed-id generator
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
 
 ## Session
 
