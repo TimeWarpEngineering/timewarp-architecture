@@ -1,0 +1,17 @@
+# Round 2 — general
+**Date:** 2026-11-25
+**Scope reviewed:** branch `task/521-feedback-items-record-the-app-version-and-page-at` vs merge-base `79651d227` (product diff, 26 files). Re-checked round 1 (no findings) against the current tree, including commit `08b293810` (case-insensitive `PropertyName` assertion). Compared with the original task and with `## Goal (implementer restatement)`. Recorded `## Results` and `### How to validate` cover the filing change and the CI fix (build, filing runfile, `web-jaribu-tests` 504/504, audit). Gates were not re-run.
+
+## Summary
+
+Filing still stores the web-server assembly informational version from `AssemblyAppVersionAccessor` (never from the client) and an optional app-relative page path. Admin list and detail return both, the admin item page shows both, filer `GetFeedback` does not carry them, the migration adds nullable columns, and the fields stay fixed after a status change. The restatement matches the task: refusing a query string or absolute URL is the choice the task allows, and there is no misread. The `PropertyName` comparison is case-insensitive on purpose (the aggregator sets FluentValidation's global resolver to camelCase). The assertion still requires `IsValid` false and an error on `PagePath`. That is a documented test fix, not a weakened check.
+
+The page path is wrong on a later filing in the same circuit. `FeedbackPagePath.From` trusts `RouteState.Routes`, and that stack drops the page the filer just left when `/Feedback` is opened again.
+
+## Issues
+
+### Issue 1 — Severity: bug
+- File: source/container-apps/web/projects/web-spa/features/feedback/feedback-state.submit-feedback.cs:93
+- Description: The path is chosen at submit from `RouteState.Routes`, which `FeedbackPagePath.From` treats as a newest-first visit list. In TimeWarp.State.Plus 12.0.0-beta.19, `TwPageTitle.OnAfterRenderAsync` calls `RouteState.PushRouteInfo` on first render, and `PushRouteInfoActionSet.Handler.TruncateToOrPush` pops every entry from the top through the previous equal absolute URL, then pushes the current URL. `TimeWarpPage` renders `TwPageTitle`, and both feedback pages use `TimeWarpPage`, so opening `/Feedback` the second time removes the page the filer just left. Example: Counter, then Feedback (records `/Counter`), then Weather, then Feedback again. The stack collapses to Feedback over Counter, and the second filing stores `/Counter` instead of `/Weather`. The first filing in a circuit is unaffected, which is the path the recorded manual smoke covers. `feedback-page-path-tests.cs` passes a list that still contains the page under the feedback URLs, so it does not model this collapse. Checked with `ilspycmd -t TimeWarp.Features.Routing.RouteState` and `ilspycmd -t TimeWarp.Features.Routing.TwPageTitle` on `/home/steve/.nuget/packages/timewarp.state.plus/12.0.0-beta.19/lib/net11.0/timewarp-state-plus.dll` (reason: the visit list may not still hold the page the form was opened from).
+- Suggestion: Remember the last non-feedback app path at navigation time, before `PushRouteInfo` truncates the stack (for example from `LocationChanged`, while the previous URL is still on top), and send that snapshot. Keep the query and fragment stripped, and still send null when that path would be refused. Add a test whose visited list is the stack after a second push of the same `/Feedback` URL, and expect the page the filer just left.
+- Status: open

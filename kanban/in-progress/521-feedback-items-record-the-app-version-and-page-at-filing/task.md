@@ -66,19 +66,41 @@ Acceptance, as I will prove it:
   Audit fix in-session: a new runfile copied the neighbour's `#:property NoWarn` and failed
   `analyzer-suppressions`; the shared world files it includes need those suppressions, so the
   task-521 tests moved into `feedback-owner-name-tests.cs` (already in the baseline) instead.
+- 2026-11-25 CI fix pass: `PropertyName` assertion made case-insensitive for the `web-jaribu-tests` aggregator.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 756d9681-ca1f-44f6-9d98-a2cafeb99bd8, max-turns 500, Done — 2026-11-25T13:21:57Z
 - Reviewer: grok session 01a212de-df11-79f1-b3fb-ba1372af11da (2026-11-25), effort 3, roster general, round 1, disposition clean.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a212de-df11-79f1-b3fb-ba1372af11da, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T13:32:53Z
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session acce303d-5db7-41ac-a89f-92abdbea107e, max-turns 500, Done — 2026-11-25T14:05:10Z
+- Reviewer round 2: grok session 01a21306-6ddc-72e1-9d85-ae25d926b44b (2026-11-25), effort 3, roster general. Open finding M1.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21306-6ddc-72e1-9d85-ae25d926b44b, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T14:15:41Z
+- 2026-11-25 review round 2 fix pass (M1): the page path now comes from a new scoped
+  `NavigationHistory` (visits recorded on `LocationChanged`, never truncated), not `RouteState.Routes`.
+- Reviewer round 3: grok session 01a21316-13a0-7852-88ab-ae54764f1798 (2026-11-25), effort 2, roster general. M1 fixed, no new findings.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21316-13a0-7852-88ab-ae54764f1798, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-25T14:30:13Z
 
 ## Review
 
-- Round 1: Done
-
+- Round 1: no findings
+- Round 2: M1 open (stale page after a second `/Feedback`)
+- Round 3: Done
 ## Notes
 
 - Domain: `features/feedback/feedback-item-domain.cs` (`File`). Submit: `features/feedback/submit-feedback/`.
 - No "about" endpoint is asked for. The intake tool's instance registry already names each instance and its environment.
 - Related: 520, 331, 378; timewarp-ganda 687 and the intake plugin task there.
+
+### CI fix pass (PR #693 — `web-jaribu-tests` failure in `Validator_Should_RefuseAPathThatIsNotAnAppPath`)
+
+PR #693 passed `ci (fast)`, `ci (publish)`, and `classify`, but failed `ci (integration)` and `template-smoke` on 1 of 504 tests in `web-jaribu-tests`:
+
+`FeedbackFilingContext_Given_.Validator_Should_RefuseAPathThatIsNotAnAppPath` at `source/container-apps/web/features/feedback/feedback-owner-name-tests.cs:360`:
+`result.Errors.ShouldContain(error => error.PropertyName == nameof(SubmitContract.Command.PagePath));`
+
+Cause: inside the multi-file `web-jaribu-tests` aggregator, earlier in-proc FastEndpoints host tests configure FluentValidation's static `ValidatorOptions.Global.PropertyNameResolver` to emit JSON camelCase (`"pagePath"` instead of `"PagePath"`), so the case-sensitive `==` fails even though `result.IsValid` is `false` (compare `update-profile-tests.cs:172-176`).
+
+Fix:
+1. Update `Validator_Should_RefuseAPathThatIsNotAnAppPath` (and check any sibling `PropertyName` assertions in `feedback-owner-name-tests.cs`) to compare `error.PropertyName` case-insensitively (`string.Equals(error.PropertyName, nameof(SubmitContract.Command.PagePath), StringComparison.OrdinalIgnoreCase)`).
+2. Verify with `./bin/dev test --project web-jaribu-tests` (the full multi-file aggregator, not only standalone `dotnet run --file`), `./bin/dev build`, and `ganda repo audit`, then commit and push so PR #693 goes green and merges.
 
 ## Results
 
@@ -100,8 +122,8 @@ What changed:
   handler copy them. Filer contracts unchanged.
 - EF: two nullable `character varying` columns; migration `20261125130740_AddFeedbackFilingContext`
   (snapshot moved from the folder `dotnet ef` wrote to into `platform/postgres/migrations/`).
-- SPA: `FeedbackPagePath.From` picks the current page, or the newest visited route before the
-  `/Feedback` pages (`RouteState.Routes`), keeps the path only, and sends null for a path the
+- SPA: `FeedbackPagePath.From` picks the current page, or the newest visited address before the
+  `/Feedback` pages (`NavigationHistory` since the round 2 fix pass; was `RouteState.Routes`), keeps the path only, and sends null for a path the
   server would refuse. `SubmitFeedbackActionSet` sends it. The admin item page shows
   "App version" and "Page" facts ("Not recorded" when null).
 - `template.json`: the new SPA test file joins the postgres-only exclusion list.
@@ -127,10 +149,50 @@ Gates (run once each):
 - `ganda repo audit`: first run failed `analyzer-suppressions` (copied NoWarn on a new runfile); fixed by folding the tests into `feedback-owner-name-tests.cs`; rerun passes with one non-blocking advisory (`vscode-window-icon`: local, gitignored `.vscode/settings.json` missing).
 - Not run: `dev template-smoke` (CI runs the default variant on the PR; the template.json edit only adds a postgres-off exclusion, covered by the nightly matrix).
 
+### CI fix pass (PR #693)
+
+- Change: `Validator_Should_RefuseAPathThatIsNotAnAppPath` compares `error.PropertyName` with
+  `StringComparison.OrdinalIgnoreCase` (the aggregator's host tests set FluentValidation's global
+  property-name resolver to camelCase). It was the only `PropertyName` assertion in the file.
+- `./bin/dev build`: succeeded, 0 warnings, 0 errors.
+- `dotnet run --file source/container-apps/web/features/feedback/feedback-owner-name-tests.cs`: 17/17 passed.
+- `./bin/dev test --no-build --project web-jaribu-tests` (the aggregator that failed in CI): 504/504 passed.
+- `ganda repo audit`: passes all checks.
+
+### Review round 2 fix pass (M1)
+
+- Cause: `RouteState.Routes` is a back stack. `TwPageTitle`'s `PushRouteInfo` pops down to an
+  earlier copy of the same URL, so a second open of `/Feedback` dropped the page the filer left.
+- Change: new scoped `NavigationHistory`
+  (`web-spa/features/application/navigation/navigation-history.cs`). It records the start address
+  and every `LocationChanged` address, newest first, skips a repeat of the newest, keeps 64 and
+  drops the oldest (so a lost origin is null, never an older page). Registered in
+  `Program.ConfigureServices` and activated by `Routes.razor`'s `@inject`, like
+  `NotificationState.NavigationListener`. `SubmitFeedbackActionSet.Handler` passes
+  `NavigationHistory.Visits` to `FeedbackPagePath.From` (query/fragment still cut, refused path
+  still null). Test hosts that send the submit (`AspireSpaTestApplication`, `FeedbackSpa`) register it.
+- Tests: new `navigation-history-tests.cs` (start address, repeat visit keeps the pages between,
+  same-page navigation, cap, dispose); `FeedbackPagePath_Should_.Use_The_Page_Left_When_Feedback_Is_Opened_Again`;
+  `CatalogAgent_Should.WebMcp_Approved_Submit_Feedback_Returns_The_Real_Receipt` now navigates
+  Counter, Feedback, Weather?city=x, Feedback and asserts the sent `PagePath` is `/Weather`.
+
+Smoke: `./bin/dev test --no-build --project web-spa-integration-tests --filter-class NavigationHistory_`
+Expect: 5/5 passed; the same with `--filter-class FeedbackPagePath_` gives 7/7.
+
+Gates:
+
+- `./bin/dev build`: succeeded, 0 warnings, 0 errors.
+- `tests/container-apps/web/web-spa-integration-tests/features/application/navigation-history-tests.cs` (new): not a standalone runfile; `./bin/dev test --no-build --project web-spa-integration-tests --filter-class NavigationHistory_`: 5/5 passed.
+- `tests/container-apps/web/web-spa-integration-tests/features/feedback/feedback-page-path-tests.cs`: not a standalone runfile; `--filter-class FeedbackPagePath_`: 7/7 passed.
+- `tests/container-apps/web/web-spa-integration-tests/features/application/catalog-agent-feedback-page-context-tests.cs` (+ `catalog-agent-test-doubles.cs`): not a standalone runfile; `--filter-class CatalogAgent_Should --filter-method WebMcp_Approved_Submit_Feedback_Returns_The_Real_Receipt`: 1/1 passed.
+- `ganda repo audit`: passes all checks.
+
 ### Review
 
-- Round 1. Roster: general. Effort: 3.
-- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
-- Disposition: clean. No wontfix and no escalation. The implementer restatement matches the original task (no misread).
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Rounds: 3. Roster: general. Effort: 3 for rounds 1–2, 2 for round 3 (by-diff).
+- Round 1 counts: bug 0, suggestion 0, nit 0.
+- Round 2 raised M1 (bug, open at the close of that round).
+- Round 3 counts (final): bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
+- Disposition: clean. No wontfix and no escalation. The implementer restatement matches the original task (no misread). M1 is fixed: submit reads `NavigationHistory` (visits recorded on `LocationChanged`, not truncated) instead of `RouteState.Routes`. Round 3 found no new issues.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
