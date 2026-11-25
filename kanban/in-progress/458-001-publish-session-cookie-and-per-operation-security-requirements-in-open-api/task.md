@@ -11,6 +11,26 @@ agent token (for example `GET /api/Feedback/attachments/{attachmentId}`, the `cr
 routes) publish only the bearer requirement and say "Requires an agent bearer token".
 `open-api-bearer-security-server.cs` deliberately leaves cookie-only operations alone.
 
+## Goal (implementer restatement)
+
+The published OpenAPI document must say which credential each operation takes. Today cookie-only
+routes publish no `security` and read as anonymous, and dual routes publish only the bearer.
+
+Acceptance:
+
+- `components.securitySchemes` gains `IdentitySessionCookie` (`apiKey`, `in: cookie`, name
+  `.timewarp.identity.session`), described as issued only by the browser passkey or Entra ceremony.
+- Each operation's `security` comes from the endpoint's `AuthSchemeNames`: session only (or no
+  schemes, since identity-session is the DefaultScheme) → session requirement; agent token →
+  `JWTBearerAuth` with its scopes; both → two alternative requirement objects. The description
+  sentence says "Requires …" or "Accepts … or …" to match.
+- Anonymous verbs publish `security: []`, so every operation declares security (Redocly
+  `security-defined`).
+- A document test over every web-server endpoint: each operation has a `security` key, and each one
+  that documents `401` has a non-empty requirement, except the Entra challenge.
+- `open-api-bearer-security-tests.cs` and `open-api-payment-responses-tests.cs` stop asserting
+  `security` is omitted.
+
 ## Requirements
 
 - Add a session-cookie security scheme (`type: apiKey`, `in: cookie`, the identity-session cookie
@@ -27,8 +47,8 @@ Owner: transformer: `source/foundation/foundation-server/open-api-bearer-securit
 
 ## Checklist
 
-- [ ] Implement the requirements above
-- [ ] Tests or document checks named above pass
+- [x] Implement the requirements above
+- [x] Tests or document checks named above pass
 
 ## Notes
 
@@ -46,3 +66,63 @@ Owner: transformer: `source/foundation/foundation-server/open-api-bearer-securit
 ## Session
 
 - Created: 2227132 (2026-11-24)
+- Implement (2026-11-26): found that FastEndpoints' document pass, which runs after operation
+  transformers, writes every `AddAuth` scheme onto an endpoint whose `AuthSchemeNames` is null. Before
+  this change that put `JWTBearerAuth` on authorized endpoints with no `AuthSchemes`. The schemes now
+  go into components from our own document transformer, and `AddAuth` is not called.
+
+## Results
+
+What changed:
+
+- `source/foundation/foundation-server/open-api-session-cookie.cs` (new): host-supplied session scheme
+  name, cookie name, and whether it is the DefaultScheme.
+- `source/foundation/foundation-server/open-api-operation-security-server.cs` (new): adds
+  `JWTBearerAuth` and `IdentitySessionCookie` (`apiKey`, `in: cookie`, `.timewarp.identity.session`,
+  described as issued only by the passkey or Entra ceremony) to components, and writes each operation's
+  `security` from `AuthSchemeNames`: anonymous verb → `[]`; agent → bearer with scopes; session (or no
+  schemes, since the session is the DefaultScheme) → session; both → bearer then session as
+  alternatives. The description sentence is "Requires …" or "Accepts the browser session cookie
+  (IdentitySessionCookie) or an agent bearer …".
+- `open-api-bearer-security-server.cs`: keeps the bearer scheme, scopes, and 401/403 responses; the
+  operation walk moved to the new transformer.
+- `common-server-module.cs`: new optional `sessionCookie` parameter on `AddOpenApi`; no FastEndpoints
+  `AddAuth`.
+- `identity-host/open-api-session-cookie-registration-server.cs` (new) and `web-server/program.cs`:
+  the web host passes `IdentitySessionDefaults.Scheme` and `.CookieName`.
+- Tests: new `open-api-operation-security-tests.cs` over every web-server endpoint (every operation has
+  a `security` key; every operation documenting 401 has a non-empty requirement except
+  `GET /api/identity/entra/challenge`; scheme shape; `GET /api/admin/roles` session only;
+  `GET /api/feedback/attachments/{attachmentId}` bearer + session). `open-api-bearer-security-tests.cs`
+  now asserts session, dual, default-scheme, and `security: []`; its probe endpoints moved to
+  `open-api-bearer-security-probes.cs` (500-line cap, TWA0038). `open-api-payment-responses-tests.cs`
+  asserts `security: []` on the anonymous tip routes.
+- No version bump: `2.0.0-beta.32` is not yet published (`dev check-version`: source is one increment
+  ahead of `2.0.0-beta.31`), so the `AddOpenApi` addition ships in that pending release.
+
+Gates (the web-server-integration-tests files are suite files, not standalone runfiles; each was run
+with `./bin/dev test <file>`):
+
+- `./bin/dev build` → pass, 0 warnings, 0 errors.
+- `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-operation-security-tests.cs` → 6/6 pass.
+- `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-bearer-security-tests.cs` → 15/15 pass.
+- `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-payment-responses-tests.cs` → 6/6 pass.
+- `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-anonymous-intent-tests.cs` → 6/6 pass (covers `CommonServerModule.AddOpenApi`).
+- `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-discovery-coverage-tests.cs` → 6/6 pass (covers `CommonServerModule.AddOpenApi`).
+- `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-agent-reviewer-guide-tests.cs` → 4/4 pass (reads `JWTBearerAuth` from components).
+- `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-operation-tags-tests.cs` → 2/2 pass.
+- `./bin/dev test tests/container-apps/api/api-server-integration-tests/features/open-api/open-api-document-tests.cs` → 2/2 pass (api-server `AddOpenApi`).
+- `ganda repo audit` → passes; one advisory warning, `vscode-window-icon` (`.vscode/settings.json` is
+  missing; that file is gitignored and local, so nothing to commit).
+
+### How to validate
+
+Smoke: `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-operation-security-tests.cs`,
+then after deploy fetch `https://arch.timewarp.work/openapi/v1.json`.
+
+Expect: 6/6 pass. In the live document, `components.securitySchemes.IdentitySessionCookie` is
+`apiKey` in `cookie` named `.timewarp.identity.session`; `GET /api/admin/roles` has
+`security: [{"IdentitySessionCookie": []}]`; `GET /api/feedback/attachments/{attachmentId}` has a
+`JWTBearerAuth` requirement and an `IdentitySessionCookie` requirement, and its description starts
+the auth sentence with "Accepts"; `GET /api/hello` has `security: []`; Redocly `security-defined`
+reports 0 errors.

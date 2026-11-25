@@ -1,12 +1,11 @@
 #region Purpose
-// Attaches JWTBearerAuth to OpenAPI operations that accept the host's agent bearer scheme, including scopes and bearer failure responses.
+// Builds the JWTBearerAuth scheme, the scopes an agent-token operation requires, and its bearer failure responses.
 #endregion
 
 #region Design
-// FastEndpoints.OpenApi inserts a scheme named JWTBearerAuth and then copies it onto an
-// operation only when EndpointDefinition.AuthSchemeNames contains that same string.
-// Product endpoints list the host's agent scheme, so EnableJWTBearerAuth stays off and
-// AddAuth registers JWTBearerAuth for the opaque bearer.
+// JWTBearerAuth is the scheme name Scalar and the reviewer guide look up. FastEndpoints'
+// automatic scheme and AddAuth stay off (see CommonServerModule); OpenApiOperationSecurity
+// adds this scheme to the components.
 // The host passes OpenApiAgentBearer: the scheme name and the policy → scope map. This
 // file has no product policy names, scope strings, or scheme name.
 // Scopes are the OpenAPI reading of the policy already on the endpoint, not Roles and
@@ -15,8 +14,8 @@
 // 401 and 403 bodies are application/problem+json. WWW-Authenticate follows RFC 6750 when
 // the bearer handler challenges, and is omitted on a handler-level 401 or 403. An existing
 // response description is kept and the bearer note is appended. The header is not required.
-// Cookie-only and anonymous operations are left alone so a public ceremony is not
-// documented as requiring a bearer.
+// OpenApiOperationSecurity decides which operations accept the bearer and writes
+// operation.Security; this file supplies the scheme, the scopes, and the failure responses.
 // How to obtain a token, and the configured lifetime, are not written here. The web host
 // appends that paragraph when the document is built (OpenApiAgentReviewerGuide), because
 // this file does not know the ceremony operation names or AgentTokenOptions.
@@ -27,7 +26,7 @@ namespace TimeWarp.Foundation;
 using Microsoft.OpenApi;
 
 /// <summary>
-/// Documents agent bearer auth on the OpenAPI operations that accept it.
+/// Agent bearer scheme, scopes, and failure responses for the OpenAPI document.
 /// </summary>
 internal static class OpenApiBearerSecurity
 {
@@ -86,69 +85,7 @@ internal static class OpenApiBearerSecurity
     };
   }
 
-  internal static void Register(OpenApiOptions openApiOptions, OpenApiAgentBearer agentBearer)
-  {
-    ArgumentNullException.ThrowIfNull(openApiOptions);
-    ArgumentNullException.ThrowIfNull(agentBearer);
-    openApiOptions.AddOperationTransformer((operation, context, cancellationToken) =>
-      TransformAsync(operation, context, agentBearer, cancellationToken));
-  }
-
-  private static Task TransformAsync
-  (
-    OpenApiOperation operation,
-    OpenApiOperationTransformerContext context,
-    OpenApiAgentBearer agentBearer,
-    CancellationToken cancellationToken
-  )
-  {
-    _ = cancellationToken;
-    EndpointDefinition? endpoint = context.Description.ActionDescriptor.EndpointMetadata
-      .OfType<EndpointDefinition>()
-      .SingleOrDefault();
-    if (endpoint is null || context.Document is null || !AcceptsAgentToken(endpoint, context.Description.HttpMethod, agentBearer.SchemeName))
-    {
-      return Task.CompletedTask;
-    }
-
-    List<string> scopes = ScopesFor(endpoint, agentBearer);
-    operation.Security =
-    [
-      new OpenApiSecurityRequirement
-      {
-        [new OpenApiSecuritySchemeReference(SchemeName, context.Document, null)] = scopes
-      }
-    ];
-    NoteRequiredScopes(operation, scopes);
-    DocumentBearerFailure(operation, endpoint, "401", UnauthorizedDescription, UnauthorizedHeader);
-    DocumentBearerFailure(operation, endpoint, "403", ForbiddenDescription, ForbiddenHeader);
-    return Task.CompletedTask;
-  }
-
-  private static bool AcceptsAgentToken(EndpointDefinition endpoint, string? httpMethod, string schemeName)
-  {
-    if (endpoint.AuthSchemeNames?.Contains(schemeName, StringComparer.Ordinal) != true)
-    {
-      return false;
-    }
-
-    if (endpoint.AnonymousVerbs is null || string.IsNullOrEmpty(httpMethod))
-    {
-      return true;
-    }
-
-    foreach (string verb in endpoint.AnonymousVerbs)
-    {
-      if (string.Equals(verb, httpMethod, StringComparison.OrdinalIgnoreCase))
-      {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private static List<string> ScopesFor(EndpointDefinition endpoint, OpenApiAgentBearer agentBearer)
+  internal static List<string> ScopesFor(EndpointDefinition endpoint, OpenApiAgentBearer agentBearer)
   {
     HashSet<string> scopes = new(StringComparer.Ordinal);
     if (endpoint.AllowedScopes is not null)
@@ -178,16 +115,12 @@ internal static class OpenApiBearerSecurity
     return ordered;
   }
 
-  private static void NoteRequiredScopes(OpenApiOperation operation, List<string> scopes)
+  internal static void DocumentBearerFailures(OpenApiOperation operation, EndpointDefinition endpoint)
   {
-    string note = scopes.Count switch
-    {
-      0 => "Requires an agent bearer token (JWTBearerAuth).",
-      1 => $"Requires bearer scope {scopes[0]} (JWTBearerAuth).",
-      _ => $"Requires bearer scopes {string.Join(", ", scopes)} (JWTBearerAuth)."
-    };
-
-    operation.Description = AppendNote(operation.Description, note);
+    ArgumentNullException.ThrowIfNull(operation);
+    ArgumentNullException.ThrowIfNull(endpoint);
+    DocumentBearerFailure(operation, endpoint, "401", UnauthorizedDescription, UnauthorizedHeader);
+    DocumentBearerFailure(operation, endpoint, "403", ForbiddenDescription, ForbiddenHeader);
   }
 
   private static void DocumentBearerFailure
@@ -254,7 +187,7 @@ internal static class OpenApiBearerSecurity
     };
   }
 
-  private static string AppendNote(string? existing, string note)
+  internal static string AppendNote(string? existing, string note)
   {
     if (string.IsNullOrEmpty(existing))
     {
