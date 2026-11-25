@@ -10,6 +10,9 @@
 // the contract remarks. The signing prefixes are read from AgentKeyProof so a copied
 // string that drifts fails here. Each scheme step's method and path are read from the
 // contract route, and that path must exist under paths in the same document.
+// Task 520: the list-feedback operation documents ActivityFrom and the LastActivityAt sort and
+// field. The document is searched as text for the names, so the test does not pin how the
+// generator lays out parameter and component schemas.
 #endregion
 
 namespace OpenApiAgentReviewerGuide_;
@@ -131,6 +134,20 @@ public class Document_Given_
     description.ShouldContain("Status = New");
     description.ShouldContain("processed marker");
     description.ShouldContain("off New");
+  }
+
+  public static async Task ListFeedback_Should_DocumentLastActivity()
+  {
+    using JsonDocument document = await DocumentAsync();
+    JsonElement operation = document.RootElement.GetProperty("paths").GetProperty("/api/admin/feedback").GetProperty("get");
+    string description = operation.GetProperty("description").GetString()!;
+    description.ShouldContain("ActivityFrom");
+    description.ShouldContain("LastActivityAt");
+    string[] parameters = [.. operation.GetProperty("parameters").EnumerateArray().Select(static p => p.GetProperty("name").GetString()!)];
+    parameters.ShouldContain(name => string.Equals(name, nameof(TimeWarp.Architecture.Features.Feedback.ListFeedback.Query.ActivityFrom), StringComparison.OrdinalIgnoreCase));
+    string json = document.RootElement.GetRawText();
+    json.ShouldContain($"\"{nameof(TimeWarp.Architecture.Features.Feedback.FeedbackListSortColumn.LastActivityAt)}\"");
+    json.ShouldContain("\"lastActivityAt\"");
   }
 #endif
 

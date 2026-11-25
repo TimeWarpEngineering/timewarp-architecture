@@ -7,7 +7,8 @@
 // name (task 336) lives in the profile slice and the store pages in the database, so an owner
 // sort would load every match; if added, it must 403 without admin.profiles.read (task 328).
 // PascalCase names on the wire, like FeedbackKind; the query string carries the name. FiledAt
-// descending is the default (newest first).
+// descending is the default (newest first). LastActivityAt (task 520) orders by the newest
+// thread entry (FiledAt when there is none), so "recently touched" reads first when descending.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -18,4 +19,5 @@ public enum FeedbackListSortColumn
   Title = 1,
   Kind = 2,
   Status = 3,
+  LastActivityAt = 4,
 }

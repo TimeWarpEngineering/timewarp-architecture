@@ -18,7 +18,8 @@
 // detail, status changes (never back to New, 409 on the current status, email only for
 // Planned/Completed/Declined), admin replies (always emailed when an address is known),
 // internal notes (never shown to the filer, never emailed), filer replies (own items only),
-// and contract validators.
+// and contract validators. Task 520: ActivityFrom finds an old item only after new thread
+// activity, and LastActivityAt is on the list item, the detail, and the sort.
 #endregion
 
 //-:cnd:noEmit
@@ -412,6 +413,38 @@ namespace TimeWarp.Architecture.Features.Feedback
       admin.Item.Activity[1].AuthorPrincipalId.ShouldBe(world.Filer.Value);
     }
 
+    public static async Task ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply()
+    {
+      TriageWorld world = new();
+      FeedbackItem old = await world.AddAsync(world.Filer.Value, day: 1);
+      FeedbackItem recent = await world.AddAsync(Guid.NewGuid(), day: 5);
+      DateTimeOffset since = TriageWorld.Day(3);
+      AdminListContract.Query changed = new() { ActivityFrom = since };
+
+      AdminListContract.Response before = await world.ListAsync(changed);
+      before.Items.Select(item => item.FeedbackItemId).ShouldBe([recent.Id.Value]);
+      before.Items[0].LastActivityAt.ShouldBe(TriageWorld.Day(5));
+
+      old.AddFilerReply(world.Filer.Value, "It happened again.", TriageWorld.Day(4));
+      (await world.Feedback.UpdateAsync(old)).ShouldBeTrue();
+
+      AdminListContract.Response after = await world.ListAsync(changed);
+      after.Items.Select(item => item.FeedbackItemId).ShouldBe([recent.Id.Value, old.Id.Value]);
+      after.Items.Single(item => item.FeedbackItemId == old.Id.Value).LastActivityAt.ShouldBe(TriageWorld.Day(4));
+      (await world.ListAsync(new AdminListContract.Query { ActivityFrom = TriageWorld.Day(4), Kind = ContractKind.FeatureRequest }))
+        .TotalCount.ShouldBe(0, "ActivityFrom ANDs with the other filters");
+      (await world.ListAsync(new AdminListContract.Query { ActivityFrom = TriageWorld.Day(4).AddTicks(10) }))
+        .Items.Select(item => item.FeedbackItemId).ShouldBe([recent.Id.Value], "ActivityFrom is inclusive, not later");
+      (await world.SortedIdsAsync(FeedbackListSortColumn.LastActivityAt, descending: true)).ShouldBe([recent.Id.Value, old.Id.Value]);
+      (await world.SortedIdsAsync(FeedbackListSortColumn.LastActivityAt, descending: false)).ShouldBe([old.Id.Value, recent.Id.Value]);
+
+      AdminGetContract.Response detail = (await world.AdminGet().Handle(
+          new AdminGetContract.Query { FeedbackItemId = old.Id.Value }, CancellationToken.None))
+        .Match(ok => ok, _ => throw new InvalidOperationException("Expected admin get success"));
+      detail.Item.LastActivityAt.ShouldBe(TriageWorld.Day(4));
+      detail.Item.FiledAt.ShouldBe(TriageWorld.Day(1));
+    }
+
     public static async Task UnsignedWrites_Should_Return401()
     {
       TriageWorld world = new();
@@ -452,6 +485,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       parsed.Item.Status.ShouldBe(ContractStatus.Planned);
       parsed.Item.Activity.Count.ShouldBe(3);
       parsed.Item.Activity[0].ToStatus.ShouldBe(ContractStatus.Planned);
+      parsed.Item.LastActivityAt.ShouldBe(view.LastActivityAt);
       return Task.CompletedTask;
     }
   }

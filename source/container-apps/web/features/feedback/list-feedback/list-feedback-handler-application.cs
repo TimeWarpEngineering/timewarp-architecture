@@ -10,6 +10,7 @@
 // Task 336: owner display names come from FeedbackOwnerNames in one batch over the page's
 // distinct owners (never per row), and only with the caller's admin.profiles.read.
 // Severity null is every severity. Unset is passed through as a real filter (task 378).
+// ActivityFrom passes through to the store (task 520); it needs no scope beyond feedback.read.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -98,7 +99,8 @@ public sealed class ListFeedback
             request.SortBy,
             request.SortDescending,
             request.Search,
-            severity),
+            severity,
+            request.ActivityFrom),
           cancellationToken)
         .ConfigureAwait(false);
 
@@ -114,6 +116,7 @@ public sealed class ListFeedback
           status: FeedbackContractMap.ToContract(item.Status),
           title: item.Title,
           filedAt: item.FiledAt,
+          lastActivityAt: item.LastActivityAt,
           ownerDisplayName: ownerNames.GetValueOrDefault(item.OwnerPrincipalId),
           severity: FeedbackContractMap.ToContract(item.Severity)))
       ];

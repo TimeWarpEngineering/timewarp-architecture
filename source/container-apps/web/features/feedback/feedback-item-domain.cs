@@ -15,6 +15,10 @@
 // Severity always equals the last severity change's To (Unset when there is none). A status
 // change does not set severity. Assignee, tags, merging and kind re-classification are
 // deferred (decision 5), and nothing deletes thread entries.
+// Task 520: LastActivityAt is FiledAt at filing and the At of each appended entry after that, so
+// a poller can ask "what changed since T" with one list filter. Every append goes through
+// Append, the one writer. The invariant ties it to the last entry by Sequence (FiledAt when
+// there is none), which is also how the migration backfills existing rows.
 // Who may call the admin mutations is the endpoint's permission check; the aggregate only
 // guards what it can know (owner identity for filer replies, non-empty principals).
 // Activity is ordered by Sequence; EF loads owned rows in no particular order, so the getter
@@ -51,6 +55,7 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
     Body = body;
     FiledAt = filedAt;
     Status = FeedbackStatus.New;
+    LastActivityAt = filedAt;
   }
 
   public Guid OwnerPrincipalId { get; }
@@ -60,6 +65,9 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
   public DateTimeOffset FiledAt { get; }
   public FeedbackStatus Status { get; private set; }
   public FeedbackSeverity Severity { get; private set; } = FeedbackSeverity.Unset;
+
+  /// <summary>FiledAt, then the At of the newest thread entry (task 520).</summary>
+  public DateTimeOffset LastActivityAt { get; private set; }
 
   /// <summary>The thread, oldest first.</summary>
   public IReadOnlyList<FeedbackActivity> Activity =>
@@ -108,8 +116,7 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
 
     var entry = FeedbackActivity.StatusChange(NextSequence(), adminPrincipalId, Status, status, at);
     Status = status;
-    ActivityList.Add(entry);
-    return entry;
+    return Append(entry);
   }
 
   /// <summary>True when <see cref="SetSeverity"/> would accept <paramref name="severity"/>.</summary>
@@ -137,8 +144,7 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
 
     var entry = FeedbackActivity.SeverityChange(NextSequence(), principalId, Severity, severity, at);
     Severity = severity;
-    ActivityList.Add(entry);
-    return entry;
+    return Append(entry);
   }
 
   /// <summary>Adds an administrator's reply, visible to the filer.</summary>
@@ -165,7 +171,13 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
     RequirePrincipal(authorPrincipalId, nameof(authorPrincipalId));
     string trimmed = RequireText(body, MaxMessageLength, nameof(body));
     var entry = FeedbackActivity.Message(NextSequence(), kind, authorPrincipalId, trimmed, at);
+    return Append(entry);
+  }
+
+  private FeedbackActivity Append(FeedbackActivity entry)
+  {
     ActivityList.Add(entry);
+    LastActivityAt = entry.At;
     return entry;
   }
 
@@ -206,6 +218,9 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
       RuleFor(item => item)
         .Must(SeverityMatchesLastChange)
         .WithMessage("Severity must equal the last severity change (Unset when there is none).");
+      RuleFor(item => item)
+        .Must(LastActivityMatchesLastEntry)
+        .WithMessage("LastActivityAt must equal the last thread entry's At (FiledAt when there is none).");
       RuleForEach(item => item.Activity).ChildRules(entry =>
       {
         entry.RuleFor(activity => activity.Kind).IsInEnum();
@@ -264,6 +279,9 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
       FeedbackActivity? last = item.Activity.LastOrDefault(entry => entry.Kind == FeedbackActivityKind.StatusChange);
       return item.Status == (last?.ToStatus ?? FeedbackStatus.New);
     }
+
+    private static bool LastActivityMatchesLastEntry(FeedbackItem item) =>
+      item.LastActivityAt == (item.Activity.Count == 0 ? item.FiledAt : item.Activity[^1].At);
 
     private static bool SeverityMatchesLastChange(FeedbackItem item)
     {

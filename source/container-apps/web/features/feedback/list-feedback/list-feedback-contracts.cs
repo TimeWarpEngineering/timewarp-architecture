@@ -25,6 +25,10 @@
 // the two. Items include Severity. The filer's list does not.
 // Query remarks are the OpenAPI description a reviewer reads: list Status = New, and
 // moving status off New is the processed marker so the next pull skips that item.
+// Task 520: ActivityFrom (inclusive) keeps items whose LastActivityAt is at or after it, so a
+// poller holding feedback:read finds an older item that changed (a filer reply, a status or
+// severity change, an admin reply, a note) without opening every item. It ANDs with the other
+// filters like FiledFrom does. Items carry LastActivityAt; SortBy accepts LastActivityAt.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -51,7 +55,7 @@ public static partial class ListFeedback
   public const int MaxPage = (int.MaxValue / MaxPageSize) + 1;
 
   /// <summary>Lists feedback items for an administrator or an agent with feedback:read.</summary>
-  /// <remarks>A reviewer lists Status = New. Moving an item's status off New is the processed marker: the next list with Status = New does not return that item.</remarks>
+  /// <remarks>A reviewer lists Status = New. Moving an item's status off New is the processed marker: the next list with Status = New does not return that item. To find older items that changed since a time, pass ActivityFrom: it returns items whose LastActivityAt (the newest thread entry, or the filing when there is none) is at or after it.</remarks>
   [ApiRoute("api/admin/feedback", HttpVerb.Get)]
   [Operation("feedback.list", Description = "List feedback items for triage, filtered and sorted.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
@@ -61,6 +65,8 @@ public static partial class ListFeedback
     public FeedbackKind? Kind { get; set; }
     public DateTimeOffset? FiledFrom { get; set; }
     public DateTimeOffset? FiledTo { get; set; }
+    /// <summary>Inclusive lower bound on LastActivityAt: items with any thread activity (or a filing) at or after this time.</summary>
+    public DateTimeOffset? ActivityFrom { get; set; }
     public bool IncludeClosed { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = DefaultPageSize;
@@ -77,6 +83,7 @@ public static partial class ListFeedback
         { nameof(Kind), Kind?.ToString() },
         { nameof(FiledFrom), FiledFrom?.ToString("O", CultureInfo.InvariantCulture) },
         { nameof(FiledTo), FiledTo?.ToString("O", CultureInfo.InvariantCulture) },
+        { nameof(ActivityFrom), ActivityFrom?.ToString("O", CultureInfo.InvariantCulture) },
         { nameof(IncludeClosed), IncludeClosed ? "true" : null },
         { nameof(Page), Page.ToString(CultureInfo.InvariantCulture) },
         { nameof(PageSize), PageSize.ToString(CultureInfo.InvariantCulture) },
@@ -117,6 +124,8 @@ public static partial class ListFeedback
     public FeedbackSeverity Severity { get; }
     public string Title { get; }
     public DateTimeOffset FiledAt { get; }
+    /// <summary>FiledAt, then the time of the newest thread entry (task 520).</summary>
+    public DateTimeOffset LastActivityAt { get; }
     /// <summary>The owner's profile display name (task 336). The handler reads it from the profile slice.</summary>
     [Computed]
     public string? OwnerDisplayName { get; }
@@ -128,6 +137,7 @@ public static partial class ListFeedback
       FeedbackStatus status,
       string title,
       DateTimeOffset filedAt,
+      DateTimeOffset lastActivityAt,
       string? ownerDisplayName = null,
       FeedbackSeverity severity = FeedbackSeverity.Unset)
     {
@@ -153,6 +163,7 @@ public static partial class ListFeedback
       Severity = severity;
       Title = Guard.Against.NullOrWhiteSpace(title);
       FiledAt = filedAt;
+      LastActivityAt = lastActivityAt;
       OwnerDisplayName = ownerDisplayName;
     }
   }
@@ -181,6 +192,7 @@ public static partial class ListFeedback
         FeedbackStatus.UnderReview,
         "Mock bug report",
         DateTimeOffset.Parse("2026-10-09T00:00:00Z"),
+        DateTimeOffset.Parse("2026-10-09T03:00:00Z"),
         "Ada Lovelace",
         FeedbackSeverity.Medium),
       new(
@@ -189,6 +201,7 @@ public static partial class ListFeedback
         FeedbackKind.FeatureRequest,
         FeedbackStatus.New,
         "Mock feature request",
+        DateTimeOffset.Parse("2026-10-08T00:00:00Z"),
         DateTimeOffset.Parse("2026-10-08T00:00:00Z"),
         "Ada Lovelace",
         FeedbackSeverity.Unset),

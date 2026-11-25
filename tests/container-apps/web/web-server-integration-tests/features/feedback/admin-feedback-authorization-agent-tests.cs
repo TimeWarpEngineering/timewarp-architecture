@@ -12,6 +12,8 @@
 // principal who also holds Administrator is still evaluated as the agent token: a
 // feedback:note token cannot download, and a feedback:read token does not receive the
 // owner display name.
+// Task 520: the feedback:read token lists with ActivityFrom (no extra scope). A bound before the
+// filing returns the item with LastActivityAt; a bound an hour ahead does not.
 // One token that holds all four feedback scopes lists Status = New, reads the item, sets
 // severity, adds a note, and moves status off New. The next Status = New list omits it.
 #endregion
@@ -48,6 +50,7 @@ public class Agent_Returns_
   {
     (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
     await SetRolesAsync(Web, filerId, RoleIds.Member);
+    DateTimeOffset beforeFiling = DateTimeOffset.UtcNow.AddMinutes(-1);
     Guid itemId;
     using (HttpClient filer = Client(Web, filerCookie))
     {
@@ -69,6 +72,12 @@ public class Agent_Returns_
       HttpResponseMessage list = await reader.GetAsync(new ListFeedback.Query().GetRouteWithQueryString());
       list.StatusCode.ShouldBe(HttpStatusCode.OK);
       (await list.Content.ReadAsStringAsync()).ShouldContain(itemId.ToString());
+      ListFeedback.Response changed = await ReadAsync<ListFeedback.Response>(await reader.GetAsync(
+        new ListFeedback.Query { ActivityFrom = beforeFiling, PageSize = ListFeedback.MaxPageSize }.GetRouteWithQueryString()));
+      changed.Items.Single(item => item.FeedbackItemId == itemId).LastActivityAt.ShouldBeGreaterThanOrEqualTo(beforeFiling);
+      ListFeedback.Response later = await ReadAsync<ListFeedback.Response>(await reader.GetAsync(
+        new ListFeedback.Query { ActivityFrom = DateTimeOffset.UtcNow.AddHours(1) }.GetRouteWithQueryString()));
+      later.Items.ShouldNotContain(item => item.FeedbackItemId == itemId);
       (await PostNoteAsync(reader, itemId, "from read")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
       (await PutSeverityAsync(reader, itemId, FeedbackSeverity.Low)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
       (await PutStatusAsync(reader, itemId, FeedbackStatus.UnderReview)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);

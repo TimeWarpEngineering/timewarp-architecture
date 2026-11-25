@@ -135,6 +135,7 @@ internal static class FeedbackContractMap
       title: item.Title,
       body: item.Body,
       filedAt: item.FiledAt,
+      lastActivityAt: item.LastActivityAt,
       filerHasEmail: !string.IsNullOrWhiteSpace(email),
       attachments: attachments,
       activity: AdminThread(item),
