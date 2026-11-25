@@ -127,8 +127,7 @@ mapping tests sit in `tests/tools/dev-cli-tests/`; `dev build` and `ganda repo a
 
 ### How to validate
 
-Smoke: `./bin/dev self-install` is not needed on a fresh checkout's runfile path; with the AOT
-binary refreshed (`dotnet run --file tools/dev-cli/dev.cs -- self-install`), run
+Smoke: refresh the AOT binary (`dotnet run --file tools/dev-cli/dev.cs -- self-install`), then run
 `./bin/dev test tests/container-apps/web/web-spa-playwright-tests/dark-theme-playwright-tests.cs`,
 then `./bin/dev test tests/container-apps/web/web-spa-playwright-tests/drawer-page-asserts.cs`.
 
