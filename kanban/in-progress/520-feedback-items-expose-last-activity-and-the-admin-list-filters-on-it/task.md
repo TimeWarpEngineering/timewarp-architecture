@@ -73,17 +73,30 @@ Done when:
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ab5a7dd3-497c-4fce-9029-6669b97b5c28, max-turns 500, Done — 2026-11-25T08:53:07Z
 - Review oracle: reviewed by reviewer-grok (grok, vendor xai, model grok-4.7, session 01a211e9-0052-7612-b27f-f40bb2e390fc), effort 3, roster general, round 1, disposition clean — 2026-11-25
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a211e9-0052-7612-b27f-f40bb2e390fc, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T09:02:29Z
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 68bc2246-0cb5-4b5d-b02c-6c3965d53b97, max-turns 500, Done — 2026-11-25T12:43:21Z
+- Review oracle: reviewed by reviewer-grok (grok, vendor xai, model grok-4.7, session 01a212bb-86ba-7273-8559-294134f9f34c), effort 3, roster general, round 2, disposition clean — 2026-11-25
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a212bb-86ba-7273-8559-294134f9f34c, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T12:49:12Z
 
 ## Review
 
 - Round 1: Done
-
+- Round 2: Done
 ## Notes
 
 - Today's list filters: `Status`, `Severity`, `Kind`, `FiledFrom`, `FiledTo`, `IncludeClosed`, `Search`; sort `FiledAt`, `Title`, `Kind`, `Status` (`features/feedback/list-feedback/`).
 - The internal concurrency `Version` is not exposed and is not a substitute: it is not a time and cannot be filtered on.
 - No webhook or push is wanted (task 331 ruled them out). This keeps intake pull-only.
 - Related: 331, 378, 521; timewarp-ganda 687 (board) and the intake plugin task there.
+
+### CI fix pass (PR #692 — `web-jaribu-tests` compile error)
+
+PR #692 passed `ci (fast)`, `ci (publish)`, and `classify`, but failed `ci (integration)` and `template-smoke` on the same compile error in an unlisted Jaribu aggregator runfile:
+
+`source/container-apps/web/features/feedback/feedback-owner-name-tests.cs(213,120): error CS1503: Argument 7: cannot convert from 'string' to 'System.DateTimeOffset' [tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj]`
+
+Fix:
+1. Update the missed constructor call site(s) in `source/container-apps/web/features/feedback/feedback-owner-name-tests.cs` (line 213) and verify no other co-located `*-tests.cs` files under `source/container-apps/web/` have stale constructor calls.
+2. Verify `dotnet build tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj` (0 warnings, 0 errors), run `dotnet run --file source/container-apps/web/features/feedback/feedback-owner-name-tests.cs`, run `./bin/dev build` and `ganda repo audit`, then commit and push so PR #692 goes green and merges.
 
 ## Results
 
@@ -152,12 +165,22 @@ Expect: all tests pass; `ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply
   (100 lines of EF-generated pragma entries no longer counted); "Repository passes all audit checks",
   including `source-file-line-cap`.
 
+- CI fix pass (PR #692, `web-jaribu-tests` CS1503): `feedback-owner-name-tests.cs:213` built a
+  `ListFeedback.Item` without the new `LastActivityAt` argument; added it. No other stale call site
+  (grep for `ListFeedback.Item(` / `AdminListContract.Item` and `new FeedbackAdminView(`). Merged
+  `origin/master` (kanban-only).
+- `dotnet build tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj`: 0 warnings, 0 errors.
+- `./bin/dev build`: passed, 0 warnings, 0 errors.
+- `dotnet run --file source/container-apps/web/features/feedback/feedback-owner-name-tests.cs`: 9/9 passed.
+- `ganda repo audit` (run 4, after the CI fix): "Repository passes all audit checks".
+
 ### Review
 
-- Round 1, roster general, effort 3 (by-diff, 1038 lines). Reviewer did not re-run build, test, or audit.
+- Round 1, roster general, effort 3 (by-diff, 1038 lines). Reviewer did not re-run build, test, or audit. Counts: bug 0, suggestion 0, nit 0.
+- Round 2, roster general, effort 3 (by-diff, 1040 lines). Re-checked the branch after the PR #692 `feedback-owner-name-tests.cs` constructor fix. Reviewer did not re-run build, test, or audit.
 - Counts: bug 0, suggestion 0, nit 0. Open 0. Fixed 0. Wontfix 0.
 - Disposition: clean. The implementer restatement matches the original task (no misread).
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`. Round 1 files left in place.
 
 ## Blocked
 
