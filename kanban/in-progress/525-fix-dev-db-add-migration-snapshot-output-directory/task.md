@@ -63,6 +63,8 @@ Acceptance:
 
 - Created: 37533 (2026-11-25)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ef5ca338-ed06-4a4c-9a8c-211ab6a5cc56, max-turns 500, Done — 2026-11-25T16:37:21Z
+- Review oracle: Grok 4.7 (xAI), session 01a21391-c338-7db1-952c-987f0ceb4868, effort 2, roster general, turn cap 120, round 1 — 2026-11-25. Disposition clean.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21391-c338-7db1-952c-987f0ceb4868, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-25T16:43:43Z
 
 ## Results
 
@@ -115,7 +117,20 @@ plus the two new `*_ValidateProbe*.cs` files in `platform/postgres/migrations/`,
 `git checkout -- source/container-apps/web/platform/postgres/migrations/PostgresDbContextModelSnapshot.cs`.
 Unit: `./bin/dev test --project dev-cli-tests` passes, including `ReconcileSnapshot_Given_`.
 
+### Review
+
+- Rounds: 1. Roster: general. Effort: 2 (by-diff, 517 lines, turn cap 120).
+- Counts: bug 0, suggestion 0, nit 0. Open 0. Fixed 0. Wontfix 0.
+- Disposition: clean. The implementer restatement matches the original task (no misread). No escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Reviewer did not re-run build, test, or audit. Those stay with the gates recorded above, the host audit node, and CI.
+
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Observed during task 520 (`AddFeedbackLastActivity`).
 - Existing tests live in `tests/tools/dev-cli-tests/db-ef-tests.cs`.
+- Review kitchen: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md` (clean, 2026-11-25).
