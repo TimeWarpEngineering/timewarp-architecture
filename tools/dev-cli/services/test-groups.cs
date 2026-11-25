@@ -8,7 +8,9 @@
 //   fast        — everything outside tests/container-apps/, plus container-app *-contracts-tests
 //                 and *-domain-tests (pure, no host): analyzers, sourcegen, foundation, libraries,
 //                 common, tools.
-//   playwright  — *-playwright-tests (browser proof; local only, CI skips it since task 501).
+//   playwright  — *-playwright-tests (browser proof). Not on pull requests since task 501; it runs
+//                 nightly through `template-smoke --matrix --app-tests` (task 502). A walk gate runs
+//                 a changed class with `dev test <file>` (task 523).
 //   integration — the rest of tests/container-apps/: *-integration-tests, aspire-tests,
 //                 *-infrastructure-tests (Testcontainers), *-jaribu-tests aggregators.
 // Every test project must match exactly one group. `dev test --group` refuses to run when one does

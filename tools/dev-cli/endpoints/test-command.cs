@@ -33,6 +33,11 @@
 // targeted run never needs raw `dotnet test` from the repo root. A project where the filter selects
 // no test fails (MTP exit code 8, zero tests ran), which catches a mistyped filter; with several
 // projects the run says so up front, so pair a filter with --project.
+// Task 523: file arguments (`dev test <file…>`, TestFileSelection) run a runfile through
+// `dotnet run --file`, and a csproj test file as its project filtered to each class it declares,
+// one `dotnet test --filter-class` per class. They run one at a time on the resolved port base. A
+// file picks its own project and classes, so --group, --project, and --filter-class are refused;
+// --filter-method is refused with a runfile, which takes no MTP options.
 #endregion
 
 namespace DevCli.Commands;
@@ -43,6 +48,9 @@ using System.Globalization;
 [NuruRoute("test", Description = "Run the test suite")]
 internal sealed class TestCommand : ICommand<Unit>
 {
+  [Parameter(IsCatchAll = true, Description = "Test files to run: a csproj test file runs its project filtered to the classes it declares; a JARIBU_MULTI runfile runs with dotnet run --file")]
+  public string[] Files { get; set; } = [];
+
   [Option("quiet", "q", Description = "Hide test output unless a project fails")]
   public bool Quiet { get; set; }
 
@@ -111,6 +119,8 @@ internal sealed class TestCommand : ICommand<Unit>
     {
       // Globbing the tests/ tree (rather than the .slnx) keeps this correct in a generated app where
       // feature-flagged test projects are physically excluded.
+      if (Command.Files.Length > 0) return await TestFilesAsync();
+
       string[] projects = DotNetTestArguments.TestProjects(Path.Combine(RepoRoot, "tests"));
 
       if (Command.Group is not null)
@@ -135,10 +145,7 @@ internal sealed class TestCommand : ICommand<Unit>
         Terminal.WriteLine($"Test projects: {string.Join(", ", projects.Select(Path.GetFileNameWithoutExtension))}");
       }
 
-      string? overrideValue = Environment.GetEnvironmentVariable(InProcTestPorts.EnvironmentVariableName);
-      string? checkoutRoot = InProcTestPorts.FindCheckoutRoot([RepoRoot]);
-      (int basePort, InProcTestPorts.BaseSource source) = InProcTestPorts.ResolveBase(overrideValue, checkoutRoot);
-      Terminal.WriteLine($"In-proc test ports: {InProcTestPorts.Describe(basePort, source, checkoutRoot)}");
+      (int basePort, InProcTestPorts.BaseSource source) = ResolvePortBase();
 
       int slotLimit = TestParallelism.SlotLimit(basePort, source);
       int maxParallel = Command.MaxParallel ?? TestParallelism.DefaultMaxParallel(Environment.ProcessorCount, slotLimit);
@@ -169,6 +176,11 @@ internal sealed class TestCommand : ICommand<Unit>
         Terminal.WriteLine("Filters apply to every selected project; a project where they match no test fails (zero tests ran). Narrow with --project.".Yellow());
 
       ProjectResult[] results = await RunAllAsync(projects, appHostSuites, portBases, maxIntegration);
+      return Finish(results);
+    }
+
+    private bool Finish(ProjectResult[] results)
+    {
       WriteSummary(results);
 
       if (results.Any(r => !r.Passed))
@@ -179,6 +191,94 @@ internal sealed class TestCommand : ICommand<Unit>
       }
 
       return true;
+    }
+
+    private (int BasePort, InProcTestPorts.BaseSource Source) ResolvePortBase()
+    {
+      string? overrideValue = Environment.GetEnvironmentVariable(InProcTestPorts.EnvironmentVariableName);
+      string? checkoutRoot = InProcTestPorts.FindCheckoutRoot([RepoRoot]);
+      (int basePort, InProcTestPorts.BaseSource source) = InProcTestPorts.ResolveBase(overrideValue, checkoutRoot);
+      Terminal.WriteLine($"In-proc test ports: {InProcTestPorts.Describe(basePort, source, checkoutRoot)}");
+      return (basePort, source);
+    }
+
+    // Task 523: run the named files one at a time (TestFileSelection maps each one).
+    private async Task<bool> TestFilesAsync()
+    {
+      string? refused = Command.Group is not null ? "--group"
+        : Command.Project.Length > 0 ? "--project"
+        : Command.FilterClass is not null ? "--filter-class"
+        : null;
+      if (refused is not null)
+        return Fail($"Test file arguments choose the project and the classes; drop {refused}.");
+
+      TestFileSelectionResult selection = TestFileSelection.Select(
+        Command.Files,
+        Environment.CurrentDirectory,
+        RepoRoot,
+        DotNetTestArguments.TestProjects(Path.Combine(RepoRoot, "tests")),
+        path => File.Exists(path) ? File.ReadAllText(path) : null,
+        ProjectSources);
+      if (selection.Errors.Length > 0)
+        return Fail(string.Join(Environment.NewLine, selection.Errors));
+      if (Command.FilterMethod is not null && selection.Runfiles.Length > 0)
+        return Fail("--filter-method does not reach a runfile (dotnet run --file takes no MTP options); drop it or pass only csproj test files.");
+
+      int portBase = ResolvePortBase().BasePort;
+      string[] projects = [.. selection.ProjectRuns.Select(run => run.Project)];
+      if (projects.Length > 0)
+      {
+        string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
+        SolutionProjects = DotNetTestArguments.SolutionProjects(await File.ReadAllTextAsync(solutionFile, Ct), RepoRoot);
+        if (!await BuildAsync(solutionFile, DotNetTestArguments.BuildPlan(projects, SolutionProjects, Command.NoBuild, selectedByName: true)))
+          return false;
+      }
+
+      List<ProjectResult> results = [];
+      foreach (TestFileProjectRun run in selection.ProjectRuns)
+      {
+        foreach (string filterClass in run.ClassFilters)
+          results.Add(await RunOneAsync(run.Project, GroupOf(run.Project), portBase, filterClass));
+      }
+
+      foreach (string runfile in selection.Runfiles)
+        results.Add(await RunFileAsync(runfile, portBase));
+
+      return Finish([.. results]);
+    }
+
+    private bool Fail(string message)
+    {
+      Terminal.WriteErrorLine(message.Red());
+      Environment.ExitCode = 1;
+      return false;
+    }
+
+    // Every .cs file's text under a project folder (obj/ and bin/ excluded), for RegisterTests<T>() lookup.
+    private static IEnumerable<string> ProjectSources(string projectDirectory)
+    {
+      string obj = $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}";
+      string bin = $"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}";
+      return Directory
+        .EnumerateFiles(projectDirectory, "*.cs", SearchOption.AllDirectories)
+        .Where(file => !file.Contains(obj, StringComparison.Ordinal) && !file.Contains(bin, StringComparison.Ordinal))
+        .Select(File.ReadAllText);
+    }
+
+    private async Task<ProjectResult> RunFileAsync(string runfile, int portBase)
+    {
+      string name = Path.GetRelativePath(RepoRoot, runfile).Replace('\\', '/');
+      Terminal.WriteLine($"Started  {name} (dotnet run --file, port base {portBase})");
+      var stopwatch = Stopwatch.StartNew();
+      CommandOutput output = await DotNet.Run()
+        .WithFile(runfile)
+        .WithWorkingDirectory(RepoRoot)
+        .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, portBase.ToString(CultureInfo.InvariantCulture))
+        .WithNoValidation()
+        .CaptureAsync(Ct);
+      ProjectResult result = new(name, "runfile", output.Success, stopwatch.Elapsed, portBase);
+      WriteProjectOutput(result, output);
+      return result;
     }
 
     // Serial build phase (DotNetTestArguments.BuildPlan): the solution, then single projects one at a time.
@@ -264,12 +364,12 @@ internal sealed class TestCommand : ICommand<Unit>
       return [.. results];
     }
 
-    private async Task<ProjectResult> RunOneAsync(string project, string group, int portBase)
+    private async Task<ProjectResult> RunOneAsync(string project, string group, int portBase, string? filterClass = null)
     {
-      string name = Path.GetFileNameWithoutExtension(project);
+      string name = Path.GetFileNameWithoutExtension(project) + (filterClass is null ? "" : $" [{filterClass}]");
       lock (OutputLock) Terminal.WriteLine($"Started  {name} (port base {portBase})");
       var stopwatch = Stopwatch.StartNew();
-      CommandOutput output = await BuildTestCommand(project, portBase).CaptureAsync(Ct);
+      CommandOutput output = await BuildTestCommand(project, portBase, filterClass ?? Command.FilterClass).CaptureAsync(Ct);
       ProjectResult result = new(name, group, output.Success, stopwatch.Elapsed, portBase);
       WriteProjectOutput(result, output);
       return result;
@@ -356,13 +456,13 @@ internal sealed class TestCommand : ICommand<Unit>
     /// project-local global.json supplies the MTP runner (task 145-007). The worker's port base
     /// goes to the child (task 370).
     /// </summary>
-    private CommandResult BuildTestCommand(string project, int portBase)
+    private CommandResult BuildTestCommand(string project, int portBase, string? filterClass)
     {
       return DotNet.Test()
         .WithConfiguration("Release")
         .WithNoBuild()
         .WithNoRestore()
-        .WithArguments(DotNetTestArguments.PlatformArguments(CoverageDirectory(project), Command.FilterClass, Command.FilterMethod))
+        .WithArguments(DotNetTestArguments.PlatformArguments(CoverageDirectory(project), filterClass, Command.FilterMethod))
         .WithWorkingDirectory(ProjectDirectory(project))
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, portBase.ToString(CultureInfo.InvariantCulture))
         .WithNoValidation()
