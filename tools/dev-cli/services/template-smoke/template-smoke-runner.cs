@@ -32,6 +32,8 @@
 // `#if flag` regions or template.json symbols. --app-tests adds AssertGeneratedAppTestSuitesAsync per
 // variant (needs Docker). The loop runs every selected variant even after one fails and reports them
 // together, so one nightly names every broken flag.
+// Task 528: --variant <name> runs one matrix entry, so a change aimed at one combination is proved
+// locally without paying for every variant. An unknown name fails before packing.
 #endregion
 
 namespace DevCli.Services;
@@ -61,13 +63,22 @@ internal sealed class TemplateSmokeRunner
     Terminal = terminal;
   }
 
-  public async Task RunAsync(bool matrix, bool appTests, CancellationToken ct)
+  public async Task RunAsync(bool matrix, string? variant, bool appTests, CancellationToken ct)
   {
     Matrix = matrix;
     AppTests = appTests;
     Ct = ct;
 
     if (!FindRepoRoot()) return;
+
+    (string Name, string[] ExtraArgs, string[] ExcludedFamilies)[] variants = SelectVariants(variant);
+    if (variants.Length == 0)
+    {
+      Terminal.WriteErrorLine(
+        $"Unknown --variant '{variant}'. Known: {string.Join(", ", SmokeMatrix.Select(v => v.Name))}".Red());
+      Environment.ExitCode = 1;
+      return;
+    }
 
     SmokeRoot = Path.Combine(RepoRoot, "artifacts", "template-smoke");
     PackagesDir = Path.Combine(SmokeRoot, "packages");
@@ -85,12 +96,9 @@ internal sealed class TemplateSmokeRunner
     if (!await Packaging.InstallTemplateAsync(Ct)) return;
     if (!await AssertDottedNameKebabsAsync()) return;
 
-    (string Name, string[] ExtraArgs, string[] ExcludedFamilies)[] variants = Matrix
-      ? SmokeMatrix
-      : [.. SmokeMatrix.Where(variant => variant.ExtraArgs.Length == 0)];
     Terminal.WriteLine(
       $"Variants: {string.Join(", ", variants.Select(v => v.Name))}" +
-      (Matrix ? "" : " (--matrix adds each flag off)") +
+      (Matrix || variant is not null ? "" : " (--matrix adds each flag off)") +
       (AppTests ? "; generated-app test projects included" : ""));
 
     List<string> failedVariants = [];
@@ -113,6 +121,14 @@ internal sealed class TemplateSmokeRunner
     if (!AssertIngressPortsRegenerated()) return;
 
     Terminal.WriteLine("\nTemplate smoke SUCCEEDED".Green());
+  }
+
+  private (string Name, string[] ExtraArgs, string[] ExcludedFamilies)[] SelectVariants(string? variant)
+  {
+    if (variant is not null)
+      return [.. SmokeMatrix.Where(entry => string.Equals(entry.Name, variant, StringComparison.OrdinalIgnoreCase))];
+
+    return Matrix ? SmokeMatrix : [.. SmokeMatrix.Where(entry => entry.ExtraArgs.Length == 0)];
   }
 
   private bool FindRepoRoot()
@@ -216,6 +232,10 @@ internal sealed class TemplateSmokeRunner
         // Tier 1 (cheap): the JARIBU_MULTI guard must survive dotnet-new generation verbatim —
         // check right after generate, before spending time on restore/build (task 135).
         if (!Harness.TestRuns.AssertCoLocatedTestFilesSurviveGeneration(outputDir, excludedFamilies))
+          return Task.FromResult(false);
+
+        // Task 528: flag-owned test projects and files follow the excluded families.
+        if (!Harness.TestRuns.AssertFamilyTestArtifacts(outputDir, excludedFamilies))
           return Task.FromResult(false);
 
         if (!Harness.Pins.RewriteCpmPins(outputDir, SmokePackageVersion))

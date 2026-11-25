@@ -7,6 +7,8 @@
 // template-safety escape (cnd:noEmit) for generated apps - the ordinary solution build never touches
 // these files (they compile into no layer project by design), so without this pair the gate would be
 // silently blind to a regression here.
+// Task 528: AssertFamilyTestArtifacts (tier 1) checks FamilyTestArtifacts - flag-owned test projects
+// and files absent when a family is excluded, present when it is not.
 // Task 136 / 226 / 228: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release`
 // from each family aggregator project dir. Gate is exit 0, failed == 0, total > 0, and
 // total == succeeded + skipped. Unparsable MTP summary fails (silent zero-discovery).
@@ -86,6 +88,41 @@ internal sealed class TemplateSmokeTestRuns
 
     if (ok)
       Terminal.WriteLine("Co-located Jaribu JARIBU_MULTI guard survived generation (tier 1).");
+
+    return ok;
+  }
+
+  /// <summary>
+  /// Tier 1 (task 528): every FamilyTestArtifacts path is absent when any required family is
+  /// excluded and present otherwise. Reports every mismatch before returning.
+  /// </summary>
+  public bool AssertFamilyTestArtifacts(string outputDir, IReadOnlyCollection<string> excludedFamilies)
+  {
+    bool ok = true;
+
+    foreach ((string[] requiredFamilies, string relativePath) in FamilyTestArtifacts)
+    {
+      string generatedPath = Path.Combine(outputDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
+      bool exists = File.Exists(generatedPath) || Directory.Exists(generatedPath);
+      string[] missingRequiredFamilies = [.. requiredFamilies.Where(excludedFamilies.Contains)];
+
+      if (missingRequiredFamilies.Length > 0 && exists)
+      {
+        string flags = string.Join(", ", missingRequiredFamilies.Select(family => $"--{family} false"));
+        Terminal.WriteErrorLine(
+          $"{relativePath}: generated despite {flags} — template family exclude no longer covers it.".Red());
+        ok = false;
+      }
+      else if (missingRequiredFamilies.Length == 0 && !exists)
+      {
+        Terminal.WriteErrorLine(
+          $"Family test artifact missing after generation: {relativePath} (renamed? update FamilyTestArtifacts).".Red());
+        ok = false;
+      }
+    }
+
+    if (ok)
+      Terminal.WriteLine("Flag-owned test artifacts match the excluded families (tier 1).");
 
     return ok;
   }
