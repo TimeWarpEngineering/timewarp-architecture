@@ -80,6 +80,19 @@ Acceptance, as I will prove it:
 - No "about" endpoint is asked for. The intake tool's instance registry already names each instance and its environment.
 - Related: 520, 331, 378; timewarp-ganda 687 and the intake plugin task there.
 
+### CI fix pass (PR #693 — `web-jaribu-tests` failure in `Validator_Should_RefuseAPathThatIsNotAnAppPath`)
+
+PR #693 passed `ci (fast)`, `ci (publish)`, and `classify`, but failed `ci (integration)` and `template-smoke` on 1 of 504 tests in `web-jaribu-tests`:
+
+`FeedbackFilingContext_Given_.Validator_Should_RefuseAPathThatIsNotAnAppPath` at `source/container-apps/web/features/feedback/feedback-owner-name-tests.cs:360`:
+`result.Errors.ShouldContain(error => error.PropertyName == nameof(SubmitContract.Command.PagePath));`
+
+Cause: inside the multi-file `web-jaribu-tests` aggregator, earlier in-proc FastEndpoints host tests configure FluentValidation's static `ValidatorOptions.Global.PropertyNameResolver` to emit JSON camelCase (`"pagePath"` instead of `"PagePath"`), so the case-sensitive `==` fails even though `result.IsValid` is `false` (compare `update-profile-tests.cs:172-176`).
+
+Fix:
+1. Update `Validator_Should_RefuseAPathThatIsNotAnAppPath` (and check any sibling `PropertyName` assertions in `feedback-owner-name-tests.cs`) to compare `error.PropertyName` case-insensitively (`string.Equals(error.PropertyName, nameof(SubmitContract.Command.PagePath), StringComparison.OrdinalIgnoreCase)`).
+2. Verify with `./bin/dev test --project web-jaribu-tests` (the full multi-file aggregator, not only standalone `dotnet run --file`), `./bin/dev build`, and `ganda repo audit`, then commit and push so PR #693 goes green and merges.
+
 ## Results
 
 What changed:
