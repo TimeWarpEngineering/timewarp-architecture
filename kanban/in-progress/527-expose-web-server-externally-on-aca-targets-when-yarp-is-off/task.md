@@ -68,7 +68,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2
 - Round 1 fix pass: M1, M2 fixed (docs)
-
+- Round 2: Done
 ## Notes
 
 - Files: `source/container-apps/aspire/projects/aspire-app-host/web-server-resource.cs`,
@@ -86,6 +86,7 @@ Acceptance:
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 921b3c23-b8be-4d17-94ac-f2d0de39bfef, max-turns 500, Done — 2026-11-25T17:44:42Z
 - Review oracle round 1: general (grok), effort 2, roster general (2026-11-26). Open findings M1 and M2. Disposition not written.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a213cf-6b25-7be1-a81a-a6cee28d804d, max-turns 120, artifacts general.md, merged.md — 2026-11-25T17:54:12Z
+- Review oracle round 2: general (grok, vendor xai, model grok-4.7), effort 1, roster general, session 01a213db-6840-7c21-a2f8-208335593a6c, max-turns 80 (2026-11-26). M1 and M2 verified fixed. No new findings. Disposition clean. Artifacts `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Results (required before done)
 
@@ -166,6 +167,15 @@ Fix pass gates:
 - Test files: none edited; the change is skill markdown only, no production code.
 - `./bin/dev lint-skills` — 11/11 passed (first run failed the 500-line cap at 505; condensed).
 - `ganda repo audit` — 43 passed, 1 non-blocking warning (`vscode-window-icon`: the git-ignored local `.vscode/settings.json` is absent), 2 skipped.
+
+Review round 2 (2026-11-26), roster general, effort 1:
+
+- Re-read fix commit `575761ebb` only. M1 and M2 verified fixed in `skills/tw-deploy`. No new findings.
+- Counts (final): bug 0 open, 2 fixed, 0 wontfix. suggestion 0. nit 0.
+- Disposition: clean. Final open count 0.
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- The implementer restatement matches the original requirements. No misread. No `## Learnings` entry.
+- Gates were not re-run. The fix-pass record above covers this docs-only delta.
 
 ### How to validate (required before done)
 
