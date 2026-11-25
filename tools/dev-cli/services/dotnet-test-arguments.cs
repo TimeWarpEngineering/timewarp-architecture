@@ -21,6 +21,10 @@
 // of the whole solution, so a targeted run stays fast and still never builds inside `dotnet test`.
 // --filter-class / --filter-method go after the coverage flags to Jaribu's MTP options, which each
 // take one substring (class FullName / method name, ignore-case).
+// Task 526: TestProjects (the tests/ glob) and UnlistedProjects (glob minus .slnx) are shared with
+// `dev build`, which builds the unlisted projects after the solution so a compile error in a
+// co-located runfile fails locally, not first in CI. Globbing disk (not a fixed list) keeps a
+// generated app with a family flagged off correct: its aggregator is simply absent.
 #endregion
 
 namespace DevCli.Services;
@@ -42,6 +46,29 @@ internal static class DotNetTestArguments
       .Select(path => Path.GetFullPath(Path.Combine(solutionDirectory, path)))
       .ToHashSet(StringComparer.Ordinal);
   }
+
+  /// <summary>
+  /// Every <c>*.csproj</c> under <paramref name="testsDirectory"/> outside obj/ and bin/, sorted
+  /// ordinally. Empty when the folder does not exist.
+  /// </summary>
+  internal static string[] TestProjects(string testsDirectory)
+  {
+    if (!Directory.Exists(testsDirectory)) return [];
+
+    string obj = $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}";
+    string bin = $"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}";
+    return [.. Directory
+      .GetFiles(testsDirectory, "*.csproj", SearchOption.AllDirectories)
+      .Where(project => !project.Contains(obj, StringComparison.Ordinal) && !project.Contains(bin, StringComparison.Ordinal))
+      .OrderBy(project => project, StringComparer.Ordinal)];
+  }
+
+  /// <summary>
+  /// The <paramref name="projects"/> the solution does not list (the Jaribu family aggregators and
+  /// timewarp-testing-tests), in their given order.
+  /// </summary>
+  internal static string[] UnlistedProjects(IEnumerable<string> projects, HashSet<string> solutionProjects) =>
+    [.. projects.Where(project => !solutionProjects.Contains(Path.GetFullPath(project)))];
 
   /// <summary>
   /// MTP code-coverage flags (Microsoft.Testing.Extensions.CodeCoverage, referenced by tests/Directory.Build.props).

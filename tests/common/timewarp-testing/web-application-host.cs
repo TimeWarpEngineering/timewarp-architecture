@@ -26,6 +26,13 @@ using Microsoft.Extensions.Configuration.Json;
 // Task 312: configurationOverrides is an in-memory source added last, so a host can supply what
 // Aspire injects as environment variables in a real deployment — e.g. the Services:* endpoints
 // service discovery resolves named HttpClients from.
+//
+// Task 526: the constructor enters ValidatorOptionsGuard before CreateBuilder (so before
+// TProgram.ConfigureServices / ConfigureMiddleware / ConfigureEndpoints, which overwrite the static
+// FluentValidation resolvers) and leaves it when the host is gone: in DisposeAsyncCore, or in the
+// constructor's catch when any step of building or starting fails. The guard is ref-counted across
+// every host type, so the pre-host resolvers come back when the last live host goes, and a validator
+// test after a host test in one aggregator process sees PascalCase PropertyName again.
 #endregion
 
 /// <summary>
@@ -41,6 +48,7 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   where TProgram : IAspNetProgram
 {
   public bool Started;
+  private bool Disposed;
   private readonly WebApplication WebApplication;
   public readonly string[] Urls;
 
@@ -59,98 +67,108 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   )
   {
     Urls = urls;
-    WebApplicationBuilder builder =
-      WebApplication.CreateBuilder(webApplicationOptions);
-
-    // Hermeticity (task 104-031): remove developer user secrets so machine-local values cannot alter
-    // test outcomes — see this class's Design region. Iterate backwards because we mutate in place.
-    IList<IConfigurationSource> configurationSources = builder.Configuration.Sources;
-    for (int index = configurationSources.Count - 1; index >= 0; index--)
-    {
-      if (configurationSources[index] is JsonConfigurationSource jsonSource && jsonSource.Path == "secrets.json")
-      {
-        configurationSources.RemoveAt(index);
-      }
-    }
-
-    // Task 145-002 R2-1 follow-up: layer an OPTIONAL consumer-authored override on top of the
-    // host's own real appsettings (ContentRootPath, set by each Test*ServerApplication — see
-    // ProjectContentRoot's Design region). Additive only (a later JSON source overrides matching
-    // KEYS, never deletes sections it doesn't mention), so this cannot reintroduce R2-1's bug
-    // (a whole section silently missing) — it restores the pre-existing "merged appsettings.json"
-    // pattern (web-server-integration-tests/appsettings.json, task 104-031's predecessor, dates to
-    // 05679ba4 2022: "all the projects are merged together and served from one folder") that used
-    // to work by accident, via the SAME flattened-output-directory collision R2-1 fixed. That
-    // consumer file still lands at AppContext.BaseDirectory (the running test process's own output
-    // dir) regardless of ContentRootPath — this reads it back explicitly instead of relying on
-    // which project's content item happened to win the copy collision.
-    string consumerOverridePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-    string ownAppSettingsPath = Path.Combine(
-      webApplicationOptions.ContentRootPath ?? AppContext.BaseDirectory, "appsettings.json");
-    if (
-      !string.Equals(
-        Path.GetFullPath(consumerOverridePath), Path.GetFullPath(ownAppSettingsPath), StringComparison.OrdinalIgnoreCase)
-      && File.Exists(consumerOverridePath))
-    {
-      builder.Configuration.AddJsonFile(consumerOverridePath, optional: true, reloadOnChange: false);
-    }
-
-    if (configurationOverrides is not null)
-    {
-      builder.Configuration.AddInMemoryCollection(configurationOverrides);
-    }
-
-    builder.WebHost
-      .UseUrls(urls)
-      .UseShutdownTimeout(TimeSpan.FromSeconds(30));
-
-    Configuration = builder.Configuration;
-    TProgram.ConfigureServices(builder.Services, builder.Configuration);
-    configureServicesDelegate?.Invoke(builder.Services);
-
-    WebApplication = builder.Build();
-    TProgram.ConfigureMiddleware(WebApplication);
-    TProgram.ConfigureEndpoints(WebApplication);
-
-    ServiceProvider = WebApplication.Services;
-    // Options validation is now wired at registration time via the Timewarp.OptionsValidation
-    // package's AddFluentValidatedOptions (in each Program's ConfigureServices); the former
-    // host-side ServiceProvider.ValidateOptions sweep no longer exists in the package.
-
+    ValidatorOptionsGuard.Enter();
     try
     {
-      // Register ApplicationStarted BEFORE RunAsync — a failed host disposes the ServiceProvider.
-      IHostApplicationLifetime lifetime = ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
-      TaskCompletionSource serverStartedTcs = new();
-      lifetime.ApplicationStarted.Register(() => serverStartedTcs.TrySetResult());
+      WebApplicationBuilder builder =
+        WebApplication.CreateBuilder(webApplicationOptions);
 
-      Task runTask = WebApplication.RunAsync();
-
-      // Race ApplicationStarted against RunAsync faulting / timeout so we surface the real error.
-      Task timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
-      Task completed = Task.WhenAny(serverStartedTcs.Task, runTask, timeoutTask).GetAwaiter().GetResult();
-
-      if (completed == runTask)
-        runTask.GetAwaiter().GetResult(); // rethrow host startup failure
-
-      if (completed == timeoutTask)
+      // Hermeticity (task 104-031): remove developer user secrets so machine-local values cannot alter
+      // test outcomes — see this class's Design region. Iterate backwards because we mutate in place.
+      IList<IConfigurationSource> configurationSources = builder.Configuration.Sources;
+      for (int index = configurationSources.Count - 1; index >= 0; index--)
       {
-        throw new TimeoutException(
-          $"WebApplication for {typeof(TProgram).FullName} did not signal ApplicationStarted within 30s. " +
-          $"Urls: {string.Join(", ", urls)}");
+        if (configurationSources[index] is JsonConfigurationSource jsonSource && jsonSource.Path == "secrets.json")
+        {
+          configurationSources.RemoveAt(index);
+        }
       }
 
-      if (runTask.IsFaulted)
-        runTask.GetAwaiter().GetResult();
+      // Task 145-002 R2-1 follow-up: layer an OPTIONAL consumer-authored override on top of the
+      // host's own real appsettings (ContentRootPath, set by each Test*ServerApplication — see
+      // ProjectContentRoot's Design region). Additive only (a later JSON source overrides matching
+      // KEYS, never deletes sections it doesn't mention), so this cannot reintroduce R2-1's bug
+      // (a whole section silently missing) — it restores the pre-existing "merged appsettings.json"
+      // pattern (web-server-integration-tests/appsettings.json, task 104-031's predecessor, dates to
+      // 05679ba4 2022: "all the projects are merged together and served from one folder") that used
+      // to work by accident, via the SAME flattened-output-directory collision R2-1 fixed. That
+      // consumer file still lands at AppContext.BaseDirectory (the running test process's own output
+      // dir) regardless of ContentRootPath — this reads it back explicitly instead of relying on
+      // which project's content item happened to win the copy collision.
+      string consumerOverridePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+      string ownAppSettingsPath = Path.Combine(
+        webApplicationOptions.ContentRootPath ?? AppContext.BaseDirectory, "appsettings.json");
+      if (
+        !string.Equals(
+          Path.GetFullPath(consumerOverridePath), Path.GetFullPath(ownAppSettingsPath), StringComparison.OrdinalIgnoreCase)
+        && File.Exists(consumerOverridePath))
+      {
+        builder.Configuration.AddJsonFile(consumerOverridePath, optional: true, reloadOnChange: false);
+      }
 
-      Console.WriteLine("======= WebApplication Started ======");
-      Started = true;
+      if (configurationOverrides is not null)
+      {
+        builder.Configuration.AddInMemoryCollection(configurationOverrides);
+      }
+
+      builder.WebHost
+        .UseUrls(urls)
+        .UseShutdownTimeout(TimeSpan.FromSeconds(30));
+
+      Configuration = builder.Configuration;
+      TProgram.ConfigureServices(builder.Services, builder.Configuration);
+      configureServicesDelegate?.Invoke(builder.Services);
+
+      WebApplication = builder.Build();
+      TProgram.ConfigureMiddleware(WebApplication);
+      TProgram.ConfigureEndpoints(WebApplication);
+
+      ServiceProvider = WebApplication.Services;
+      // Options validation is now wired at registration time via the Timewarp.OptionsValidation
+      // package's AddFluentValidatedOptions (in each Program's ConfigureServices); the former
+      // host-side ServiceProvider.ValidateOptions sweep no longer exists in the package.
+
+      try
+      {
+        // Register ApplicationStarted BEFORE RunAsync — a failed host disposes the ServiceProvider.
+        IHostApplicationLifetime lifetime = ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
+        TaskCompletionSource serverStartedTcs = new();
+        lifetime.ApplicationStarted.Register(() => serverStartedTcs.TrySetResult());
+
+        Task runTask = WebApplication.RunAsync();
+
+        // Race ApplicationStarted against RunAsync faulting / timeout so we surface the real error.
+        Task timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
+        Task completed = Task.WhenAny(serverStartedTcs.Task, runTask, timeoutTask).GetAwaiter().GetResult();
+
+        if (completed == runTask)
+          runTask.GetAwaiter().GetResult(); // rethrow host startup failure
+
+        if (completed == timeoutTask)
+        {
+          throw new TimeoutException(
+            $"WebApplication for {typeof(TProgram).FullName} did not signal ApplicationStarted within 30s. " +
+            $"Urls: {string.Join(", ", urls)}");
+        }
+
+        if (runTask.IsFaulted)
+          runTask.GetAwaiter().GetResult();
+
+        Console.WriteLine("======= WebApplication Started ======");
+        Started = true;
+      }
+      catch (Exception)
+      {
+        Console.WriteLine("======= Failed to Start WebApplication Disposing ======");
+        WebApplication.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        Console.WriteLine("======= WebApplication.Disposed ======");
+        throw;
+      }
     }
     catch (Exception)
     {
-      Console.WriteLine("======= Failed to Start WebApplication Disposing ======");
-      WebApplication.DisposeAsync().AsTask().GetAwaiter().GetResult();
-      Console.WriteLine("======= WebApplication.Disposed ======");
+      // Startup failed (configure, build, or start): this host never reaches DisposeAsyncCore.
+      ValidatorOptionsGuard.Exit();
       throw;
     }
   }
@@ -158,15 +176,25 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   protected virtual async ValueTask DisposeAsyncCore()
   {
     Console.WriteLine("==== Application.DisposeAsyncCore ====");
-    if (Started)
-    {
-      Console.WriteLine("==== Wait till WebApplication Stops ====");
-      await WebApplication.StopAsync();
-      Started = false;
-    }
+    if (Disposed) return;
 
-    Console.WriteLine("==== Now dispose of WebApplication ====");
-    await WebApplication.DisposeAsync();
+    Disposed = true;
+    try
+    {
+      if (Started)
+      {
+        Console.WriteLine("==== Wait till WebApplication Stops ====");
+        await WebApplication.StopAsync();
+        Started = false;
+      }
+
+      Console.WriteLine("==== Now dispose of WebApplication ====");
+      await WebApplication.DisposeAsync();
+    }
+    finally
+    {
+      ValidatorOptionsGuard.Exit();
+    }
   }
 
   public async ValueTask DisposeAsync()

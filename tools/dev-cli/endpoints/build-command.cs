@@ -11,6 +11,12 @@
 // Before MSBuild, scan tracked files for client names (the same scan as dev check-client-names).
 // CI's fast job runs this build. A skills-only PR does not, so dev lint-skills runs the scan too.
 // ganda repo audit has no word-list check.
+// Task 526: after the .slnx, build each tests/ project the .slnx does not list (the Jaribu family
+// aggregators and timewarp-testing-tests), one at a time like dev test's build phase so shared
+// obj/ and bin/ folders never race. They stay out of the .slnx on purpose, but they compile every
+// co-located runfile, so a runfile compile error used to pass dev build and fail first in CI.
+// Discovery is DotNetTestArguments.TestProjects / UnlistedProjects (a disk glob, not a list), so a
+// generated app with a family flagged off builds only what it has. --clean cleans them too.
 #endregion
 
 namespace DevCli.Commands;
@@ -83,33 +89,65 @@ internal sealed class BuildCommand : ICommand<Unit>
       return true;
     }
 
+    private string SolutionFile => Path.Combine(RepoRoot, "timewarp-architecture.slnx");
+
     private async Task<bool> CleanAsync()
     {
       if (!Command.Clean) return true;
 
-      string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
-
-      WriteStepLine($"Cleaning {solutionFile}...");
+      WriteStepLine($"Cleaning {SolutionFile}...");
       CommandResult command = DotNet.Clean()
-        .WithProject(solutionFile)
+        .WithProject(SolutionFile)
         .WithNoValidation()
         .Build();
 
-      return await ExecuteAsync(command, "Clean failed!");
+      if (!await ExecuteAsync(command, "Clean failed!")) return false;
+
+      foreach (string project in await UnlistedProjectsAsync())
+      {
+        WriteStepLine($"Cleaning {Path.GetFileNameWithoutExtension(project)} (not in the solution)...");
+        CommandResult clean = DotNet.Clean()
+          .WithProject(project)
+          .WithNoValidation()
+          .Build();
+        if (!await ExecuteAsync(clean, $"Clean failed: {Path.GetFileNameWithoutExtension(project)}")) return false;
+      }
+
+      return true;
     }
 
     private async Task<bool> BuildAsync()
     {
-      string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
-
-      WriteStepLine($"Building {solutionFile}...");
+      WriteStepLine($"Building {SolutionFile}...");
       CommandResult command = DotNet.Build()
-        .WithProject(solutionFile)
+        .WithProject(SolutionFile)
         .WithConfiguration("Release")
         .WithNoValidation()
         .Build();
 
-      return await ExecuteAsync(command, "Build failed!");
+      if (!await ExecuteAsync(command, "Build failed!")) return false;
+
+      // One at a time, like dev test's build phase: these share obj/ and bin/ folders with the solution's projects.
+      foreach (string project in await UnlistedProjectsAsync())
+      {
+        WriteStepLine($"Building {Path.GetFileNameWithoutExtension(project)} (not in the solution, Release)...");
+        CommandResult build = DotNet.Build()
+          .WithConfiguration("Release")
+          .WithWorkingDirectory(Path.GetDirectoryName(project)!)
+          .WithNoValidation()
+          .Build();
+        if (!await ExecuteAsync(build, $"Build failed: {Path.GetFileNameWithoutExtension(project)}")) return false;
+      }
+
+      return true;
+    }
+
+    private async Task<string[]> UnlistedProjectsAsync()
+    {
+      HashSet<string> solutionProjects =
+        DotNetTestArguments.SolutionProjects(await File.ReadAllTextAsync(SolutionFile, Ct), RepoRoot);
+      return DotNetTestArguments.UnlistedProjects(
+        DotNetTestArguments.TestProjects(Path.Combine(RepoRoot, "tests")), solutionProjects);
     }
 
     // Streamed output needs a blank line between steps; captured output prints the step line alone.

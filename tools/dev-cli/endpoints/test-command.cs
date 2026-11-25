@@ -111,13 +111,7 @@ internal sealed class TestCommand : ICommand<Unit>
     {
       // Globbing the tests/ tree (rather than the .slnx) keeps this correct in a generated app where
       // feature-flagged test projects are physically excluded.
-      string testsDirectory = Path.Combine(RepoRoot, "tests");
-      string[] projects = Directory
-        .GetFiles(testsDirectory, "*.csproj", SearchOption.AllDirectories)
-        .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-                 && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
-        .OrderBy(p => p, StringComparer.Ordinal)
-        .ToArray();
+      string[] projects = DotNetTestArguments.TestProjects(Path.Combine(RepoRoot, "tests"));
 
       if (Command.Group is not null)
       {
