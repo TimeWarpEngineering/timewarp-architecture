@@ -20,7 +20,6 @@ Owner: transformers `open-api-public-server.cs` and document options in `common-
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -32,6 +31,8 @@ Owner: transformers `open-api-public-server.cs` and document options in `common-
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
+- Grooming note: pass product tag descriptions from `web-server/program.cs` rather than hardcoding them in shared `foundation-server`; update `open-api-document-servers-tests.cs` (which currently asserts trailing `/`).
 
 ## Session
 
