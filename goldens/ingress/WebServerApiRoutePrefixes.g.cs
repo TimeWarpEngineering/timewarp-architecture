@@ -12,16 +12,16 @@ public static class WebServerApiRoutePrefixes
 {
   /// <summary>The distinct top-level api prefixes, sorted ordinally.</summary>
   public static readonly ImmutableArray<string> All = ImmutableArray.Create(
-    "api/Feedback",
-    "api/Hello",
-    "api/Roles",
-    "api/Users",
     "api/admin",
     "api/agent-chat",
     "api/agent-links",
+    "api/analytics",
     "api/browser-logs",
     "api/demo",
+    "api/feedback",
+    "api/hello",
     "api/identity",
     "api/settings",
-    "api/tip");
+    "api/tip",
+    "api/users");
 }

@@ -100,7 +100,7 @@ internal static class AdminFeedbackAuthorizationFixture
   {
     HttpResponseMessage response = await PostAsync(
       client,
-      "api/Feedback",
+      "api/feedback",
       new { kind = "BugReport", title, body = "Body for " + title, emailCopy = false, attachmentIds });
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     using JsonDocument document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -112,7 +112,7 @@ internal static class AdminFeedbackAuthorizationFixture
   {
     HttpResponseMessage response = await PostAsync(
       client,
-      "api/Feedback",
+      "api/feedback",
       new { kind = "BugReport", title, body = "Body for " + title, emailCopy = false, pagePath });
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     using JsonDocument document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

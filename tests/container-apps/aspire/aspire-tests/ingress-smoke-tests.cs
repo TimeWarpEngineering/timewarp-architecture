@@ -6,7 +6,7 @@
 // X-Forwarded-Host is honored. The untrusted-peer case is the standalone yarp suite.
 // Extended for task 107: proves the GENERATED Web.Server /api carve-outs
 // (WebServerApiRoutePrefixes) actually reach Web.Server through the ingress — including
-// /api/identity (the 104-003 drift that shipped unreachable) and /api/Roles (a live drift the
+// /api/identity (the 104-003 drift that shipped unreachable) and /api/admin/roles (a live drift the
 // hand-maintained list had dropped). Task 270: also proves a first run against an empty
 // database logs no Error from web-server.
 // Framework: Jaribu MTP (task 145-003) — SetupOnce replaces xUnit IClassFixture/IAsyncLifetime.
@@ -294,7 +294,7 @@ public partial class IngressSmoke_Given_
     // the destination as Host and the foreign host travels in X-Forwarded-Host; a foreign Host must
     // still answer on a web route. Hello is [EndpointAllowAnonymous], so no allowlist/auth setup
     // is needed to reach it.
-    using HttpRequestMessage request = new(HttpMethod.Get, "/api/Hello?Name=Smoke");
+    using HttpRequestMessage request = new(HttpMethod.Get, "/api/hello?Name=Smoke");
     request.Headers.Host = "smoke.test";
 
     HttpResponseMessage response = await httpClient.SendAsync(request);
@@ -383,7 +383,7 @@ public partial class IngressSmoke_Given_
 
     // Api.Server catch-all over the default https hop — the api routes keep YARP's defaults (no
     // X-Forwarded transform of their own), unlike the plain-HTTP web routes.
-    HttpResponseMessage response = await httpClient.GetAsync("/api/weatherforecast?Days=10");
+    HttpResponseMessage response = await httpClient.GetAsync("/api/weather-forecasts?Days=10");
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
   }
@@ -411,12 +411,12 @@ public partial class IngressSmoke_Given_
   {
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
-    // /api/Roles is the LIVE drift the hand-maintained list had dropped: 5 admin endpoints that were
+    // /api/admin/roles is the LIVE drift the hand-maintained list had dropped: 5 admin endpoints that were
     // falling to the Api.Server catch-all through the ingress. GetRoles is
     // [EndpointAuthorize] on Web.Server, so an unauthenticated request must return 401 — which proves
-    // the generated prefix routed it to Web.Server (Api.Server hosts no /api/Roles, so a drift would
+    // the generated prefix routed it to Web.Server (Api.Server hosts no /api/admin/roles, so a drift would
     // surface as 404). Asserting 401-not-404 is the bug-fix regression guard.
-    HttpResponseMessage response = await httpClient.GetAsync("/api/Roles");
+    HttpResponseMessage response = await httpClient.GetAsync("/api/admin/roles");
 
     response.StatusCode.ShouldNotBe(HttpStatusCode.NotFound);
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
@@ -433,7 +433,7 @@ public partial class IngressSmoke_Given_
     // Header name SSOT: MockAuthenticationDefaults.MockPrincipalIdHeader (Web.Spa)
     httpClient.DefaultRequestHeaders.Add("X-TimeWarp-Mock-Principal-Id", principalId.ToString());
 
-    HttpResponseMessage response = await httpClient.GetAsync($"/api/Roles?UserId={principalId:D}");
+    HttpResponseMessage response = await httpClient.GetAsync($"/api/admin/roles?UserId={principalId:D}");
 
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
   }
@@ -452,12 +452,14 @@ public class GeneratedIngressRoutes_Given_
   public static Task WebServerApiRoutePrefixes_Should_CoverIdentityAndHello()
   {
     // Compile-time proof (no running app): the generator produced the Web.Server /api carve-outs the
-    // ingress loops over. api/identity is the 104-003 regression shape; api/Hello is the existing
+    // ingress loops over. api/identity is the 104-003 regression shape; api/hello is the existing
     // anonymous demo route. Both must be present for the HTTP facts above to be meaningful.
+    // api/analytics is TrackEvent, under api/ since task 458-010, so the ingress must carve it out.
     WebServerApiRoutePrefixes.All.ShouldContain("api/identity");
-    WebServerApiRoutePrefixes.All.ShouldContain("api/Hello");
-    // /api/GetCurrentUser became [ClientOnlyContract] — it must NOT be a generated ingress prefix.
-    WebServerApiRoutePrefixes.All.ShouldNotContain("api/GetCurrentUser");
+    WebServerApiRoutePrefixes.All.ShouldContain("api/hello");
+    WebServerApiRoutePrefixes.All.ShouldContain("api/analytics");
+    // Every todo-item contract is [ClientOnlyContract] — it must NOT be a generated ingress prefix.
+    WebServerApiRoutePrefixes.All.ShouldNotContain("api/todo-items");
     return Task.CompletedTask;
   }
 }

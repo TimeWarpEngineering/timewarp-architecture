@@ -28,7 +28,7 @@ public class SharedProblemDetails_Should
         "title": "One or more validation errors occurred.",
         "status": 400,
         "detail": "See errors.",
-        "instance": "/api/Roles",
+        "instance": "/api/admin/roles",
         "errors": { "Name": ["'Name' must not be empty."] },
         "traceId": "00-abc-def-00"
       }

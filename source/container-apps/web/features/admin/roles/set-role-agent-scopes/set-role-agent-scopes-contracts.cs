@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Task 466: PUT api/Roles/{RoleId}/agent-scopes — full replace, beside SetRolePermissions.
+// Task 466: PUT api/admin/roles/{RoleId}/agent-scopes — full replace, beside SetRolePermissions.
 // The list is agent scopes (AgentScopes.All), not human permission ids. Empty clears the role's
 // contribution. identity:read stays approved at issuance even when it is absent here.
 // [EndpointAuthorize] uses admin.roles.manage, same as SetRolePermissions.
@@ -22,7 +22,7 @@ using TimeWarp.Identity;
 )]
 public static partial class SetRoleAgentScopes
 {
-  [ApiRoute("api/Roles/{RoleId:guid}/agent-scopes", HttpVerb.Put)]
+  [ApiRoute("api/admin/roles/{RoleId:guid}/agent-scopes", HttpVerb.Put)]
   [Operation("roles.set-agent-scopes", Description = "Replace a role's agent scopes.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {

@@ -30,7 +30,7 @@ namespace TimeWarp.Architecture.Features.Profiles;
 [EndpointAllowAnonymous("This read is dual-mode: an anonymous caller gets the demo profile, and a signed-in caller gets their stored profile.")]
 public static partial class GetProfile
 {
-  [ApiRoute(RouteTemplate: "api/Users/Current/Profile", HttpVerb.Get)]
+  [ApiRoute(RouteTemplate: "api/users/current/profile", HttpVerb.Get)]
   [Operation("profile.get", Description = "Get the current user's profile.", Group = "profile")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 

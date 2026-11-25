@@ -29,7 +29,7 @@ public static partial class ListMyFeedback
 
   public const int MaxSearchLength = 200;
 
-  [ApiRoute("api/Feedback", HttpVerb.Get)]
+  [ApiRoute("api/feedback", HttpVerb.Get)]
   [Operation("feedback.list-mine", Description = "List the current user's feedback items, optionally filtered by a search.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {

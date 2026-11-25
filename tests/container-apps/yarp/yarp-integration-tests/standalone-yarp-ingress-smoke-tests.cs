@@ -62,7 +62,7 @@ public class Smoke_Given_
 
   public static async Task HelloThroughStandaloneYarp_Should_ReachWebServer()
   {
-    HttpResponseMessage response = await YarpClient.GetAsync("/api/Hello?Name=Smoke");
+    HttpResponseMessage response = await YarpClient.GetAsync("/api/hello?Name=Smoke");
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string body = await response.Content.ReadAsStringAsync();
@@ -74,7 +74,7 @@ public class Smoke_Given_
     // This exact request 502'd (RemoteCertificateNameMismatch) when the gateway forwarded web
     // routes over https with the original Host (task 104-031). Since task 070-008 the foreign host
     // travels in X-Forwarded-Host; a foreign Host must still answer. Hello is [EndpointAllowAnonymous].
-    using HttpRequestMessage request = new(HttpMethod.Get, "/api/Hello?Name=Smoke");
+    using HttpRequestMessage request = new(HttpMethod.Get, "/api/hello?Name=Smoke");
     request.Headers.Host = "smoke.test";
 
     HttpResponseMessage response = await YarpClient.SendAsync(request);
@@ -249,9 +249,9 @@ public class Smoke_Given_
 
   public static async Task RolesThroughStandaloneYarp_Should_ReachWebServerAndRequireAuth()
   {
-    // 401-not-404: GetRoles is [EndpointAuthorize] on Web.Server. Api.Server hosts no /api/Roles,
+    // 401-not-404: GetRoles is [EndpointAuthorize] on Web.Server. Api.Server hosts no /api/admin/roles,
     // so a missing generated prefix would 404. Asserting 401 proves the carve-out routed to Web.
-    HttpResponseMessage response = await YarpClient.GetAsync("/api/Roles");
+    HttpResponseMessage response = await YarpClient.GetAsync("/api/admin/roles");
 
     response.StatusCode.ShouldNotBe(HttpStatusCode.NotFound);
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);

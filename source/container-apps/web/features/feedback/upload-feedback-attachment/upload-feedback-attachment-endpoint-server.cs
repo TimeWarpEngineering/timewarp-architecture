@@ -26,7 +26,7 @@ using Microsoft.AspNetCore.Http.Metadata;
 using TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Foundation.Features;
 
-/// <summary>POST api/Feedback/attachments</summary>
+/// <summary>POST api/feedback/attachments</summary>
 public sealed class UploadFeedbackAttachmentEndpoint
   : BaseFastEndpoint<UploadFeedbackAttachment.Command, UploadFeedbackAttachment.Response>
 {

@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Task 182-004: PUT api/Roles/{RoleId}/permissions — full replace of one role's permission ids
+// Task 182-004: PUT api/admin/roles/{RoleId}/permissions — full replace of one role's permission ids
 // (Role.SetPermissions, task 473). RoleId from route (source-generated on partial Command). Validator
 // requires every PermissionId ∈ PermissionIds.All (catalog only — no free-form strings).
 // [EndpointAuthorize] admin.roles.manage; AuthenticationSchemes identity-session +
@@ -26,7 +26,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 )]
 public static partial class SetRolePermissions
 {
-  [ApiRoute("api/Roles/{RoleId:guid}/permissions", HttpVerb.Put)]
+  [ApiRoute("api/admin/roles/{RoleId:guid}/permissions", HttpVerb.Put)]
   [Operation("roles.set-permissions", Description = "Replace a role's permission ids.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {

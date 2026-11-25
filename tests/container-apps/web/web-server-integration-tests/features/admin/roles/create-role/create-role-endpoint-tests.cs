@@ -1,5 +1,5 @@
 #region Purpose
-// End-to-end tests for POST api/Roles: real host, real mediator pipeline, real backend validation.
+// End-to-end tests for POST api/admin/roles: real host, real mediator pipeline, real backend validation.
 #endregion
 
 #region Design

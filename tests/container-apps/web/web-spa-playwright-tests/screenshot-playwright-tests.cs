@@ -182,11 +182,11 @@ public class Screenshot_Given_Wasm
 
     await SubmitFeedbackAsync(page);
     await page.Locator("[data-qa=FeedbackPermalink]").ClickAsync();
-    ILocator filed = page.Locator("img[src*='/api/Feedback/attachments/']");
+    ILocator filed = page.Locator("img[src*='/api/feedback/attachments/']");
     await filed.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
     (await filed.CountAsync()).ShouldBe(1);
     await page.WaitForFunctionAsync(
-      "() => { const image = document.querySelector(\"img[src*='/api/Feedback/attachments/']\"); return image && image.complete && image.naturalWidth > 0; }",
+      "() => { const image = document.querySelector(\"img[src*='/api/feedback/attachments/']\"); return image && image.complete && image.naturalWidth > 0; }",
       null,
       new PageWaitForFunctionOptions { Timeout = 30_000 });
     int filedWidth = await filed.First.EvaluateAsync<int>("image => image.naturalWidth");

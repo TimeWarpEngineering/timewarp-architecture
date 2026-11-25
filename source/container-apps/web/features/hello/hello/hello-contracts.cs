@@ -16,7 +16,7 @@ namespace TimeWarp.Architecture.Features.Hellos;
 [EndpointAllowAnonymous("Minimal end-to-end sample endpoint; no security surface, deliberately reachable with zero setup.")]
 public static partial class Hello
 {
-  [ApiRoute(RouteTemplate: "api/Hello", HttpVerb.Get)]
+  [ApiRoute(RouteTemplate: "api/hello", HttpVerb.Get)]
   public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public string Name { get; set; } = null!;

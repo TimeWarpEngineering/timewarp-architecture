@@ -43,7 +43,7 @@ public static partial class GetRoles
 {
   public const int MaxSearchLength = 200;
 
-  [ApiRoute("api/Roles", HttpVerb.Get)]
+  [ApiRoute("api/admin/roles", HttpVerb.Get)]
   [Operation("roles.list", Description = "List roles, optionally filtered by a name search.", Group = "admin.roles")]
   [OpenDataQueryParameters]
   [AuthApiRequest]

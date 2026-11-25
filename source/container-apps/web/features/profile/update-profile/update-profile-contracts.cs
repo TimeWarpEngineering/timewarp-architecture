@@ -4,7 +4,7 @@
 
 #region Design
 // PUT of the same IProfileDetails shape GetProfile.Response implements so the Profile page form
-// binds once. Identity comes from the auth context (api/Users/Current/Profile), never a
+// binds once. Identity comes from the auth context (api/users/current/profile), never a
 // client-supplied id. [EndpointAuthorize] profile.write — this is never a gate on passkey/agent-key
 // register, session, or token (locked 104 decision 1). AuthenticationSchemes: identity-session +
 // mock-identity-session (human chrome; agents do not edit this product profile).
@@ -22,7 +22,7 @@ namespace TimeWarp.Architecture.Features.Profiles;
 )]
 public static partial class UpdateProfile
 {
-  [ApiRoute("api/Users/Current/Profile", HttpVerb.Put)]
+  [ApiRoute("api/users/current/profile", HttpVerb.Put)]
   [Operation("profile.update", Description = "Replace the current user's profile settings.", Group = "profile")]
   public sealed partial class Command : IApiRequest, IProfileDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {

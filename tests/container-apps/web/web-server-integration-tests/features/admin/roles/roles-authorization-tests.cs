@@ -71,7 +71,7 @@ public class Returns_
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
 
-    HttpResponseMessage response = await client.GetAsync("api/Roles");
+    HttpResponseMessage response = await client.GetAsync("api/admin/roles");
 
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
@@ -82,7 +82,7 @@ public class Returns_
     const string requestJson = """{"userId":"11111111-1111-1111-1111-111111111111","name":"Auditor","description":"Read-only access."}""";
 
     HttpResponseMessage response = await client.PostAsync
-      ("api/Roles", new StringContent(requestJson, Encoding.UTF8, "application/json"));
+      ("api/admin/roles", new StringContent(requestJson, Encoding.UTF8, "application/json"));
 
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
@@ -112,7 +112,7 @@ public class Returns_
     const string requestJson = """{"userId":"11111111-1111-1111-1111-111111111111","name":"Auditor","description":"Read-only access."}""";
 
     HttpResponseMessage response = await client.PostAsync(
-      "api/Roles",
+      "api/admin/roles",
       new StringContent(requestJson, Encoding.UTF8, "application/json"));
 
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -174,7 +174,7 @@ public class Returns_
       const string requestJson =
         """{"userId":"11111111-1111-1111-1111-111111111111","name":"ReadOnlyDenied","description":"Must not create without manage."}""";
       HttpResponseMessage createResponse = await client.PostAsync(
-        "api/Roles",
+        "api/admin/roles",
         new StringContent(requestJson, Encoding.UTF8, "application/json"));
       createResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
@@ -192,7 +192,7 @@ public class Returns_
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     // Deliberately NO Cookie header — only the bearer token.
 
-    HttpResponseMessage response = await client.GetAsync("api/Roles");
+    HttpResponseMessage response = await client.GetAsync("api/admin/roles");
 
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }

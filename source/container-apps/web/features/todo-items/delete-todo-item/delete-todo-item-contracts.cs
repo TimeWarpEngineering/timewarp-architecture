@@ -12,7 +12,7 @@ namespace TimeWarp.Architecture.Features.TodoItems;
 
 public sealed partial class DeleteTodoItem
 {
-  [ApiRoute("api/TodoItems/{TodoItemId:guid}", HttpVerb.Delete)]
+  [ApiRoute("api/todo-items/{TodoItemId:guid}", HttpVerb.Delete)]
   [ClientOnlyContract("Todo items are a client demo; the server slice awaits the feature's finish-vs-delete decision.")]
   public sealed partial class Command : ICommand<OneOf<Response, SharedProblemDetails>>, IApiRequest;
 

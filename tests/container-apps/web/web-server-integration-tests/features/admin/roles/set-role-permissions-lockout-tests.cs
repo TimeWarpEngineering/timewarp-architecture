@@ -81,7 +81,7 @@ public class Returns_
       ContractSerializationDefaults.Options);
 
     HttpResponseMessage response = await client.PutAsync(
-      $"api/Roles/{RoleIds.Administrator}/permissions",
+      $"api/admin/roles/{RoleIds.Administrator}/permissions",
       new StringContent(body, Encoding.UTF8, "application/json"));
 
     response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -117,7 +117,7 @@ public class Returns_
         ContractSerializationDefaults.Options);
 
       HttpResponseMessage response = await client.PutAsync(
-        $"api/Roles/{RoleIds.Member}/permissions",
+        $"api/admin/roles/{RoleIds.Member}/permissions",
         new StringContent(body, Encoding.UTF8, "application/json"));
 
       response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -166,7 +166,7 @@ public class Returns_
         ContractSerializationDefaults.Options);
 
       HttpResponseMessage response = await client.PutAsync(
-        $"api/Roles/{RoleIds.Administrator}/permissions",
+        $"api/admin/roles/{RoleIds.Administrator}/permissions",
         new StringContent(body, Encoding.UTF8, "application/json"));
 
       response.StatusCode.ShouldBe(HttpStatusCode.OK);

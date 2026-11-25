@@ -173,8 +173,8 @@ namespace TimeWarp.Architecture.Features.Feedback
           .Handle(new ListContract.Query { Search = " " }, CancellationToken.None))
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected list success"));
       blank.Items.Count.ShouldBe(2);
-      new ListContract.Query { Search = "printer" }.GetRouteWithQueryString().ShouldBe("api/Feedback?Search=printer");
-      new ListContract.Query().GetRouteWithQueryString().ShouldBe("api/Feedback");
+      new ListContract.Query { Search = "printer" }.GetRouteWithQueryString().ShouldBe("api/feedback?Search=printer");
+      new ListContract.Query().GetRouteWithQueryString().ShouldBe("api/feedback");
     }
 
     public static async Task EmailCopy_Should_SendOnceWhenOptedInAndEmailIsOnFile()

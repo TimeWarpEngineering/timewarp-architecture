@@ -9,7 +9,7 @@
 // HttpClient per test with AllowAutoRedirect=false so Location and status are observable. Passkey
 // mint via CredentialCeremonyHelpers for signed-in cases (Member default; Admin/Roles needs
 // Administrator so Member proves forbid ≠ Login). Cases mirror the dual-mode matrix in
-// IdentitySessionCookieChallenge Design: HTML Accept + Accept-less fallback redirect; api/Roles
+// IdentitySessionCookieChallenge Design: HTML Accept + Accept-less fallback redirect; api/admin/roles
 // anonymous 401; Member session cookie authenticated; Member /Admin/Roles 403.
 // Task 183 resolved the old residual (authenticated HTML SSR stack overflow): hosted prerender
 // now prefers HttpContext.User (HostedIdentitySessionAuthenticationStateProvider) and
@@ -74,7 +74,7 @@ public class Pages_Returns_
   {
     using HttpClient client = CreateNoRedirectClient(Web);
 
-    HttpResponseMessage response = await client.GetAsync("api/Roles");
+    HttpResponseMessage response = await client.GetAsync("api/admin/roles");
 
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     response.Headers.Location.ShouldBeNull();

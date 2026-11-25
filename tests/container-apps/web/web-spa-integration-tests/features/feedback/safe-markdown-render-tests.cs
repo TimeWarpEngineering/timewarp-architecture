@@ -30,8 +30,8 @@ using TimeWarp.Architecture.Features.Feedback;
 [TestTag("Unit")]
 public class SafeMarkdown_Should_
 {
-  private const string Own = "/api/Feedback/attachments/11111111-1111-1111-1111-111111111111";
-  private const string Other = "/api/Feedback/attachments/22222222-2222-2222-2222-222222222222";
+  private const string Own = "/api/feedback/attachments/11111111-1111-1111-1111-111111111111";
+  private const string Other = "/api/feedback/attachments/22222222-2222-2222-2222-222222222222";
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<SafeMarkdown_Should_>();
@@ -118,7 +118,7 @@ public class SafeMarkdown_Should_
     GetFeedback.Attachment inline = new(Guid.Parse("11111111-1111-1111-1111-111111111111"), "pasted.png", "image/png", 10, Own, isFilePresent: true);
     GetFeedback.Attachment unreferenced = new(Guid.Parse("22222222-2222-2222-2222-222222222222"), "second.png", "image/png", 10, Other, isFilePresent: true);
     GetFeedback.Attachment notes = new(Guid.Parse("33333333-3333-3333-3333-333333333333"), "notes.txt", "text/plain", 10,
-      "/api/Feedback/attachments/33333333-3333-3333-3333-333333333333", isFilePresent: true);
+      "/api/feedback/attachments/33333333-3333-3333-3333-333333333333", isFilePresent: true);
 
     string html = await RenderComponentAsync<FeedbackBody>(new Dictionary<string, object?>
     {
@@ -135,7 +135,7 @@ public class SafeMarkdown_Should_
 
   public static async Task Not_List_A_File_The_Body_Links_Inline()
   {
-    const string notesPath = "/api/Feedback/attachments/33333333-3333-3333-3333-333333333333";
+    const string notesPath = "/api/feedback/attachments/33333333-3333-3333-3333-333333333333";
     GetFeedback.Attachment notes = new(Guid.Parse("33333333-3333-3333-3333-333333333333"), "notes.txt", "text/plain", 10, notesPath, isFilePresent: true);
 
     string html = await RenderComponentAsync<FeedbackBody>(new Dictionary<string, object?>
@@ -152,7 +152,7 @@ public class SafeMarkdown_Should_
 
   public static async Task Render_An_Orphan_Attachment_As_A_Missing_File()
   {
-    const string notesPath = "/api/Feedback/attachments/33333333-3333-3333-3333-333333333333";
+    const string notesPath = "/api/feedback/attachments/33333333-3333-3333-3333-333333333333";
     GetFeedback.Attachment pasted = new(Guid.Parse("11111111-1111-1111-1111-111111111111"), "pasted.png", "image/png", 10, Own, isFilePresent: false);
     GetFeedback.Attachment listed = new(Guid.Parse("22222222-2222-2222-2222-222222222222"), "second.png", "image/png", 10, Other, isFilePresent: false);
     GetFeedback.Attachment notes = new(Guid.Parse("33333333-3333-3333-3333-333333333333"), "notes.txt", "text/plain", 10, notesPath, isFilePresent: false);

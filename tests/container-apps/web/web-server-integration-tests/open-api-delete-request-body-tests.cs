@@ -1,5 +1,5 @@
 #region Purpose
-// DELETE /api/Roles/{roleId} is published without a required request body.
+// DELETE /api/admin/roles/{roleId} is published without a required request body.
 #endregion
 
 #region Design
@@ -84,7 +84,7 @@ public class DeleteRoles_Given_
 
   public static async Task DeleteRole_Should_Omit_RequestBody_And_Publish_UserId_Query()
   {
-    JsonElement operation = await OperationAsync("/api/Roles/{roleId}", "delete");
+    JsonElement operation = await OperationAsync("/api/admin/roles/{roleId}", "delete");
     operation.TryGetProperty("requestBody", out _).ShouldBeFalse();
 
     JsonElement roleId = Parameter(operation, "roleId", "path");
@@ -100,7 +100,7 @@ public class DeleteRoles_Given_
 
   public static async Task GetRole_Should_Keep_UserId_On_The_Query_String()
   {
-    JsonElement operation = await OperationAsync("/api/Roles/{roleId}", "get");
+    JsonElement operation = await OperationAsync("/api/admin/roles/{roleId}", "get");
     operation.TryGetProperty("requestBody", out _).ShouldBeFalse();
     Parameter(operation, "userId", "query");
     Parameter(operation, "roleId", "path");
@@ -108,7 +108,7 @@ public class DeleteRoles_Given_
 
   public static async Task ClearUserXaiApiKey_Should_Stay_Without_A_Body()
   {
-    JsonElement operation = await OperationAsync("/api/Users/Current/xai-api-key", "delete");
+    JsonElement operation = await OperationAsync("/api/users/current/xai-api-key", "delete");
     operation.TryGetProperty("requestBody", out _).ShouldBeFalse();
   }
 

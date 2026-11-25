@@ -140,7 +140,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       notes.IsImage.ShouldBeFalse();
       GetFeedback.Attachment image = opened.Attachments.Single(attachment => attachment.FileName == "shot.png");
       image.IsImage.ShouldBeTrue();
-      image.DownloadPath.ShouldStartWith("/api/Feedback/attachments/");
+      image.DownloadPath.ShouldStartWith("/api/feedback/attachments/");
       opened.Attachments.ShouldAllBe(attachment => attachment.IsFilePresent);
     }
 

@@ -36,7 +36,7 @@ public class Copies_
     };
 
     using HttpClient client = new(handler);
-    await client.GetAsync("https://example.test/api/Users/Current/Profile");
+    await client.GetAsync("https://example.test/api/users/current/profile");
 
     inner.LastRequest.ShouldNotBeNull();
     inner.LastRequest!.Headers.GetValues("Cookie")
@@ -54,7 +54,7 @@ public class Copies_
     };
 
     using HttpClient client = new(handler);
-    await client.GetAsync("https://example.test/api/Users/Current/Profile");
+    await client.GetAsync("https://example.test/api/users/current/profile");
 
     inner.LastRequest.ShouldNotBeNull();
     inner.LastRequest!.Headers.Contains("Cookie").ShouldBeFalse();

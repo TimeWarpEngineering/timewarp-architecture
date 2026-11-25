@@ -66,7 +66,7 @@ public class FeedbackMissingFile_Given_Wasm
     ILocator details = page.Locator("[data-qa=FeedbackBody]").Locator("textarea");
     string body = await details.InputValueAsync();
     string kept = string.Join('\n', body.Split('\n').Where(static line => !line.Contains("console-log.txt", StringComparison.Ordinal)));
-    kept.ShouldContain("/api/Feedback/attachments/");
+    kept.ShouldContain("/api/feedback/attachments/");
     kept.ShouldContain("The header is unreadable in dark mode.");
     await details.FillAsync(kept);
     await details.PressAsync("Tab");
@@ -144,7 +144,7 @@ public class FeedbackMissingFile_Given_Wasm
     ILocator listed = page.Locator($"[data-qa={attachmentQa}] [data-qa=MissingFile]");
     await Assertions.Expect(listed).ToHaveCountAsync(1);
     await Assertions.Expect(listed).ToContainTextAsync("console-log.txt");
-    (await page.Locator("img[src*='/api/Feedback/attachments/']").CountAsync()).ShouldBe(0);
-    (await page.Locator("a[href*='/api/Feedback/attachments/']").CountAsync()).ShouldBe(0);
+    (await page.Locator("img[src*='/api/feedback/attachments/']").CountAsync()).ShouldBe(0);
+    (await page.Locator("a[href*='/api/feedback/attachments/']").CountAsync()).ShouldBe(0);
   }
 }
