@@ -162,6 +162,15 @@ Expect: all tests pass; `ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply
   (100 lines of EF-generated pragma entries no longer counted); "Repository passes all audit checks",
   including `source-file-line-cap`.
 
+- CI fix pass (PR #692, `web-jaribu-tests` CS1503): `feedback-owner-name-tests.cs:213` built a
+  `ListFeedback.Item` without the new `LastActivityAt` argument; added it. No other stale call site
+  (grep for `ListFeedback.Item(` / `AdminListContract.Item` and `new FeedbackAdminView(`). Merged
+  `origin/master` (kanban-only).
+- `dotnet build tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj`: 0 warnings, 0 errors.
+- `./bin/dev build`: passed, 0 warnings, 0 errors.
+- `dotnet run --file source/container-apps/web/features/feedback/feedback-owner-name-tests.cs`: 9/9 passed.
+- `ganda repo audit` (run 4, after the CI fix): "Repository passes all audit checks".
+
 ### Review
 
 - Round 1, roster general, effort 3 (by-diff, 1038 lines). Reviewer did not re-run build, test, or audit.

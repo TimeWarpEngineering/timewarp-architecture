@@ -210,7 +210,7 @@ namespace TimeWarp.Architecture.Features.Feedback
     public static Task Contracts_Should_CarryOwnerDisplayNameThroughJson()
     {
       AdminListContract.Item row = new(
-        Guid.NewGuid(), Guid.NewGuid(), ContractKind.BugReport, ContractStatus.New, "Title", DateTimeOffset.UnixEpoch, "Ada");
+        Guid.NewGuid(), Guid.NewGuid(), ContractKind.BugReport, ContractStatus.New, "Title", DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, "Ada");
       string json = JsonSerializer.Serialize(new AdminListContract.Response(1, [row], 1, 25), ContractSerializationDefaults.Options);
       JsonSerializer.Deserialize<AdminListContract.Response>(json, ContractSerializationDefaults.Options)
         .ShouldNotBeNull().Items[0].OwnerDisplayName.ShouldBe("Ada");
