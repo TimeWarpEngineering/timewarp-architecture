@@ -1,5 +1,5 @@
 #region Purpose
-// The public web OpenAPI document names health, the tip alias, and the excluded discovery documents.
+// The public web OpenAPI document names health, the tip alias, and every served route that is not an operation.
 #endregion
 
 #region Design
@@ -7,6 +7,14 @@
 // flag is what web-server passes. A second host without the flag is the api-server case: those
 // routes must stay absent. llms.txt and the discovery skill must name the same excluded paths
 // the document lists, because agents read both.
+// Liveness is listed from IngressPaths.WebServerAlivePath, the constant the health description
+// names (task 458-007). WebServer_Given_ boots the real web-server host and walks its endpoint
+// data source: a served route that is not an operation must be in x-timewarp-excluded-routes,
+// unless it is in a family the document description names as unlisted (Razor pages, static
+// assets, Blazor framework routes) or is the document and Scalar themselves. Development-only
+// routes (the DevTools config) are skipped because a published host does not serve them. The
+// test host does not run Program.Main, so /alive (MapDefaultEndpoints) is checked by the tiny
+// host's liveness test instead.
 #endregion
 
 namespace OpenApiDiscoveryCoverage_;
@@ -15,9 +23,12 @@ using System.Net;
 using System.Text.Json;
 using FastEndpoints;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TimeWarp.Foundation;
+using TimeWarp.Foundation.Configuration;
 
 [TestTag("OpenApi")]
 public class Document_Given_
@@ -92,7 +103,7 @@ public class Document_Given_
     string description = operation.GetProperty("description").GetString()!;
     description.ShouldContain("text/plain");
     description.ShouldContain("PostgresDbContext");
-    description.ShouldContain("/web-server/alive");
+    description.ShouldContain("Liveness is GET " + IngressPaths.WebServerAlivePath + ".");
     JsonElement responses = operation.GetProperty("responses");
     responses.GetProperty("200").GetProperty("content").TryGetProperty("text/plain", out _).ShouldBeTrue();
     responses.TryGetProperty("503", out _).ShouldBeTrue();
@@ -137,7 +148,25 @@ public class Document_Given_
       listed.Add(entry.GetProperty("path").GetString()!);
     }
 
-    listed.SetEquals(ExcludedPaths).ShouldBeTrue(string.Join(", ", listed));
+    listed.SetEquals([.. ExcludedPaths, IngressPaths.WebServerAlivePath]).ShouldBeTrue(string.Join(", ", listed));
+  }
+
+  public static async Task Liveness_Should_Be_Listed_Not_An_Operation()
+  {
+    using JsonDocument document = await DocumentAsync();
+    JsonElement root = document.RootElement;
+    root.GetProperty("paths").TryGetProperty(IngressPaths.WebServerAlivePath, out _).ShouldBeFalse();
+
+    JsonElement entry = root.GetProperty("x-timewarp-excluded-routes").EnumerateArray()
+      .Single(candidate => candidate.GetProperty("path").GetString() == IngressPaths.WebServerAlivePath);
+    entry.GetProperty("method").GetString().ShouldBe("GET");
+    string reason = entry.GetProperty("reason").GetString()!;
+    reason.ShouldContain(HealthEndpointPaths.Alive);
+    reason.ShouldContain(IngressPaths.WebServerHealthPath);
+
+    string description = root.GetProperty("info").GetProperty("description").GetString()!;
+    description.ShouldContain("`GET " + IngressPaths.WebServerAlivePath + "`");
+    description.ShouldContain("Razor pages, static files");
   }
 
   public static async Task ScalarPage_Should_Load_The_Document()
@@ -193,6 +222,7 @@ public class Document_Given_
     llms.ShouldContain("x-timewarp-excluded-routes");
     llms.ShouldContain("/scalar/v1");
     llms.ShouldContain("GET|POST /api");
+    llms.ShouldContain(IngressPaths.WebServerAlivePath);
     skill.ShouldContain("x-timewarp-excluded-routes");
     skill.ShouldContain("/scalar/v1");
     return Task.CompletedTask;
@@ -296,5 +326,124 @@ public sealed class TipPostEndpoint : EndpointWithoutRequest
   {
     _ = ct;
     return Task.CompletedTask;
+  }
+}
+
+[TestTag("OpenApi")]
+public class WebServer_Given_
+{
+  private static readonly string[] UnlistedPrefixes =
+  [
+    "/_blazor",
+    "/_framework",
+    "/openapi/",
+    "/scalar",
+  ];
+
+  private static readonly string[] DevelopmentOnlyPaths =
+  [
+    HealthEndpointPaths.Health,
+    TimeWarp.State.DevTools.Export.TimeWarpStateDevToolsClientConfigEndpoint.Path,
+  ];
+
+  private static HostGraph? Graph;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<WebServer_Given_>();
+
+  public static async Task SetupOnce()
+  {
+#if(api)
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
+  }
+
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static async Task Every_Served_Route_Should_Be_An_Operation_Or_Listed()
+  {
+    WebTestServerApplication web = Graph!.Web!;
+    using HttpResponseMessage response = await web.HttpClient.GetAsync("/openapi/v1.json");
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    using JsonDocument document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+    JsonElement root = document.RootElement;
+
+    // The document camel-cases route parameter names ({linkId}); the route keeps the DTO's ({LinkId}).
+    HashSet<string> covered = new(StringComparer.OrdinalIgnoreCase);
+    foreach (JsonProperty path in root.GetProperty("paths").EnumerateObject())
+    {
+      covered.Add(path.Name);
+    }
+
+    foreach (JsonElement entry in root.GetProperty("x-timewarp-excluded-routes").EnumerateArray())
+    {
+      covered.Add(entry.GetProperty("path").GetString()!);
+    }
+
+    EndpointDataSource dataSource = web.WebApplicationHost.ServiceProvider.GetRequiredService<EndpointDataSource>();
+    List<string> unlisted = [];
+    int checkedRoutes = 0;
+    foreach (RouteEndpoint endpoint in dataSource.Endpoints.OfType<RouteEndpoint>())
+    {
+      string path = Normalize(endpoint.RoutePattern.RawText ?? string.Empty);
+      if (IsUnlistedFamily(endpoint, path))
+      {
+        continue;
+      }
+
+      checkedRoutes++;
+      if (!covered.Contains(path))
+      {
+        unlisted.Add(path + " (" + endpoint.DisplayName + ")");
+      }
+    }
+
+    checkedRoutes.ShouldBeGreaterThan(0);
+    unlisted.ShouldBeEmpty
+    (
+      "Served but neither an operation nor in x-timewarp-excluded-routes: " + string.Join("; ", unlisted)
+    );
+  }
+
+  private static bool IsUnlistedFamily(RouteEndpoint endpoint, string path)
+  {
+    return endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Components.Endpoints.ComponentTypeMetadata>() is not null
+      || endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.StaticAssets.StaticAssetDescriptor>() is not null
+      || endpoint.RoutePattern.Parameters.Any(IsFileParameter)
+      || UnlistedPrefixes.Any(prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+      || DevelopmentOnlyPaths.Contains(path, StringComparer.OrdinalIgnoreCase);
+  }
+
+  // The static-file fallback ({**path:file}) serves files the asset manifest does not list.
+  private static bool IsFileParameter(Microsoft.AspNetCore.Routing.Patterns.RoutePatternParameterPart parameter)
+  {
+    return parameter.ParameterPolicies.Any(static policy => string.Equals(policy.Content, "file", StringComparison.Ordinal));
+  }
+
+  private static string Normalize(string rawText)
+  {
+    // The document spells a route parameter without its constraint or optional marker.
+    string[] segments = rawText.TrimStart('/').Split('/');
+    for (int index = 0; index < segments.Length; index++)
+    {
+      string segment = segments[index];
+      if (segment.StartsWith('{', StringComparison.Ordinal) && segment.EndsWith('}', StringComparison.Ordinal))
+      {
+        string name = segment[1..^1].TrimStart('*');
+        int end = name.IndexOfAny([':', '?', '=']);
+        segments[index] = "{" + (end < 0 ? name : name[..end]) + "}";
+      }
+    }
+
+    return "/" + string.Join('/', segments);
   }
 }
