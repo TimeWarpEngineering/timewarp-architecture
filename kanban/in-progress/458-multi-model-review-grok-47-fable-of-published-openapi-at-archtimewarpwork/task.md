@@ -146,6 +146,17 @@ Review outcome: 17 merged findings (1 blocker held, 9 major, 6 minor, 1 nit) plu
   disposition row except M-01 (held) and M-17 (rejected) links an existing to-do child task; both
   `review/round-1/grok-4.7.md` and `review/round-1/fable.md` exist and contain no secret values.
 
-## Blocked
+## Unblock update (2026-11-25)
 
-2026-11-24: The operator must fix the held live-host security finding first: rotate the exposed credentials and take the endpoint down (details in the walk log summary and ~/.local/state/timewarp/task-458-held/fable.md F-001). Then resume this walk to restore the F-001 text, file its follow-on task, and rerun ganda repo audit after task 315 lands its kitchen.
+Operator remediation is complete:
+
+- The local dev Aspire host serving `/api/debug-config` on `arch.timewarp.work` has been stopped (verified `HTTP 502`; no longer serving `/api/debug-config`).
+- All exposed rotatable credentials have been rotated (`OTEL_EXPORTER_OTLP_HEADERS` was Aspire's ephemeral dashboard OTLP key and `ASPIRE_USER_SECRETS_ID` is the public csproj GUID).
+- The structural code fix **already landed on `master`**: **Task 524** (PR #690, `kanban/done/524-remove-api-debug-config-endpoint-from-common-server-module/task.md`) removed `/api/debug-config` from `CommonServerModule` and added a `404` regression test.
+- Task 315 (PR #689) also merged to `master`, clearing the earlier `kanban-landed` drift.
+
+Resumed walk actions:
+1. Merge `origin/master` into this branch.
+2. Restore the held F-001 text in `review/round-1/fable.md`, the held sentence in `review/round-1/grok-4.7.md` (G-009), and M-01 in `review/findings.md` from `~/.local/state/timewarp/task-458-held/` (strictly zero secret values).
+3. Update `disposition.md` and the checklist: mark M-01 accepted and resolved by [524](../../done/524-remove-api-debug-config-endpoint-from-common-server-module/task.md) (PR #690) — do **not** file a duplicate follow-on task. Because `arch.timewarp.work` is currently stopped (`HTTP 502`), verify the removal from Task 524's merged code and `404` regression test rather than expecting a live host response.
+4. Run `./bin/dev build` and `ganda repo audit`, commit, and finish.
