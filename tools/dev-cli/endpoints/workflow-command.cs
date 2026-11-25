@@ -16,7 +16,8 @@
 // --phase test [--group <name>] is clean -> build -> test (one TestGroups group, or all); --phase
 // publish is clean -> build -> publish all. No --phase runs everything in order. Release mode
 // accepts no --phase/--group: packing and pushing stay one job and one pass. The playwright group
-// is not in the CI matrix; `dev test --group playwright` still runs it.
+// is not in the pull request matrix (task 501). It runs nightly through `template-smoke --matrix
+// --app-tests` (task 502); locally `dev test --group playwright` or `dev test <file>` runs it.
 // The test step runs `dev test --no-build`, and publish runs `dev publish all --no-build` (every
 // target, their safety suites in one aspire-tests run, then helm lint), against the Release build
 // that just ran. Publish outputs are files on the runner; CI uploads none of them and deploys

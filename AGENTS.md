@@ -47,7 +47,7 @@ and plain CSS (`tw-blazor-css-strategy`). Aspire. EF Core when `postgres` is on.
 | Razor, actions, outcomes | `tw-blazor`, `tw-blazor-layout` |
 | Brand (name, logo, icons, colors, dark variants) | `tw-brand`. One `BrandOptions` section in web-server configuration; component CSS reads role tokens only. |
 | Aggregates | `tw-aggregate-pattern` |
-| Tests | `tw-jaribu` for the framework. Co-located runfiles, C-create / C-share, host lanes, the shared `InteractiveHtmlRenderer` page-test host, and selecting several classes in one run (one Aspire boot): `skills/tw-feature-placement/references/co-located-jaribu-runfiles.md` |
+| Tests | `tw-jaribu` for the framework. Co-located runfiles, C-create / C-share, host lanes, the shared `InteractiveHtmlRenderer` page-test host, and selecting several classes in one run (one Aspire boot): `skills/tw-feature-placement/references/co-located-jaribu-runfiles.md`. `./bin/dev test <file>` runs the test classes in one file (a Playwright test file too), and CI runs the Playwright suite only nightly. |
 | Deploy | `tw-deploy` |
 | Runtime performance (CPU, allocations, heap) | `tw-dotnet-diagnostics` |
 | Release cut | `tw-release`. Maintainer notes: `documentation/developer/guides/` (not packed). |
