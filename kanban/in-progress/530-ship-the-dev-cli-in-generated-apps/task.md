@@ -76,7 +76,7 @@ required. readme says the same.
 ## Review
 
 - Round 1: Blocked — open M1, M2
-
+- Round 2: Done
 ## Notes
 
 - Found 2026-11-25 while scoping the instance CI workflow (task 531) and the release deploy job
@@ -96,10 +96,12 @@ required. readme says the same.
 - 2026-11-26 implement-fix-2 (review round 1 fix pass): M1 and M2 fixed, see Results › Review fix pass.
 - Review oracle: grok session 01a2149c-8f0e-7c20-a0c6-5ae91cc3abd7 (2026-11-26), effort 3, roster general, round 1
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2149c-8f0e-7c20-a0c6-5ae91cc3abd7, max-turns 200, artifacts general.md, merged.md — 2026-11-25T21:41:33Z
+- Review oracle round 2: grok session 01a214ad-d381-7e20-abcd-77224169cb95 (2026-11-26), effort 2, roster general
 
 ## Learnings
 
 - No misread. The Goal restatement matches the original task (ship the dev CLI, drop template-only commands, refuse or exclude flag-off commands, smoke `dev build` on the default variant and `--matrix`). The Goal line says `dev db` is excluded without postgres; Results and the code also exclude it when web is off. That tighter coupling is finding M1, not a conflict with the task.
+- Round 2 re-checked the restatement, including the fix-pass paragraph, against the original task. Still no misread. Naming web when the web tree is gone, and refusing `dev deploy` without web, is the review fix. It matches the task rule that a flag-off command is excluded or refuses cleanly.
 
 ## Results (required before done)
 
@@ -170,7 +172,11 @@ they ship. readme.md, kanban/readme.md and AGENTS.md say what a generated app co
 
 ### Review
 
-Round 1 (general, effort 3): 1 bug, 1 suggestion, 0 nits, both fixed (disposition in `review/round-1/merged.md`). Framework: `review/review-framework.md`.
+Round 1 (general, effort 3): 1 bug, 1 suggestion, 0 nits, both open at the end of that round. Ledger: `review/round-1/merged.md`.
+
+Round 2 (general, effort 2): re-reviewed the fix delta. M1 and M2 stay fixed. No new findings.
+
+Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. Disposition: clean. Final open count: 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### Review fix pass (round 1 → round 2)
 

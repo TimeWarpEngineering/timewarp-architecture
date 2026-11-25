@@ -2,19 +2,19 @@
 
 **Date:** 2026-11-26
 **Host task:** kanban/in-progress/530-ship-the-dev-cli-in-generated-apps/
-**Diff scope:** branch `task/530-ship-the-dev-cli-in-generated-apps` vs `master` (`master...HEAD`, 30 files, +1090/−364). Untracked kitchen files under `review/` are this round, not product scope.
-**Plan / brief:** Ship `tools/dev-cli/` (and the root files it reads) in a generated app, drop template-only commands, and refuse or exclude commands whose feature flag is off. `dev template-smoke` builds that CLI and runs `dev build` for the default variant and `--matrix`.
-**Effort:** 3 (general only)
+**Diff scope:** Round 2 reviews the fix delta only: `f88c6cd88` vs its parent. Product files: `tools/dev-cli/services/app-features.cs`, `tools/dev-cli/endpoints/deploy-command.cs`, `tests/tools/dev-cli-tests/app-features-tests.cs`, `readme.md`. Round 1 reviewed the branch vs `master`.
+**Plan / brief:** Ship `tools/dev-cli/` (and the root files it reads) in a generated app, drop template-only commands, and refuse or exclude commands whose feature flag is off. Round 2 checks the M1/M2 fix: a refusal names the flag that is actually off, and `dev deploy` refuses without web.
+**Effort:** round 1 was 3; this round is 2 (general only), per the by-diff budget below
 **Reviewer roster:** general
-**Session IDs:** grok `01a2149c-8f0e-7c20-a0c6-5ae91cc3abd7`
+**Session IDs:** round 1 grok `01a2149c-8f0e-7c20-a0c6-5ae91cc3abd7`; round 2 grok `01a214ad-d381-7e20-abcd-77224169cb95`
 
 ## Budget (by-diff)
 
-- Lines changed: 1454
-- Effort: 3
+- Lines changed: 252
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -29,4 +29,6 @@
 
 ## Record reviewed
 
-Implementer `## Results` / `### How to validate` record `./bin/dev build`, targeted dev-cli tests, `./bin/dev template-smoke` and `--matrix` (six variants), `ganda repo audit`, and a manual packed-template pass over the flag-off refusals. That record covers the pack, the command list, and `dev build` through the generated CLI. It does not exercise `dev deploy migrate` on `--web false`. Gates were not re-run.
+Round 1: implementer `## Results` / `### How to validate` record `./bin/dev build`, targeted dev-cli tests, `./bin/dev template-smoke` and `--matrix` (six variants), `ganda repo audit`, and a manual packed-template pass over the flag-off refusals. That record covered the pack, the command list, and `dev build` through the generated CLI. It did not exercise `dev deploy migrate` on `--web false`. Gates were not re-run.
+
+Round 2: the fix-pass record adds `./bin/dev build`, `./bin/dev test tests/tools/dev-cli-tests/app-features-tests.cs` (6/6), a manual refusal of `dev deploy migrate` in an empty git checkout (names web, exit 1) and of `dev deploy --no-browser` with only the yarp marker present (names web, exit 1), and `ganda repo audit` (passed). Template-smoke was not rerun; the fix does not change `template.json` or the generated layout. That record covers this delta. Gates were not re-run. One targeted Python check replayed the new marker-exclude rule against `.template.config/template.json` to see whether a flag outside `Requires` still removes a marker. It did not.
