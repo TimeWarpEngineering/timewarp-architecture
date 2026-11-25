@@ -1,0 +1,111 @@
+No configurations were provided -- using built in recommended configuration by default.
+
+validating openapi.json...
+openapi.json:
+  10:14   error    no-server-trailing-slash  Server `url` should not have a trailing slash.
+  15:7    error    operation-summary         Operation object should contain `summary` field.
+  480:7   error    operation-summary         Operation object should contain `summary` field.
+  2221:7  error    operation-summary         Operation object should contain `summary` field.
+  2267:7  error    operation-summary         Operation object should contain `summary` field.
+  2303:7  error    operation-summary         Operation object should contain `summary` field.
+  2397:7  error    operation-summary         Operation object should contain `summary` field.
+  2503:7  error    operation-summary         Operation object should contain `summary` field.
+  2550:7  error    operation-summary         Operation object should contain `summary` field.
+  2597:7  error    operation-summary         Operation object should contain `summary` field.
+  2704:7  error    operation-summary         Operation object should contain `summary` field.
+  2745:7  error    operation-summary         Operation object should contain `summary` field.
+  2961:7  error    operation-summary         Operation object should contain `summary` field.
+  3205:7  error    operation-summary         Operation object should contain `summary` field.
+  3330:7  error    operation-summary         Operation object should contain `summary` field.
+  3436:7  error    operation-summary         Operation object should contain `summary` field.
+  3542:7  error    operation-summary         Operation object should contain `summary` field.
+  3648:7  error    operation-summary         Operation object should contain `summary` field.
+  3744:7  error    operation-summary         Operation object should contain `summary` field.
+  3861:7  error    operation-summary         Operation object should contain `summary` field.
+  3978:7  error    operation-summary         Operation object should contain `summary` field.
+  4018:7  error    operation-summary         Operation object should contain `summary` field.
+  4049:7  error    operation-summary         Operation object should contain `summary` field.
+  4080:7  error    operation-summary         Operation object should contain `summary` field.
+  4121:7  error    operation-summary         Operation object should contain `summary` field.
+  4162:7  error    operation-summary         Operation object should contain `summary` field.
+  4193:7  error    operation-summary         Operation object should contain `summary` field.
+  4234:7  error    operation-summary         Operation object should contain `summary` field.
+  4275:7  error    operation-summary         Operation object should contain `summary` field.
+  4306:7  error    operation-summary         Operation object should contain `summary` field.
+  4337:7  error    operation-summary         Operation object should contain `summary` field.
+  4368:7  error    operation-summary         Operation object should contain `summary` field.
+  4402:7  error    operation-summary         Operation object should contain `summary` field.
+  4448:7  error    operation-summary         Operation object should contain `summary` field.
+  4524:7  error    operation-summary         Operation object should contain `summary` field.
+  4617:7  error    operation-summary         Operation object should contain `summary` field.
+  4772:7  error    operation-summary         Operation object should contain `summary` field.
+  4929:7  error    operation-summary         Operation object should contain `summary` field.
+  4952:7  error    operation-summary         Operation object should contain `summary` field.
+  15:7    error    security-defined          Every operation should have security defined on it or on the root level.
+  56:7    error    security-defined          Every operation should have security defined on it or on the root level.
+  103:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  150:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  326:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  374:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  422:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  480:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  566:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  521:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  729:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  784:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  674:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  842:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  900:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  958:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  988:7   error    security-defined          Every operation should have security defined on it or on the root level.
+  1070:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  1105:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  1035:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  1187:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  1222:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  1152:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  1689:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  1983:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  2057:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  2105:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  2163:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  2221:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  2267:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  2503:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  2550:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  2704:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  3057:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  3099:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  3131:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  3173:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  3978:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4018:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4049:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4080:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4121:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4162:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4193:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4234:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4275:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4306:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4337:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4368:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4402:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4448:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4477:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4524:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4570:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4617:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4772:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4929:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  4952:7  error    security-defined          Every operation should have security defined on it or on the root level.
+  3:3     warning  info-license              Info object should contain `license` field.
+  421:5   warning  no-ambiguous-paths        Paths should resolve unambiguously. Found two ambiguous paths: `/api/Feedback/attachments/{attachmentId}` and `/api/Feedback/{feedbackItemId}/replies`.
+  31:9    warning  operation-4xx-response    Operation must have at least one `4XX` response.
+
+< ... 21 more problems hidden > increase with `--max-problems N`
+openapi.json: validated in 159ms
+
+❌ Validation failed with 97 errors and 24 warnings.
+run `redocly lint --generate-ignore-file` to add all problems to the ignore file.
+
