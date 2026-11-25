@@ -62,6 +62,8 @@ Acceptance:
   Audit: the first run failed `analyzer-suppressions` because the new runfile copied a neighbour's
   `#:property NoWarn=` line. Removed it; the file compiles clean without it (runfile and JARIBU_MULTI).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c00b27f8-959c-4eb2-a4db-fe54a7fd9810, max-turns 500, Done — 2026-11-25T15:00:06Z
+- Review oracle: grok session 01a21338-bc62-7530-bc4f-8f8c648fb47a (2026-11-25), effort 3, roster general, max-turns 200. Round 1 disposition clean.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21338-bc62-7530-bc4f-8f8c648fb47a, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T15:09:19Z
 
 ## Results
 
@@ -114,6 +116,18 @@ Acceptance:
   runfile under `source/container-apps/web/features/` now fails `./bin/dev build`. The runfile reports
   4/4 passed: the validator reports `pagePath` while an Api.Server host is alive and `PagePath` again
   after it is disposed or fails to start.
+
+### Review
+
+- Round 1. Roster: general. Effort: 3 (802 lines). Reviewer session: grok `01a21338-bc62-7530-bc4f-8f8c648fb47a`.
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 / 0 / 0. Final open count: 0.
+- Disposition: **clean**. No wontfix and no escalation. The implementer restatement matches the original task (no misread).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- This review read the diff and the recorded gates. It did not re-run `./bin/dev build`, `./bin/dev test`, or `ganda repo audit`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
