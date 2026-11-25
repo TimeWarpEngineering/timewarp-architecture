@@ -26,7 +26,7 @@ likely
 - A deploy job for generated apps, triggered by `release: published` and `workflow_dispatch` only.
   No push or pull-request trigger reaches it.
 - The job calls `dev deploy --target <t>` (publish, `aspire deploy`, migrate, smoke). It does not
-  re-implement those steps in YAML. `--no-browser` so it prints the URL.
+  re-implement those steps in YAML. Pass `--yes --no-browser` (`deploy-runner.cs` refuses redirected stdin without `--yes`, and `--no-browser` prints the URL).
 - Azure login is GitHub OIDC (`azure/login`, `id-token: write`), with client id, tenant id and
   subscription id read from repository variables. No client secret.
 - The target is configuration, not an edit to the YAML: a repository variable, default `aca-neon`.
@@ -71,6 +71,7 @@ likely
   calls. 531 depends on 530, so this task waits on both.
 - Task 527 makes a web-only (yarp off) app reachable on the Azure targets. A web-only instance needs
   it before this job is useful, but this task does not depend on it.
+- Grooming note: align the "never CI" / "never a CI step" comments in `tools/dev-cli/endpoints/deploy-command.cs`, `tools/dev-cli/services/deploy-runner.cs`, `tools/dev-cli/services/deploy/aspire-deploy.cs`, and `source/container-apps/aspire/projects/aspire-app-host/program.cs` with the amended `tw-deploy` rule.
 
 ## Session
 
