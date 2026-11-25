@@ -85,7 +85,7 @@ public class Get_Principal_Returns_
     detail.Principal.Profile.Email.ShouldBe(email);
 
     ListPrincipals.Response list = await ReadAsync<ListPrincipals.Response>(
-      await client.GetAsync(new ListPrincipals.Query { UserId = Guid.NewGuid(), Search = "integration admin" }.GetRouteWithQueryString()));
+      await client.GetAsync(new ListPrincipals.Query { Search = "integration admin" }.GetRouteWithQueryString()));
     list.Items.Select(item => item.PrincipalId.Value).ShouldContain(principalId.Value);
     list.Items.Single(item => item.PrincipalId.Value == principalId.Value).Email.ShouldBe(email);
   }
@@ -113,7 +113,7 @@ public class Get_Principal_Returns_
       client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
       HttpResponseMessage listResponse = await client.GetAsync(
-        new ListPrincipals.Query { UserId = Guid.NewGuid() }.GetRouteWithQueryString());
+        new ListPrincipals.Query().GetRouteWithQueryString());
       listResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
       string listJson = await listResponse.Content.ReadAsStringAsync();
       listJson.ShouldNotContain(email);
@@ -124,7 +124,7 @@ public class Get_Principal_Returns_
       list.Items.ShouldAllBe(item => item.DisplayName == null && item.Email == null);
 
       HttpResponseMessage searchResponse = await client.GetAsync(
-        new ListPrincipals.Query { UserId = Guid.NewGuid(), Search = "integration" }.GetRouteWithQueryString());
+        new ListPrincipals.Query { Search = "integration" }.GetRouteWithQueryString());
       searchResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
       HttpResponseMessage getResponse = await client.GetAsync($"api/admin/principals/{principalId}");

@@ -5,7 +5,7 @@
 #region Design
 // HttpApiService sends no body for DELETE. Non-route values travel on the query string
 // (IQueryStringRouteProvider). FastEndpoints.OpenApi promotes unbound properties to query
-// parameters only for GET and HEAD, so a DELETE command that also carries UserId is published
+// parameters only for GET and HEAD, so a DELETE command with a non-route property is published
 // as requestBody.required with */* and application/json. Contracts cannot take a FastEndpoints
 // [QueryParam]: web-contracts does not reference that package. This transformer runs after the
 // FastEndpoints operation transformer, moves leftover scalar properties to query parameters, and

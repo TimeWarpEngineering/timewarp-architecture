@@ -25,7 +25,6 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using System.Text.Json;
 using TimeWarp.Architecture.Features;
@@ -61,7 +60,6 @@ partial class CredentialsState
     {
       private readonly IWebServerApiService ApiService;
       private readonly IJSRuntime JsRuntime;
-      private readonly AuthenticationStateProvider AuthenticationStateProvider;
       private readonly IPublisher<ClientPipeline> Publisher;
 
       public Handler
@@ -69,13 +67,11 @@ partial class CredentialsState
         IStore store,
         IWebServerApiService apiService,
         IJSRuntime jsRuntime,
-        AuthenticationStateProvider authenticationStateProvider,
         IPublisher<ClientPipeline> publisher
       ) : base(store)
       {
         ApiService = apiService;
         JsRuntime = jsRuntime;
-        AuthenticationStateProvider = authenticationStateProvider;
         Publisher = publisher;
       }
 
@@ -106,10 +102,8 @@ partial class CredentialsState
           using var document = JsonDocument.Parse(credentialJson);
           JsonElement root = document.RootElement;
 
-          Guid userId = await ResolveUserIdAsync();
           AddPasskey.Command completeCommand = new()
           {
-            UserId = userId,
             CredentialId = root.GetProperty("credentialId").GetString()!,
             ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
             AttestationObject = root.GetProperty("attestationObject").GetString()!,
@@ -181,18 +175,6 @@ partial class CredentialsState
         }
 
         return values.Count == 0 ? null : values;
-      }
-
-      private async Task<Guid> ResolveUserIdAsync()
-      {
-        try
-        {
-          return await AuthenticationStateProvider.GetUserIdAsync();
-        }
-        catch (InvalidOperationException)
-        {
-          return Guid.NewGuid();
-        }
       }
 
       private static SharedProblemDetails ToProblem<TResponse>(

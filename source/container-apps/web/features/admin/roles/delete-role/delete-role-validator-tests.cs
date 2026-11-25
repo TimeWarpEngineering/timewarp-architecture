@@ -5,11 +5,11 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211
 
-// Co-located Jaribu validator tests for DeleteRole (RoleId NotEmpty + auth).
+// Co-located Jaribu validator tests for DeleteRole (RoleId NotEmpty).
 // Run standalone:  dotnet run source/container-apps/web/features/admin/roles/delete-role/delete-role-validator-tests.cs
 
 #region Purpose
-// Jaribu runfile proving DeleteRole.Validator rejects empty RoleId and UserId.
+// Jaribu runfile proving DeleteRole.Validator rejects an empty RoleId.
 #endregion
 
 //-:cnd:noEmit
@@ -39,7 +39,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       DeleteRole.Command command = new()
       {
         RoleId = RoleIds.Member,
-        UserId = Guid.NewGuid()
       };
 
       ValidationResult result = new DeleteRole.Validator().Validate(command);
@@ -52,26 +51,11 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       DeleteRole.Command command = new()
       {
         RoleId = Guid.Empty,
-        UserId = Guid.NewGuid()
       };
 
       ValidationResult result = new DeleteRole.Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
       result.Errors.ShouldContain(error => error.PropertyName == nameof(DeleteRole.Command.RoleId));
-      return Task.CompletedTask;
-    }
-
-    public static Task EmptyUserId_Should_FailValidation()
-    {
-      DeleteRole.Command command = new()
-      {
-        RoleId = RoleIds.Member,
-        UserId = Guid.Empty
-      };
-
-      ValidationResult result = new DeleteRole.Validator().Validate(command);
-      result.IsValid.ShouldBeFalse();
-      result.Errors.ShouldContain(error => error.PropertyName == nameof(DeleteRole.Command.UserId));
       return Task.CompletedTask;
     }
   }

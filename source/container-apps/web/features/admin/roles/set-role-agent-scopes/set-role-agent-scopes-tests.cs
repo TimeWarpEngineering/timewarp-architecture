@@ -39,7 +39,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       SetRoleAgentScopes.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         RoleId = RoleIds.Developer,
         Scopes = [AgentScopes.FeedbackRead, AgentScopes.IdentityRead],
       };
@@ -53,7 +52,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       SetRoleAgentScopes.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         RoleId = RoleIds.Member,
         Scopes = [],
       };
@@ -67,7 +65,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       SetRoleAgentScopes.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         RoleId = RoleIds.Member,
         Scopes = ["not-a-scope"],
       };

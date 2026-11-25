@@ -156,7 +156,6 @@ public class Returns_
     (
       new AddPasskey.Command
       {
-        UserId = Guid.NewGuid(),
         CredentialId = credentialId,
         ClientDataJson = clientDataJson,
         AttestationObject = attestationObject
@@ -255,7 +254,6 @@ public class Returns_
     (
       new AddPasskey.Command
       {
-        UserId = Guid.NewGuid(),
         CredentialId = credentialId,
         ClientDataJson = clientDataJson,
         AttestationObject = attestationObject

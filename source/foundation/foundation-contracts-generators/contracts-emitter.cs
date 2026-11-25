@@ -1,6 +1,6 @@
 #region Purpose
 // Emitter for ContractsGenerator: the public marker attributes, each part's member text
-// (route, auth, open-data, operation), and the namespace/container wrapper per contract type.
+// (route, operation), and the namespace/container wrapper per contract type.
 #endregion
 
 namespace TimeWarp.Foundation.Contracts.Generators;
@@ -13,7 +13,6 @@ using System.Text;
 internal static class ContractsEmitter
 {
   private const string Verb = "global::TimeWarp.Foundation.Features.HttpVerb";
-  private const string Nvc = "global::System.Collections.Specialized.NameValueCollection";
 
   internal static string OperationBody(
     string name,
@@ -94,39 +93,6 @@ internal static class ContractsEmitter
     return sb.ToString();
   }
 
-  internal static string AuthBody(bool includeQueryHelper)
-  {
-    StringBuilder sb = new();
-    sb.Append("    public global::System.Guid UserId { get; set; }").Append('\n');
-    if (!includeQueryHelper)
-    {
-      return sb.ToString();
-    }
-
-    sb.Append("    private ").Append(Nvc).Append(" GetAuthQueryParameters() =>").Append('\n');
-    sb.Append("      new ").Append(Nvc).Append('\n');
-    sb.Append("      {").Append('\n');
-    sb.Append("        { nameof(UserId), UserId.ToString() }").Append('\n');
-    sb.Append("      };").Append('\n');
-    return sb.ToString();
-  }
-
-  internal static string OpenDataBody() =>
-    "    public int? Top { get; set; }\n" +
-    "    public int? Skip { get; set; }\n" +
-    "    public string? Filter { get; set; }\n" +
-    "    public string? OrderBy { get; set; }\n" +
-    "    public bool ReturnTotalCount { get; set; }\n" +
-    "    private " + Nvc + " GetOpenDataQueryParameters() =>\n" +
-    "      new " + Nvc + "\n" +
-    "      {\n" +
-    "        { nameof(Top), Top?.ToString() },\n" +
-    "        { nameof(Skip), Skip?.ToString() },\n" +
-    "        { nameof(Filter), Filter },\n" +
-    "        { nameof(OrderBy), OrderBy },\n" +
-    "        { nameof(ReturnTotalCount), ReturnTotalCount.ToString() }\n" +
-    "      };\n";
-
   internal static string Wrap(ContractTarget t)
   {
     StringBuilder sb = new();
@@ -180,11 +146,7 @@ internal static class ContractsEmitter
     sb.Append("  public ").Append(Verb).Append(" HttpVerb { get; }\n");
     sb.Append("  public ApiRouteAttribute(string RouteTemplate, ").Append(Verb).Append(" HttpVerb)\n");
     sb.Append("  {\n    this.RouteTemplate = RouteTemplate;\n    this.HttpVerb = HttpVerb;\n  }\n");
-    sb.Append("}\n\n");
-    sb.Append(usage).Append('\n');
-    sb.Append("public sealed class AuthApiRequestAttribute : System.Attribute { }\n\n");
-    sb.Append(usage).Append('\n');
-    sb.Append("public sealed class OpenDataQueryParametersAttribute : System.Attribute { }\n");
+    sb.Append("}\n");
     return sb.ToString();
   }
 }

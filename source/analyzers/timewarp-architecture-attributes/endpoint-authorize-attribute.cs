@@ -26,7 +26,7 @@ namespace TimeWarp.Architecture.Attributes;
 
 /// <summary>
 /// Declares authorization for a generated FastEndpoint (policy, schemes, and/or roles). This is
-/// the sole server-auth marker — <c>IAuthApiRequest</c> is a client/mock signal and does not
+/// the sole server-auth marker — <c>IAuthApiRequest</c> is a member-less marker and does not
 /// secure the HTTP shim. Mutually exclusive with <see cref="EndpointAllowAnonymousAttribute"/>.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]

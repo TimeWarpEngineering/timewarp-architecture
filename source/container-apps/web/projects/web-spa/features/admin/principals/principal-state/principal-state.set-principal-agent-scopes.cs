@@ -44,7 +44,6 @@ partial class PrincipalState
         PrincipalState.LastSetPrincipalAgentScopesSucceeded = false;
         return Task.FromResult<Command?>(new Command
         {
-          UserId = Guid.NewGuid(),
           PrincipalId = action.Command.PrincipalId,
           Scopes = [.. action.Command.Scopes]
         });

@@ -167,8 +167,8 @@ validator **explicitly** — Blazilla supports an explicit instance; runtime-typ
 
 ## Tier 3 — Filterable list + query string
 
-Optional nullable filters; no unconditional required rules on filters. With
-`[AuthApiRequest]`/`[OpenDataQueryParameters]`, compose the generated helpers:
+Optional nullable filters; no unconditional required rules on filters. Declare each filter the
+handler reads, and put it in the query string:
 
 ```csharp
 public static partial class GetAccountOwnedPolicies
@@ -195,9 +195,9 @@ public static partial class GetAccountOwnedPolicies
 }
 ```
 
-For an authenticated, pageable list see `get-roles.cs` in the timewarp-architecture template — it
-stacks `[ApiRoute]` + `[OpenDataQueryParameters]` + `[AuthApiRequest]` and composes
-`GetAuthQueryParameters()` + `GetOpenDataQueryParameters()` into the query string.
+For an authenticated, searchable list see `get-roles-contracts.cs` in the timewarp-architecture
+template: `[ApiRoute]` plus a hand-declared `Search`, the only member its handler reads. The caller
+comes from the principal, not the query string.
 
 ## Tier 4 — Contract test (serialization)
 

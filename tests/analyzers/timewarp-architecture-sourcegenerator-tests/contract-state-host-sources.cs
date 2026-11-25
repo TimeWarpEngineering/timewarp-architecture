@@ -19,16 +19,12 @@ internal static class ContractStateHostSources
     {
       public interface IApiRequest { }
 
-      public interface IAuthApiRequest : IApiRequest
-      {
-        System.Guid UserId { get; set; }
-      }
+      public interface IAuthApiRequest : IApiRequest { }
 
       public static class GetThings
       {
         public sealed class Query : IAuthApiRequest
         {
-          public System.Guid UserId { get; set; }
           public string? Search { get; set; }
         }
 
@@ -42,7 +38,6 @@ internal static class ContractStateHostSources
       {
         public sealed class Command : IAuthApiRequest
         {
-          public System.Guid UserId { get; set; }
           public System.Collections.Generic.List<string> Names { get; set; } = [];
           public string Computed => "computed";
         }

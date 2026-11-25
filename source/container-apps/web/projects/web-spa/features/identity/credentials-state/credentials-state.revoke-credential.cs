@@ -40,7 +40,6 @@ partial class CredentialsState
 
     internal sealed class Handler : DefaultApiHandler<Action, Command, Response>
     {
-      private readonly AuthenticationStateProvider AuthenticationStateProvider;
 
       public Handler
       (
@@ -50,15 +49,10 @@ partial class CredentialsState
       IPublisher<ClientPipeline> publisher,
         AuthenticationStateProvider authenticationStateProvider
       ) : base(store, webServerApiService, logger, publisher, authenticationStateProvider: authenticationStateProvider)
-      {
-        AuthenticationStateProvider = authenticationStateProvider;
-      }
+      { }
 
-      protected override async Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
-      {
-        Guid userId = await ResolveUserIdAsync();
-        return new Command { CredentialId = action.CredentialId, UserId = userId };
-      }
+      protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken) =>
+        Task.FromResult<Command?>(new Command { CredentialId = action.CredentialId });
 
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
@@ -69,18 +63,6 @@ partial class CredentialsState
           new OutcomeNotification(MessageBarIntent.Success, "Credential revoked."),
           cancellationToken
         );
-      }
-
-      private async Task<Guid> ResolveUserIdAsync()
-      {
-        try
-        {
-          return await AuthenticationStateProvider.GetUserIdAsync();
-        }
-        catch (InvalidOperationException)
-        {
-          return Guid.NewGuid();
-        }
       }
     }
   }

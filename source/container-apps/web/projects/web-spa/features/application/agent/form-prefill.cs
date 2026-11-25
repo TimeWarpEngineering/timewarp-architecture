@@ -11,7 +11,7 @@
 // exactly one I*Details interface (tw-web-api-contracts: the edit form binds that interface).
 // The [EditFormSubmit] attribute that 490 used is deleted: it repeated what the contract and the
 // page already say. The draft schema and the accepted keys are that interface's properties, so
-// RoleId, Version, and UserId are never drafted. A page renders FormPrefillScope<TSubmit> around
+// RoleId and Version are never drafted. A page renders FormPrefillScope<TSubmit> around
 // the form to apply the draft; FormPrefillConvention_Should_ fails when a derived submit has no
 // scope in this assembly. Product slices are not named here. Normalization and apply live on the
 // other part of this type. Approval is Ask before editing on the page, and never for the

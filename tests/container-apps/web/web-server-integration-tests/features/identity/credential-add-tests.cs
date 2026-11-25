@@ -57,7 +57,6 @@ public class Returns_
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
     var command = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = credentialId,
       ClientDataJson = clientDataJson,
       AttestationObject = attestationObject
@@ -81,7 +80,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = credentialId,
       ClientDataJson = clientDataJson,
       AttestationObject = attestationObject,
@@ -95,7 +93,7 @@ public class Returns_
     addResult.ShouldNotBeNull();
     addResult.CredentialId.IsEmpty.ShouldBeFalse();
 
-    var listQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var listQuery = new GetCredentials.Query();
     HttpResponseMessage listResponse = await client.GetAsync(listQuery.GetRouteWithQueryString());
     GetCredentials.Response? list =
       JsonSerializer.Deserialize<GetCredentials.Response>(await listResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -119,7 +117,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = credentialId,
       ClientDataJson = clientDataJson,
       AttestationObject = attestationObject,
@@ -133,7 +130,7 @@ public class Returns_
       JsonSerializer.Deserialize<AddPasskey.Response>(await addResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
     addResult.ShouldNotBeNull();
 
-    var listQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var listQuery = new GetCredentials.Query();
     HttpResponseMessage listResponse = await client.GetAsync(listQuery.GetRouteWithQueryString());
     string listJson = await listResponse.Content.ReadAsStringAsync();
     GetCredentials.Response? list =
@@ -177,7 +174,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, authenticator, sessionCookie);
     var firstCommand = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = firstCredentialId,
       ClientDataJson = firstClientDataJson,
       AttestationObject = firstAttestationObject
@@ -189,7 +185,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, authenticator, sessionCookie);
     var secondCommand = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = secondCredentialId,
       ClientDataJson = secondClientDataJson,
       AttestationObject = secondAttestationObject
@@ -213,7 +208,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(Web, secondKey);
     var addCommand = new AddAgentKey.Command
     {
-      UserId = Guid.NewGuid(),
       PublicKey = publicKey,
       Challenge = challenge,
       Signature = signature,
@@ -226,7 +220,7 @@ public class Returns_
       JsonSerializer.Deserialize<AddAgentKey.Response>(await addResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
     addResult.ShouldNotBeNull();
 
-    var listQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var listQuery = new GetCredentials.Query();
     HttpResponseMessage listResponse = await client.GetAsync(listQuery.GetRouteWithQueryString());
     GetCredentials.Response? list =
       JsonSerializer.Deserialize<GetCredentials.Response>(await listResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -247,7 +241,7 @@ public class Returns_
 
     // 1. Discover the original key's CredentialId via the list endpoint (rotation, like a real
     //    caller, does not already know it — only the KeyId from registration).
-    var listBeforeQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var listBeforeQuery = new GetCredentials.Query();
     HttpResponseMessage listBeforeResponse = await client.GetAsync(listBeforeQuery.GetRouteWithQueryString());
     GetCredentials.Response? listBefore =
       JsonSerializer.Deserialize<GetCredentials.Response>(await listBeforeResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -261,7 +255,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(Web, newKey);
     var addCommand = new AddAgentKey.Command
     {
-      UserId = Guid.NewGuid(),
       PublicKey = publicKey,
       Challenge = challenge,
       Signature = signature
@@ -273,11 +266,11 @@ public class Returns_
     //    ORIGINAL key's proof-of-possession ceremony, but credential-management authorizes the
     //    PRINCIPAL, not the specific key that was presented, so revoking that same principal's own
     //    now-superseded key is expected to succeed.
-    var revokeCommand = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = originalCredentialId.Value };
+    var revokeCommand = new RevokeCredential.Command { CredentialId = originalCredentialId.Value };
     HttpResponseMessage revokeResponse = await testApiService.GetHttpResponseMessage(revokeCommand, CancellationToken.None);
     revokeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-    var listAfterQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var listAfterQuery = new GetCredentials.Query();
     HttpResponseMessage listAfterResponse = await client.GetAsync(listAfterQuery.GetRouteWithQueryString());
     GetCredentials.Response? listAfter =
       JsonSerializer.Deserialize<GetCredentials.Response>(await listAfterResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -309,7 +302,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sharedAuthenticator, principalBCookie);
     var addCommand = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = credentialId,
       ClientDataJson = clientDataJson,
       AttestationObject = attestationObject
@@ -321,7 +313,7 @@ public class Returns_
     // Principal B's own credential count is unchanged — no attach happened.
     using HttpClient principalBReadClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     principalBReadClient.DefaultRequestHeaders.Add("Cookie", principalBCookie);
-    var principalBListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var principalBListQuery = new GetCredentials.Query();
     HttpResponseMessage principalBListResponse = await principalBReadClient.GetAsync(principalBListQuery.GetRouteWithQueryString());
     GetCredentials.Response? principalBList = JsonSerializer.Deserialize<GetCredentials.Response>
       (await principalBListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -331,7 +323,7 @@ public class Returns_
     // Principal A still exclusively owns the original credential, unaffected.
     using HttpClient principalAClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     principalAClient.DefaultRequestHeaders.Add("Cookie", principalACookie);
-    var principalAListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var principalAListQuery = new GetCredentials.Query();
     HttpResponseMessage principalAListResponse = await principalAClient.GetAsync(principalAListQuery.GetRouteWithQueryString());
     GetCredentials.Response? principalAList = JsonSerializer.Deserialize<GetCredentials.Response>
       (await principalAListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -357,13 +349,13 @@ public class Returns_
     // Principal B attempts to attach PRINCIPAL A's already-registered key to itself.
     (string publicKey, string challenge, string signature) =
       await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(Web, principalAKey);
-    var addCommand = new AddAgentKey.Command { UserId = Guid.NewGuid(), PublicKey = publicKey, Challenge = challenge, Signature = signature };
+    var addCommand = new AddAgentKey.Command { PublicKey = publicKey, Challenge = challenge, Signature = signature };
 
     HttpResponseMessage response = await principalBApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);
     response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
     // Principal B's own credential count is unchanged — no attach happened.
-    var principalBListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var principalBListQuery = new GetCredentials.Query();
     HttpResponseMessage principalBListResponse = await principalBClient.GetAsync(principalBListQuery.GetRouteWithQueryString());
     GetCredentials.Response? principalBList = JsonSerializer.Deserialize<GetCredentials.Response>
       (await principalBListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -373,7 +365,7 @@ public class Returns_
     // Principal A still exclusively owns the original key, unaffected.
     using HttpClient principalAClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     principalAClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", principalAToken);
-    var principalAListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var principalAListQuery = new GetCredentials.Query();
     HttpResponseMessage principalAListResponse = await principalAClient.GetAsync(principalAListQuery.GetRouteWithQueryString());
     GetCredentials.Response? principalAList = JsonSerializer.Deserialize<GetCredentials.Response>
       (await principalAListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);

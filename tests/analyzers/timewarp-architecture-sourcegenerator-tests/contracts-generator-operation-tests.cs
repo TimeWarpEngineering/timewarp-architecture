@@ -30,18 +30,12 @@ public class ContractsGenerator_Operation_Tests
           }
       }
 
-      namespace TimeWarp.Foundation.Features
-      {
-          public interface IAuthApiRequest { }
-      }
-
       namespace Test.Features.Admin.Roles
       {
           public static partial class GetRoles
           {
               [TimeWarp.Contracts.Operation("roles.list", Description = "Lists roles.")]
               [ApiRoute("api/Roles", HttpVerb.Get)]
-              [AuthApiRequest]
               public sealed partial class Query { }
           }
       }
@@ -52,7 +46,6 @@ public class ContractsGenerator_Operation_Tests
     generated.Split("public const string OperationName = \"roles.list\";").Length.ShouldBe(2);
     generated.ShouldContain("public const string OperationDescription = \"Lists roles.\";");
     generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
-    generated.ShouldContain("public global::System.Guid UserId { get; set; }");
     AssertGeneratedCompilesWithoutErrors(source);
     return Task.CompletedTask;
   }

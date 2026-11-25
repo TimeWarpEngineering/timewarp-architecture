@@ -18,12 +18,9 @@
 // Read also rejects every shape the generated ResourceReferenceType.Create call cannot compile:
 // Query, Response and item type must be public (with public containing types), Query must
 // implement IApiRequest, have a public parameterless constructor and no required member besides
-// Search (and a stamped UserId), Response must be a reference type, and a stamped UserId needs a
-// public setter.
-// UserId: for an IAuthApiRequest query the generator stamps a fresh Guid, not the signed-in
-// user's id (FetchCredentials resolves the real one; the generated search does not). The handler
-// of a referenceable IAuthApiRequest query must therefore not rely on the request UserId; it must
-// resolve the user from the authenticated principal, as GetCredentials does.
+// Search, and Response must be a reference type. The generated search sets Search only: a
+// request does not name its caller (task 458-008), so the handler resolves the user from the
+// authenticated principal, as GetCredentials does.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -46,7 +43,6 @@ internal sealed class ReferenceableResourceShape
   public string IdProperty { get; private set; } = "";
   public string IdTypeName { get; private set; } = "";
   public string LabelProperty { get; private set; } = "";
-  public bool QuerySetsUserId { get; private set; }
 
   public static AttributeData? FindAttribute(INamedTypeSymbol type) =>
     type.GetAttributes().FirstOrDefault(static a => a.AttributeClass?.Name == AttributeSimpleName);
@@ -130,16 +126,8 @@ internal sealed class ReferenceableResourceShape
       return null;
     }
 
-    bool isAuthRequest = query.AllInterfaces.Any(static i => i.Name == "IAuthApiRequest");
-    IPropertySymbol? userId = isAuthRequest ? FindProperty(query, "UserId") : null;
-    if (userId is { SetMethod: not { DeclaredAccessibility: Accessibility.Public } })
-    {
-      problem = "Query is an IAuthApiRequest whose UserId has no public setter";
-      return null;
-    }
-
     string? required = RequiredMembers(query)
-      .FirstOrDefault(name => name != "Search" && !(userId is not null && name == "UserId"));
+      .FirstOrDefault(static name => name != "Search");
     if (required is not null)
     {
       problem = $"Query has required member '{required}'; only Search may be required";
@@ -212,7 +200,6 @@ internal sealed class ReferenceableResourceShape
       IdProperty = idProperty,
       IdTypeName = id.Type.Name,
       LabelProperty = labelProperty,
-      QuerySetsUserId = userId is not null,
     };
   }
 

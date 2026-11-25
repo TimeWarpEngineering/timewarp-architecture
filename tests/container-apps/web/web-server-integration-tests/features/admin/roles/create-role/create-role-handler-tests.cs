@@ -35,7 +35,6 @@ public class Handle_Returns
 
   private static Command CreateValidCommand() => new()
   {
-    UserId = Guid.NewGuid(),
     Name = "Dispatcher",
     Description = "Schedules and routes work."
   };

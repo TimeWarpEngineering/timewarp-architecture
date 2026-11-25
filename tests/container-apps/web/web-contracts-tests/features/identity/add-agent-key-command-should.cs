@@ -18,7 +18,6 @@ public class AddAgentKey_Command_Should
   {
     AddAgentKey.Command command = new()
     {
-      UserId = Guid.NewGuid(),
       PublicKey = "AQIDBA",
       Challenge = "BQYHCA",
       Signature = "CQoLDA",
@@ -38,7 +37,6 @@ public class AddAgentKey_Command_Should
   {
     AddAgentKey.Command command = new()
     {
-      UserId = Guid.NewGuid(),
       PublicKey = "AQIDBA",
       Challenge = "BQYHCA",
       Signature = "CQoLDA"

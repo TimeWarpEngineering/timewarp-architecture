@@ -39,7 +39,6 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
     {
       SetPrincipalRoles.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         RoleIds = [RoleIds.Member, RoleIds.Developer]
       };
 
@@ -48,7 +47,6 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
         JsonSerializer.Deserialize<SetPrincipalRoles.Command>(json, ContractSerializationDefaults.Options);
 
       parsed.ShouldNotBeNull();
-      parsed.UserId.ShouldBe(command.UserId);
       parsed.RoleIds.ShouldBe(command.RoleIds);
       return Task.CompletedTask;
     }
@@ -57,7 +55,6 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
     {
       SetPrincipalRoles.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         PrincipalId = Guid.NewGuid(),
         RoleIds = []
       };
@@ -71,7 +68,6 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
     {
       SetPrincipalRoles.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         PrincipalId = Guid.NewGuid(),
         RoleIds = [Guid.Parse("99999999-9999-9999-9999-999999999999")]
       };

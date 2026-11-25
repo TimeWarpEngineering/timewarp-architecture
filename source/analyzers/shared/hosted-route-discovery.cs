@@ -41,14 +41,10 @@ internal static class HostedRouteDiscovery
   public const string ApiEndpointAttributeSimpleName = "ApiEndpointAttribute";
   public const string ApiEndpointsEmbeddedAttributeSimpleName = "ApiEndpointsEmbeddedAttribute";
   public const string ApiRouteAttributeFullName = "TimeWarp.Foundation.Features.ApiRouteAttribute";
-  public const string AuthApiRequestAttributeFullName = "TimeWarp.Foundation.Features.AuthApiRequestAttribute";
   public const string ClientOnlyContractAttributeSimpleName = "ClientOnlyContractAttribute";
 
   public static bool IsApiRouteAttribute(AttributeData attr)
     => HasMetadataName(attr.AttributeClass, ApiRouteAttributeFullName);
-
-  public static bool IsAuthApiRequestAttribute(AttributeData attr)
-    => HasMetadataName(attr.AttributeClass, AuthApiRequestAttributeFullName);
 
   public static bool HasMetadataName(INamedTypeSymbol? type, string fullName)
   {

@@ -27,14 +27,12 @@ public class CreateRole_Command_Should
   {
     CreateRole.Command command = new()
     {
-      UserId = Guid.NewGuid(),
       Name = "Auditor",
       Description = "Read-only access to financial modules."
     };
 
     CreateRole.Command parsed = ContractSerialization.RoundTrip(command);
 
-    parsed.UserId.ShouldBe(command.UserId);
     parsed.Name.ShouldBe(command.Name);
     parsed.Description.ShouldBe(command.Description);
     return Task.CompletedTask;
@@ -76,12 +74,11 @@ public class GetRole_Query_Should
   {
     // RoleId is not declared in get-role.cs — [ApiRoute("api/admin/roles/{RoleId:guid}")] generates it.
     Guid roleId = Guid.NewGuid();
-    GetRole.Query query = new() { RoleId = roleId, UserId = Guid.NewGuid() };
+    GetRole.Query query = new() { RoleId = roleId };
 
     GetRole.Query parsed = ContractSerialization.RoundTrip(query);
 
     parsed.RoleId.ShouldBe(roleId);
-    parsed.UserId.ShouldBe(query.UserId);
     return Task.CompletedTask;
   }
 }
@@ -152,14 +149,12 @@ public class SetRolePermissions_Command_Should
     SetRolePermissions.Command command = new()
     {
       RoleId = roleId,
-      UserId = Guid.NewGuid(),
       PermissionIds = [PermissionIds.DeveloperAccess, PermissionIds.ProfileRead]
     };
 
     SetRolePermissions.Command parsed = ContractSerialization.RoundTrip(command);
 
     parsed.RoleId.ShouldBe(roleId);
-    parsed.UserId.ShouldBe(command.UserId);
     parsed.PermissionIds.ShouldBe(command.PermissionIds);
     return Task.CompletedTask;
   }

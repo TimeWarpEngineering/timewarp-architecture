@@ -13,9 +13,8 @@
 // shape every [ApiEndpoint] contract has. Anything else is TWE015 and the contract is skipped, so one bad contract
 // does not hide the others.
 // Request copy: every public, non-static, settable (set or init) property of the request, base types included, is
-// copied into a new request in the handler, so the page's bound model is never changed. An auth request
-// (IAuthApiRequest or [AuthApiRequest]) with a settable Guid UserId gets UserId = Guid.NewGuid() instead of a copy,
-// the mock-mode stamp every hand-written handler writes.
+// copied into a new request in the handler, so the page's bound model is never changed. Nothing is stamped: a
+// request does not name its caller (task 458-008 removed IAuthApiRequest.UserId).
 // [Destructive] is read from the request first, then the contract class, the same rule EndpointMetadata uses for the
 // transports' hint. A [Destructive(false)] reads as not destructive.
 #endregion
@@ -170,10 +169,7 @@ internal static class ContractStateReader
       return null;
     }
 
-    bool isAuth = request.AllInterfaces.Any(static i => i.Name == "IAuthApiRequest")
-      || request.GetAttributes().Any(static a => a.AttributeClass?.Name is "AuthApiRequestAttribute" or "AuthApiRequest");
     List<string> copied = [];
-    bool stamps = false;
     HashSet<string> seen = new(StringComparer.Ordinal);
     for (INamedTypeSymbol? current = request; current is not null && current.SpecialType != SpecialType.System_Object; current = current.BaseType)
     {
@@ -182,12 +178,6 @@ internal static class ContractStateReader
         if (property.IsStatic || property.IsIndexer || property.DeclaredAccessibility != Accessibility.Public) continue;
         if (property.SetMethod is not { DeclaredAccessibility: Accessibility.Public }) continue;
         if (!seen.Add(property.Name)) continue;
-
-        if (isAuth && property.Name == "UserId" && property.Type.ToDisplayString() == "System.Guid")
-        {
-          stamps = true;
-          continue;
-        }
 
         copied.Add(property.Name);
       }
@@ -204,8 +194,7 @@ internal static class ContractStateReader
       isDraft,
       IsDestructive(request) ?? IsDestructive(contract) ?? false,
       RequestIsOptional: isQuery,
-      new EquatableArray<string>(copied),
-      stamps
+      new EquatableArray<string>(copied)
     );
   }
 

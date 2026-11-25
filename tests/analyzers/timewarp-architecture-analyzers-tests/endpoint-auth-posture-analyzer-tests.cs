@@ -15,10 +15,9 @@ public class Should_Enforce_Auth_Posture
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Should_Enforce_Auth_Posture>();
 
-  // Minimal stub surface. IAuthApiRequest is matched by simple name; AuthApiRequestAttribute and
-  // ApiRouteAttribute are matched by FQN in TimeWarp.Foundation.Features (task 053-004).
-  // ClientOnlyContractAttribute stays simple-name. The stubs stand in for BOTH the manual
-  // interface form and the [AuthApiRequest] generator-expanded form.
+  // Minimal stub surface. IAuthApiRequest is matched by simple name; ApiRouteAttribute is matched
+  // by FQN in TimeWarp.Foundation.Features (task 053-004). ClientOnlyContractAttribute stays
+  // simple-name. IAuthApiRequest is a member-less marker (task 458-008).
   private const string Stubs =
     """
     #region Purpose
@@ -33,7 +32,6 @@ public class Should_Enforce_Auth_Posture
       {
         public ApiRouteAttribute(string routeTemplate, HttpVerb httpVerb) { }
       }
-      public sealed class AuthApiRequestAttribute : System.Attribute { }
       public sealed class ClientOnlyContractAttribute : System.Attribute
       {
         public ClientOnlyContractAttribute(string reason) { }
@@ -200,38 +198,6 @@ public class Should_Enforce_Auth_Posture
           {
             public System.Guid UserId { get; set; }
           }
-          public sealed class Response { }
-        }
-      }
-      """;
-
-    await Test(source).RunAsync();
-  }
-
-  public static async Task Given_AllowAnonymous_With_AuthApiRequest_Attribute_Flags_TWA0014()
-  {
-    // Simulates the [AuthApiRequest] attribute form (get-roles.cs's shape): the attribute is applied
-    // directly rather than the interface being hand-declared — ContractsGenerator would expand
-    // this into an IAuthApiRequest implementation too, but this test exercises the attribute-only
-    // detection path independently (see the analyzer's Design region on why both checks exist).
-    const string source =
-      """
-      #region Purpose
-      // Test feature.
-      #endregion
-      namespace App.Contracts
-      {
-        using TimeWarp.Architecture;
-        using TimeWarp.Architecture.Attributes;
-        using TimeWarp.Foundation.Features;
-
-        [{|TWA0014:ApiEndpoint|}]
-        [EndpointAllowAnonymous("Should be flagged: Query carries [AuthApiRequest].")]
-        public static class GetWidgets
-        {
-          [ApiRoute("api/Widgets", HttpVerb.Get)]
-          [AuthApiRequest]
-          public sealed class Query { }
           public sealed class Response { }
         }
       }

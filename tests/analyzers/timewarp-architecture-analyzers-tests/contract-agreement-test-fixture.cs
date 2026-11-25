@@ -77,7 +77,7 @@ internal static class ContractAgreementTestFixture
     namespace TimeWarp.Foundation
     {
       public sealed class SharedProblemDetails { }
-      public interface IAuthApiRequest { Guid UserId { get; set; } }
+      public interface IAuthApiRequest { }
     }
     """;
 

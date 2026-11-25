@@ -1,7 +1,7 @@
 ---
 name: tw-web-api-contracts
 description: "**TIMEWARP SKILL** — endpoint-centric Web.Contracts API contracts (Command, Query, ApiRoute, Operation, I*Details, Validator, serialization tests), one contract bound to HTTP, CLI, and MCP. Invoke before scaffolding or fixing contracts. WHEN: Add a CreateTodoItem command contract, Scaffold a GetRole query with ApiRoute and IRoleDetails for the edit form, Add a serialization round-trip test for my Command."
-when-to-use: Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint, Operation attribute, TimeWarp.Contracts, IQuery, ICommand, IIdempotentCommand, CLI or MCP binding, tool hint, Destructive, OpenWorld, Operation title, EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest, FastEndpoint generation
+when-to-use: Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint, Operation attribute, TimeWarp.Contracts, IQuery, ICommand, IIdempotentCommand, CLI or MCP binding, tool hint, Destructive, OpenWorld, Operation title, EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator, serialization round-trip, BFF, IAuthApiRequest, FastEndpoint generation
 ---
 
 # Web API Contracts
@@ -88,8 +88,11 @@ become hosted FastEndpoints.
 | Attribute | Generates | Use when |
 |-----------|-----------|----------|
 | `[ApiRoute("api/…", HttpVerb.X)]` | `RouteTemplate` const, `GetRoute()`, `GetHttpVerb()`, and a typed property per route parameter (`{RoleId:guid}` → `Guid RoleId`) | Every contract request |
-| `[AuthApiRequest]` | `Guid UserId { get; set; }`; private `GetAuthQueryParameters()` only when the same type is `IQueryStringRouteProvider` or also has `[OpenDataQueryParameters]` | List/GET queries that carry user identity in the query string |
-| `[OpenDataQueryParameters]` | `Top`/`Skip`/`Filter`/`OrderBy`/`ReturnTotalCount` + private `GetOpenDataQueryParameters()` | Pageable/sortable list queries |
+
+`[ApiRoute]` is the only generated request attribute. Every other request member is declared by
+hand on the contract, beside the handler that reads it: the published document lists exactly what
+the handler uses. A list query that pages declares its own paging members, and a test proves the
+page size changes the row count.
 
 The FastEndpoint generator matches `TimeWarp.Foundation.Features.ApiRouteAttribute` by fully qualified metadata
 name; the contracts generator emits that public type, so it ignores the generated app's RootNamespace.
@@ -114,8 +117,8 @@ hand-written MVC `BaseEndpoint` shims in the template. Opt in per operation:
 
 Picking anonymous when the contract shouldn't be is caught too: **TWA0014** flags a contract that
 carries both markers, or `[EndpointAllowAnonymous]` alongside a nested `Query`/`Command` that
-declares `IAuthApiRequest` (manually or via `[AuthApiRequest]`) — see the auth-forms
-section below for why that combination is a contradiction, not just a style nit.
+implements `IAuthApiRequest` — see the auth section below for why that combination is a
+contradiction, not just a style nit.
 
 ```csharp
 [ApiEndpoint]
@@ -193,7 +196,6 @@ public static partial class CreateRole
   public sealed partial class Command
     : IAuthApiRequest, IRoleDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
   }
@@ -203,7 +205,6 @@ public static partial class CreateRole
     public Validator()
     {
       RuleFor(x => x).SetValidator(new RoleDetailsValidator());
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
     }
   }
 
@@ -241,42 +242,24 @@ from `[ApiRoute]`).
 
 ## Auth requests vs. server auth — two different concerns
 
-**Canonical statement (task 110):** `IAuthApiRequest` is a **client/mock-mode identity signal
-only** — it does **not** secure the server. `[EndpointAuthorize]` is the **sole** marker that
-secures a generated endpoint. The two are independent axes; **TWA0014** enforces that they don't
-contradict each other.
+`IAuthApiRequest` is a **member-less marker**: "this request serves an authenticated caller." It
+does **not** secure the server and does **not** carry the caller. `[EndpointAuthorize]` is the
+**sole** marker that secures a generated endpoint, and the handler reads the caller from the
+session or bearer principal (`ICurrentPrincipalAccessor`). **TWA0014** enforces that the two do
+not contradict each other.
 
-### The three valid states (plus the one that's forbidden)
+**A request never names its caller.** Do not add a `UserId` (or any caller id) to a hosted
+contract: no handler may trust it, so it is a required parameter a generated client has to
+invent. Whose data an endpoint touches is decided server-side from the principal. A client-only
+contract (`[ClientOnlyContract]`) that needs a user id for mock responses declares its own
+property; it never reaches a server.
 
 | `IAuthApiRequest` on `Query`/`Command` | Server auth marker | Meaning |
 |---|---|---|
-| Present | `[EndpointAuthorize(...)]` | Secured route; client *also* carries `UserId` for mock-mode tailoring (e.g. `CreateRole`) |
-| Absent | `[EndpointAuthorize(...)]` | Secured route; server derives identity entirely from the auth token/claims — contract stays auth-agnostic |
+| Present | `[EndpointAuthorize(...)]` | Secured route serving the signed-in caller (e.g. `CreateRole`) |
+| Absent | `[EndpointAuthorize(...)]` | Secured route; equally valid — the marker is optional |
 | Absent | `[EndpointAllowAnonymous(reason)]` | Genuinely public / pre-auth route; no identity involved |
-| **Present** | **`[EndpointAllowAnonymous(reason)]`** | **Forbidden — TWA0014.** A contract that carries a user identity but declares its endpoint unauthenticated is self-contradictory. Fix by adding `[EndpointAuthorize]` or dropping `IAuthApiRequest`. |
-
-`IAuthApiRequest` is detected by either shape the contracts generator produces — the interface
-implementation or the `[AuthApiRequest]` attribute itself — so the forbidden row is caught
-regardless of which of the two forms below produced it.
-
-### The two forms of `IAuthApiRequest` itself
-
-The contract can carry the current user's identity (`Guid UserId`) so that **mock mode** — where
-no server exists to derive identity — can tailor responses per user. Two forms:
-
-| Form | Shape | Use when |
-|------|-------|----------|
-| **Attribute** `[AuthApiRequest]` | Generates `UserId`; also `GetAuthQueryParameters()` when the same type is `IQueryStringRouteProvider` or also has `[OpenDataQueryParameters]` | Query-string queries (`IQueryStringRouteProvider` — lists, filters) that must append `UserId` to the URL |
-| **Manual** `: IAuthApiRequest` + declared `Guid UserId { get; set; }` | You write the property | POST bodies and GET-by-id routes — no query-string composition needed |
-
-Both pair with `RuleFor(x => x).SetValidator(new AuthApiRequestValidator())`.
-
-**Security rule:** the server must **never trust** a client-sent `UserId` — it re-derives identity
-from the auth token. The contract field exists for mock-mode tailoring and client-side context;
-it plays no role in whether the generated endpoint actually requires authentication.
-
-**Valid alternative:** derive the user **entirely server-side** (claims/token) and keep contracts
-auth-agnostic. Choose it when mock-mode identity isn't needed; it is not wrong.
+| **Present** | **`[EndpointAllowAnonymous(reason)]`** | **Forbidden — TWA0014.** A request that serves an authenticated caller on an anonymous endpoint is self-contradictory. Fix by adding `[EndpointAuthorize]` or dropping `IAuthApiRequest`. |
 
 ## Workflow
 
@@ -293,7 +276,7 @@ Read → `get-*/get-*-contracts.cs` · Write → `create-*|update-*|delete-*/…
   required on every `[ApiEndpoint]` contract; **TWA0013** flags the omission, **TWA0014** flags
   picking both, or anonymous alongside `IAuthApiRequest`
 - `[ApiRoute("api/...", HttpVerb.*)]` on nested `Query`/`Command`
-- Implement `IApiRequest` (or `IAuthApiRequest` — see auth forms above; add
+- Implement `IApiRequest` (or the `IAuthApiRequest` marker — see the auth section above; add
   `IQueryStringRouteProvider` when query-string filters apply)
 - The kind interface over `OneOf<Response, SharedProblemDetails>`: `IQuery`, `ICommand`, or
   `IIdempotentCommand` (see [neutral-operations.md](references/neutral-operations.md))
@@ -381,10 +364,13 @@ If the field has any invariant (a `Guid` id that must be non-empty **is** one), 
 
 Implement `IQueryStringRouteProvider` + `GetRouteWithQueryString()` for optional filters.
 Optional filter properties are `string?` / nullable value types with **no** unconditional
-required rules. Compose generated helpers into the query string:
+required rules. Put each filter the handler reads into the query string, and nothing else:
 
 ```csharp
-var collection = new NameValueCollection { GetAuthQueryParameters(), GetOpenDataQueryParameters() };
+var collection = new NameValueCollection
+{
+  { nameof(Search), string.IsNullOrWhiteSpace(Search) ? null : Search.Trim() },
+};
 return $"{GetRoute()}?{this.GetQueryString(collection)}";
 ```
 
@@ -469,7 +455,8 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 | `[ApiEndpoint]` with no auth marker, assuming the generator defaults to anonymous | It doesn't (task 110, fail-closed) — no marker emits nothing, so FastEndpoints' own default (auth required) applies; TWA0013 also catches it at build time |
 | `[EndpointAuthorize(Policy=…)]` without `AuthenticationSchemes` | Non-default schemes never run against PermissionIds policies. Set `AuthenticationSchemes`. |
 | `[EndpointAuthorize(Policy = "…")]` literal that does not match a server `AddPolicy` / `PermissionIds` name | TWA0024 at the server build (task 111). Use `PermissionIds.*` on web; keep api literals byte-identical to `AgentTokenDefaults` policy constants |
-| Treating `IAuthApiRequest` as if it secures the route | It's a client/mock-mode identity signal only — `[EndpointAuthorize]` is the sole server-auth marker; TWA0014 flags pairing `IAuthApiRequest` with `[EndpointAllowAnonymous]` |
+| Treating `IAuthApiRequest` as if it secures the route | It's a member-less marker — `[EndpointAuthorize]` is the sole server-auth marker; TWA0014 flags pairing `IAuthApiRequest` with `[EndpointAllowAnonymous]` |
+| A `UserId` (caller id) on a hosted request, or a paging member the handler ignores | Published as a parameter a client must fill and the server never reads. The handler reads the principal; declare only members the handler uses |
 | Re-validating in the handler or enabling FE FluentValidation | Validation is `FluentValidationBehavior` on the mediator only |
 | `required init` Response with invariants | `Guid.Empty` slips through — ctor + `Guard` |
 | Copying paths/casing from another repo | Read existing contracts in **this** repo first |
@@ -479,8 +466,9 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 - **Living anchor (timewarp-architecture template):** `web/features/admin/roles/` — every
   operation carries `[Operation]` and a kind interface (`IQuery`, `ICommand`, `IIdempotentCommand`);
   `role-details-contracts.cs` (`IRoleDetails` + validator, shared at slice root),
-  `create-role/create-role-contracts.cs`, `get-roles/get-roles-contracts.cs` (attribute auth +
-  open-data), `get-role/get-role-contracts.cs` (manual auth, `I*Details` Response). Each
+  `create-role/create-role-contracts.cs`, `get-roles/get-roles-contracts.cs` (`Search` is the only
+  query parameter), `get-role/get-role-contracts.cs` (the route id is the whole request:
+  `IAuthApiRequest`, no caller property, `I*Details` Response). Each
   contract sits beside its handler in the same use-case folder
   (`create-role/create-role-handler-application.cs`); layer projects compose via static
   `*-{layer}.cs` globs regardless of folder.

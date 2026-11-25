@@ -5,7 +5,7 @@
 
 #region Design
 // IDOR rule (task 104-005, load-bearing): the principal id comes ONLY from
-// ICurrentPrincipalAccessor — command.UserId (the IAuthApiRequest field) is never read here. There is
+// ICurrentPrincipalAccessor; the query does not name a caller (task 458-008). There is
 // no "list someone else's credentials" code path to accidentally reach; the query implicitly scopes
 // to the caller by construction, not by a runtime ownership check (contrast RevokeCredential.Handler,
 // where an ownership check IS needed because the target is chosen by CredentialId, not implied by the

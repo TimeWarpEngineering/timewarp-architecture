@@ -37,7 +37,7 @@ public class GetRoles_Returns
 
   public static async Task Seeded_Roles()
   {
-    var query = new GetRoles.Query { UserId = Guid.NewGuid() };
+    var query = new GetRoles.Query();
 
     OneOf<GetRoles.Response, SharedProblemDetails> result = await Web.Send(query);
 
@@ -55,7 +55,7 @@ public class GetRoles_Returns
   public static async Task Roles_Matching_Search()
   {
     // Task 345: Search crosses the wire in the query string and filters by name, ignoring case.
-    var query = new GetRoles.Query { UserId = Guid.NewGuid(), Search = " ADMIN " };
+    var query = new GetRoles.Query { Search = " ADMIN " };
 
     OneOf<GetRoles.Response, SharedProblemDetails> result = await Web.Send(query);
 
@@ -103,7 +103,7 @@ public class GetRole_Returns
 
   public static async Task Role_Given_Known_Id()
   {
-    var query = new GetRole.Query { RoleId = RoleIds.Administrator, UserId = Guid.NewGuid() };
+    var query = new GetRole.Query { RoleId = RoleIds.Administrator };
 
     OneOf<GetRole.Response, SharedProblemDetails> result = await Web.Send(query);
 
@@ -120,7 +120,7 @@ public class GetRole_Returns
 
   public static async Task NotFound_Given_Unknown_Id()
   {
-    var query = new GetRole.Query { RoleId = Guid.NewGuid(), UserId = Guid.NewGuid() };
+    var query = new GetRole.Query { RoleId = Guid.NewGuid() };
 
     OneOf<GetRole.Response, SharedProblemDetails> result = await Web.Send(query);
 
@@ -162,31 +162,29 @@ public class UpdateThenDelete_Roundtrip
 
   public static async Task Create_Update_Get_Delete()
   {
-    Guid userId = Guid.NewGuid();
-
     // Create a role this test owns (the seeded roles stay untouched for other tests).
-    var create = new CreateRole.Command { UserId = userId, Name = "Courier", Description = "Delivers things." };
+    var create = new CreateRole.Command { Name = "Courier", Description = "Delivers things." };
     OneOf<CreateRole.Response, SharedProblemDetails> created = await Web.Send(create);
     Guid roleId = created.AsT0.RoleId;
 
-    // Update it (PUT body carries UserId + RoleId).
-    var update = new UpdateRole.Command { RoleId = roleId, UserId = userId, Name = "Courier", Description = "Delivers things faster." };
+    // Update it (RoleId in route, details in the PUT body).
+    var update = new UpdateRole.Command { RoleId = roleId, Name = "Courier", Description = "Delivers things faster." };
     OneOf<UpdateRole.Response, SharedProblemDetails> updated = await Web.Send(update);
     updated.IsT0.ShouldBeTrue("UpdateRole returned SharedProblemDetails.");
 
     // Read back the update.
     OneOf<GetRole.Response, SharedProblemDetails> fetched =
-      await Web.Send(new GetRole.Query { RoleId = roleId, UserId = userId });
+      await Web.Send(new GetRole.Query { RoleId = roleId });
     fetched.AsT0.Description.ShouldBe("Delivers things faster.");
 
-    // Delete it (DELETE: RoleId in route, UserId in query string).
+    // Delete it (DELETE: RoleId in route, no body).
     OneOf<DeleteRole.Response, SharedProblemDetails> deleted =
-      await Web.Send(new DeleteRole.Command { RoleId = roleId, UserId = userId });
+      await Web.Send(new DeleteRole.Command { RoleId = roleId });
     deleted.IsT0.ShouldBeTrue("DeleteRole returned SharedProblemDetails.");
 
     // Gone.
     OneOf<GetRole.Response, SharedProblemDetails> afterDelete =
-      await Web.Send(new GetRole.Query { RoleId = roleId, UserId = userId });
+      await Web.Send(new GetRole.Query { RoleId = roleId });
     afterDelete.IsT1.ShouldBeTrue("Deleted role still resolves.");
     afterDelete.AsT1.Status.ShouldBe(404);
   }
@@ -194,18 +192,16 @@ public class UpdateThenDelete_Roundtrip
   public static async Task Conflict_Given_Product_Role()
   {
     // Task 473: product roles (RoleIds.All) are not deletable; the endpoint answers 409, not 500.
-    Guid userId = Guid.NewGuid();
-
     foreach (Guid roleId in RoleIds.All)
     {
       OneOf<DeleteRole.Response, SharedProblemDetails> deleted =
-        await Web.Send(new DeleteRole.Command { RoleId = roleId, UserId = userId });
+        await Web.Send(new DeleteRole.Command { RoleId = roleId });
       deleted.IsT1.ShouldBeTrue($"DeleteRole returned a Response for product role '{roleId}'.");
       deleted.AsT1.Status.ShouldBe(409);
 
       // Still there.
       OneOf<GetRole.Response, SharedProblemDetails> fetched =
-        await Web.Send(new GetRole.Query { RoleId = roleId, UserId = userId });
+        await Web.Send(new GetRole.Query { RoleId = roleId });
       fetched.IsT0.ShouldBeTrue($"Product role '{roleId}' no longer resolves after a refused delete.");
     }
   }

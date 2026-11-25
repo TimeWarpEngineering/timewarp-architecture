@@ -4,7 +4,7 @@
 
 #region Design
 // The page owns the checkbox working copy and passes RoleIds on the command. This handler
-// stamps UserId and sends that list. It does not read a store draft.
+// sends that list. It does not read a store draft.
 // HandleSuccess does not fetch. The Set response echoes *stored* roles only — the page
 // recopies from OpenPrincipal, which returns effective roles (roleless human → Member;
 // roleless agent → no role; bootstrap unions Admin+Member; review M1).
@@ -60,7 +60,6 @@ partial class PrincipalState
         PrincipalState.LastSetPrincipalRolesSucceeded = false;
         return Task.FromResult<Command?>(new Command
         {
-          UserId = Guid.NewGuid(),
           PrincipalId = action.Command.PrincipalId,
           RoleIds = [.. action.Command.RoleIds]
         });

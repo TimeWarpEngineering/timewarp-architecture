@@ -10,7 +10,7 @@
 //   contract request as Request.
 // - <Contract>ActionSet.Handler: DefaultApiHandler<Action, TRequest, TResponse> with the four constructor
 //   dependencies every hand-written handler takes (plus IConfirmationService for a [Destructive] contract).
-//   GetRequest copies the request's settable members into a new request, stamps UserId, then calls the build hook.
+//   GetRequest copies the request's settable members into a new request, then calls the build hook.
 //   HandleSuccess calls the success hook. HandleError stays DefaultApiHandler's toast.
 // - Hooks, declared on the state so they can write its private members:
 //   required (access modifier, CS8795 when the body is missing): private partial void On<C>Loaded(Response) for a
@@ -121,7 +121,6 @@ internal static class ContractStateEmitter
       sb.Append(i).Append("        ").Append(member).Append(" = action.Request.").Append(member).Append(",\n");
     }
 
-    if (action.StampsUserId) sb.Append(i).Append("        UserId = global::System.Guid.NewGuid(),\n");
     sb.Append(i).Append("      };\n");
     sb.Append(i).Append("      Store.GetState<").Append(state).Append(">().")
       .Append(action.IsDraft ? "Build" : "OnBuilding").Append(action.Name).Append("Request(request);\n");

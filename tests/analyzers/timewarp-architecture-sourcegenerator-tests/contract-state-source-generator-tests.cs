@@ -114,13 +114,12 @@ public class ContractStateSourceGenerator_Tests
     return Task.CompletedTask;
   }
 
-  public static Task Should_Stamp_UserId_And_Copy_The_Other_Settable_Members()
+  public static Task Should_Copy_Settable_Members_And_Stamp_Nothing()
   {
     (_, _, string generated) = Run(AllHooks);
 
     generated.ShouldContain("Names = action.Request.Names,");
-    generated.ShouldContain("UserId = global::System.Guid.NewGuid(),");
-    generated.ShouldNotContain("UserId = action.Request.UserId");
+    generated.ShouldNotContain("UserId");
     generated.ShouldNotContain("Computed = action.Request.Computed");
     return Task.CompletedTask;
   }

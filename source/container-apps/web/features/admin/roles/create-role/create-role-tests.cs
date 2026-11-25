@@ -57,7 +57,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       CreateRole.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         Name = "Auditor",
         Description = "Read-only access to financial modules."
       };
@@ -66,7 +65,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       CreateRole.Command? parsed = JsonSerializer.Deserialize<CreateRole.Command>(json, ContractSerializationDefaults.Options);
 
       parsed.ShouldNotBeNull();
-      parsed.UserId.ShouldBe(command.UserId);
       parsed.Name.ShouldBe(command.Name);
       parsed.Description.ShouldBe(command.Description);
       return Task.CompletedTask;
@@ -111,7 +109,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       CreateRole.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         Name = "",
         Description = "Read-only access to financial modules."
       };
@@ -127,7 +124,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     {
       CreateRole.Command command = new()
       {
-        UserId = Guid.NewGuid(),
         Name = "Auditor",
         Description = "Read-only access to financial modules."
       };

@@ -121,7 +121,6 @@ public static partial class UpdateRole
   public sealed partial class Command
     : IAuthApiRequest, IRoleDetails, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
   }

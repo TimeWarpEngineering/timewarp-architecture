@@ -5,8 +5,8 @@
 #region Design
 // Task 473: Role.Create mints the RoleId and checks the details; IRoleStore.AddAsync saves. The
 // new role starts with no permissions and no agent scopes. Input validation does NOT belong here —
-// FluentValidationBehavior already ran the contract's Validator (shared RoleDetailsValidator +
-// AuthApiRequestValidator) before this executes. The response mapping (role id) is hand-written.
+// FluentValidationBehavior already ran the contract's Validator (shared RoleDetailsValidator)
+// before this executes. The response mapping (role id) is hand-written.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;

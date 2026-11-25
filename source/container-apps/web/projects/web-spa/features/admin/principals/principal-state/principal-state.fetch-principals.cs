@@ -32,7 +32,6 @@ partial class PrincipalState
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken) =>
         Task.FromResult<Query?>(new Query
         {
-          UserId = Guid.NewGuid(),
           Search = PrincipalState.Search,
           SortBy = PrincipalState.SortBy,
           SortDescending = PrincipalState.SortDescending,

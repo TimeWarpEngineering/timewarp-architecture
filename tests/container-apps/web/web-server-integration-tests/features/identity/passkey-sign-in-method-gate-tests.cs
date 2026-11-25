@@ -101,7 +101,7 @@ public class Returns_
       });
 
     using HttpClient listed = Client(sessionCookie);
-    HttpResponseMessage credentials = await listed.GetAsync(new GetCredentials.Query { UserId = Guid.NewGuid() }.GetRouteWithQueryString());
+    HttpResponseMessage credentials = await listed.GetAsync(new GetCredentials.Query().GetRouteWithQueryString());
     credentials.StatusCode.ShouldBe(HttpStatusCode.OK);
     string credentialsJson = await credentials.Content.ReadAsStringAsync();
     credentialsJson.ShouldContain("\"type\":\"Passkey\"");

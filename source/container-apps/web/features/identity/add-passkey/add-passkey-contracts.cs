@@ -15,9 +15,8 @@
 // audience: CompletePasskeyRegistration is anonymous and mints a brand-new Principal, this command is
 // authenticated ([EndpointAuthorize], credential-management policy) and attaches to the CALLER's
 // EXISTING principal — the handler sources the principal id from ICurrentPrincipalAccessor and never
-// calls Principal.Create. UserId is a client/mock-mode identity signal only (see GetCredentials'
-// Design region) — the server never trusts it; the accessor is what actually decides whose principal
-// gets the new credential.
+// calls Principal.Create. The command does not name its caller; the accessor decides whose
+// principal gets the new credential.
 // Reuses StartPasskeyRegistration's existing ANONYMOUS challenge-minting endpoint rather than adding
 // a dedicated authenticated Start ceremony (task 104-005 scope boundary) — StartPasskeyRegistration
 // is side-effect-free (mints options/a challenge, creates nothing), so there is nothing
@@ -25,7 +24,7 @@
 // registration flow uses; the SECURITY-sensitive half (attaching the resulting credential to a
 // principal) only happens in this authenticated command's handler. Task 253: the start MUST set
 // StartPasskeyRegistration.ForCurrentAccount so the WebAuthn user name is the caller's own account
-// name (read from the session there, never from this command's UserId); the handler refuses a
+// name (read from the session there, never from this command); the handler refuses a
 // new-account challenge with 400 ChallengeInvalid.
 // Wave-1 simplification (documented, not an oversight): the reused Start endpoint does not
 // populate WebAuthn's excludeCredentials with the caller's
@@ -52,7 +51,6 @@ public static partial class AddPasskey
   [ApiRoute("api/identity/credentials/passkey", HttpVerb.Post)]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public string CredentialId { get; set; } = null!;
     public string ClientDataJson { get; set; } = null!;
     public string AttestationObject { get; set; } = null!;
@@ -75,7 +73,6 @@ public static partial class AddPasskey
       RuleFor(x => x.Transports).Must(transports => transports is null || transports.Count <= 8)
         .WithMessage("Transports cannot list more than 8 entries.");
       RuleForEach(x => x.Transports).NotEmpty().MaximumLength(32);
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
     }
   }
 

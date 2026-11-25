@@ -14,8 +14,7 @@
 // PermissionIds.CredentialManageSelf — an agent token needs the credential:manage scope expanded
 // via AgentScopePermissionSeed) and attaches to the CALLER's EXISTING principal — the
 // handler sources the principal id from ICurrentPrincipalAccessor and never calls Principal.Create.
-// UserId is a client/mock-mode identity signal only (see GetCredentials' Design region) — the server
-// never trusts it.
+// The command does not name its caller (see GetCredentials' Design region).
 // Reuses StartAgentKeyRegistration's existing ANONYMOUS challenge-minting endpoint (same rationale as
 // AddPasskey's Design region — the Start endpoint is side-effect-free, so an authenticated caller
 // reusing it introduces no new security surface; the sensitive half is this command's handler).
@@ -40,7 +39,6 @@ public static partial class AddAgentKey
   [ApiRoute("api/identity/credentials/agent-key", HttpVerb.Post)]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
-    public Guid UserId { get; set; }
     public string PublicKey { get; set; } = null!;
     public string Challenge { get; set; } = null!;
     public string Signature { get; set; } = null!;
@@ -55,7 +53,6 @@ public static partial class AddAgentKey
       RuleFor(x => x.Challenge).NotEmpty().MaximumLength(256);
       RuleFor(x => x.Signature).NotEmpty().MaximumLength(1024);
       RuleFor(x => x.Nickname).MaximumLength(Credential.MaxNicknameLength);
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
     }
   }
 

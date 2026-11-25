@@ -5,11 +5,11 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211
 
-// Co-located Jaribu validator tests for UpdateRole (RoleId NotEmpty + RoleDetails + auth).
+// Co-located Jaribu validator tests for UpdateRole (RoleId NotEmpty + RoleDetails).
 // Run standalone:  dotnet run source/container-apps/web/features/admin/roles/update-role/update-role-validator-tests.cs
 
 #region Purpose
-// Jaribu runfile proving UpdateRole.Validator rejects empty RoleId, Name, Description, and UserId,
+// Jaribu runfile proving UpdateRole.Validator rejects empty RoleId, Name, and Description,
 // and that Command.From copies a GetRole response including RoleId.
 #endregion
 
@@ -40,7 +40,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       UpdateRole.Command command = new()
       {
         RoleId = RoleIds.Member,
-        UserId = Guid.NewGuid(),
         Name = "Courier",
         Description = "Delivers things faster."
       };
@@ -55,7 +54,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       UpdateRole.Command command = new()
       {
         RoleId = Guid.Empty,
-        UserId = Guid.NewGuid(),
         Name = "Courier",
         Description = "Delivers things faster."
       };
@@ -71,7 +69,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       UpdateRole.Command command = new()
       {
         RoleId = RoleIds.Member,
-        UserId = Guid.NewGuid(),
         Name = "",
         Description = "Delivers things faster."
       };
@@ -87,7 +84,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       UpdateRole.Command command = new()
       {
         RoleId = RoleIds.Member,
-        UserId = Guid.NewGuid(),
         Name = "Courier",
         Description = ""
       };
@@ -95,22 +91,6 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       ValidationResult result = new UpdateRole.Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
       result.Errors.ShouldContain(error => error.PropertyName == nameof(UpdateRole.Command.Description));
-      return Task.CompletedTask;
-    }
-
-    public static Task EmptyUserId_Should_FailValidation()
-    {
-      UpdateRole.Command command = new()
-      {
-        RoleId = RoleIds.Member,
-        UserId = Guid.Empty,
-        Name = "Courier",
-        Description = "Delivers things faster."
-      };
-
-      ValidationResult result = new UpdateRole.Validator().Validate(command);
-      result.IsValid.ShouldBeFalse();
-      result.Errors.ShouldContain(error => error.PropertyName == nameof(UpdateRole.Command.UserId));
       return Task.CompletedTask;
     }
 

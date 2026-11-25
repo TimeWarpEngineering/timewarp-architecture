@@ -58,7 +58,7 @@ public class Returns_
   public static async Task Unauthorized_Given_Anonymous_Request()
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
-    var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var query = new GetCredentials.Query();
 
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
@@ -71,7 +71,7 @@ public class Returns_
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
-    var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var query = new GetCredentials.Query();
 
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
@@ -89,7 +89,7 @@ public class Returns_
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-    var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var query = new GetCredentials.Query();
 
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
@@ -107,7 +107,7 @@ public class Returns_
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-    var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var query = new GetCredentials.Query();
 
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
@@ -130,7 +130,6 @@ public class Returns_
       await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
-      UserId = Guid.NewGuid(),
       CredentialId = credentialId,
       ClientDataJson = clientDataJson,
       AttestationObject = attestationObject
@@ -141,11 +140,11 @@ public class Returns_
       JsonSerializer.Deserialize<AddPasskey.Response>(await addResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
     addResult.ShouldNotBeNull();
 
-    var revokeCommand = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = addResult.CredentialId.Value };
+    var revokeCommand = new RevokeCredential.Command { CredentialId = addResult.CredentialId.Value };
     HttpResponseMessage revokeResponse = await testApiService.GetHttpResponseMessage(revokeCommand, CancellationToken.None);
     revokeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-    var activeOnlyQuery = new GetCredentials.Query { UserId = Guid.NewGuid(), IncludeRevoked = false };
+    var activeOnlyQuery = new GetCredentials.Query { IncludeRevoked = false };
     HttpResponseMessage activeOnlyResponse = await client.GetAsync(activeOnlyQuery.GetRouteWithQueryString());
     GetCredentials.Response? activeOnly = JsonSerializer.Deserialize<GetCredentials.Response>
       (await activeOnlyResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -153,7 +152,7 @@ public class Returns_
     activeOnly.Credentials.Count.ShouldBe(1);
     activeOnly.Credentials[0].IsActive.ShouldBeTrue();
 
-    var allQuery = new GetCredentials.Query { UserId = Guid.NewGuid(), IncludeRevoked = true };
+    var allQuery = new GetCredentials.Query { IncludeRevoked = true };
     HttpResponseMessage allResponse = await client.GetAsync(allQuery.GetRouteWithQueryString());
     GetCredentials.Response? all = JsonSerializer.Deserialize<GetCredentials.Response>
       (await allResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
@@ -175,7 +174,7 @@ public class Returns_
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
-    var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    var query = new GetCredentials.Query();
 
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 

@@ -36,8 +36,7 @@ using TimeWarp.Identity;
 public static partial class ListPrincipals
 {
   [ApiRoute("api/admin/principals", HttpVerb.Get)]
-  [AuthApiRequest]
-  public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public string? Search { get; set; }
     public PrincipalListSortColumn SortBy { get; set; } = PrincipalListSortColumn.CreatedAt;
@@ -47,7 +46,6 @@ public static partial class ListPrincipals
     {
       var collection = new NameValueCollection
       {
-        GetAuthQueryParameters(),
         { nameof(Search), string.IsNullOrWhiteSpace(Search) ? null : Search.Trim() },
         { nameof(SortBy), SortBy.ToString() },
         { nameof(SortDescending), SortDescending ? "true" : "false" },
@@ -60,7 +58,6 @@ public static partial class ListPrincipals
   {
     public Validator()
     {
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
       RuleFor(x => x.SortBy).IsInEnum();
       // 254 = Profile.MaxEmailLength (contracts cannot reference the domain).
       RuleFor(x => x.Search).MaximumLength(254);

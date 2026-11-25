@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// The server derives the owner from the authenticated principal. The command carries no UserId
-// (IAuthApiRequest is a mock-mode signal this endpoint does not need).
+// The server derives the owner from the authenticated principal. The command does not name its
+// caller.
 // Kind, Title and Body are IFeedbackItemDetails (task 475), whose validator this one includes and
 // whose length literals duplicate FeedbackItem.MaxTitleLength / MaxBodyLength (contracts must not
 // reference domain). MaxTitleLength / MaxBodyLength here forward to it for existing callers.

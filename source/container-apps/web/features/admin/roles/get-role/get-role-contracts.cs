@@ -15,6 +15,7 @@
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
 // AuthenticationSchemeNames' Design region.
 // [Operation] names it roles.get for every transport; IQuery is its kind (tw-web-api-contracts).
+// The route id is the whole request: no query string (task 458-008 removed the unread UserId).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -32,21 +33,13 @@ public static partial class GetRole
 {
   [ApiRoute("api/admin/roles/{RoleId:guid}", HttpVerb.Get)]
   [Operation("roles.get", Description = "Get one role with its stored permission ids.", Group = "admin.roles")]
-  public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
-  {
-    public Guid UserId { get; set; }
-
-    // GET carries no body, so UserId travels in the query string (manual IAuthApiRequest form —
-    // the [AuthApiRequest] attribute's generated helper is not available here).
-    public string GetRouteWithQueryString() =>
-      $"{GetRoute()}?{this.GetQueryString(new NameValueCollection { { nameof(UserId), UserId.ToString() } })}";
-  }
+  public sealed partial class Query : IAuthApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>
   {
     public Validator()
     {
-      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
+      RuleFor(x => x.RoleId).NotEmpty();
     }
   }
 

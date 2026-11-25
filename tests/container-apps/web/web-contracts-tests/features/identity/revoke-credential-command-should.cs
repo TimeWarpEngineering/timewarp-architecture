@@ -16,11 +16,10 @@ public class RevokeCredential_Command_Should
 
   public static Task SerializeAndDeserialize_Including_Generated_RouteProperty()
   {
-    RevokeCredential.Command command = new() { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid() };
+    RevokeCredential.Command command = new() { CredentialId = Guid.NewGuid() };
 
     RevokeCredential.Command parsed = ContractSerialization.RoundTrip(command);
 
-    parsed.UserId.ShouldBe(command.UserId);
     parsed.CredentialId.ShouldBe(command.CredentialId);
     return Task.CompletedTask;
   }
