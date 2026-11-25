@@ -100,7 +100,9 @@ Gates:
 - Test files: none added or edited. No test file names the changed types (`TemplateSmokeMatrix`,
   `TemplateSmokeRunner`, `TemplateSmokeTestRuns`, `TemplateSmokeTestTables`, `TemplateSmokeCommand`);
   the template-smoke run above is their gate.
-- `ganda repo audit`: see below.
+- `./bin/dev lint-skills` (skills/ changed): 11 skills linted, 11 passed.
+- `./bin/dev template-smoke --variant Nope`: unknown-variant message, exit 1.
+- `ganda repo audit`: passed (tree 71705b933145, all checks pass).
 
 ### How to validate (required before done)
 
