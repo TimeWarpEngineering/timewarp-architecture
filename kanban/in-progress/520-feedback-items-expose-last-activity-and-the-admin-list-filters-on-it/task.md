@@ -71,6 +71,12 @@ Done when:
   it repeats.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 2d2de821-6660-468a-b3f1-24d064a261c6, max-turns 500, Blocked — 2026-11-25T02:06:51Z
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ab5a7dd3-497c-4fce-9029-6669b97b5c28, max-turns 500, Done — 2026-11-25T08:53:07Z
+- Review oracle: reviewed by reviewer-grok (grok, vendor xai, model grok-4.7, session 01a211e9-0052-7612-b27f-f40bb2e390fc), effort 3, roster general, round 1, disposition clean — 2026-11-25
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a211e9-0052-7612-b27f-f40bb2e390fc, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T09:02:29Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -145,6 +151,13 @@ Expect: all tests pass; `ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply
 - `ganda repo audit --fix` (run 3): `analyzer-suppressions` lowered `.timewarp/suppression-baseline.json`
   (100 lines of EF-generated pragma entries no longer counted); "Repository passes all audit checks",
   including `source-file-line-cap`.
+
+### Review
+
+- Round 1, roster general, effort 3 (by-diff, 1038 lines). Reviewer did not re-run build, test, or audit.
+- Counts: bug 0, suggestion 0, nit 0. Open 0. Fixed 0. Wontfix 0.
+- Disposition: clean. The implementer restatement matches the original task (no misread).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Blocked
 
