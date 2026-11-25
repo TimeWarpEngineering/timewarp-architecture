@@ -27,7 +27,6 @@ Owner: transformer beside `source/foundation/foundation-server/open-api-one-of.c
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -39,6 +38,8 @@ Owner: transformer beside `source/foundation/foundation-server/open-api-one-of.c
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
+- Grooming note: `DownloadFeedbackAttachmentEndpoint` currently registers only `WithTags("Feedback")`, so declare `FeedbackAttachmentRules.AllowedContentTypes` metadata there for a generic `foundation-server` transformer to read.
 
 ## Session
 
