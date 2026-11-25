@@ -14,9 +14,12 @@
 // Liveness (task 458-007) is listed, not an operation: it reports the process, not this API. Its
 // entry and the health description both read IngressPaths.WebServerAlivePath, so they cannot name
 // different probes. The host adds its own non-operation routes (OpenApiExcludedRoute) from the
-// constants its Map calls use. info.description says which families are not listed (Razor pages,
-// static files, Blazor framework routes), so "a missing path is an exclusion" stays true. The
-// web-server discovery-coverage test enumerates the served routes and fails on an unlisted one.
+// constants its Map calls use. info.description names the families that are not listed (Razor
+// pages, static files, Blazor framework routes, this document, Scalar, and Development-only
+// routes), so "a missing path is an exclusion" stays true. The web-server discovery-coverage test
+// skips exactly those families, enumerates the served routes and methods, and fails on an
+// unlisted one. MapDefaultEndpoints also serves HealthEndpointPaths.Alive in every environment,
+// and the ingress catch-all forwards a public /alive to web-server, so that path is listed too.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -48,6 +51,10 @@ internal static class OpenApiDiscoveryCoverage
   internal const string AliasSentence =
     "GET and POST /api and /api/ rewrite to /api/tip before routing.";
 
+  internal const string UnlistedFamilies =
+    "Razor pages, static files (such as `/llms.txt`), Blazor framework routes (`/_framework`, `/_blazor`), "
+    + "this document (`/openapi/v1.json`), Scalar (`/scalar/v1`), and Development-only routes";
+
   private const string LlmsPath = "/llms.txt";
 
   private static readonly OpenApiExcludedRoute[] SharedRoutes =
@@ -66,6 +73,15 @@ internal static class OpenApiDiscoveryCoverage
       + TimeWarp.Foundation.Configuration.HealthEndpointPaths.Alive
       + ", which runs only the self check and opens no dependency. The body is text/plain: Healthy (200) "
       + "or Unhealthy (503). Readiness is GET " + HealthPath + ".",
+      LlmsPath
+    ),
+    new
+    (
+      "GET",
+      TimeWarp.Foundation.Configuration.HealthEndpointPaths.Alive,
+      "The same self check as GET " + AlivePath + ", served by MapDefaultEndpoints in every environment. "
+      + "The ingress forwards an unmatched public path to web-server, so this path answers too. "
+      + "The body is text/plain: Healthy (200) or Unhealthy (503).",
       LlmsPath
     ),
   ];
@@ -218,8 +234,8 @@ internal static class OpenApiDiscoveryCoverage
       + "This document includes the web-server FastEndpoints operations, `GET " + HealthPath + "`, "
       + "and `GET` and `POST /api` (a rewrite alias of `/api/tip`, including `/api/`).\n\n"
       + "The routes below are served but are not operations. A missing path is one of these "
-      + "exclusions, not a missing route. Razor pages, static files (such as `/llms.txt`), and "
-      + "Blazor framework routes are not listed. Scalar ([/scalar/v1](/scalar/v1)) shows this note. "
+      + "exclusions, not a missing route. Not listed: " + UnlistedFamilies + ". "
+      + "Scalar ([/scalar/v1](/scalar/v1)) shows this note. "
       + "Index: [" + LlmsPath + "](" + LlmsPath + "). The same list is `" + ExtensionName + "`.\n";
 
     foreach (OpenApiExcludedRoute route in routes)

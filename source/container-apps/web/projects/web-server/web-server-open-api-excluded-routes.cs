@@ -8,9 +8,10 @@
 // well-known documents, WebMCP, liveness). Each path is the constant the Map call uses, so a
 // renamed route moves the entry with it. Not listed: Razor pages, MapStaticAssets files, Blazor
 // framework routes, the OpenAPI document and Scalar, and Development-only routes (/health and the
-// TimeWarp.State DevTools config); the document description names those families. The
-// discovery-coverage test (WebServer_Given_) enumerates the real host's endpoints and fails on a
-// route that is in none of these groups.
+// TimeWarp.State DevTools config); the document description names those families
+// (OpenApiDiscoveryCoverage.UnlistedFamilies). One entry per method: the dictation path maps GET
+// and CONNECT, so it has two. The discovery-coverage test (WebServer_Given_) enumerates the real
+// host's endpoints and their methods and fails on a route or method that is in none of these groups.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -21,6 +22,10 @@ namespace TimeWarp.Architecture.Web.Server;
 internal static class WebServerOpenApiExcludedRoutes
 {
   internal const string SignalRNegotiateSuffix = "/negotiate";
+
+  private const string DictationReason =
+    "WebSocket for Ask dictation audio (GET upgrade on HTTP/1.1, CONNECT on HTTP/2). Requires the identity "
+    + "session. A request that is not a WebSocket upgrade is 400.";
 
   internal static readonly OpenApiExcludedRoute[] All =
   [
@@ -34,12 +39,7 @@ internal static class WebServerOpenApiExcludedRoutes
       "SignalR negotiate for the SPA chat hub. A SignalR client calls it; it is not REST."
     ),
     new("GET", ChatHubConstants.Route, "SignalR connection for the SPA chat hub (WebSocket, server-sent events, or long polling)."),
-    new
-    (
-      "GET",
-      TranscribeAgentAudio.StreamPath,
-      "WebSocket for Ask dictation audio (CONNECT on HTTP/2). Requires the identity session. "
-      + "A request that is not a WebSocket upgrade is 400."
-    ),
+    new("GET", TranscribeAgentAudio.StreamPath, DictationReason),
+    new("CONNECT", TranscribeAgentAudio.StreamPath, DictationReason),
   ];
 }

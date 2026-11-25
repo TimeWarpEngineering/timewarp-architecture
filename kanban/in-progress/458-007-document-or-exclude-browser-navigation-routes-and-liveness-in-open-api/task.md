@@ -58,6 +58,11 @@ Acceptance:
 - [x] Implement the requirements above
 - [x] Tests or document checks named above pass
 
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
+- Round 1 fix pass: M1, M2, M3 fixed (disposition notes in `review/round-1/merged.md`).
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -80,6 +85,17 @@ Acceptance:
   (claim held by this identity, session dead), fixed with `ganda kanban reconcile --task-id 528`;
   `vscode-window-icon` fixed with `ganda repo audit --fix` (writes the ignored `.vscode/settings.json`).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c7c6a331-e2ec-40a6-99c8-e7b374561a0e, max-turns 500, Done — 2026-11-25T23:37:41Z
+- 2026-11-26 review round 1: general (grok, session 01a21512-9948-7c90-8a6c-a0777e930e7a), effort 3. Open findings M1, M2, M3 in `review/round-1/merged.md`. No disposition.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21512-9948-7c90-8a6c-a0777e930e7a, max-turns 200, artifacts general.md, merged.md — 2026-11-25T23:50:16Z
+
+- 2026-11-26 fix pass (round 1 findings): `/alive` listed and checked through `MapDefaultEndpoints`;
+  `info.description` names every family the walk skips; dictation lists GET and CONNECT and the
+  walk compares methods. The route walk moved to `open-api-served-route-coverage-tests.cs`
+  (TWA0038, 500-line cap; it boots its own host graph).
+
+## Learnings
+
+- Misread: `## Goal (implementer restatement)` treats the route walk as the real web-server host and says every served route outside Razor pages, static assets, framework routes, and Development-only routes is an operation or an exclusion. Production `Program.Main` also maps `GET /alive` (`HealthEndpointPaths.Alive`) in every environment, and that path is none of those families. The acceptance checks liveness only as `IngressPaths.WebServerAlivePath`. The task requires each served non-operation route to be listed. Results later note that the test host does not run `MapDefaultEndpoints`, which is how the walk misses `/alive`. The decision to document the three identity routes, rather than exclude them, matches the task.
 
 ## Results
 
@@ -116,6 +132,21 @@ Acceptance:
 - Not changed: the api-server document (no opt-in). `/alive` itself is mapped by `Program.Main`
   (`MapDefaultEndpoints`), which the test host does not run, so its listing is checked by the
   tiny-host liveness test, not the route walk.
+- Round 1 fix pass:
+  - M1: shared exclusion list adds `GET /alive` (`HealthEndpointPaths.Alive`), the same self check
+    as `/web-server/alive`, served in every environment and reachable through the ingress
+    catch-all. `Default_Endpoints_Should_Be_Listed` maps `MapDefaultEndpoints` on a Production host
+    and checks its routes against the real document. `llms.txt` names `GET /alive`.
+  - M2: `info.description` says "Not listed: " + `OpenApiDiscoveryCoverage.UnlistedFamilies`
+    (Razor pages, static files, Blazor framework routes, `/openapi/v1.json`, `/scalar/v1`,
+    Development-only routes), matching what the walk skips; both Design regions name it.
+  - M3: dictation has `GET` and `CONNECT` entries. The walk compares method + path when the
+    endpoint declares methods (path only for SignalR connections, which declare none).
+    `Dictation_Should_List_Every_Mapped_Method` asserts both.
+  - `WebServer_Given_` moved to `open-api-served-route-coverage-tests.cs` (TWA0038 500-line cap).
+  - Negative checks: dropping the CONNECT entry failed the walk with "CONNECT
+    /api/agent-chat/transcriptions/stream"; renaming the `/alive` entry failed
+    `Default_Endpoints_Should_Be_Listed`. Both restored.
 - Follow-up: after deploy, re-fetch `https://arch.timewarp.work/openapi/v1.json` and confirm the
   three identity operations have no 204 and `x-timewarp-excluded-routes` lists `/web-server/alive`.
 
@@ -139,13 +170,21 @@ None of these test files is a standalone runfile (no `#if !JARIBU_MULTI` guard);
   the fixes in ## Session, `ganda repo audit --fix --checks vscode-window-icon` reran the audit:
   pass, all checks.
 
+Round 1 fix pass gates (neither file is a standalone runfile; both ran in one
+`./bin/dev test --no-build <files…>` after the build):
+
+- `./bin/dev build` — pass (0 warnings, 0 errors).
+- `tests/container-apps/web/web-server-integration-tests/open-api-discovery-coverage-tests.cs` — pass (`Document_Given_` 8/8).
+- `tests/container-apps/web/web-server-integration-tests/open-api-served-route-coverage-tests.cs` (new, moved `WebServer_Given_`) — pass 3/3.
+- `ganda repo audit` — pass, all checks.
+
 ### How to validate
 
-- Smoke: `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-discovery-coverage-tests.cs tests/container-apps/web/web-server-integration-tests/open-api-browser-navigation-tests.cs`;
+- Smoke: `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-discovery-coverage-tests.cs tests/container-apps/web/web-server-integration-tests/open-api-served-route-coverage-tests.cs tests/container-apps/web/web-server-integration-tests/open-api-browser-navigation-tests.cs`;
   then delete the `BrandStylesheet.Path` entry in
   `source/container-apps/web/projects/web-server/web-server-open-api-excluded-routes.cs` and run the
-  first file again. Or run the web host and `curl -s <origin>/openapi/v1.json | jq '.paths["/identity/sign-out"].post.responses, ."x-timewarp-excluded-routes"'`.
-- Expect: both files pass (8 + 3). With the entry removed, `WebServer_Given_` fails with
+  served-route file again (or delete the `CONNECT` dictation entry). Or run the web host and `curl -s <origin>/openapi/v1.json | jq '.paths["/identity/sign-out"].post.responses, ."x-timewarp-excluded-routes"'`.
+- Expect: the files pass (8 + 3 + 3). With the entry removed, `WebServer_Given_` fails with
   "Served but neither an operation nor in x-timewarp-excluded-routes: /brand.css". In the
   document, sign-out has 303 (with `Location`) and 400 and no 204, and the excluded list
-  includes `/web-server/alive`.
+  includes `/web-server/alive` and `/alive`; the dictation path is listed for GET and CONNECT.
