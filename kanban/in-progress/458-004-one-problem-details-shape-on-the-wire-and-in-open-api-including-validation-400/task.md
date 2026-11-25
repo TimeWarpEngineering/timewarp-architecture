@@ -44,6 +44,10 @@ and no other `*ProblemDetails` component remains. Existing OpenAPI tests updated
 - [x] Implement the requirements above
 - [x] Tests or document checks named above pass
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -135,8 +139,18 @@ exists, `paths./api/hello.get.responses.400` references that component, no
 response is a `$ref` to it (payment 402/503 as the first `allOf` member). After deploy, re-fetch
 `https://arch.timewarp.work/openapi/v1.json` and confirm the same.
 
+### Review
+
+Round 1. Roster: general. Effort: 3 (1128 lines). Turn cap 200. Reviewer session: grok `01a214cb-7cf7-73d0-98bb-94112a3e46b0`.
+Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
+Disposition: clean. The goal restatement matches the original task; no misread recorded.
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+Gates were not re-run; the implementer record above covers build, the OpenAPI and Hello checks, and audit.
+
 ## Session
 
 - Created: 2227132 (2026-11-24)
 - 2026-11-26 implementer: wire fix (SharedProblemDetailsHttp), OpenApiProblemDetails transformer + document check, bearer/payment/Entra point at the one component; gates in ## Results.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f65f0311-2aa8-474a-86cf-18838ef9b251, max-turns 500, Done — 2026-11-25T22:19:59Z
+- Review oracle: grok session `01a214cb-7cf7-73d0-98bb-94112a3e46b0` (2026-11-26), effort 3, roster general, max-turns 200. Round 1 disposition clean.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a214cb-7cf7-73d0-98bb-94112a3e46b0, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T22:31:36Z
