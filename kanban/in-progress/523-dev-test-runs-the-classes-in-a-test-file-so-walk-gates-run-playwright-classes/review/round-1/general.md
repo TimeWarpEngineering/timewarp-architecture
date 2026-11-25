@@ -1,0 +1,17 @@
+# Round 1 — general
+**Date:** 2026-11-26
+**Scope reviewed:** branch `task/523-dev-test-runs-the-classes-in-a-test-file-so-walk` vs merge-base `d27ec05f8`. Product files: `tools/dev-cli/endpoints/test-command.cs`, `tools/dev-cli/services/test-file-selection.cs`, `tools/dev-cli/services/test-groups.cs`, `tools/dev-cli/endpoints/workflow-command.cs`, `tests/tools/dev-cli-tests/test-file-selection-tests.cs`, `tests/tools/dev-cli-tests/dev-cli-tests.csproj`, `AGENTS.md`. Checked against task 523 Requirements and `## Goal (implementer restatement)`.
+
+## Summary
+
+`dev test` now takes file paths. A `#if !JARIBU_MULTI` line runs `dotnet run --file`. Any other file under a `tests/` project is built like `--project` and run once per class through Jaribu `--filter-class`. Helper and stray files fail with the file name. `--group`, `--project`, and `--filter-class` are refused when files are present. Comments and the AGENTS.md Tests row match the nightly-only Playwright note. The goal restatement matches the task. Recorded gates cover build, the mapping tests, the dark-theme file, a runfile, the helper and stray failures, the `--group` refusal, and audit. No full build, test, or audit was re-run.
+
+The filter value is the class FullName, and Jaribu treats `--filter-class` as a case-insensitive substring. A shorter FullName cannot be isolated when a longer class in the same project contains it. That breaks the requirement that a file runs only the test classes it declares.
+
+## Issues
+
+### Issue 1 — Severity: bug
+- File: tools/dev-cli/services/test-file-selection.cs:150
+- Description: `ClassFilters` emits `Namespace.Class` (or `+Class` when the declaration is indented deeper than the file's least-indented class) and `test-command.cs` passes that string to `dotnet test -- --filter-class`. TimeWarp.Jaribu.TestingPlatform defines that option as "Run only test classes whose FullName contains this substring (ordinal ignore-case)" (`jaribu-command-line-options.cs`, ArgumentArity.ExactlyOne). Every substring of a shorter FullName is also a substring of a longer FullName that starts with it, so the shorter class cannot be selected alone. The design comment at `test-file-selection.cs:25` says test class names in this repo do not collide that way. They do. `tests/foundation/foundation-domain-tests/entity-tests.cs` declares `Equality` in namespace `TimeWarp.Architecture.Foundation.Domain.Tests` (line 19). `enumeration-tests.cs` in the same project and the same namespace declares `Equality_Operators` (line 310). The filter `TimeWarp.Architecture.Foundation.Domain.Tests.Equality` is contained in `TimeWarp.Architecture.Foundation.Domain.Tests.Equality_Operators`, so `dev test` on `entity-tests.cs` also runs `Equality_Operators`. The requirement is that a file under any `tests/` project runs filtered to the test classes that file declares. The mapping tests never put a prefix pair in one project, so they stay green. The recorded dark-theme run (4 methods) does not cover this pair.
+- Suggestion: Before starting `dotnet test`, derive the same filter string for every other class the owning project registers. If the chosen filter is an ordinal-ignore-case substring of a different class's FullName, fail the file with an error that names the file, the class, and the other class. Do not start the run. Jaribu's contains-match cannot isolate the shorter name. Pin the case with a mapping test: same project, same namespace, classes `Equality` and `Equality_Operators`, and the `Equality` file returns that error.
+- Status: open
