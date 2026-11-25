@@ -61,6 +61,7 @@ Acceptance:
   in timewarp-testing; regression tests; update-profile workaround tightened to an exact PascalCase match.
   Audit: the first run failed `analyzer-suppressions` because the new runfile copied a neighbour's
   `#:property NoWarn=` line. Removed it; the file compiles clean without it (runfile and JARIBU_MULTI).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c00b27f8-959c-4eb2-a4db-fe54a7fd9810, max-turns 500, Done — 2026-11-25T15:00:06Z
 
 ## Results
 
