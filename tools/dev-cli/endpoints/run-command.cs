@@ -124,6 +124,9 @@ internal sealed class RunCommand : ICommand<Unit>
 
     private async Task WarnIfXaiKeyMissingAsync()
     {
+      // An app generated with --web false has no web-server and no Ctrl-K Ask (task 530).
+      if (!AppFeatures.IsPresent(RepoRoot, AppFeatures.Web)) return;
+
       try
       {
         string? environmentValue = Environment.GetEnvironmentVariable(XaiPreflight.EnvironmentVariable);

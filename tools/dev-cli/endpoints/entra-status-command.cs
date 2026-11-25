@@ -38,6 +38,8 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       Command = command;
       Ct = ct;
 
+      if (!AppFeatures.Require(Terminal, "dev entra status", AppFeatures.Web)) return Unit.Value;
+
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {
         Environment.ExitCode = 1;

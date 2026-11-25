@@ -8,9 +8,10 @@
 // a failed step prints the whole captured output to stderr. --verbose streams via RunAsync.
 // --quiet is the default and stays accepted. Mode rules and the summary: services/build-output.cs.
 // dev workflow (CI) builds with the defaults, so a red CI build still shows every diagnostic.
-// Before MSBuild, scan tracked files for client names (the same scan as dev check-client-names).
-// CI's fast job runs this build. A skills-only PR does not, so dev lint-skills runs the scan too.
-// ganda repo audit has no word-list check.
+// In the template repository, before MSBuild, scan tracked files for client names (the same scan
+// as dev check-client-names). CI's fast job runs this build. A skills-only PR does not, so dev
+// lint-skills runs the scan too. ganda repo audit has no word-list check. The scan is a
+// templateRepository region (task 530): a generated app has no name list, so its build skips it.
 // Task 526: after the .slnx, build each tests/ project the .slnx does not list (the Jaribu family
 // aggregators and timewarp-testing-tests), one at a time like dev test's build phase so shared
 // obj/ and bin/ folders never race. They stay out of the .slnx on purpose, but they compile every
@@ -56,6 +57,7 @@ internal sealed class BuildCommand : ICommand<Unit>
       var stopwatch = Stopwatch.StartNew();
 
       if (!FindRepoRoot()) return Unit.Value;
+#if templateRepository
       if (!await ClientNameScan.ReportAsync(
             RepoRoot,
             message => Terminal.WriteLine(message),
@@ -64,6 +66,7 @@ internal sealed class BuildCommand : ICommand<Unit>
       {
         return Unit.Value;
       }
+#endif
 
       if (!await CleanAsync()) return Unit.Value;
       if (!await BuildAsync()) return Unit.Value;

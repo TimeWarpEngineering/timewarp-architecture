@@ -45,6 +45,8 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
 
     public async ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
+      if (!AppFeatures.Require(Terminal, "dev deploy", AppFeatures.Yarp)) return Unit.Value;
+
       await DeployRunner.RunAsync(
         Terminal,
         command.Target,

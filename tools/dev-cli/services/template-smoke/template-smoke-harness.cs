@@ -9,7 +9,8 @@
 // ingress port), TemplateSmokeTestRuns (co-located tests, Jaribu aggregators, generated suites),
 // TemplateSmokeGeneration (generate + SmokeOneAsync + environment), and
 // TemplateSmokeInitializerAssets (host-free import-graph check), and TemplateSmokeBrandSurfaces
-// (task 513: configuration-only rebrand leaves no template brand).
+// (task 513: configuration-only rebrand leaves no template brand), and TemplateSmokeDevCli (task 530:
+// the generated app's dev CLI ships, lists the app commands, and runs `dev build`).
 #endregion
 
 namespace DevCli.Services;
@@ -28,6 +29,7 @@ internal sealed class TemplateSmokeHarness
     Generation = new TemplateSmokeGeneration(terminal, repoRoot, Pins);
     InitializerAssets = new TemplateSmokeInitializerAssets(terminal);
     BrandSurfaces = new TemplateSmokeBrandSurfaces(terminal);
+    DevCli = new TemplateSmokeDevCli(terminal, repoRoot);
   }
 
   public TemplateSmokeArchitectureSuffixes Suffixes { get; }
@@ -43,4 +45,6 @@ internal sealed class TemplateSmokeHarness
   public TemplateSmokeInitializerAssets InitializerAssets { get; }
 
   public TemplateSmokeBrandSurfaces BrandSurfaces { get; }
+
+  public TemplateSmokeDevCli DevCli { get; }
 }

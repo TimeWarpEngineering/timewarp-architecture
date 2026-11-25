@@ -1,20 +1,35 @@
 {
-  // Per-repo configuration for TimeWarp.Nuru.DevCli shared endpoints
+  // Per-repo configuration for TimeWarp.Nuru.DevCli shared endpoints.
+  // The template pack ships this file to generated apps (task 530). Generation strips the
+  // templateRepository regions: they hold the template repository's release and CI entries.
+  //#if (templateRepository)
   "checkVersionConfig": {
     // git-tag: compare repo Version to latest GitHub release (release workflow)
     "checkVersionStrategy": "git-tag"
   },
+  //#endif
 
   // Pull request build decision (task 493, timewarp-nuru 595): additions to the
   // PullRequestBuildClassifier rule in TimeWarp.Nuru.DevCli. An entry is a path,
   // "dir/", or "dir/**". buildPaths always build; nonBuildPaths skip, but never
   // source/, tests/, tools/, msbuild/, .github/workflows/, or .editorconfig.
-  // buildPaths: the template content and the ingress golden build from these roots,
-  // markdown included (the template pack ships its readme).
   // .github/actions/** holds the CI setup action, which changes how every job runs.
-  // nonBuildPaths: skills and their evals are gated by the skill-lint job, not ci.
+  // nonBuildPaths: skills change no build.
   "pullRequestBuild": {
-    "buildPaths": ["timewarp-templates/**", ".template.config/**", "goldens/**", ".github/actions/**"],
-    "nonBuildPaths": ["skills/**", "evals/**", ".vally.yaml"]
+    "buildPaths": [
+      //#if (templateRepository)
+      // The template content and the ingress golden build from these roots, markdown included
+      // (the template pack ships its readme).
+      "timewarp-templates/**", ".template.config/**", "goldens/**",
+      //#endif
+      ".github/actions/**"
+    ],
+    "nonBuildPaths": [
+      //#if (templateRepository)
+      // Skills and their evals are gated by the skill-lint job, not ci.
+      "evals/**", ".vally.yaml",
+      //#endif
+      "skills/**"
+    ]
   }
 }

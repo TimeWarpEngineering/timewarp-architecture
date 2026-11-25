@@ -27,6 +27,8 @@ internal sealed class EntraDisableCommand : EntraGroup, ICommand<Unit>
 
     public async ValueTask<Unit> Handle(EntraDisableCommand command, CancellationToken ct)
     {
+      if (!AppFeatures.Require(Terminal, "dev entra disable", AppFeatures.Web)) return Unit.Value;
+
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {
         Environment.ExitCode = 1;

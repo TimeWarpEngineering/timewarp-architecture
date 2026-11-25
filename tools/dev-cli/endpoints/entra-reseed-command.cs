@@ -35,6 +35,8 @@ internal sealed class EntraReseedCommand : EntraGroup, ICommand<Unit>
     {
       Command = command;
 
+      if (!AppFeatures.Require(Terminal, "dev entra reseed", AppFeatures.Web)) return Unit.Value;
+
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {
         Environment.ExitCode = 1;

@@ -92,6 +92,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
     public async ValueTask<Unit> Handle(DeployMigrateCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
+      if (!AppFeatures.Require(Terminal, Verb, AppFeatures.Postgres)) return Unit.Value;
 
       DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, Verb, command.Target, PreflightScope.Migrate, ct);
       if (preflight is null) return Unit.Value;

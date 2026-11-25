@@ -24,6 +24,27 @@
             "**/obj/**",
             "artifacts/**",
             "tools/agent-identity-cli/**",
+            "tools/fix-analyzer-debug.reg",
+            "tools/dev-cli/vally-cli.version",
+            "tools/dev-cli/endpoints/check-client-names-command.cs",
+            "tools/dev-cli/endpoints/lint-skills-command.cs",
+            "tools/dev-cli/endpoints/regenerate-generated-command.cs",
+            "tools/dev-cli/endpoints/template-install-command.cs",
+            "tools/dev-cli/endpoints/template-publish-smoke-command.cs",
+            "tools/dev-cli/endpoints/template-smoke-command.cs",
+            "tools/dev-cli/endpoints/verify-samples-command.cs",
+            "tools/dev-cli/endpoints/workflow-template-repository.cs",
+            "tools/dev-cli/services/client-name-scan.cs",
+            "tools/dev-cli/services/feature-filename-grammar-generator.cs",
+            "tools/dev-cli/services/generated-ingress-prefixes.cs",
+            "tools/dev-cli/services/green-key.cs",
+            "tools/dev-cli/services/green-key-ledger.cs",
+            "tools/dev-cli/services/jaribu-aggregator-summary-gate.cs",
+            "tools/dev-cli/services/skill-spec-lint.cs",
+            "tools/dev-cli/services/template-nupkg.cs",
+            "tools/dev-cli/services/template-smoke-content-assets.cs",
+            "tools/dev-cli/services/template-smoke/**",
+            "tools/dev-cli/services/workflow-path-classes.cs",
             "tests/tools/agent-identity-cli-tests/**",
             "tests/tools/dev-cli-tests/**",
             "source/foundation/**",
@@ -88,6 +109,14 @@
             "tests/common/timewarp-testing/applications/yarp-test-server-application.cs",
             "tests/container-apps/web/web-spa-integration-tests/pipeline/clone-state-behavior-tests.cs",
             "tests/container-apps/yarp/**"
+          ]
+        },
+        {
+          "condition": "(!postgres || !web)",
+          "exclude": [
+            "tools/dev-cli/endpoints/db-*.cs",
+            "tools/dev-cli/services/db-ef.cs",
+            "tools/dev-cli/services/db-nuke.cs"
           ]
         },
         {
@@ -173,9 +202,15 @@
       "datatype": "bool",
       "defaultValue": "true"
     },
+    "templateRepository": {
+      "type": "computed",
+      "datatype": "bool",
+      "description": "True only in this template repository, false in every generated app (task 530). Regions under it are the template repository's own: tools/dev-cli/Directory.Build.props defines the C# constant so the monorepo compiles them, and generation strips them. Never a parameter: it is not an architecture flag.",
+      "value": "(false)"
+    },
     "appNameKebab": {
       "type": "derived",
-      "description": "The app name as a DNS-1123 label (Contoso.Shop -> contoso-shop): the committed AppHost Parameters k8s-namespace, helm-release-name and registry-repository, and the MCP server card serverInfo name (task 513). Replaces the monorepo's own kebab name only where it is one of those values (onlyIf), never in repository URLs or project names.",
+      "description": "The app name as a DNS-1123 label (Contoso.Shop -> contoso-shop): the committed AppHost Parameters k8s-namespace, helm-release-name and registry-repository, the MCP server card serverInfo name (task 513), and the dev CLI's description and telemetry service name in tools/dev-cli/dev.cs (task 530). Replaces the monorepo's own kebab name only where it is one of those values (onlyIf), never in repository URLs or project names.",
       "valueSource": "name",
       "valueTransform": "dnsLabel",
       "replaces": "timewarp-architecture",
@@ -183,7 +218,9 @@
         { "after": "\"k8s-namespace\": \"" },
         { "after": "\"helm-release-name\": \"" },
         { "after": "\"registry-repository\": \"" },
-        { "after": "\"name\": \"" }
+        { "after": "\"name\": \"" },
+        { "after": "Development CLI for " },
+        { "after": "ServiceName = \"" }
       ]
     },
     "ingressPort": {

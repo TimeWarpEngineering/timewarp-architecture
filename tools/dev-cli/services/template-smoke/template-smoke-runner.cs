@@ -32,6 +32,8 @@
 // `#if flag` regions or template.json symbols. --app-tests adds AssertGeneratedAppTestSuitesAsync per
 // variant (needs Docker). The loop runs every selected variant even after one fails and reports them
 // together, so one nightly names every broken flag.
+// Task 530: every variant asserts the dev CLI shipped (after generate) and runs it from its runfile
+// after the solution build: `--help` lists the app commands, then `dev build` passes.
 #endregion
 
 namespace DevCli.Services;
@@ -115,6 +117,13 @@ internal sealed class TemplateSmokeRunner
     Terminal.WriteLine("\nTemplate smoke SUCCEEDED".Green());
   }
 
+  // True when extraArgs turns the template flag off (`--<flag> false`).
+  private static bool HasFlagOff(string[] extraArgs, string flag)
+  {
+    int index = Array.IndexOf(extraArgs, $"--{flag}");
+    return index >= 0 && index + 1 < extraArgs.Length && extraArgs[index + 1] == "false";
+  }
+
   private bool FindRepoRoot()
   {
     string? root = Git.FindRoot();
@@ -180,6 +189,7 @@ internal sealed class TemplateSmokeRunner
   private async Task<bool> SmokeOneAsync(string name, string[] extraArgs, string[] excludedFamilies)
   {
     string? outputDirForTier2 = null;
+    bool dbExpected = !HasFlagOff(extraArgs, "postgres") && !HasFlagOff(extraArgs, "web");
 
     bool buildOk = await Harness.Generation.SmokeOneAsync(
       name,
@@ -198,6 +208,10 @@ internal sealed class TemplateSmokeRunner
           return Task.FromResult(false);
 
         if (!Harness.Content.AssertKanbanSkeletonShipped(outputDir))
+          return Task.FromResult(false);
+
+        // Task 530: the dev CLI ships without its template-only files.
+        if (!Harness.DevCli.AssertDevCliShipped(outputDir, dbExpected))
           return Task.FromResult(false);
 
         // Task 288: matrix names carry no separators, so the kebab name is the lower-cased name.
@@ -235,6 +249,11 @@ internal sealed class TemplateSmokeRunner
     // Task 240: generated SPA initializer `_content` specifiers must exist in the NuGet cache
     // (State.Plus kebab-case rename). Host-free; the HTTP graph smoke lives in web-server tests.
     if (!Harness.InitializerAssets.AssertInitializerImportGraphResolves(outputDirForTier2))
+      return false;
+
+    // Task 530: the generated dev CLI compiles from its runfile, lists the app commands, and
+    // `dev build` passes through it.
+    if (!await Harness.DevCli.RunGeneratedCliAsync(outputDirForTier2, dbExpected, Ct))
       return false;
 
     // Tier 2 (authoritative): `dotnet run` each generated co-located test standalone and

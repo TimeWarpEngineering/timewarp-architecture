@@ -73,6 +73,8 @@ public class IsTemplatePath_Given_
       "Directory.Build.props",
       "Directory.Packages.props",
       "timewarp-architecture.slnx",
+      ".timewarp/dev.jsonc",
+      ".envrc",
       "./tools/dev-cli/endpoints/template-smoke-command.cs",
       ".github/workflows/workflow.yml",
       ".github/actions/setup-ci/action.yml",
