@@ -54,7 +54,7 @@ Done when:
 - [x] EF configuration, migration and backfill
 - [x] Contracts: list item, detail, query filter, sort column
 - [x] Tests
-- [ ] Gates (audit blocked: source-file-line-cap on EF-generated migration files)
+- [x] Gates
 
 ## Depends on
 
@@ -135,6 +135,15 @@ Expect: all tests pass; `ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply
   EF migration output (`*.Designer.cs`, `*ModelSnapshot.cs`, or paths `.editorconfig` marks
   `generated_code = true`), or the maintainer decides how this repo takes a migration under the
   ratchet.
+
+- Resume after ganda 723 (installed `1.0.0-beta.38+878bfc9a`): merged `origin/master` (kanban-only
+  commits; conflict in this task file resolved by keeping both the Blocked and Unblock sections),
+  dropped the three EF entries from `.timewarp/line-cap-baseline.json`.
+- `./bin/dev build` (after the merge): passed, 0 warnings, 0 errors. No product code changed on this
+  resume, so no test file was rerun.
+- `ganda repo audit --fix` (run 3): `analyzer-suppressions` lowered `.timewarp/suppression-baseline.json`
+  (100 lines of EF-generated pragma entries no longer counted); "Repository passes all audit checks",
+  including `source-file-line-cap`.
 
 ## Blocked
 
