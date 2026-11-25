@@ -6,7 +6,8 @@
 // A tiny FastEndpoints host, not the full web graph. CommonServerModule.AddOpenApi is the
 // document pipeline, with the same agent-bearer map web-server registers and
 // OpenApiPaymentResponses.Register, which is the web host's extra callback.
-// Tip GET and POST share /api/tip. Metered GET requires demo:invoke. A free GET must not
+// Tip GET and POST share /api/tip and are anonymous, so each publishes security: [].
+// Metered GET requires demo:invoke. A free GET must not
 // gain 402 or 503. The bare /api alias is not its own operation. The document description
 // keeps the free-routes-never-402 statement.
 // Stub routes and asserted paths are the contract RouteTemplate values. The host sets
@@ -109,7 +110,7 @@ public class Document_Given_
   public static async Task TipGet_Should_Document402And503()
   {
     JsonElement operation = await OperationAsync(TipPath, "get");
-    operation.TryGetProperty("security", out _).ShouldBeFalse();
+    operation.GetProperty("security").GetArrayLength().ShouldBe(0);
     AssertPaidResponses(operation, TipResource(), includeTip: true);
   }
 
@@ -117,7 +118,7 @@ public class Document_Given_
   {
     TipPostPath.ShouldBe(TipPath);
     JsonElement operation = await OperationAsync(TipPostPath, "post");
-    operation.TryGetProperty("security", out _).ShouldBeFalse();
+    operation.GetProperty("security").GetArrayLength().ShouldBe(0);
     AssertPaidResponses(operation, TipResource(), includeTip: true);
   }
 

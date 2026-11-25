@@ -20,12 +20,13 @@
 // come from generator Description.WithTags (namespace leaf under Features, plus additive
 // [OpenApiTags]); FE Tags() is filter-only and does not set OpenAPI operation tags.
 // AutoTagPathSegmentIndex=0 disables route-segment auto-tags so they do not compete with
-// those explicit OpenAPI tags. EnableJWTBearerAuth stays off: the automatic scheme is
-// named JWTBearerAuth and FastEndpoints attaches it only when AuthSchemeNames contains
-// that string, which product endpoints never do (they list agent-token). AddAuth
-// registers JWTBearerAuth when the host passes OpenApiAgentBearer, and
-// OpenApiBearerSecurity copies it onto operations that list that scheme, with the
-// host's policy-to-scope map. UseScalarApiReference must run after UseFastEndpoints;
+// those explicit OpenAPI tags. EnableJWTBearerAuth stays off and FastEndpoints AddAuth is not
+// called: FastEndpoints' document pass writes every registered scheme onto an endpoint with no
+// AuthSchemes, after the operation transformers ran. OpenApiOperationSecurity adds
+// JWTBearerAuth when the host passes OpenApiAgentBearer and IdentitySessionCookie (apiKey in a
+// cookie) when it passes OpenApiSessionCookie, and writes every operation's security from its
+// AuthSchemeNames: bearer with the host's scopes, the session, both as alternatives, or [] for
+// an anonymous verb. UseScalarApiReference must run after UseFastEndpoints;
 // MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
 // DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
 // applies the bearer. OpenApiOneOf publishes the OneOf response union as its wire shape
@@ -112,6 +113,9 @@ public class CommonServerModule : IAspNetModule
   /// <param name="configureOpenApi">
   /// Host callback invoked after the shared transformers. Null adds none.
   /// </param>
+  /// <param name="sessionCookie">
+  /// Browser session scheme and cookie name. When null, the document does not advertise the session cookie.
+  /// </param>
   public static void AddOpenApi
   (
     IServiceCollection serviceCollection,
@@ -119,7 +123,8 @@ public class CommonServerModule : IAspNetModule
     string apiTitle,
     OpenApiAgentBearer? agentBearer,
     bool documentPublicWebRoutes = false,
-    Action<OpenApiOptions>? configureOpenApi = null
+    Action<OpenApiOptions>? configureOpenApi = null,
+    OpenApiSessionCookie? sessionCookie = null
   )
   {
     if (agentBearer is not null)
@@ -139,27 +144,16 @@ public class CommonServerModule : IAspNetModule
         // Disable route-segment auto-tags so they do not compete with those explicit tags.
         options.AutoTagPathSegmentIndex = 0;
         options.ExcludeNonFastEndpoints = true;
-        // The automatic JWTBearerAuth scheme is never referenced: FastEndpoints matches it
-        // against AuthSchemeNames, and those names are the host's agent scheme.
+        // No FastEndpoints auth schemes: its document pass would put every registered scheme on
+        // an endpoint with no AuthSchemes. OpenApiOperationSecurity adds the schemes instead.
         options.EnableJWTBearerAuth = false;
-        if (agentBearer is not null)
-        {
-          options.AddAuth
-          (
-            OpenApiBearerSecurity.SchemeName,
-            OpenApiBearerSecurity.CreateScheme(agentBearer.PolicyScopes.Values.ToList())
-          );
-        }
 
         options.ConfigureOpenApi = openApiOptions =>
         {
           // After FastEndpoints' operation transformer, which is registered before this callback.
           OpenApiOneOf.Register(openApiOptions);
           OpenApiDeleteRequestBody.Register(openApiOptions);
-          if (agentBearer is not null)
-          {
-            OpenApiBearerSecurity.Register(openApiOptions, agentBearer);
-          }
+          OpenApiOperationSecurity.Register(openApiOptions, agentBearer, sessionCookie);
 
           OpenApiPublicServer.Register(openApiOptions);
           if (documentPublicWebRoutes)

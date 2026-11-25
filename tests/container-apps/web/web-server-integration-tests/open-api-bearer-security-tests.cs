@@ -8,9 +8,11 @@
 // (seed inverse + AuthenticationSchemeNames.AgentToken). The seed walk reads every grant
 // back from a probe operation, so a new permission with no probe, or the wrong scope,
 // fails here. A domain 403
-// description is kept and WWW-Authenticate stays optional. Cookie-only and anonymous
-// operations must stay without a bearer requirement. Scalar's page must name JWTBearerAuth
-// so Authorize has a scheme to apply.
+// description is kept and WWW-Authenticate stays optional. The host also passes the
+// session-cookie registration: a cookie-only operation requires IdentitySessionCookie and no
+// bearer, a dual operation lists the bearer then the session as alternatives, an operation
+// with no AuthSchemes uses the session (the DefaultScheme), and an anonymous one publishes
+// security: []. Scalar's page must name JWTBearerAuth so Authorize has a scheme to apply.
 #endregion
 
 namespace OpenApiBearerSecurity_;
@@ -58,7 +60,8 @@ public class Document_Given_
       builder.Services,
       "v1",
       "Test API",
-      OpenApiAgentBearerRegistration.Create()
+      OpenApiAgentBearerRegistration.Create(),
+      sessionCookie: OpenApiSessionCookieRegistration.Create()
     );
     App = builder.Build();
     App.UseFastEndpoints(config =>
@@ -161,16 +164,18 @@ public class Document_Given_
     header.GetProperty("description").GetString()!.ShouldContain("only when");
   }
 
-  public static async Task AgentLinks_Should_RequireIdentityRead()
+  public static async Task AgentLinks_Should_AcceptSessionOrIdentityRead()
   {
     JsonElement operation = await OperationAsync("/api/agent-links", "get");
     AssertBearer(operation, "identity:read");
+    AssertSessionAlternative(operation, "identity:read");
   }
 
-  public static async Task Credentials_Should_RequireCredentialManage()
+  public static async Task Credentials_Should_AcceptSessionOrCredentialManage()
   {
     JsonElement operation = await OperationAsync("/api/identity/credentials", "get");
     AssertBearer(operation, "credential:manage");
+    AssertSessionAlternative(operation, "credential:manage");
   }
 
   public static async Task Metered_Should_RequireDemoInvoke()
@@ -179,10 +184,19 @@ public class Document_Given_
     AssertBearer(operation, "demo:invoke");
   }
 
-  public static async Task FeedbackRead_Should_RequireFeedbackRead()
+  public static async Task FeedbackRead_Should_AcceptSessionOrFeedbackRead()
   {
     JsonElement operation = await OperationAsync("/api/feedback", "get");
     AssertBearer(operation, "feedback:read");
+    AssertSessionAlternative(operation, "feedback:read");
+  }
+
+  public static async Task AgentOnly_Should_ListOnlyTheBearer()
+  {
+    JsonElement operation = await OperationAsync("/api/identity/agent/me", "get");
+    operation.GetProperty("security").GetArrayLength().ShouldBe(1);
+    operation.GetProperty("description").GetString()!
+      .ShouldContain("Requires an agent bearer with scope identity:read (JWTBearerAuth).");
   }
 
   public static async Task UnmappedAgentPolicy_Should_RequireBearerWithoutAScope()
@@ -194,18 +208,24 @@ public class Document_Given_
     AssertProblemResponses(operation);
   }
 
-  public static async Task Anonymous_Should_OmitBearerSecurity()
+  public static async Task Anonymous_Should_PublishEmptySecurity()
   {
     JsonElement operation = await OperationAsync("/api/hello", "get");
-    operation.TryGetProperty("security", out _).ShouldBeFalse();
+    operation.GetProperty("security").GetArrayLength().ShouldBe(0);
     operation.TryGetProperty("responses", out JsonElement responses).ShouldBeTrue();
     responses.TryGetProperty("401", out _).ShouldBeFalse();
   }
 
-  public static async Task CookieOnly_Should_OmitBearerSecurity()
+  public static async Task CookieOnly_Should_RequireTheSessionCookie()
   {
     JsonElement operation = await OperationAsync("/api/profile", "put");
-    operation.TryGetProperty("security", out _).ShouldBeFalse();
+    AssertSessionOnly(operation);
+  }
+
+  public static async Task NoAuthSchemes_Should_RequireTheDefaultSession()
+  {
+    JsonElement operation = await OperationAsync("/api/default-scheme", "get");
+    AssertSessionOnly(operation);
   }
 
   public static async Task ScalarPage_Should_NameJwtBearerAuth()
@@ -220,9 +240,33 @@ public class Document_Given_
   private static void AssertBearer(JsonElement operation, string scope)
   {
     JsonElement scopes = operation.GetProperty("security")[0].GetProperty("JWTBearerAuth");
+    operation.GetProperty("security")[0].TryGetProperty("IdentitySessionCookie", out _).ShouldBeFalse();
     scopes.GetArrayLength().ShouldBe(1);
     scopes[0].GetString().ShouldBe(scope);
     AssertProblemResponses(operation);
+  }
+
+  private static void AssertSessionOnly(JsonElement operation)
+  {
+    JsonElement security = operation.GetProperty("security");
+    security.GetArrayLength().ShouldBe(1);
+    security[0].TryGetProperty("JWTBearerAuth", out _).ShouldBeFalse();
+    security[0].GetProperty("IdentitySessionCookie").GetArrayLength().ShouldBe(0);
+    string description = operation.GetProperty("description").GetString()!;
+    description.ShouldContain("Requires the browser session cookie (IdentitySessionCookie).");
+    description.ShouldNotContain("JWTBearerAuth");
+  }
+
+  private static void AssertSessionAlternative(JsonElement operation, string scope)
+  {
+    JsonElement security = operation.GetProperty("security");
+    security.GetArrayLength().ShouldBe(2);
+    security[1].TryGetProperty("JWTBearerAuth", out _).ShouldBeFalse();
+    security[1].GetProperty("IdentitySessionCookie").GetArrayLength().ShouldBe(0);
+    string description = operation.GetProperty("description").GetString()!;
+    description.ShouldContain(
+      $"Accepts the browser session cookie (IdentitySessionCookie) or an agent bearer with scope {scope} (JWTBearerAuth).");
+    description.ShouldNotContain("Requires");
   }
 
   private static void AssertProblemResponses(JsonElement operation)
@@ -262,218 +306,5 @@ public class Document_Given_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await response.Content.ReadAsStringAsync();
     return JsonDocument.Parse(json);
-  }
-}
-
-public sealed class AgentMeEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/identity/agent/me");
-    AuthSchemes(AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.IdentityRead);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class DomainForbiddenEndpoint : EndpointWithoutRequest
-{
-  internal const string Route = "/api/agent-links/human-ux";
-  internal const string DomainDetail = "This link belongs to a different agent.";
-
-  public override void Configure()
-  {
-    Get(Route);
-    AuthSchemes(AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.AgentLinkManageSelf);
-    Summary(summary => summary.Responses[403] = DomainDetail);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-internal static class ProbePaths
-{
-  private static readonly Dictionary<string, string> Paths = new(StringComparer.Ordinal)
-  {
-    [PermissionIds.IdentityRead] = "/api/identity/agent/me",
-    [PermissionIds.AgentLinkManageSelf] = "/api/agent-links",
-    [PermissionIds.CredentialManageSelf] = "/api/identity/credentials",
-    [PermissionIds.DemoInvoke] = "/api/demo/metered-capability",
-    [PermissionIds.FeedbackRead] = "/api/feedback",
-    [PermissionIds.FeedbackNote] = "/api/feedback/notes",
-    [PermissionIds.FeedbackSeverity] = "/api/feedback/severity",
-    [PermissionIds.FeedbackStatus] = "/api/feedback/status",
-  };
-
-  internal static bool TryGetValue(string permission, out string? path) =>
-    Paths.TryGetValue(permission, out path);
-}
-
-public sealed class AgentLinksEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/agent-links");
-    AuthSchemes(AuthenticationSchemeNames.IdentitySession, AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.AgentLinkManageSelf);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class CredentialsEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/identity/credentials");
-    AuthSchemes(AuthenticationSchemeNames.IdentitySession, AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.CredentialManageSelf);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class MeteredEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/demo/metered-capability");
-    AuthSchemes(AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.DemoInvoke);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class FeedbackReadEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/feedback");
-    AuthSchemes(AuthenticationSchemeNames.IdentitySession, AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.FeedbackRead);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class FeedbackNoteEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/feedback/notes");
-    AuthSchemes(AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.FeedbackNote);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class FeedbackSeverityEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/feedback/severity");
-    AuthSchemes(AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.FeedbackSeverity);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class FeedbackStatusEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/feedback/status");
-    AuthSchemes(AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.FeedbackStatus);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class UnmappedAgentEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Put("/api/settings/site");
-    AuthSchemes(AuthenticationSchemeNames.AgentToken);
-    Policies(PermissionIds.SettingsWrite);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class PublicHelloEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Get("/api/hello");
-    AllowAnonymous();
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
-  }
-}
-
-public sealed class CookieProfileEndpoint : EndpointWithoutRequest
-{
-  public override void Configure()
-  {
-    Put("/api/profile");
-    AuthSchemes(AuthenticationSchemeNames.IdentitySession);
-    Policies(PermissionIds.ProfileWrite);
-  }
-
-  public override Task HandleAsync(CancellationToken ct)
-  {
-    _ = ct;
-    return Task.CompletedTask;
   }
 }
