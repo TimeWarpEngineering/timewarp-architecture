@@ -56,7 +56,7 @@ Acceptance:
 ## Review
 
 - Round 1: M1 fixed in the fix pass (skill canonical-examples line)
-
+- Round 2: Done
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -149,7 +149,9 @@ Fix pass (review round 1, skill text only):
 
 ### Review
 
-Round 1 (effort 3, roster general): one suggestion, M1, in `review/round-1/merged.md`: the skill canonical-examples line still called GetRoles "attribute auth + open-data" and GetRole "manual auth". Fixed: `skills/tw-web-api-contracts/SKILL.md` Canonical examples now says GetRoles' `Search` is the only query parameter and GetRole's route id is the whole request (`IAuthApiRequest`, no caller property). M1 disposition is `fixed` in merged.md. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 (effort 3, roster general): one suggestion, M1, in `review/round-1/merged.md`: the skill canonical-examples line still called GetRoles "attribute auth + open-data" and GetRole "manual auth". Fixed in `22e842c7e`: `skills/tw-web-api-contracts/SKILL.md` Canonical examples now says GetRoles' `Search` is the only query parameter and GetRole's route id is the whole request (`IAuthApiRequest`, no caller property, `I*Details` Response).
+
+Round 2 (effort 1, roster general) re-reviewed that delta against `get-roles-contracts.cs` and `get-role-contracts.cs`. M1 stays fixed. No new findings. Disposition: clean. Final counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0 open / 0 fixed / 0 wontfix. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`. Gates were not re-run; the fix-pass record above covers the skill-text change.
 
 ## Learnings
 
@@ -163,3 +165,4 @@ Round 1 (effort 3, roster general): one suggestion, M1, in `review/round-1/merge
 - Reviewer: grok session 01a213f4-0f56-78d2-90e2-6f5e9bcb0d5c (2026-11-26), effort 3, roster general, round 1 open (M1)
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a213f4-0f56-78d2-90e2-6f5e9bcb0d5c, max-turns 200, artifacts general.md, merged.md — 2026-11-25T18:32:18Z
 - Fix pass (review round 1): implementer-claude (claude-opus-5-5), M1 fixed in `skills/tw-web-api-contracts/SKILL.md`; build, lint-skills, audit passed — 2026-11-26
+- Review round 2: reviewer-grok (grok, vendor xai, model grok-4.7), session 01a213fd-b606-77e3-9a18-62226b47c023, effort 1, roster general, max-turns 80, disposition clean — 2026-11-26

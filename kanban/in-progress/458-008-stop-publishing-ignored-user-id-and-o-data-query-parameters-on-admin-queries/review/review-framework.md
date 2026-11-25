@@ -6,15 +6,22 @@
 **Plan / brief:** Stop publishing unread `userId` and OData query members (`top`, `skip`, `filter`, `orderBy`, `returnTotalCount`) that `[AuthApiRequest]` and `[OpenDataQueryParameters]` stamped onto admin and identity contracts. Record whether `IAuthApiRequest.UserId` belongs on the wire. Add a handler-read check only if it can be done without inference.
 **Effort:** 3
 **Reviewer roster:** general
-**Session IDs:** review oracle grok session `01a213f4-0f56-78d2-90e2-6f5e9bcb0d5c` (2026-11-26). Implementer session `a55ae55e-9096-452b-a518-4425f1fe25cd` (2026-11-25).
+**Session IDs:** review oracle grok session `01a213f4-0f56-78d2-90e2-6f5e9bcb0d5c` (2026-11-26, round 1). Round 2 review oracle grok session `01a213fd-b606-77e3-9a18-62226b47c023` (2026-11-26). Implementer session `a55ae55e-9096-452b-a518-4425f1fe25cd` (2026-11-25).
+
+## Round 2 scope
+
+**Date:** 2026-11-26
+**Diff scope:** delta since round 1, commit `22e842c7e` (`skills/tw-web-api-contracts/SKILL.md` canonical-examples parenthetical and the kitchen record of that fix). By-diff budget below is this round (94 lines, effort 1, general, turn cap 80). Round 1 scope stays in the header (product commit `e25884ca4`).
+**Effort:** 1 (general only)
+**Reviewer roster:** general
 
 ## Budget (by-diff)
 
-- Lines changed: 1682
-- Effort: 3
+- Lines changed: 94
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
