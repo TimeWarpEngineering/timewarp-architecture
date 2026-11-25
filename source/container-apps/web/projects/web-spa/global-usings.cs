@@ -80,7 +80,9 @@ global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Features.Analytics;
 global using TimeWarp.Architecture.Features.Profiles;
 global using TimeWarp.Architecture.Features.AgentLinks;
+#if(postgres)
 global using TimeWarp.Architecture.Features.Feedback;
+#endif
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 global using TimeWarp.Architecture.Pipeline.NotificationPreProcessor;

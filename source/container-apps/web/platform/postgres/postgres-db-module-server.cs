@@ -20,9 +20,12 @@
 // IRoleStore → EfRoleStore with the role grant read ports IRolePermissionStore →
 // EfRolePermissionStore and IRoleAgentScopeStore → EfRoleAgentScopeStore (task 473),
 // IPrincipalAgentScopeStore → EfPrincipalAgentScopeStore (task 466), IProfileStore → EfProfileStore
-// (task 148 D4), and IFeedbackStore → EfFeedbackStore. IFeedbackAttachmentBlobStore → EfFeedbackAttachmentBlobStore
-// only when FeedbackAttachments:ConnectionString is empty (Azure wins; task 352). Challenge/token
-// stores stay in-memory either way.
+// (task 148 D4). Feedback has no in-memory store (task 522): IFeedbackStore → EfFeedbackStore and
+// IFeedbackAttachmentStore → EfFeedbackAttachmentStore replace FeedbackModule's
+// UnavailableFeedbackStorage, and IFeedbackAttachmentBlobStore → EfFeedbackAttachmentBlobStore
+// only when FeedbackAttachments:ConnectionString is empty (else FeedbackModule registered Azure;
+// task 352).
+// Challenge/token stores stay in-memory either way.
 // Schema: AppHost AddEFMigrations applies committed migrations (platform/postgres/migrations/)
 // via RunDatabaseUpdateOnStart (task 147-007). There is NO wait edge between web-server and the
 // migration resource (task 155 — WaitFor deadlocked dashboard restarts, WaitForCompletion broke
@@ -137,14 +140,14 @@ public sealed partial class PostgresDbModule : IModule
     serviceCollection.RemoveAll<IProfileStore>();
     serviceCollection.AddScoped<IProfileStore, EfProfileStore>();
 
+    // Task 522: replaces FeedbackModule's UnavailableFeedbackStorage (there is no in-memory store).
     serviceCollection.RemoveAll<IFeedbackStore>();
     serviceCollection.AddScoped<IFeedbackStore, EfFeedbackStore>();
-
     serviceCollection.RemoveAll<IFeedbackAttachmentStore>();
     serviceCollection.AddScoped<IFeedbackAttachmentStore, EfFeedbackAttachmentStore>();
 
     // Task 352: attachment bytes live next to their rows unless Azure Blob Storage is configured.
-    if (!FeedbackAttachmentBlobModule.IsAzureConfigured(configuration))
+    if (!FeedbackModule.IsAzureConfigured(configuration))
     {
       serviceCollection.RemoveAll<IFeedbackAttachmentBlobStore>();
       serviceCollection.AddScoped<IFeedbackAttachmentBlobStore, EfFeedbackAttachmentBlobStore>();

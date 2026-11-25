@@ -12,7 +12,9 @@
 // for FeedbackAdminView, and the filer's display name through FeedbackOwnerNames (null without
 // admin.profiles.read). Enums, including severity, map by name.
 // Project is the one attachment projection (task 479): AttachmentsAsync and the upload handler
-// wrap it into their own contract types with named arguments. Every constructor call here
+// wrap it into their own contract types with named arguments. AttachmentsAsync also asks the
+// byte store whether each file is still stored (task 522), one Exists call per attachment; an
+// item holds at most FeedbackAttachmentRules.MaxPerItem files. Every constructor call here
 // names its arguments so same-typed members cannot be swapped silently.
 #endregion
 
@@ -72,21 +74,30 @@ internal static class FeedbackContractMap
 
   public static async Task<List<GetFeedbackContract.Attachment>> AttachmentsAsync(
     IFeedbackAttachmentStore attachmentStore,
+    IFeedbackAttachmentBlobStore blobStore,
     FeedbackItemId itemId,
     CancellationToken cancellationToken)
   {
     IReadOnlyList<FeedbackAttachment> stored = await attachmentStore
       .ListByItemAsync(itemId, cancellationToken)
       .ConfigureAwait(false);
-    return
-    [
-      .. stored.Select(Project).Select(projection => new GetFeedbackContract.Attachment(
+    List<GetFeedbackContract.Attachment> attachments = new(stored.Count);
+    foreach (FeedbackAttachment attachment in stored)
+    {
+      AttachmentProjection projection = Project(attachment);
+      bool isFilePresent = await blobStore
+        .ExistsAsync(attachment.StorageKey, cancellationToken)
+        .ConfigureAwait(false);
+      attachments.Add(new GetFeedbackContract.Attachment(
         attachmentId: projection.AttachmentId,
         fileName: projection.FileName,
         contentType: projection.ContentType,
         size: projection.Size,
-        downloadPath: projection.DownloadPath))
-    ];
+        downloadPath: projection.DownloadPath,
+        isFilePresent: isFilePresent));
+    }
+
+    return attachments;
   }
 
   /// <summary>Reads the members every attachment contract shares from a stored attachment.</summary>
@@ -103,11 +114,12 @@ internal static class FeedbackContractMap
   public static async Task<FeedbackAdminView> AdminViewAsync(
     FeedbackItem item,
     IFeedbackAttachmentStore attachmentStore,
+    IFeedbackAttachmentBlobStore blobStore,
     IProfileEmailLookup profileEmailLookup,
     FeedbackOwnerNames ownerNames,
     CancellationToken cancellationToken)
   {
-    List<GetFeedbackContract.Attachment> attachments = await AttachmentsAsync(attachmentStore, item.Id, cancellationToken)
+    List<GetFeedbackContract.Attachment> attachments = await AttachmentsAsync(attachmentStore, blobStore, item.Id, cancellationToken)
       .ConfigureAwait(false);
     string? email = await profileEmailLookup
       .FindEmailAsync(item.OwnerPrincipalId, cancellationToken)

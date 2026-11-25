@@ -6,7 +6,8 @@
 #region Design
 // C-create: each test class owns its HostGraph (CreateHostAsync in SetupOnce, DisposeAsync in
 // CleanUpOnce) and passes its WebTestServerApplication to the helpers that touch the host. The
-// fixture keeps no host state, so no host is shared across classes.
+// fixture keeps no host state, so no host is shared across classes. Each graph runs over its own
+// Postgres database (PostgresWebHost, task 522): there is no in-memory feedback store.
 #endregion
 
 namespace AdminFeedbackAuthorization_;
@@ -33,12 +34,7 @@ internal static class AdminFeedbackAuthorizationFixture
   /// Builds the host graph a test class owns for its lifetime (C-create): the class stores it in its
   /// SetupOnce and disposes it in its CleanUpOnce.
   /// </summary>
-  public static Task<HostGraph> CreateHostAsync() =>
-#if(api)
-    HostGraphFactory.CreateWebWithApiAsync();
-#else
-    HostGraphFactory.CreateWebAsync();
-#endif
+  public static Task<HostGraph> CreateHostAsync() => PostgresWebHost.CreateWebAsync();
 
   public static async Task<string> IssueTokenAsync(WebTestServerApplication web, params string[] scopes)
   {

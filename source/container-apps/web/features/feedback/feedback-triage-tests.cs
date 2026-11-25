@@ -1,11 +1,13 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)container-apps/web/projects/web-contracts/web-contracts.csproj
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
+#:project $(TestsDirectory)common/timewarp-testing/timewarp-testing.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0005;IDE0007;IDE0008
 #:include feedback-triage-world-tests.cs
+#:include feedback-postgres-stores-tests.cs
 
 // Co-located Jaribu: admin feedback triage (status, replies, internal notes) and the filer's thread.
 // Run standalone:  dotnet run source/container-apps/web/features/feedback/feedback-triage-tests.cs

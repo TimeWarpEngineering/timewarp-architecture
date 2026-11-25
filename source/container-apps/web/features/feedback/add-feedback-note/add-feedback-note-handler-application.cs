@@ -19,6 +19,7 @@ public sealed class AddFeedbackNote
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IFeedbackStore FeedbackStore;
     private readonly IFeedbackAttachmentStore AttachmentStore;
+    private readonly IFeedbackAttachmentBlobStore BlobStore;
     private readonly IProfileEmailLookup ProfileEmailLookup;
     private readonly FeedbackOwnerNames OwnerNames;
 
@@ -26,12 +27,14 @@ public sealed class AddFeedbackNote
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IFeedbackStore feedbackStore,
       IFeedbackAttachmentStore attachmentStore,
+      IFeedbackAttachmentBlobStore blobStore,
       IProfileEmailLookup profileEmailLookup,
       FeedbackOwnerNames ownerNames)
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       FeedbackStore = feedbackStore;
       AttachmentStore = attachmentStore;
+      BlobStore = blobStore;
       ProfileEmailLookup = profileEmailLookup;
       OwnerNames = ownerNames;
     }
@@ -68,7 +71,7 @@ public sealed class AddFeedbackNote
       }
 
       return new Response(
-        item: await FeedbackContractMap.AdminViewAsync(item, AttachmentStore, ProfileEmailLookup, OwnerNames, cancellationToken)
+        item: await FeedbackContractMap.AdminViewAsync(item, AttachmentStore, BlobStore, ProfileEmailLookup, OwnerNames, cancellationToken)
           .ConfigureAwait(false));
     }
   }

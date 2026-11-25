@@ -6,7 +6,9 @@
 // Unauthenticated is defense in depth behind [EndpointAuthorize]. A missing item and an item
 // owned by someone else share one 404 so a read does not reveal that the id exists.
 // AttachmentGone is the 404 for a reader who may see the row but whose bytes are missing
-// (an in-memory store that restarted, task 352); it is only returned after the access check.
+// (rows written before task 352 kept their bytes in memory); it is only returned after the
+// access check. The item views report the same condition up front as Attachment.IsFilePresent
+// (task 522).
 // StatusUnchanged and Changed are the triage conflicts (task 314): choosing the current status,
 // and another writer saving the item between this request's read and write. InvalidSeverity and
 // SeverityUnchanged are the same pair for review severity (task 378): Unset, and the current value.

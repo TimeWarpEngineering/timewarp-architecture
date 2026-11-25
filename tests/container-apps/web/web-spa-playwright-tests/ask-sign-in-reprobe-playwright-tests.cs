@@ -24,7 +24,7 @@
 // Task 345: signed in (the first passkey account is Administrator), Settings' Ask types @ in the
 // composer: Enter chooses the first permitted type, Backspace returns to the types, Enter again,
 // and Enter on the highlighted item inserts its @prefix:id token in place of the @. The list
-// query is the real in-memory API as that user. The sent message carries the token and the fake
+// query is the real API as that user, over its own Postgres database (task 522). The sent message carries the token and the fake
 // upstream's page_context answer lists it under references.
 // Task 346: on /Feedback the account files one item, so "Your filings" has a row. Ask's Tag
 // turns on pick mode; Esc cancels it with no chip. Tag again, hovering the row outlines it with
@@ -45,7 +45,9 @@
 
 namespace AskSignInPlaywright_;
 
+#if postgres
 using TimeWarp.Architecture.Features.Applications;
+#endif
 using static AskSignInPlaywright_.AskSignInTestFixture;
 
 public class AskSignInReprobe_Given_Wasm
@@ -58,7 +60,12 @@ public class AskSignInReprobe_Given_Wasm
 
   public static async Task SignIn_Should_ReprobeAsk_And_NeverShowA401AsNotConfigured()
   {
+    // Task 522: filing feedback needs Postgres (no in-memory feedback store).
+#if postgres
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync(services =>
+#else
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+#endif
       services.PostConfigure<XaiChatOptions>(options =>
       {
         options.UseFakeUpstream = true;
@@ -172,6 +179,7 @@ public class AskSignInReprobe_Given_Wasm
       }
 
       await AssertReasoningOmitsDictionaryAsync(session, failures, "Settings");
+#if postgres
 
       string feedbackUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Feedback";
       await session.Page.GotoAsync(feedbackUrl, new PageGotoOptions
@@ -263,6 +271,7 @@ public class AskSignInReprobe_Given_Wasm
 
         await AssertReasoningOmitsDictionaryAsync(session, failures, "Feedback");
       }
+#endif
     }
 
     Console.WriteLine($"task-293 configuration statuses: [{session.Statuses}]; signed out: {signedOut}; signed in: {signedIn}");

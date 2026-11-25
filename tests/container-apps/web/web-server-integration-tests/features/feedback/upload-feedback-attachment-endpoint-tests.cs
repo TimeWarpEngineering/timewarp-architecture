@@ -9,7 +9,7 @@
 // with the file's own Content-Type. A new passkey account has feedback.file.self. The
 // disallowed type stays on the host 415. The handler's magic-byte 415 is covered by the
 // co-located Jaribu runfile. The client accepts the loopback dev certificate; CI runners
-// do not trust it.
+// do not trust it. The host runs over its own Postgres database (PostgresWebHost, task 522).
 #endregion
 
 namespace UploadFeedbackAttachmentEndpoint_;
@@ -35,11 +35,7 @@ public class Accepts_
 
   public static async Task SetupOnce()
   {
-#if(api)
-    Graph = await HostGraphFactory.CreateWebWithApiAsync();
-#else
-    Graph = await HostGraphFactory.CreateWebAsync();
-#endif
+    Graph = await PostgresWebHost.CreateWebAsync();
     (_, SessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
   }
 

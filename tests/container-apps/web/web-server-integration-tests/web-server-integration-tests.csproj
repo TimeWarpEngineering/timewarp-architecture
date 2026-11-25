@@ -15,7 +15,7 @@
     <!-- Feature-flag symbols (task 145-004 R2-1): the template engine strips #if(flag) regions
          at generation time; the real repo build (all features on) needs the symbol defined to
          keep the CreateWebWithApiAsync branch (else CreateWebAsync) at every SetupOnce call site. -->
-    <DefineConstants>$(DefineConstants);api</DefineConstants>
+    <DefineConstants>$(DefineConstants);api;postgres</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AutoFixture" />

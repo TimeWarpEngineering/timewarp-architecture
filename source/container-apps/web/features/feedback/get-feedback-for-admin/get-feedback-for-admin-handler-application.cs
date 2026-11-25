@@ -4,6 +4,7 @@
 
 #region Design
 // No owner check: admin.feedback.read on the endpoint is the gate. A missing id is 404.
+// Attachments carry IsFilePresent from the byte store (task 522, FeedbackContractMap).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -17,17 +18,20 @@ public sealed class GetFeedbackForAdmin
   {
     private readonly IFeedbackStore FeedbackStore;
     private readonly IFeedbackAttachmentStore AttachmentStore;
+    private readonly IFeedbackAttachmentBlobStore BlobStore;
     private readonly IProfileEmailLookup ProfileEmailLookup;
     private readonly FeedbackOwnerNames OwnerNames;
 
     public Handler(
       IFeedbackStore feedbackStore,
       IFeedbackAttachmentStore attachmentStore,
+      IFeedbackAttachmentBlobStore blobStore,
       IProfileEmailLookup profileEmailLookup,
       FeedbackOwnerNames ownerNames)
     {
       FeedbackStore = feedbackStore;
       AttachmentStore = attachmentStore;
+      BlobStore = blobStore;
       ProfileEmailLookup = profileEmailLookup;
       OwnerNames = ownerNames;
     }
@@ -45,7 +49,7 @@ public sealed class GetFeedbackForAdmin
       }
 
       return new Response(
-        item: await FeedbackContractMap.AdminViewAsync(item, AttachmentStore, ProfileEmailLookup, OwnerNames, cancellationToken)
+        item: await FeedbackContractMap.AdminViewAsync(item, AttachmentStore, BlobStore, ProfileEmailLookup, OwnerNames, cancellationToken)
           .ConfigureAwait(false));
     }
   }

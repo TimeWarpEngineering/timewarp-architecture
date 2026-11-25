@@ -65,6 +65,17 @@ public sealed class AzureFeedbackAttachmentBlobStore : IFeedbackAttachmentBlobSt
   }
 
   /// <inheritdoc />
+  public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(key);
+    await EnsureContainerAsync(cancellationToken).ConfigureAwait(false);
+    Azure.Response<bool> exists = await Container.GetBlobClient(key)
+      .ExistsAsync(cancellationToken)
+      .ConfigureAwait(false);
+    return exists.Value;
+  }
+
+  /// <inheritdoc />
   public async Task DeleteAsync(string key, CancellationToken cancellationToken = default)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(key);

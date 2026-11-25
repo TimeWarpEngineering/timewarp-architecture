@@ -1,7 +1,9 @@
 #region Purpose
 // Render SafeMarkdown and FeedbackBody and prove the safety rules: no raw HTML, no script or
 // on* attributes, links only http(s) or app-relative, images only from the allow-list, and an
-// attachment shown inline is not listed again.
+// attachment shown inline is not listed again. An attachment whose file is no longer stored
+// (task 522) renders MissingFile in the body and the list, never an img or a link. The
+// FeedbackBody tests compile only with the postgres flag, like the feedback slice.
 #endregion
 
 #region Design
@@ -21,7 +23,9 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging.Abstractions;
 using TimeWarp.Architecture.Components;
+#if postgres
 using TimeWarp.Architecture.Features.Feedback;
+#endif
 
 [TestTag("Unit")]
 public class SafeMarkdown_Should_
@@ -107,13 +111,14 @@ public class SafeMarkdown_Should_
     CountOf(html, "<img").ShouldBe(1);
     html.ShouldNotContain(" onerror=\"alert");
   }
+#if postgres
 
   public static async Task Not_List_Inline_Attachments_Twice()
   {
-    GetFeedback.Attachment inline = new(Guid.Parse("11111111-1111-1111-1111-111111111111"), "pasted.png", "image/png", 10, Own);
-    GetFeedback.Attachment unreferenced = new(Guid.Parse("22222222-2222-2222-2222-222222222222"), "second.png", "image/png", 10, Other);
+    GetFeedback.Attachment inline = new(Guid.Parse("11111111-1111-1111-1111-111111111111"), "pasted.png", "image/png", 10, Own, isFilePresent: true);
+    GetFeedback.Attachment unreferenced = new(Guid.Parse("22222222-2222-2222-2222-222222222222"), "second.png", "image/png", 10, Other, isFilePresent: true);
     GetFeedback.Attachment notes = new(Guid.Parse("33333333-3333-3333-3333-333333333333"), "notes.txt", "text/plain", 10,
-      "/api/Feedback/attachments/33333333-3333-3333-3333-333333333333");
+      "/api/Feedback/attachments/33333333-3333-3333-3333-333333333333", isFilePresent: true);
 
     string html = await RenderComponentAsync<FeedbackBody>(new Dictionary<string, object?>
     {
@@ -131,7 +136,7 @@ public class SafeMarkdown_Should_
   public static async Task Not_List_A_File_The_Body_Links_Inline()
   {
     const string notesPath = "/api/Feedback/attachments/33333333-3333-3333-3333-333333333333";
-    GetFeedback.Attachment notes = new(Guid.Parse("33333333-3333-3333-3333-333333333333"), "notes.txt", "text/plain", 10, notesPath);
+    GetFeedback.Attachment notes = new(Guid.Parse("33333333-3333-3333-3333-333333333333"), "notes.txt", "text/plain", 10, notesPath, isFilePresent: true);
 
     string html = await RenderComponentAsync<FeedbackBody>(new Dictionary<string, object?>
     {
@@ -144,6 +149,51 @@ public class SafeMarkdown_Should_
     CountOf(html, $"href=\"{notesPath}\"").ShouldBe(1);
     html.ShouldNotContain("data-qa=\"Listed\"");
   }
+
+  public static async Task Render_An_Orphan_Attachment_As_A_Missing_File()
+  {
+    const string notesPath = "/api/Feedback/attachments/33333333-3333-3333-3333-333333333333";
+    GetFeedback.Attachment pasted = new(Guid.Parse("11111111-1111-1111-1111-111111111111"), "pasted.png", "image/png", 10, Own, isFilePresent: false);
+    GetFeedback.Attachment listed = new(Guid.Parse("22222222-2222-2222-2222-222222222222"), "second.png", "image/png", 10, Other, isFilePresent: false);
+    GetFeedback.Attachment notes = new(Guid.Parse("33333333-3333-3333-3333-333333333333"), "notes.txt", "text/plain", 10, notesPath, isFilePresent: false);
+
+    string html = await RenderComponentAsync<FeedbackBody>(new Dictionary<string, object?>
+    {
+      ["Body"] = $"Dark theme broken\n\n![pasted.png]({Own})\n\nLog: [notes.txt]({notesPath})",
+      ["Attachments"] = new List<GetFeedback.Attachment> { pasted, listed, notes },
+      ["AttachmentDataQa"] = "Listed",
+    });
+
+    html.ShouldNotContain("<img");
+    html.ShouldNotContain($"\"{Own}\"");
+    html.ShouldNotContain($"\"{Other}\"");
+    html.ShouldNotContain($"\"{notesPath}\"");
+    CountOf(html, "data-qa=\"MissingFile\"").ShouldBe(3);
+    CountOf(html, "file no longer stored").ShouldBe(3);
+    html.ShouldContain(">pasted.png</span>");
+    html.ShouldContain(">second.png</span>");
+    html.ShouldContain(">notes.txt</span>");
+    CountOf(html, "data-qa=\"Listed\"").ShouldBe(1);
+  }
+
+  public static async Task Render_A_Stored_Attachment_Next_To_A_Missing_One()
+  {
+    GetFeedback.Attachment stored = new(Guid.Parse("11111111-1111-1111-1111-111111111111"), "kept.png", "image/png", 10, Own, isFilePresent: true);
+    GetFeedback.Attachment missing = new(Guid.Parse("22222222-2222-2222-2222-222222222222"), "lost.png", "image/png", 10, Other, isFilePresent: false);
+
+    string html = await RenderComponentAsync<FeedbackBody>(new Dictionary<string, object?>
+    {
+      ["Body"] = $"![kept.png]({Own})\n\n![lost.png]({Other})",
+      ["Attachments"] = new List<GetFeedback.Attachment> { stored, missing },
+    });
+
+    CountOf(html, "<img").ShouldBe(1);
+    html.ShouldContain($"src=\"{Own}\"");
+    html.ShouldNotContain($"\"{Other}\"");
+    CountOf(html, "data-qa=\"MissingFile\"").ShouldBe(1);
+    html.ShouldContain(">lost.png</span>");
+  }
+#endif
 
   public static async Task Keep_Soft_Breaks_As_Br_By_Default()
   {

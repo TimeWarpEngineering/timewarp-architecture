@@ -98,8 +98,10 @@ public class Document_Given_
   public static async Task Hand_Written_Endpoints_Should_Use_Their_Feature_Tag()
   {
     JsonElement document = await DocumentRootAsync();
+#if postgres
     Tags(Operation(document, "/api/Feedback/attachments", "post")).ShouldBe(["Feedback"]);
     Tags(Operation(document, "/api/Feedback/attachments/{attachmentId}", "get")).ShouldBe(["Feedback"]);
+#endif
     Tags(Operation(document, "/api/identity/entra/challenge", "get")).ShouldBe(["Identity"]);
     Tags(Operation(document, "/identity/sign-out", "post")).ShouldBe(["Identity"]);
     Tags(Operation(document, "/identity/sign-out/antiforgery-token", "get")).ShouldBe(["Identity"]);

@@ -24,8 +24,8 @@
 // Runner: GREEN_KEY_RUNNER_IMAGE when set. Otherwise RUNNER_ENVIRONMENT plus, on a GitHub-hosted
 // runner, ImageOS and ImageVersion, and on a self-hosted (wslc) runner the SHA-256 of
 // /var/lib/dpkg/status, the way ganda describes an image that publishes no id. It describes the
-// classify job's runner, which is every gated job's runner except ci (integration): that leg needs
-// Docker and always runs hosted, so its image is not in the key. The workflow pulls no container
+// classify job's runner, which is every gated job's runner except ci (integration) and
+// template-smoke: those need Docker and always run hosted, so their image is not in the key. The workflow pulls no container
 // image by tag (Testcontainers' postgres tag is a string in the tree), so there is no image line.
 //
 // Gates: ci (the ci-group matrix), skill (skill-lint), template (template-smoke). A marker is a

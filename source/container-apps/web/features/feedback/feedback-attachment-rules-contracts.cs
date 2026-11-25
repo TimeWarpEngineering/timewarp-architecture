@@ -5,8 +5,8 @@
 #region Design
 // Contracts must not reference domain, so these literals are duplicated on
 // FeedbackAttachment in the domain. A unit test locks the two copies together.
-// Five mebibytes and eight files per item bound memory on the in-memory blob and on the
-// browser draft. SVG and HTML are refused so a download cannot become active content.
+// Five mebibytes and eight files per item bound the bytes one request loads (the Postgres
+// store reads a whole value) and the browser draft. SVG and HTML are refused so a download cannot become active content.
 // The served Content-Type is always one of AllowedContentTypes, never the request header.
 // PendingLifetime bounds an upload that is never filed: the draft list lives only in the
 // browser, so a reload loses it. Upload deletes the caller's own unlinked files older than

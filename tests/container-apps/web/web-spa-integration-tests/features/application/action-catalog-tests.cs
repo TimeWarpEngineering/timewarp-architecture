@@ -30,6 +30,7 @@ public class ActionCatalog_Should
     "Credentials.LinkMicrosoft365",
     "Credentials.RenameCredential",
     "Credentials.RevokeCredential",
+#if postgres
     "Feedback.ListMyFeedback",
     "Feedback.OpenFeedback",
     // Human: the file picker and the paste hook both dispatch these.
@@ -37,6 +38,7 @@ public class ActionCatalog_Should
     "Feedback.ReplyAsFiler",
     "Feedback.SubmitFeedback",
     "Feedback.UploadFeedbackAttachment",
+#endif
     // Agent, required arguments: the Prefill tools store a draft through it (FormPrefill).
     "FormSuggestion.SetFormSuggestion",
     "Profile.SignOut",
@@ -102,6 +104,7 @@ public class ActionCatalog_Should
     linkMicrosoft365.Visibility.ShouldBe(ActionVisibility.Human);
     linkMicrosoft365.Description.ShouldNotBeNullOrWhiteSpace();
     linkMicrosoft365.DisplayName.ShouldBe("Link Microsoft 365");
+#if postgres
 
     foreach (string fileAction in new[] { "Feedback.UploadFeedbackAttachment", "Feedback.RemoveFeedbackAttachment", "Feedback.ReplyAsFiler" })
     {
@@ -109,6 +112,7 @@ public class ActionCatalog_Should
       entry.Visibility.ShouldBe(ActionVisibility.Human, fileAction);
       entry.Permissions.ShouldBe([PermissionIds.FeedbackFileSelf], fileAction);
     }
+#endif
 
     // Task 282: item actions need a credential id, so people reach them from the page's row buttons;
     // the catalog exposes them to agents only (Ctrl-K lists navigation and parameter-free commands).

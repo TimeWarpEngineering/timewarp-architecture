@@ -12,12 +12,13 @@ name: CI/CD
 #   green-key       uploads a green-key marker for each gate that passed (task 504)
 #
 # Runner (task 504, as timewarp-nuru 539). A push, or a pull request whose head branch lives in this
-# repo, runs classify, ci-group, skill-lint, and template-smoke on the wslc container runners on
-# TWE-001 (labels self-hosted, twe-001, wslc; org runner group 3, which allows this public repo:
+# repo, runs classify, ci-group, and skill-lint on the wslc container runners on TWE-001 (labels
+# self-hosted, twe-001, wslc; org runner group 3, which allows this public repo:
 # timewarp-infrastructure 004). Everything else stays on ubuntu-latest: fork pull requests (untrusted
 # code), release, schedule, workflow_dispatch, and the small ci and green-key jobs. ci (integration)
-# stays hosted on every event: its Testcontainers and aspire-tests need a Docker daemon, and the wslc
-# image has no Docker socket. A fork pull request runs its own copy of this file and can rewrite
+# and template-smoke stay hosted on every event: Testcontainers and aspire-tests need a Docker
+# daemon, and the wslc image has no Docker socket. template-smoke runs the generated app's
+# web-jaribu-tests, whose feedback tests use Testcontainers Postgres (task 522). A fork pull request runs its own copy of this file and can rewrite
 # runs-on, so the real gate is the fork pull request approval setting (all_external_contributors):
 # approvers read the workflow diff before approving. Set the repository variable CI_HOSTED_ONLY to
 # true to send every run to ubuntu-latest (runners offline) without a code change.
@@ -285,11 +286,8 @@ jobs:
         (github.event_name == 'workflow_dispatch' && inputs.mode != 'probe') ||
         ((github.event_name == 'push' || github.event_name == 'pull_request') && needs.classify.outputs.template == 'true')
       )
-    runs-on: >-
-      ${{ vars.CI_HOSTED_ONLY != 'true' &&
-      (github.event_name == 'push' ||
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
-      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
+    # Hosted on every event: the generated app's tests use Testcontainers (see the header).
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
@@ -316,8 +314,7 @@ jobs:
           exit $LASTEXITCODE
 
       # The smoke restores this branch's 2.0.0-smoke packages. Evict them before the cache
-      # post-step saves (hosted) or the next job reuses the instance's NuGet volume (wslc), so no
-      # cache carries one branch's local bits into another run.
+      # post-step saves, so no cache carries one branch's local bits into another run.
       - name: Evict smoke packages from NuGet cache
         if: always()
         run: rm -rf ~/.nuget/packages/*/2.0.0-smoke

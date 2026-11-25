@@ -1,5 +1,5 @@
 #region Purpose
-// Shared fakes for the feedback attachment runfiles: in-memory world, racing store, fake blob store, and stub lookups.
+// Shared fakes for the feedback attachment runfiles: a Postgres-backed world, racing store, undeletable blob store, and stub lookups.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback
@@ -25,13 +25,23 @@ namespace TimeWarp.Architecture.Features.Feedback
     internal static readonly byte[] Png = Convert.FromBase64String(
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
 
-    public InMemoryFeedbackStore Feedback { get; } = new();
-    public InMemoryFeedbackAttachmentStore Attachments { get; } = new();
-    public InMemoryFeedbackAttachmentBlobStore Blobs { get; } = new();
+    private readonly FeedbackTestStores Stores = new();
+
+    public PostgresFeedbackTestStore Feedback => Stores.Feedback;
+    public PostgresFeedbackAttachmentTestStore Attachments => Stores.Attachments;
+    public PostgresFeedbackAttachmentBlobTestStore Blobs => Stores.Blobs;
     public AttachmentGrantingPermissionEvaluator Permissions { get; } = new();
     public AttachmentHeldAgentCallers Agents { get; } = new();
     public PrincipalId Owner { get; } = PrincipalId.New();
     public IFeedbackAttachmentBlobStore? UploadBlobs { get; set; }
+
+    /// <summary>Files an item for the owner directly in the store; attachment links need a real item (foreign key).</summary>
+    public async Task<FeedbackItemId> FileItemAsync()
+    {
+      FeedbackItem item = FeedbackItem.File(Owner.Value, Domain.FeedbackKind.Complaint, "Elsewhere", "Body", DateTimeOffset.UtcNow);
+      await Feedback.AddAsync(item);
+      return item.Id;
+    }
 
     public async Task<Guid> UploadAsync(PrincipalId principal, string fileName, string contentType, byte[] content)
     {
@@ -144,7 +154,7 @@ namespace TimeWarp.Architecture.Features.Feedback
         attachmentStore ?? Attachments);
 
     private GetHandler GetAs(PrincipalId principal) =>
-      new(new AttachmentStubCurrentPrincipalAccessor(principal), Feedback, Attachments);
+      new(new AttachmentStubCurrentPrincipalAccessor(principal), Feedback, Attachments, Blobs);
 
     private static SubmitFeedback.Command Command(IReadOnlyList<Guid> attachmentIds) => new()
     {
@@ -242,6 +252,9 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public Task<Stream?> OpenReadAsync(string key, CancellationToken cancellationToken = default) =>
       Inner.OpenReadAsync(key, cancellationToken);
+
+    public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default) =>
+      Inner.ExistsAsync(key, cancellationToken);
 
     public Task DeleteAsync(string key, CancellationToken cancellationToken = default) =>
       throw new IOException("blob delete failed");

@@ -1,11 +1,13 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)container-apps/web/projects/web-contracts/web-contracts.csproj
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
+#:project $(TestsDirectory)common/timewarp-testing/timewarp-testing.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0005;IDE0007;IDE0008
 #:include feedback-attachment-world-tests.cs
+#:include feedback-postgres-stores-tests.cs
 
 // Co-located Jaribu: attachment limits, owner-or-admin download, safe headers, upload cap, and remove.
 // Run standalone:  dotnet run source/container-apps/web/features/feedback/feedback-attachment-tests.cs
@@ -117,7 +119,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       (await world.DownloadProblemAsync(admin, attachmentId)).Status.ShouldBe(404);
       (await world.DownloadProblemAsync(agentReader, attachmentId)).Status.ShouldBe(404);
 
-      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(attachmentId), world.Owner.Value, FeedbackItemId.New()))
+      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(attachmentId), world.Owner.Value, await world.FileItemAsync()))
         .ShouldBeTrue();
 
       (await world.DownloadAsync(world.Owner, attachmentId)).FileName.ShouldBe("shot.png");
@@ -139,7 +141,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       (await world.Attachments.TryLinkAsync(
           FeedbackAttachmentId.From(attachmentId),
           world.Owner.Value,
-          FeedbackItemId.New()))
+          await world.FileItemAsync()))
         .ShouldBeTrue();
 
       PrincipalId agent = PrincipalId.New();
@@ -254,7 +256,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       }
 
       Guid filedId = await world.UploadAsync(world.Owner, "kept.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
-      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(filedId), world.Owner.Value, FeedbackItemId.New()))
+      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(filedId), world.Owner.Value, await world.FileItemAsync()))
         .ShouldBeTrue();
 
       Guid freshId = await world.UploadAsync(world.Owner, "fresh.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());

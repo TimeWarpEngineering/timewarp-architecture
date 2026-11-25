@@ -5,7 +5,7 @@
 #region Design
 // Scoped, depends on PostgresDbContext. PostgresDbModule registers it when a connection string
 // is present and FeedbackAttachments:ConnectionString is empty, so mode selection is Azure, then
-// Postgres, then in-memory. Each call commits on its own: upload writes the bytes before the
+// Postgres. Each call commits on its own: upload writes the bytes before the
 // attachment row and deletes them if the row insert throws, and remove deletes the row before
 // the bytes, so "row exists" implies "bytes exist". A failure between the two calls leaves
 // unreferenced bytes, never a row without bytes.
@@ -78,6 +78,16 @@ public sealed class EfFeedbackAttachmentBlobStore : IFeedbackAttachmentBlobStore
       .FirstOrDefaultAsync(cancellationToken)
       .ConfigureAwait(false);
     return content is null ? null : new MemoryStream(content, writable: false);
+  }
+
+  /// <inheritdoc />
+  public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(key);
+    cancellationToken.ThrowIfCancellationRequested();
+    return await Db.FeedbackAttachmentBytes
+      .AnyAsync(row => row.StorageKey == key, cancellationToken)
+      .ConfigureAwait(false);
   }
 
   /// <inheritdoc />

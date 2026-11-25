@@ -16,6 +16,7 @@ using TimeWarp.Architecture.Features;
 [TestTag("Integration")]
 public partial class CatalogAgent_Should
 {
+#if postgres
   private static async Task<string> InvokePageContextAsync(IServiceProvider services)
   {
     PageContextEchoClient echo = new();
@@ -34,6 +35,7 @@ public partial class CatalogAgent_Should
     return echo.ToolResult.ShouldNotBeNull();
   }
 
+#endif
   private static string RepoFile(params string[] parts)
   {
     string? directory = AppContext.BaseDirectory;

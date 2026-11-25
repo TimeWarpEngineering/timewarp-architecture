@@ -67,7 +67,11 @@ public partial class Destinations_Should_
   public static async Task Match_Across_Menu_Palette_And_Agent_For_Plain_User()
   {
     string[] destinations = await AssertSameDestinationsAsync(PlainUser, "PlainUser");
+#if postgres
     destinations.ShouldBe(["/", "/Settings", "/Profile", "/AgentLinks", "/Feedback"]);
+#else
+    destinations.ShouldBe(["/", "/Settings", "/Profile", "/AgentLinks"]);
+#endif
   }
 
   public static async Task Match_Across_Menu_Palette_And_Agent_For_Developer()
@@ -219,7 +223,9 @@ public partial class Destinations_Should_
 
     PageAgentScope.ActionTypesFor("/Settings").ShouldNotBeEmpty();
     PageAgentScope.ActionTypesFor("/").ShouldBeEmpty();
+#if postgres
     PageAgentScope.ActionTypesFor($"/Feedback/{Guid.NewGuid():D}").ShouldNotBeEmpty();
+#endif
     PageAgentScope.ActionTypesFor("/Feedback/not-a-guid").ShouldBeEmpty();
     PageAgentScope.ActionTypesFor("/FeedbackExtra").ShouldBeEmpty();
 

@@ -6,8 +6,10 @@
 namespace AskSignInPlaywright_;
 
 using System.Text.Json;
+#if postgres
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features.Feedback;
+#endif
 
 internal static class AskSignInTestFixture
 {
@@ -221,8 +223,10 @@ internal static class AskSignInTestFixture
     // The browser is session-owned (PlaywrightBrowserSession); only this test's context is closed.
     public ValueTask DisposeAsync() => Context.DisposeAsync();
   }
+#if postgres
 
   internal const string TaggedFeedbackTitle = "Dark theme broken";
+#endif
 
   /// <summary>The text of the last user turn in a completion request body.</summary>
   internal static string LastUserText(string body)
@@ -261,6 +265,7 @@ internal static class AskSignInTestFixture
 
     return hints;
   }
+#if postgres
 
   /// <summary>Files one item, then reloads /Feedback: "Your filings" loads when the page opens.</summary>
   internal static async Task FileFeedbackAsync(IPage page, string feedbackUrl)
@@ -393,6 +398,7 @@ internal static class AskSignInTestFixture
     });
     return reference;
   }
+#endif
 
   internal static async Task<string> AssertAtReferencePickerAsync<TTest>(IPage page)
   {

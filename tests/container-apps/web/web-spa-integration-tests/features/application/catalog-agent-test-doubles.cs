@@ -5,19 +5,26 @@
 namespace CatalogAgent_;
 
 using System.Security.Claims;
+#if postgres
 using Microsoft.AspNetCore.Components;
+#endif
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.AI;
+#if postgres
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
+#endif
 using TimeWarp.Architecture.Features.AgentChats;
+#if postgres
 using TimeWarp.Architecture.Features.Feedback;
 using TimeWarp.Architecture.Web.Spa;
+#endif
 using TimeWarp.Foundation.Features;
 
 [TestTag("Integration")]
 public partial class CatalogAgent_Should
 {
+#if postgres
   /// <summary>In-proc SPA: real catalog, WebMCP dispatcher, and store; signed-in with every permission; scripted feedback BFF.</summary>
   private sealed class FeedbackSpa : ISpaTestApplication, IDisposable
   {
@@ -72,11 +79,13 @@ public partial class CatalogAgent_Should
     }
   }
 
+#endif
   private sealed class FixedAuthenticationStateProvider(ClaimsPrincipal user) : AuthenticationStateProvider
   {
     public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
       Task.FromResult(new AuthenticationState(user));
   }
+#if postgres
 
   /// <summary>Scripted BFF: answers SubmitFeedback with a fresh id and the server's permalink shape, echoing the command.</summary>
   private sealed class ScriptedFeedbackApiService : TimeWarp.Architecture.Services.IWebServerApiService
@@ -160,6 +169,7 @@ public partial class CatalogAgent_Should
       throw new InvalidOperationException($"No scripted response for {request.GetType()} → {typeof(TResponse)}.");
     }
   }
+#endif
 
   private sealed class RecordingModelContext : IWebMcpModelContext
   {
@@ -249,6 +259,7 @@ public partial class CatalogAgent_Should
       );
     }
   }
+#if postgres
 
   private sealed class PageContextEchoClient : IChatClient
   {
@@ -332,4 +343,5 @@ public partial class CatalogAgent_Should
     public object? GetService(Type serviceType) =>
       serviceType == typeof(NavigationManager) ? Stuck : Inner.GetService(serviceType);
   }
+#endif
 }

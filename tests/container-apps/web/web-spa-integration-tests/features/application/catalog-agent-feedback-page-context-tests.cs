@@ -4,18 +4,23 @@
 
 namespace CatalogAgent_;
 
+#if postgres
 using System.Security.Claims;
+#endif
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.AI;
 using TimeWarp.Architecture.Components;
+#if postgres
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Feedback;
+#endif
 
 [TestTag("Integration")]
 public partial class CatalogAgent_Should
 {
+#if postgres
   public static async Task Feedback_Tools_Are_Page_Scoped_And_Read_Only_Except_Submit()
   {
     using SpaTestScope scope = SpaTestScope.Create(Spa!);
@@ -120,6 +125,7 @@ public partial class CatalogAgent_Should
     Console.WriteLine($"WEBMCP-PROOF invoke Feedback.SubmitFeedback approved receipt={receipt}");
   }
 
+#endif
   public static async Task Home_Page_Context_Carries_Title_Purpose_Tools_And_Headings()
   {
     using SpaTestScope scope = SpaTestScope.Create(Spa!);

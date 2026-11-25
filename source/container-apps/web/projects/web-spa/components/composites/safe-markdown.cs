@@ -10,7 +10,10 @@
 // HtmlBlock renders nothing.
 // A refused link renders its text only. A refused image renders as a plain link when the URL
 // is a safe link, else as its alt text. An allowed image is a MarkdownImage, which swaps to an
-// "image unavailable" placeholder when the load fails. Soft line breaks render as <br> by default
+// "image unavailable" placeholder when the load fails. MissingFileSources (task 522) names URLs
+// whose file the server reports as gone: an image or a link to one renders MissingFile (the file
+// name and "file no longer stored") instead, checked before the image allow-list and the link
+// policy, so the browser never requests it. Soft line breaks render as <br> by default
 // because feedback bodies are typed as plain text, where a newline means a new line;
 // SoftBreaksAsSpaces gives standard CommonMark (a space) for model-written text such as Ask.
 // The defaults keep plain anchors. OnAppLinkClick, when set, takes app-relative (/path) links:
@@ -39,6 +42,9 @@ public sealed class SafeMarkdown : ComponentBase
 
   /// <summary>Exact image URLs that may render inline. Every other image is refused.</summary>
   [Parameter] public IReadOnlySet<string>? AllowedImageSources { get; set; }
+
+  /// <summary>URLs whose file is no longer stored, mapped to the file name to show. An image or link to one renders MissingFile.</summary>
+  [Parameter] public IReadOnlyDictionary<string, string>? MissingFileSources { get; set; }
 
   [Parameter] public string? DataQa { get; set; }
 
@@ -213,6 +219,11 @@ public sealed class SafeMarkdown : ComponentBase
 
   private void RenderLink(RenderTreeBuilder builder, LinkInline link)
   {
+    if (TryRenderMissingFile(builder, link.Url))
+    {
+      return;
+    }
+
     bool safe = SafeMarkdownPolicy.IsSafeLink(link.Url);
     if (safe)
     {
@@ -229,6 +240,11 @@ public sealed class SafeMarkdown : ComponentBase
   private void RenderImage(RenderTreeBuilder builder, LinkInline image)
   {
     string alt = AltText(image);
+    if (TryRenderMissingFile(builder, image.Url))
+    {
+      return;
+    }
+
     if (SafeMarkdownPolicy.IsAllowedImage(image.Url, AllowedImages))
     {
       builder.OpenComponent<MarkdownImage>(70);
@@ -246,6 +262,19 @@ public sealed class SafeMarkdown : ComponentBase
     {
       builder.AddContent(74, alt);
     }
+  }
+
+  private bool TryRenderMissingFile(RenderTreeBuilder builder, string? url)
+  {
+    if (url is null || MissingFileSources is null || !MissingFileSources.TryGetValue(url, out string? fileName))
+    {
+      return false;
+    }
+
+    builder.OpenComponent<MissingFile>(90);
+    builder.AddComponentParameter(91, nameof(MissingFile.FileName), fileName);
+    builder.CloseComponent();
+    return true;
   }
 
   [DirectComponentSideEffect("Links come from untrusted markdown content. An app-relative link is handed to OnAppLinkClick when the caller sets it, and the default anchor serves attachment downloads the client router cannot route.")]

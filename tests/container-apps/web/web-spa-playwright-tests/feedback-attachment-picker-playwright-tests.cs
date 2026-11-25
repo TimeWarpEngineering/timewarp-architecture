@@ -35,7 +35,7 @@ public class FeedbackAttachmentPicker_Given_Wasm
 
   public static async Task ChooseFiles_Should_OpenThePicker_And_SpaceTheActions()
   {
-    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    await using HostGraph graph = await PostgresWebHost.CreateWebAsync();
     IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await ProveThemeAsync(browser, dark: false);
     await ProveThemeAsync(browser, dark: true);
