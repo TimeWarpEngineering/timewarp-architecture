@@ -27,7 +27,6 @@ Owner: hand-written identity endpoints; transformer `source/foundation/foundatio
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -39,6 +38,8 @@ Owner: hand-written identity endpoints; transformer `source/foundation/foundatio
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
+- Grooming note: if browser-navigation routes are excluded from OpenAPI, update `open-api-operation-tags-tests.cs` and `open-api-anonymous-intent-tests.cs` (which currently assert those routes exist in `/openapi/v1.json`); coordinate `/identity/sign-out*` with task 458-010.
 
 ## Session
 
