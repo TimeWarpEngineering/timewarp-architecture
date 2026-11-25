@@ -169,11 +169,10 @@ namespace TimeWarp.Architecture.Features.Profiles
       return Task.CompletedTask;
     }
 
-    // Aggregator host tests mutate ValidatorOptions.Global so PropertyName is JSON camelCase
-    // (`language`); standalone runfiles keep PascalCase (`Language`).
+    // Exact PascalCase match: WebApplicationHost restores ValidatorOptions.Global after host tests
+    // in the same aggregator process (ValidatorOptionsGuard, task 526).
     static bool RejectsField(ValidationFailure error, string fieldName) =>
-      string.Equals(error.PropertyName, fieldName, StringComparison.OrdinalIgnoreCase)
-      || (error.ErrorMessage?.Contains(fieldName, StringComparison.Ordinal) ?? false);
+      string.Equals(error.PropertyName, fieldName, StringComparison.Ordinal);
 
     public static Task CatalogDefaults_Should_PassValidation()
     {

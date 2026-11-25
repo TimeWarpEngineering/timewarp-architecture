@@ -1,7 +1,8 @@
 #region Purpose
 // Pins `dev test` argument construction: the MTP coverage arguments after the typed
 // `dotnet test -c Release --no-build --no-restore` options, the --filter-class / --filter-method
-// forwarding, and the serial build plan for full and --project runs.
+// forwarding, the serial build plan for full and --project runs, and the tests/ glob plus .slnx
+// diff that `dev build` uses to build the unlisted Jaribu aggregators (task 526).
 #endregion
 
 namespace DotNetTestArguments_;
@@ -133,6 +134,132 @@ public class SolutionProjects_Given_
     HashSet<string> projects = DotNetTestArguments.SolutionProjects(Slnx, root);
 
     projects.ShouldNotContain(Path.GetFullPath(Path.Combine(root, "tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj")));
+    return Task.CompletedTask;
+  }
+}
+
+public class UnlistedProjects_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<UnlistedProjects_Given_>();
+
+  private const string Slnx = """
+    <Solution>
+      <Folder Name="/tests/">
+        <Project Path="tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj" />
+        <Project Path="tests/common/timewarp-testing/timewarp-testing.csproj" />
+      </Folder>
+    </Solution>
+    """;
+
+  private static string CreateFixture(params string[] relativeProjects)
+  {
+    string root = Path.Combine(Path.GetTempPath(), "tw-526-fixture", Guid.NewGuid().ToString("N"));
+    foreach (string relative in relativeProjects)
+    {
+      string path = Path.Combine(root, relative);
+      Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+      File.WriteAllText(path, "<Project />");
+    }
+
+    return root;
+  }
+
+  public static Task TestProjects_Should_GlobCsprojOutsideObjAndBin_Sorted()
+  {
+    string root = CreateFixture(
+      "tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj",
+      "tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj",
+      "tests/foundation/foundation-domain-tests/obj/stale.csproj",
+      "tests/foundation/foundation-domain-tests/bin/Release/stale.csproj");
+    try
+    {
+      DotNetTestArguments.TestProjects(Path.Combine(root, "tests")).ShouldBe(
+      [
+        Path.GetFullPath(Path.Combine(root, "tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj")),
+        Path.GetFullPath(Path.Combine(root, "tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj"))
+      ]);
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task TestProjects_Should_BeEmpty_When_TestsFolderIsMissing()
+  {
+    string root = Path.Combine(Path.GetTempPath(), "tw-526-fixture", Guid.NewGuid().ToString("N"));
+
+    DotNetTestArguments.TestProjects(Path.Combine(root, "tests")).ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task AllFamilies_Should_YieldEveryAggregatorAndTestingTests()
+  {
+    string root = CreateFixture(
+      "tests/common/timewarp-testing/timewarp-testing.csproj",
+      "tests/common/timewarp-testing-tests/timewarp-testing-tests.csproj",
+      "tests/container-apps/api/api-jaribu-tests/api-jaribu-tests.csproj",
+      "tests/container-apps/web/web-jaribu-tests/web-jaribu-tests.csproj",
+      "tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj");
+    try
+    {
+      string[] unlisted = DotNetTestArguments.UnlistedProjects(
+        DotNetTestArguments.TestProjects(Path.Combine(root, "tests")),
+        DotNetTestArguments.SolutionProjects(Slnx, root));
+
+      unlisted.Select(Path.GetFileNameWithoutExtension)
+        .ShouldBe(["timewarp-testing-tests", "api-jaribu-tests", "web-jaribu-tests"]);
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+
+    return Task.CompletedTask;
+  }
+
+  // A generated app with --web false has no web tree and no timewarp-testing-tests on disk.
+  public static Task FamilyFlaggedOff_Should_YieldOnlyWhatShipped()
+  {
+    string root = CreateFixture(
+      "tests/common/timewarp-testing/timewarp-testing.csproj",
+      "tests/container-apps/api/api-jaribu-tests/api-jaribu-tests.csproj",
+      "tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj");
+    try
+    {
+      string[] unlisted = DotNetTestArguments.UnlistedProjects(
+        DotNetTestArguments.TestProjects(Path.Combine(root, "tests")),
+        DotNetTestArguments.SolutionProjects(Slnx, root));
+
+      unlisted.Select(Path.GetFileNameWithoutExtension).ShouldBe(["api-jaribu-tests"]);
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task NoAggregators_Should_YieldNothing()
+  {
+    string root = CreateFixture(
+      "tests/common/timewarp-testing/timewarp-testing.csproj",
+      "tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj");
+    try
+    {
+      DotNetTestArguments.UnlistedProjects(
+        DotNetTestArguments.TestProjects(Path.Combine(root, "tests")),
+        DotNetTestArguments.SolutionProjects(Slnx, root)).ShouldBeEmpty();
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+
     return Task.CompletedTask;
   }
 }
