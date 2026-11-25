@@ -29,7 +29,6 @@ Owner: transformer: `source/foundation/foundation-server/open-api-bearer-securit
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -41,6 +40,8 @@ Owner: transformer: `source/foundation/foundation-server/open-api-bearer-securit
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
+- Grooming note: pass `IdentitySessionDefaults.CookieName` from `web-server/program.cs` (like `OpenApiAgentBearer`) since `foundation-server` cannot reference `identity-host`; update `open-api-bearer-security-tests.cs` and `open-api-payment-responses-tests.cs` where they currently assert `security` is omitted.
 
 ## Session
 
