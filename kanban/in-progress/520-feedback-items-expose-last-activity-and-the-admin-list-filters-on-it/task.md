@@ -54,7 +54,7 @@ Done when:
 - [x] EF configuration, migration and backfill
 - [x] Contracts: list item, detail, query filter, sort column
 - [x] Tests
-- [ ] Gates (audit blocked: source-file-line-cap on EF-generated migration files)
+- [x] Gates
 
 ## Depends on
 
@@ -70,6 +70,13 @@ Done when:
   column, index, last migration id and the ProductVersion annotation). Worth a dev-cli follow-up if
   it repeats.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 2d2de821-6660-468a-b3f1-24d064a261c6, max-turns 500, Blocked — 2026-11-25T02:06:51Z
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ab5a7dd3-497c-4fce-9029-6669b97b5c28, max-turns 500, Done — 2026-11-25T08:53:07Z
+- Review oracle: reviewed by reviewer-grok (grok, vendor xai, model grok-4.7, session 01a211e9-0052-7612-b27f-f40bb2e390fc), effort 3, roster general, round 1, disposition clean — 2026-11-25
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a211e9-0052-7612-b27f-f40bb2e390fc, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T09:02:29Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -136,6 +143,30 @@ Expect: all tests pass; `ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply
   `generated_code = true`), or the maintainer decides how this repo takes a migration under the
   ratchet.
 
+- Resume after ganda 723 (installed `1.0.0-beta.38+878bfc9a`): merged `origin/master` (kanban-only
+  commits; conflict in this task file resolved by keeping both the Blocked and Unblock sections),
+  dropped the three EF entries from `.timewarp/line-cap-baseline.json`.
+- `./bin/dev build` (after the merge): passed, 0 warnings, 0 errors. No product code changed on this
+  resume, so no test file was rerun.
+- `ganda repo audit --fix` (run 3): `analyzer-suppressions` lowered `.timewarp/suppression-baseline.json`
+  (100 lines of EF-generated pragma entries no longer counted); "Repository passes all audit checks",
+  including `source-file-line-cap`.
+
+### Review
+
+- Round 1, roster general, effort 3 (by-diff, 1038 lines). Reviewer did not re-run build, test, or audit.
+- Counts: bug 0, suggestion 0, nit 0. Open 0. Fixed 0. Wontfix 0.
+- Disposition: clean. The implementer restatement matches the original task (no misread).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Blocked
 
 2026-11-25: ganda repo audit fails source-file-line-cap on two EF-generated files: the new 20261125015554_AddFeedbackLastActivity.Designer.cs (559 lines, cap 500) and PostgresDbContextModelSnapshot.cs (563 lines, baseline 558). The baseline can only shrink against origin/master, and the check has no per-path exclusion. Unblock options: ganda's line-cap check skips EF migration output (*.Designer.cs and *ModelSnapshot.cs, or paths .editorconfig marks generated_code = true), or the maintainer decides how timewarp-architecture lets a new migration through the line-cap baseline.
+
+## Unblock update (2026-11-25)
+
+`timewarp-ganda` task 723 landed and is installed (`1.0.0-beta.38+878bfc9a14211d61e1e75980e5ecb9c725a18c3b`): `source-file-line-cap` and `analyzer-suppressions` now skip EF Core's generated `*.Designer.cs` and `*ModelSnapshot.cs` files.
+
+Resumed walk actions:
+1. Remove the three now-excluded EF entries (`20261102105501_AddAgentScopeGrants.Designer.cs`, `20261104193441_AddRoles.Designer.cs`, `PostgresDbContextModelSnapshot.cs`) from `.timewarp/line-cap-baseline.json` (shrinking the baseline cleanly).
+2. Merge `origin/master` if needed, run `./bin/dev build` and `ganda repo audit`, check off the Gates checklist item, commit, and finish.
