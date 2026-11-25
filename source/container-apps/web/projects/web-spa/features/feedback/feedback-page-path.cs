@@ -4,8 +4,9 @@
 
 #region Design
 // Task 521. Feedback's form is its own route (/Feedback), so "the page the filer was on" is the
-// newest visited route outside the feedback pages: RouteState.Routes lists visits newest first
-// (TwPageTitle pushes one per render), and /Feedback and /Feedback/{id} are skipped. A filing
+// newest visited address outside the feedback pages: NavigationHistory lists visits newest first
+// and never truncates (RouteState.Routes does, on a repeat visit), and /Feedback and
+// /Feedback/{id} are skipped. A filing
 // from anywhere else (the Ask thumbs, an agent call) is the current page, which is the newest
 // route already. Only the path is kept: the base URI is removed and the query string and fragment
 // are cut, so a token or an email in a query value never leaves the browser. A path the server

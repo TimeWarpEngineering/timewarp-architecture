@@ -62,6 +62,7 @@ public partial class CatalogAgent_Should
       services.AddSingleton<TimeWarp.Architecture.Services.IWebServerApiService>(Api);
       services.AddScoped(_ => FakeItEasy.A.Fake<Microsoft.JSInterop.IJSRuntime>());
       services.AddScoped<NavigationManager, TestNavigationManager>();
+      services.AddScoped<NavigationHistory>();
       services.AddScoped<PageAgentRoute>();
       services.AddScoped<AgentCallOutcome>();
       services.AddScoped<WebMcpApprovalGate>();

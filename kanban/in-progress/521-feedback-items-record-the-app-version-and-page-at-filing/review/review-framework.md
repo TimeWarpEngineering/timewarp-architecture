@@ -6,11 +6,11 @@
 **Plan / brief:** On filing, store the web-server assembly informational version (server-side, never from the client) and an optional app-relative page path (client sends path only; server validates). Both are fixed after filing, returned on the admin detail and admin list, shown on the admin feedback view, null on older rows. Filer views stay unchanged.
 **Effort:** 3 (general only; by-diff budget)
 **Reviewer roster:** general
-**Session IDs:** implementer claude `756d9681-ca1f-44f6-9d98-a2cafeb99bd8`; reviewer grok `01a212de-df11-79f1-b3fb-ba1372af11da`
+**Session IDs:** implementer claude `756d9681-ca1f-44f6-9d98-a2cafeb99bd8`; CI fix implementer claude `acce303d-5db7-41ac-a89f-92abdbea107e`; round 1 reviewer grok `01a212de-df11-79f1-b3fb-ba1372af11da`; round 2 reviewer grok `01a21306-6ddc-72e1-9d85-ae25d926b44b`
 
 ## Budget (by-diff)
 
-- Lines changed: 1441
+- Lines changed: 1564
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -30,3 +30,7 @@
 ## Goal check
 
 The implementer restatement matches the original task. The task allows a query string or absolute URL to be stored as the path only or refused; the restatement chooses refuse, and the client strips the query and fragment before send so a filing from a page that has a query still succeeds. That is the allowed choice, not a misread.
+
+## Round 2
+
+Re-review after the `web-jaribu-tests` `PropertyName` fix (`08b293810`). Same product scope, plus that assertion. Round 1 files stay as written. Findings live in `review/round-2/`.

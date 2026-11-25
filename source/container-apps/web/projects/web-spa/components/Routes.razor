@@ -2,6 +2,9 @@
 @* Resolving NotificationState.NavigationListener once per circuit hooks LocationChanged so a
    stale failure never follows the user to the next page (task 247). Nothing else to call. *@
 @inject NotificationState.NavigationListener NavigationListener
+@* NavigationHistory records each visited address from the first page on (task 521): feedback
+   reads it for the page the filer left. *@
+@inject NavigationHistory NavigationHistory
 
 @code
 {

@@ -5,7 +5,8 @@
 
 #region Design
 // Pure function, so no renderer or services. The visited list is newest first, as
-// RouteState.Routes enumerates it. Compiles only with the postgres flag, like the feedback slice
+// NavigationHistory.Visits enumerates it. One test drives a real NavigationHistory over
+// TestNavigationManager through a second open of /Feedback (review round 2, M1). Compiles only with the postgres flag, like the feedback slice
 // (template.json lists this file).
 #endregion
 
@@ -33,6 +34,19 @@ public class FeedbackPagePath_Should_
     const string itemPage = Base + "Feedback/11111111-1111-1111-1111-111111111111";
     FeedbackPagePath.From(BaseUri, new Uri(Base + "Feedback"), [Base + "Feedback", itemPage, Base + "Weather?city=x", Base])
       .ShouldBe("/Weather");
+    return Task.CompletedTask;
+  }
+
+  public static Task Use_The_Page_Left_When_Feedback_Is_Opened_Again()
+  {
+    TestNavigationManager navigation = new();
+    using NavigationHistory history = new(navigation);
+    navigation.NavigateTo("/Counter");
+    navigation.NavigateTo("/Feedback");
+    navigation.NavigateTo("/Weather?city=x");
+    navigation.NavigateTo("/Feedback");
+
+    FeedbackPagePath.From(new Uri(navigation.BaseUri), new Uri(navigation.Uri), history.Visits).ShouldBe("/Weather");
     return Task.CompletedTask;
   }
 

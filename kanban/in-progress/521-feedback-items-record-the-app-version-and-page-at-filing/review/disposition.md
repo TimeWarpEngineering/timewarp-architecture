@@ -1,13 +1,13 @@
 # Disposition — task 521
 
 **Date:** 2026-11-25
-**Outcome:** clean
-**Rounds:** 1
-**Final open count:** 0
+**Outcome:** withheld
+**Rounds:** 2
+**Final open count:** 1
 
 ## Summary
 
-Round 1 (effort 3, general only) found no bugs, suggestions, or nits. The filing version and page path match the task: server-sourced informational version, optional app-relative path, fixed after filing, admin list and detail return both, the admin item page shows both, older rows stay null, filer views unchanged.
+Round 1 found no issues. Round 2 re-checked the filing change and the case-insensitive `PropertyName` assertion. That assertion is not a finding. One bug is open: a later filing in the same circuit stores a stale page because `RouteState` drops the page just left when `/Feedback` is opened again (`review/round-2/merged.md`, M1). There is no exit disposition until that finding is fixed or marked wontfix.
 
 ## Exception log (if accepted-exceptions)
 
