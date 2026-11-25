@@ -24,7 +24,6 @@ Owner: transformers `open-api-discovery-coverage.cs` and `source/container-apps/
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -36,6 +35,7 @@ Owner: transformers `open-api-discovery-coverage.cs` and `source/container-apps/
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
 
 ## Session
 
