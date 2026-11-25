@@ -15,7 +15,8 @@
 // this view fills it the same way, so a mutation never blanks the name on the detail page.
 // An agent token is not granted admin.profiles.read, so OwnerDisplayName stays null and the
 // caller sees OwnerPrincipalId only. Severity (task 378) is on this view and not on the
-// filer's contracts.
+// filer's contracts. LastActivityAt (task 520) is too: FiledAt, then the newest thread entry's
+// time, including internal notes and severity changes the filer never sees.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -33,6 +34,8 @@ public sealed class FeedbackAdminView : ICloneable
   public string Title { get; }
   public string Body { get; }
   public DateTimeOffset FiledAt { get; }
+  /// <summary>FiledAt, then the time of the newest thread entry (task 520).</summary>
+  public DateTimeOffset LastActivityAt { get; }
   /// <summary>Whether the filer's profile has an email. The handler reads it from the profile slice.</summary>
   [Computed]
   public bool FilerHasEmail { get; }
@@ -52,6 +55,7 @@ public sealed class FeedbackAdminView : ICloneable
     string title,
     string body,
     DateTimeOffset filedAt,
+    DateTimeOffset lastActivityAt,
     bool filerHasEmail,
     IReadOnlyList<GetFeedback.Attachment>? attachments = null,
     IReadOnlyList<FeedbackActivityEntry>? activity = null,
@@ -81,6 +85,7 @@ public sealed class FeedbackAdminView : ICloneable
     Title = Guard.Against.NullOrWhiteSpace(title);
     Body = Guard.Against.NullOrWhiteSpace(body);
     FiledAt = filedAt;
+    LastActivityAt = lastActivityAt;
     FilerHasEmail = filerHasEmail;
     Attachments = attachments ?? [];
     Activity = activity ?? [];
@@ -101,6 +106,7 @@ public sealed class FeedbackAdminView : ICloneable
       "Mock bug report",
       "Mock body",
       filedAt,
+      lastActivityAt: filedAt.AddHours(3),
       filerHasEmail: true,
       activity:
       [

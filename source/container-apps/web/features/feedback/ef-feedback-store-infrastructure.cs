@@ -7,7 +7,7 @@
 // is present; it is the only IFeedbackStore (task 522). Remove rolls back a filing whose
 // attachments could not be linked. A unique id violation becomes InvalidOperationException.
 // Reads are AsNoTracking, so Update attaches the detached item: the
-// filing columns stay unchanged, Status and Severity are marked modified, and only thread entries whose
+// filing columns stay unchanged, Status, Severity and LastActivityAt are marked modified, and only thread entries whose
 // Sequence is above the stored maximum are inserted (the thread is append-only). The root is
 // Modified, so AggregateDbContext runs the invariants and the Version check; a concurrency
 // conflict or a duplicate (item, sequence) key from a racing writer returns false. Add and
@@ -22,6 +22,8 @@
 // non-ASCII title (Turkish dotted I, sharp s) may not match a term the client lower-cased
 // differently. Accepted: Search narrows an @ picker or an admin list, not an authorization or
 // uniqueness check.
+// ActivityFrom (task 520) is an inclusive range on the indexed LastActivityAt column; the
+// LastActivityAt sort breaks ties by FiledAt descending and then id, like the other non-FiledAt sorts.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;
@@ -111,6 +113,11 @@ public sealed class EfFeedbackStore : IFeedbackStore
       query = query.Where(item => item.FiledAt < to);
     }
 
+    if (filter.ActivityFrom is { } activityFrom)
+    {
+      query = query.Where(item => item.LastActivityAt >= activityFrom);
+    }
+
     if (!string.IsNullOrWhiteSpace(filter.Search))
     {
       string lowered = filter.Search.Trim().ToLowerInvariant();
@@ -144,6 +151,9 @@ public sealed class EfFeedbackStore : IFeedbackStore
       FeedbackListSortColumn.Status => descending
         ? query.OrderByDescending(item => item.Status)
         : query.OrderBy(item => item.Status),
+      FeedbackListSortColumn.LastActivityAt => descending
+        ? query.OrderByDescending(item => item.LastActivityAt)
+        : query.OrderBy(item => item.LastActivityAt),
       FeedbackListSortColumn.FiledAt or _ => descending
         ? query.OrderByDescending(item => item.FiledAt)
         : query.OrderBy(item => item.FiledAt),
@@ -178,6 +188,7 @@ public sealed class EfFeedbackStore : IFeedbackStore
 
     Db.Entry(item).Property(row => row.Status).IsModified = true;
     Db.Entry(item).Property(row => row.Severity).IsModified = true;
+    Db.Entry(item).Property(row => row.LastActivityAt).IsModified = true;
     try
     {
       await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

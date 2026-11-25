@@ -40,6 +40,12 @@ public class Map
     IProperty body = entityType.FindProperty(nameof(FeedbackItem.Body)).ShouldNotBeNull();
     body.GetMaxLength().ShouldBe(FeedbackItem.MaxBodyLength);
 
+    IProperty lastActivityAt = entityType.FindProperty(nameof(FeedbackItem.LastActivityAt)).ShouldNotBeNull();
+    lastActivityAt.IsNullable.ShouldBeFalse();
+    entityType.GetIndexes().ShouldContain(
+      index => index.Properties.Count == 1 && index.Properties[0] == lastActivityAt,
+      "ActivityFrom filters on LastActivityAt (task 520)");
+
     IProperty version = entityType.FindProperty(nameof(FeedbackItem.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);

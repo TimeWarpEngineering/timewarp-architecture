@@ -13,6 +13,7 @@
 // TotalCount counts every match, not just the page. Search (task 345) keeps items whose title
 // contains the trimmed term, ignoring case; null or blank matches every title. Severity null
 // matches every severity. A present value, including Unset, matches that value only (task 378).
+// ActivityFrom (task 520) is inclusive on LastActivityAt; null matches every item.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -30,6 +31,7 @@ public sealed record FeedbackListFilter(
   FeedbackListSortColumn SortBy = FeedbackListSortColumn.FiledAt,
   bool SortDescending = true,
   string? Search = null,
-  DomainSeverity? Severity = null);
+  DomainSeverity? Severity = null,
+  DateTimeOffset? ActivityFrom = null);
 
 public sealed record FeedbackPage(IReadOnlyList<FeedbackItem> Items, int TotalCount);

@@ -15,7 +15,8 @@
 #region Purpose
 // Jaribu runfile for task 314: the FeedbackItem status and thread mutations and their
 // invariants, plus the authorization surface: each contract's [EndpointAuthorize] policy and the
-// Administrator-only seed. HTTP 401/403 and no-PII proofs live in
+// Administrator-only seed. Task 520: LastActivityAt starts at FiledAt and each of the five
+// thread mutations moves it to the new entry's At. HTTP 401/403 and no-PII proofs live in
 // web-server-integration-tests (admin-feedback-authorization-*-tests).
 #endregion
 
@@ -183,6 +184,32 @@ namespace TimeWarp.Architecture.Features.Feedback
       note.Kind.ShouldBe(DomainActivityKind.InternalNote);
       note.IsVisibleToFiler.ShouldBeFalse();
       item.AddAdminReply(Guid.NewGuid(), "Looking", At).IsVisibleToFiler.ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+
+    public static Task EachThreadMutation_Should_MoveLastActivityAt()
+    {
+      var owner = Guid.NewGuid();
+      var admin = Guid.NewGuid();
+      FeedbackItem item = TriageWorld.Filed(owner, At);
+      item.LastActivityAt.ShouldBe(At);
+
+      (string Name, Func<DateTimeOffset, FeedbackActivity> Mutate)[] mutations =
+      [
+        ("filer reply", at => item.AddFilerReply(owner, "More detail", at)),
+        ("admin reply", at => item.AddAdminReply(admin, "Looking", at)),
+        ("internal note", at => item.AddInternalNote(admin, "Reproduced", at)),
+        ("status change", at => item.ChangeStatus(DomainStatus.UnderReview, admin, at)),
+        ("severity change", at => item.SetSeverity(DomainSeverity.High, admin, at)),
+      ];
+      for (int index = 0; index < mutations.Length; index++)
+      {
+        DateTimeOffset at = At.AddMinutes(index + 1);
+        mutations[index].Mutate(at).At.ShouldBe(at);
+        item.LastActivityAt.ShouldBe(at, mutations[index].Name);
+      }
+
+      item.Activity.Count.ShouldBe(mutations.Length);
       return Task.CompletedTask;
     }
 

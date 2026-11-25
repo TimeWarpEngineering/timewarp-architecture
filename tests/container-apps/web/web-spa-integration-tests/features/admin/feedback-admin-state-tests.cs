@@ -88,8 +88,8 @@ public class FeedbackAdminActions_Should_
     spa.Api.Answer<ListFeedback.Query>(query => new ListFeedback.Response(
       2,
       [
-        new ListFeedback.Item(Guid.NewGuid(), named, FeedbackKind.BugReport, FeedbackStatus.New, "Named", DateTimeOffset.UnixEpoch, "Ada Lovelace"),
-        new ListFeedback.Item(Guid.NewGuid(), unnamed, FeedbackKind.BugReport, FeedbackStatus.New, "Unnamed", DateTimeOffset.UnixEpoch),
+        new ListFeedback.Item(Guid.NewGuid(), named, FeedbackKind.BugReport, FeedbackStatus.New, "Named", DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, "Ada Lovelace"),
+        new ListFeedback.Item(Guid.NewGuid(), unnamed, FeedbackKind.BugReport, FeedbackStatus.New, "Unnamed", DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch),
       ],
       query.Page,
       query.PageSize));

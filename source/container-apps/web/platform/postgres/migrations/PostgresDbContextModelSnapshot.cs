@@ -16,13 +16,13 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261104193441_AddRoles";
+    public override string LastMigrationId => "20261125015554_AddFeedbackLastActivity";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
         modelBuilder
-            .HasAnnotation("ProductVersion", "11.0.0-rc.3.26522.148")
+            .HasAnnotation("ProductVersion", "11.0.0")
             .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
         NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -178,6 +178,9 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                     .HasMaxLength(32)
                     .HasColumnType("character varying(32)");
 
+                b.Property<DateTimeOffset>("LastActivityAt")
+                    .HasColumnType("timestamp with time zone");
+
                 b.Property<Guid>("OwnerPrincipalId")
                     .HasColumnType("uuid");
 
@@ -203,6 +206,8 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                     .HasColumnType("bigint");
 
                 b.HasKey("Id");
+
+                b.HasIndex("LastActivityAt");
 
                 b.HasIndex("OwnerPrincipalId");
 
