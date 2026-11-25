@@ -136,6 +136,10 @@ Expect: all tests pass; `ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply
   `generated_code = true`), or the maintainer decides how this repo takes a migration under the
   ratchet.
 
-## Blocked
+## Unblock update (2026-11-25)
 
-2026-11-25: ganda repo audit fails source-file-line-cap on two EF-generated files: the new 20261125015554_AddFeedbackLastActivity.Designer.cs (559 lines, cap 500) and PostgresDbContextModelSnapshot.cs (563 lines, baseline 558). The baseline can only shrink against origin/master, and the check has no per-path exclusion. Unblock options: ganda's line-cap check skips EF migration output (*.Designer.cs and *ModelSnapshot.cs, or paths .editorconfig marks generated_code = true), or the maintainer decides how timewarp-architecture lets a new migration through the line-cap baseline.
+`timewarp-ganda` task 723 landed and is installed (`1.0.0-beta.38+878bfc9a14211d61e1e75980e5ecb9c725a18c3b`): `source-file-line-cap` and `analyzer-suppressions` now skip EF Core's generated `*.Designer.cs` and `*ModelSnapshot.cs` files.
+
+Resumed walk actions:
+1. Remove the three now-excluded EF entries (`20261102105501_AddAgentScopeGrants.Designer.cs`, `20261104193441_AddRoles.Designer.cs`, `PostgresDbContextModelSnapshot.cs`) from `.timewarp/line-cap-baseline.json` (shrinking the baseline cleanly).
+2. Merge `origin/master` if needed, run `./bin/dev build` and `ganda repo audit`, check off the Gates checklist item, commit, and finish.
