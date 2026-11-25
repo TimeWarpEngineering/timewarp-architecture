@@ -3,8 +3,7 @@
 #endregion
 
 #region Design
-// ExcludeNonFastEndpoints stays on, so /api/debug-config and other minimal APIs stay out of the
-// document. Web-server opts in. Api-server does not: it does not serve these routes.
+// ExcludeNonFastEndpoints stays on, so minimal APIs stay out of the document. Web-server opts in. Api-server does not: it does not serve these routes.
 // GET /api/health is MapHealthChecks. The body is the status name as text/plain. The Postgres
 // check, when registered, opens a connection, so this is not the liveness probe.
 // GET and POST /api are TipDiscoveryAlias rewrites of /api/tip. The alias is its own path so a
