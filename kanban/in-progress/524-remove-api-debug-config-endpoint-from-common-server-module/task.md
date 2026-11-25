@@ -22,17 +22,87 @@ Remove the `/api/debug-config` endpoint completely from `CommonServerModule` and
    - Add a Jaribu test (following the tiny `WebApplication` + `UseTestServer()` pattern in `tests/container-apps/web/web-server-integration-tests/open-api-discovery-coverage-tests.cs`) that builds a host with `EnvironmentName = Environments.Development`, invokes `CommonServerModule.ConfigureEndpoints(app)`, starts the test server, and asserts `GET /api/debug-config` returns `HttpStatusCode.NotFound`.
    - Keep the test completely Docker-free so it runs reliably in `ci (fast)` and `template-smoke`.
 
+## Goal (implementer restatement)
+
+Every server host that composes `CommonServerModule` must stop serving the configuration dump at
+`GET /api/debug-config`, including in `Development`. `ConfigureEndpoints` stays as an empty
+`IAspNetModule` hook so `api-server` and `web-server` keep calling it unchanged.
+
+Acceptance:
+
+- `common-server-module.cs` has no `MapGet("/api/debug-config")` and no `GetDebugView()`; no unused
+  locals or usings remain.
+- The Design region and XML docs in `common-server-module.cs`, and the Design region in
+  `open-api-discovery-coverage.cs`, no longer mention the endpoint.
+- No `debug-config` or `GetDebugView` reference remains under `source/`, `tests/`, or `skills/`.
+- A Docker-free Jaribu test boots a tiny `UseTestServer()` host in `Development`, calls
+  `CommonServerModule.ConfigureEndpoints`, and asserts `GET /api/debug-config` is `404 Not Found`.
+- `./bin/dev build` is clean, the new test passes, and `ganda repo audit` passes.
+
 ## Checklist
 
-- [ ] Remove `/api/debug-config` and `GetDebugView()` from `CommonServerModule.ConfigureEndpoints` in `source/foundation/foundation-server/common-server-module.cs`
-- [ ] Update comments and XML docs in `common-server-module.cs` and `open-api-discovery-coverage.cs`
-- [ ] Verify no other `debug-config` or `GetDebugView` endpoints remain in `source/`, `tests/`, or `skills/`
-- [ ] Add a Development-environment regression test asserting `GET /api/debug-config` returns `404 Not Found`
-- [ ] Verify `./bin/dev build` (0 warnings, 0 errors), targeted `./bin/dev test`, and `ganda repo audit`
+- [x] Remove `/api/debug-config` and `GetDebugView()` from `CommonServerModule.ConfigureEndpoints` in `source/foundation/foundation-server/common-server-module.cs`
+- [x] Update comments and XML docs in `common-server-module.cs` and `open-api-discovery-coverage.cs`
+- [x] Verify no other `debug-config` or `GetDebugView` endpoints remain in `source/`, `tests/`, or `skills/`
+- [x] Add a Development-environment regression test asserting `GET /api/debug-config` returns `404 Not Found`
+- [x] Verify `./bin/dev build` (0 warnings, 0 errors), targeted `./bin/dev test`, and `ganda repo audit`
 
 ## Session
 
 - Created: 3163313 (2026-11-24)
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 970ee484-a715-4332-9d37-9e0ed7254053, max-turns 500, Done — 2026-11-24T23:53:06Z
+- Review oracle: grok, session 01a20ffa-57ea-7711-a899-b092956ce284, effort 1, roster general, round 1, 2026-11-25
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20ffa-57ea-7711-a899-b092956ce284, max-turns 80, artifacts general.md, merged.md, disposition.md — 2026-11-25T00:04:56Z
+
+## Results
+
+- `source/foundation/foundation-server/common-server-module.cs`: `ConfigureEndpoints` is now an
+  empty `IAspNetModule` hook (no `MapGet`, no `GetDebugView`). Design region, class summary, and
+  method summary rewritten.
+- `source/foundation/foundation-server/open-api-discovery-coverage.cs`: Design region no longer
+  names the route.
+- `source/foundation/foundation-server/global-usings.cs`: dropped `Microsoft.Extensions.Hosting`
+  (only `IsDevelopment()` used it; IDE0005 failed the build otherwise).
+- New `tests/container-apps/web/web-server-integration-tests/common-server-module-endpoints-tests.cs`:
+  Development `UseTestServer()` host, `ConfigureEndpoints`, `GET /api/debug-config` → 404.
+- `grep -rn "debug-config\|GetDebugView" source tests skills` finds only the new test's route string.
+
+### Gates
+
+- `./bin/dev build`: passed, 0 warnings, 0 errors (first run failed on IDE0005 in
+  foundation-server `global-usings.cs`; fixed by removing the unused `Microsoft.Extensions.Hosting`).
+- `./bin/dev test --no-build --project web-server-integration-tests --filter-class CommonServerModuleEndpoints_`
+  (`common-server-module-endpoints-tests.cs`, a suite file in the csproj, not a standalone runfile:
+  no `#if !JARIBU_MULTI` guard): passed, 1/1.
+- `ganda repo audit`: passed (reused the recorded full pass for tree 2cb2418434cd from the commit hook).
+
+### How to validate
+
+Smoke: `./bin/dev test --project web-server-integration-tests --filter-class CommonServerModuleEndpoints_`
+Expect: 1 test passes; the log shows `GET http://localhost/api/debug-config - 404`. Also
+`grep -rn GetDebugView source` prints nothing.
+
+### Review
+
+- Round 1, effort 1, roster general (grok session 01a20ffa-57ea-7711-a899-b092956ce284, 2026-11-25).
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count 0.
+- Disposition: clean (`review/disposition.md`).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Gates were not re-run. Build, the filtered test, and audit stay on the implementer record above.
+
+## Learnings
+
+### Misread — no remaining `debug-config` string
+
+`## Goal (implementer restatement)` says no `debug-config` or `GetDebugView` reference remains under `source/`, `tests/`, or `skills/`. The original task requires the regression test to request `GET /api/debug-config`. The test keeps that route string. Product code under those trees has neither token. Not filed as a finding.
+
+### Misread — `ci (fast)` and `template-smoke`
+
+The original task says the test stays Docker-free so it runs in `ci (fast)` and `template-smoke`. The restatement drops that sentence and keeps the tiny `UseTestServer` host. The test follows the cited file in `web-server-integration-tests`. `TestGroups` places that project in the integration group, so `ci (integration)` runs it on pull requests. Nightly `template-smoke --app-tests` runs generated test projects, including this one. `ci (fast)` does not include integration projects. The pull-request `template-smoke` job runs tiers 1–3 only. `tests/foundation/**` is excluded from the template, so a foundation suite would miss `template-smoke`. The cited pattern and the two lane names do not meet in one existing project. The regression still runs on the pull-request integration job and on the nightly generated-app test pass. Not filed as a finding.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
