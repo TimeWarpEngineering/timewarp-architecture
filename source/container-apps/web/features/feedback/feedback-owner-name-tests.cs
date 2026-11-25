@@ -357,7 +357,10 @@ namespace TimeWarp.Architecture.Features.Feedback
         command.PagePath = path;
         ValidationResult result = new SubmitContract.Validator().Validate(command);
         result.IsValid.ShouldBeFalse($"'{path}' must be refused");
-        result.Errors.ShouldContain(error => error.PropertyName == nameof(SubmitContract.Command.PagePath));
+        // Aggregator host tests set ValidatorOptions.Global to JSON camelCase (`pagePath`);
+        // a standalone runfile keeps PascalCase (`PagePath`).
+        result.Errors.ShouldContain(error =>
+          string.Equals(error.PropertyName, nameof(SubmitContract.Command.PagePath), StringComparison.OrdinalIgnoreCase));
       }
 
       return Task.CompletedTask;

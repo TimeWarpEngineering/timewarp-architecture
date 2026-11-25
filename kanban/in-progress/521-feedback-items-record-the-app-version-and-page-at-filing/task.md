@@ -66,6 +66,7 @@ Acceptance, as I will prove it:
   Audit fix in-session: a new runfile copied the neighbour's `#:property NoWarn` and failed
   `analyzer-suppressions`; the shared world files it includes need those suppressions, so the
   task-521 tests moved into `feedback-owner-name-tests.cs` (already in the baseline) instead.
+- 2026-11-25 CI fix pass: `PropertyName` assertion made case-insensitive for the `web-jaribu-tests` aggregator.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 756d9681-ca1f-44f6-9d98-a2cafeb99bd8, max-turns 500, Done — 2026-11-25T13:21:57Z
 - Reviewer: grok session 01a212de-df11-79f1-b3fb-ba1372af11da (2026-11-25), effort 3, roster general, round 1, disposition clean.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a212de-df11-79f1-b3fb-ba1372af11da, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T13:32:53Z
@@ -139,6 +140,16 @@ Gates (run once each):
 - `tests/container-apps/web/web-server-integration-tests/features/feedback/admin-feedback-authorization-agent-tests.cs` (+ fixture): not a standalone runfile; ran `./bin/dev test --no-build --project web-server-integration-tests --filter-class AdminFeedbackAuthorization_.Agent_Returns_`: 3/3 passed (feedback:read token reads AppVersion = web-server informational version and PagePath `/Counter` on list and detail).
 - `ganda repo audit`: first run failed `analyzer-suppressions` (copied NoWarn on a new runfile); fixed by folding the tests into `feedback-owner-name-tests.cs`; rerun passes with one non-blocking advisory (`vscode-window-icon`: local, gitignored `.vscode/settings.json` missing).
 - Not run: `dev template-smoke` (CI runs the default variant on the PR; the template.json edit only adds a postgres-off exclusion, covered by the nightly matrix).
+
+### CI fix pass (PR #693)
+
+- Change: `Validator_Should_RefuseAPathThatIsNotAnAppPath` compares `error.PropertyName` with
+  `StringComparison.OrdinalIgnoreCase` (the aggregator's host tests set FluentValidation's global
+  property-name resolver to camelCase). It was the only `PropertyName` assertion in the file.
+- `./bin/dev build`: succeeded, 0 warnings, 0 errors.
+- `dotnet run --file source/container-apps/web/features/feedback/feedback-owner-name-tests.cs`: 17/17 passed.
+- `./bin/dev test --no-build --project web-jaribu-tests` (the aggregator that failed in CI): 504/504 passed.
+- `ganda repo audit`: passes all checks.
 
 ### Review
 
