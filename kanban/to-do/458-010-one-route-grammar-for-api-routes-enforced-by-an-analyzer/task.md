@@ -24,7 +24,6 @@ Owner: contracts (`[ApiRoute]`), skill `tw-web-api-contracts`, convention analyz
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -36,6 +35,8 @@ Owner: contracts (`[ApiRoute]`), skill `tw-web-api-contracts`, convention analyz
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
+- Grooming note: `SignOutBrowserSession` (`/identity/sign-out*`) does not use `[ApiRoute]` (owned by `458-007`); next free convention analyzer id is `TWA0051`; update hardcoded route assertions in `open-api-one-of-tests.cs`, `open-api-anonymous-intent-tests.cs`, `open-api-delete-request-body-tests.cs`, and `open-api-operation-tags-tests.cs` alongside the renames.
 
 ## Session
 
