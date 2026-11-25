@@ -64,6 +64,11 @@ Acceptance:
 - [x] `skills/tw-deploy`: the ingress topology section says which app is public per target with yarp off.
 - [x] `dev template-smoke --matrix` NoYarp variant and the publish suites pass.
 
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Round 1 fix pass: M1, M2 fixed (docs)
+
 ## Notes
 
 - Files: `source/container-apps/aspire/projects/aspire-app-host/web-server-resource.cs`,
@@ -79,6 +84,8 @@ Acceptance:
 
 - Created: f7eccb81-87c9-4fb4-a0c4-0fb7417d4a2f (2026-11-25)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 921b3c23-b8be-4d17-94ac-f2d0de39bfef, max-turns 500, Done — 2026-11-25T17:44:42Z
+- Review oracle round 1: general (grok), effort 2, roster general (2026-11-26). Open findings M1 and M2. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a213cf-6b25-7be1-a81a-a6cee28d804d, max-turns 120, artifacts general.md, merged.md — 2026-11-25T17:54:12Z
 
 ## Results (required before done)
 
@@ -132,6 +139,33 @@ Gates:
   targeted runs above via `--project`/`--filter-class`.
 - Not run: `dev template-smoke --matrix` (CI runs the flag-off matrix nightly; the NoYarp compile
   path was proven by the define-removal run above). No live Azure deploy was made.
+
+Review round 1 (2026-11-26), roster general, effort 2:
+
+- Counts: bug 2 open, 0 fixed, 0 wontfix. suggestion 0. nit 0.
+- Disposition: not written. M1 and M2 are open in `review/round-1/merged.md`.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- The implementer restatement matches the original requirements. No misread.
+
+Fix pass for review round 1 (2026-11-26), docs only (`skills/tw-deploy`):
+
+- M1 fixed: SKILL.md "Rules for new code" now limits "exposes nothing" to Compose and Kubernetes and
+  says web-server stays the one external app on aca/aca-neon (`PublishAsContainerAppsEdge`). The
+  `dev open` passkey bullet names `ingress.` or, without yarp, `web-server.<env domain>`.
+- M2 fixed: SKILL.md smoke paragraph, `dev deploy` bullet and examples, `azure-container-apps.md`
+  (new smoke paragraph, `dev open` comment) and `azure-container-apps-neon.md` (Deploy text, Smoke
+  curls for both shapes, `dev open` URL) state the ingress shape (`/web-server/alive` on the ingress
+  FQDN) and the yarp-off shape (`/alive` on the web-server FQDN), plus the shared identity path.
+- SKILL.md kept under the 500-line cap (499).
+- Not changed (noted, not a finding): `DeployPipeline.FailureMessage(Smoke, …)` still lists the
+  ingress paths when web-server is the public app.
+
+Fix pass gates:
+
+- `./bin/dev build` — passed.
+- Test files: none edited; the change is skill markdown only, no production code.
+- `./bin/dev lint-skills` — 11/11 passed (first run failed the 500-line cap at 505; condensed).
+- `ganda repo audit` — 43 passed, 1 non-blocking warning (`vscode-window-icon`: the git-ignored local `.vscode/settings.json` is absent), 2 skipped.
 
 ### How to validate (required before done)
 
