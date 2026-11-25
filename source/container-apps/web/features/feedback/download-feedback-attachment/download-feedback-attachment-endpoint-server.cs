@@ -63,11 +63,6 @@ public sealed class DownloadFeedbackAttachmentEndpoint
         await using Stream content = success.Content;
         await content.CopyToAsync(HttpContext.Response.Body, cancellationToken).ConfigureAwait(false);
       },
-      async problem =>
-      {
-        HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
-        HttpContext.Response.StatusCode = problem.Status ?? StatusCodes.Status400BadRequest;
-        await HttpContext.Response.WriteAsJsonAsync(problem, cancellationToken).ConfigureAwait(false);
-      });
+      problem => SharedProblemDetailsHttp.WriteAsync(HttpContext.Response, problem, cancellationToken));
   }
 }

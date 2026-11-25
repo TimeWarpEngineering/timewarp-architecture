@@ -30,6 +30,10 @@
 // 145-004 R2-1: this file feeds the web JARIBU_MULTI aggregator, which ships regardless of the
 // api flag, so it MUST compile+run web-only). SetupOnce stores HostGraph; CleanUpOnce disposes
 // reverse-order. Hello is [EndpointAllowAnonymous], so no auth ceremony is required.
+// Task 458-004: the validation 400 is read as raw HTTP, because the typed client accepts any
+// JSON media type. It must be application/problem+json with an errors map, and the published
+// document must give GET /api/hello a 400 that references the one SharedProblemDetails
+// component, which declares errors. No MVC ProblemDetails component remains in the document.
 #endregion
 
 //-:cnd:noEmit
@@ -42,6 +46,10 @@ namespace TimeWarp.Architecture.Features.Hellos
 {
 
   using System;
+  using System.Linq;
+  using System.Net;
+  using System.Net.Http;
+  using System.Text.Json;
   using System.Threading;
   using System.Threading.Tasks;
   using OneOf;
@@ -55,6 +63,9 @@ namespace TimeWarp.Architecture.Features.Hellos
   [TestTag("Integration")]
   public class HelloEndpoint_Given_
   {
+    private const string ProblemJson = "application/problem+json";
+    private const string ProblemComponent = "TimeWarpFoundationTypesSharedProblemDetails";
+
     private static HostGraph? Graph;
     private static WebTestServerApplication Web => Graph!.Web!;
 
@@ -104,6 +115,39 @@ namespace TimeWarp.Architecture.Features.Hellos
       Query query = new() { Name = "" };
 
       await Web.ConfirmEndpointValidationError<Response>(query, nameof(Query.Name));
+    }
+
+    public static async Task ProblemJson_Given_Missing_Name()
+    {
+      using HttpResponseMessage response = await Web.HttpClient.GetAsync(Query.RouteTemplate);
+
+      response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+      response.Content.Headers.ContentType?.MediaType.ShouldBe(ProblemJson);
+      using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+      body.RootElement.GetProperty("status").GetInt32().ShouldBe(400);
+      body.RootElement.GetProperty("errors").ValueKind.ShouldBe(JsonValueKind.Object);
+    }
+
+    public static async Task Published_Document_Should_List_Errors_On_The_Validation_Problem()
+    {
+      using HttpResponseMessage response = await Web.HttpClient.GetAsync("/openapi/v1.json");
+      string json = await response.Content.ReadAsStringAsync();
+      response.StatusCode.ShouldBe(HttpStatusCode.OK, json[..Math.Min(json.Length, 2000)]);
+      using var document = JsonDocument.Parse(json);
+      JsonElement schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
+
+      schemas.GetProperty(ProblemComponent).GetProperty("properties").TryGetProperty("errors", out _).ShouldBeTrue();
+      schemas.EnumerateObject()
+        .Select(static schema => schema.Name)
+        .Where(static name => name.EndsWith("ProblemDetails", StringComparison.Ordinal))
+        .ToList()
+        .ShouldBe([ProblemComponent]);
+
+      JsonElement badRequest = document.RootElement.GetProperty("paths").EnumerateObject()
+        .Single(static path => string.Equals(path.Name, "/" + Query.RouteTemplate, StringComparison.OrdinalIgnoreCase))
+        .Value.GetProperty("get").GetProperty("responses").GetProperty("400");
+      badRequest.GetProperty("content").GetProperty(ProblemJson).GetProperty("schema").GetProperty("$ref").GetString()
+        .ShouldBe("#/components/schemas/" + ProblemComponent);
     }
   }
 

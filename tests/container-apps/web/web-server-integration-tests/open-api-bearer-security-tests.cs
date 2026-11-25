@@ -13,6 +13,7 @@
 // bearer, a dual operation lists the bearer then the session as alternatives, an operation
 // with no AuthSchemes uses the session (the DefaultScheme), and an anonymous one publishes
 // security: []. Scalar's page must name JWTBearerAuth so Authorize has a scheme to apply.
+// The bearer 401 and 403 bodies reference the one SharedProblemDetails component (task 458-004).
 #endregion
 
 namespace OpenApiBearerSecurity_;
@@ -31,6 +32,8 @@ using TimeWarp.Foundation;
 [TestTag("OpenApi")]
 public class Document_Given_
 {
+  private const string ProblemSchema = "#/components/schemas/TimeWarpFoundationTypesSharedProblemDetails";
+
   private static WebApplication? App;
   private static HttpClient? Client;
 
@@ -272,19 +275,23 @@ public class Document_Given_
   private static void AssertProblemResponses(JsonElement operation)
   {
     JsonElement unauthorized = operation.GetProperty("responses").GetProperty("401");
-    unauthorized.GetProperty("content").TryGetProperty("application/problem+json", out _).ShouldBeTrue();
+    ProblemRef(unauthorized).ShouldBe(ProblemSchema);
     string challenge = unauthorized.GetProperty("headers").GetProperty("WWW-Authenticate").GetProperty("description").GetString()!;
     challenge.ShouldContain("invalid_token");
     challenge.ShouldContain("Bearer");
 
     JsonElement forbidden = operation.GetProperty("responses").GetProperty("403");
     forbidden.GetProperty("description").GetString()!.ShouldContain("handler-level");
-    forbidden.GetProperty("content").TryGetProperty("application/problem+json", out _).ShouldBeTrue();
+    ProblemRef(forbidden).ShouldBe(ProblemSchema);
     JsonElement forbiddenHeader = forbidden.GetProperty("headers").GetProperty("WWW-Authenticate");
     forbiddenHeader.GetProperty("description").GetString()!.ShouldContain("insufficient_scope");
     AssertHeaderOptional(forbiddenHeader);
     AssertHeaderOptional(unauthorized.GetProperty("headers").GetProperty("WWW-Authenticate"));
   }
+
+  private static string? ProblemRef(JsonElement response) =>
+    response.GetProperty("content").GetProperty("application/problem+json").GetProperty("schema")
+      .GetProperty("$ref").GetString();
 
   private static void AssertHeaderOptional(JsonElement header)
   {

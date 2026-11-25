@@ -12,7 +12,8 @@
 // keeps the free-routes-never-402 statement.
 // Stub routes and asserted paths are the contract RouteTemplate values. The host sets
 // TipOptions.Resource and MeteredCapabilityOptions.Resource to paths other than those routes,
-// and the document must repeat the options values.
+// and the document must repeat the options values. Each 402 and 503 body is allOf over the one
+// SharedProblemDetails component and the payment extension members (task 458-004).
 #endregion
 
 namespace OpenApiPaymentResponses_;
@@ -37,6 +38,7 @@ using TipOptions = TimeWarp.Architecture.Features.Tip.Application.TipOptions;
 [TestTag("OpenApi")]
 public class Document_Given_
 {
+  private const string ProblemSchema = "#/components/schemas/TimeWarpFoundationTypesSharedProblemDetails";
   private const string ConfiguredTipResource = "/pay/configured-tip";
   private const string ConfiguredMeteredResource = "/pay/configured-meter";
   private static WebApplication? App;
@@ -173,10 +175,10 @@ public class Document_Given_
     challenge.ShouldContain("x402Version");
     challenge.ShouldContain("payTo");
     challenge.ShouldContain(resource);
-    paymentRequired.GetProperty("content").GetProperty("application/problem+json").GetProperty("schema")
-      .GetProperty("properties").TryGetProperty("payment", out _).ShouldBeTrue();
-    paymentRequired.GetProperty("content").GetProperty("application/problem+json").GetProperty("schema")
-      .GetProperty("properties").TryGetProperty("tip", out _).ShouldBe(includeTip);
+    JsonElement paymentMembers = ProblemMembers(paymentRequired);
+    paymentMembers.TryGetProperty("payment", out _).ShouldBeTrue();
+    paymentMembers.TryGetProperty("reason", out _).ShouldBeTrue();
+    paymentMembers.TryGetProperty("tip", out _).ShouldBe(includeTip);
 
     JsonElement header = paymentRequired.GetProperty("headers").GetProperty("PAYMENT-REQUIRED");
     header.GetProperty("required").GetBoolean().ShouldBeTrue();
@@ -196,12 +198,24 @@ public class Document_Given_
       headers.TryGetProperty("PAYMENT-REQUIRED", out _).ShouldBeFalse();
     }
 
-    JsonElement unavailableProperties = unavailable.GetProperty("content").GetProperty("application/problem+json")
-      .GetProperty("schema").GetProperty("properties");
+    JsonElement unavailableProperties = ProblemMembers(unavailable);
     unavailableProperties.TryGetProperty("error", out _).ShouldBeTrue();
     unavailableProperties.TryGetProperty("payment", out _).ShouldBeTrue();
     unavailableProperties.TryGetProperty("ok", out _).ShouldBeTrue();
     unavailableProperties.TryGetProperty("tip", out _).ShouldBe(includeTip);
+  }
+
+  /// <summary>
+  /// The extension members of a payment problem body. The schema is allOf: the one
+  /// SharedProblemDetails component first, then the members the payment gate adds.
+  /// </summary>
+  private static JsonElement ProblemMembers(JsonElement response)
+  {
+    JsonElement allOf = response.GetProperty("content").GetProperty("application/problem+json")
+      .GetProperty("schema").GetProperty("allOf");
+    allOf.GetArrayLength().ShouldBe(2);
+    allOf[0].GetProperty("$ref").GetString().ShouldBe(ProblemSchema);
+    return allOf[1].GetProperty("properties");
   }
 
   private static async Task<JsonElement> OperationAsync(string path, string method)
