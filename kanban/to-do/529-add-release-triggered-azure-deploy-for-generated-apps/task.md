@@ -1,4 +1,4 @@
-# Add release-triggered Azure deploy job and dev bootstrap-oidc
+# Add release-triggered Azure deploy for generated apps
 
 ## Description
 
