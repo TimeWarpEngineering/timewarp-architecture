@@ -9,6 +9,10 @@
 // Requires a C# identifier name; `dotnet tool restore` runs first so local `dotnet-ef` is present.
 // Both calls use the DotNet.Tool() builders (AMURU0001); `dotnet tool run
 // dotnet-ef` is the same local tool `dotnet ef` resolves.
+// After a successful scaffold, DbEf.ReconcileSnapshot moves the model snapshot EF writes under
+// web-infrastructure/<namespace path>/ back over the tracked one in platform/postgres/migrations
+// (EF cannot target the snapshot directory for compile-linked migrations; see DbEf Design). The
+// command fails when the snapshot was not updated or more than one misplaced copy exists.
 #endregion
 
 namespace DevCli.Commands;
@@ -85,6 +89,12 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
         return Unit.Value;
       }
 
+      string migrationsDirectory = Path.Combine(root, DbEf.MigrationsDirectory);
+      string trackedSnapshot = Path.Combine(migrationsDirectory, DbEf.SnapshotFileName);
+      string? trackedSnapshotBefore = File.Exists(trackedSnapshot)
+        ? await File.ReadAllTextAsync(trackedSnapshot, ct).ConfigureAwait(false)
+        : null;
+
       Terminal.WriteLine($"Scaffolding migration '{command.Name}'...");
       int exitCode = await DotNet.Tool()
         .WithWorkingDirectory(root)
@@ -101,7 +111,43 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
         return Unit.Value;
       }
 
-      Terminal.WriteLine($"Migration '{command.Name}' added under source/container-apps/web/platform/postgres/migrations/.".Green());
+      SnapshotReconciliation reconciliation = DbEf.ReconcileSnapshot(
+        Path.GetDirectoryName(infrastructureProject)!,
+        migrationsDirectory,
+        trackedSnapshotBefore);
+
+      switch (reconciliation.Outcome)
+      {
+        case SnapshotOutcome.Relocated:
+          Terminal.WriteLine(
+            $"Moved {Path.GetRelativePath(root, reconciliation.MisplacedSnapshots[0])} to {DbEf.MigrationsDirectory}/{DbEf.SnapshotFileName}.");
+          foreach (string directory in reconciliation.RemovedDirectories)
+          {
+            Terminal.WriteLine($"Removed empty {Path.GetRelativePath(root, directory)}/");
+          }
+
+          break;
+        case SnapshotOutcome.Ambiguous:
+          Terminal.WriteErrorLine(
+            $"More than one {DbEf.SnapshotFileName} under web-infrastructure; move the right one to {DbEf.MigrationsDirectory}/ and delete the rest:".Red());
+          foreach (string path in reconciliation.MisplacedSnapshots)
+          {
+            Terminal.WriteErrorLine($"  {Path.GetRelativePath(root, path)}");
+          }
+
+          Environment.ExitCode = 1;
+          return Unit.Value;
+        case SnapshotOutcome.NotUpdated:
+          Terminal.WriteErrorLine(
+            $"dotnet ef succeeded but {DbEf.MigrationsDirectory}/{DbEf.SnapshotFileName} was not updated and no misplaced snapshot was found.".Red());
+          Environment.ExitCode = 1;
+          return Unit.Value;
+        case SnapshotOutcome.AlreadyInPlace:
+        default:
+          break;
+      }
+
+      Terminal.WriteLine($"Migration '{command.Name}' added under {DbEf.MigrationsDirectory}/.".Green());
       Terminal.WriteLine("Apply with `dev db update` against a running AppHost (`dev run`).");
       return Unit.Value;
     }
