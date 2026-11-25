@@ -69,6 +69,7 @@ Done when:
   `platform/postgres/migrations/`; it was moved over the tracked snapshot (diff was only the new
   column, index, last migration id and the ProductVersion annotation). Worth a dev-cli follow-up if
   it repeats.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 2d2de821-6660-468a-b3f1-24d064a261c6, max-turns 500, Blocked — 2026-11-25T02:06:51Z
 
 ## Notes
 
@@ -135,3 +136,6 @@ Expect: all tests pass; `ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply
   `generated_code = true`), or the maintainer decides how this repo takes a migration under the
   ratchet.
 
+## Blocked
+
+2026-11-25: ganda repo audit fails source-file-line-cap on two EF-generated files: the new 20261125015554_AddFeedbackLastActivity.Designer.cs (559 lines, cap 500) and PostgresDbContextModelSnapshot.cs (563 lines, baseline 558). The baseline can only shrink against origin/master, and the check has no per-path exclusion. Unblock options: ganda's line-cap check skips EF migration output (*.Designer.cs and *ModelSnapshot.cs, or paths .editorconfig marks generated_code = true), or the maintainer decides how timewarp-architecture lets a new migration through the line-cap baseline.
