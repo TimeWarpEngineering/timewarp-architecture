@@ -66,6 +66,7 @@ Acceptance, as I will prove it:
   Audit fix in-session: a new runfile copied the neighbour's `#:property NoWarn` and failed
   `analyzer-suppressions`; the shared world files it includes need those suppressions, so the
   task-521 tests moved into `feedback-owner-name-tests.cs` (already in the baseline) instead.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 756d9681-ca1f-44f6-9d98-a2cafeb99bd8, max-turns 500, Done — 2026-11-25T13:21:57Z
 
 ## Notes
 
