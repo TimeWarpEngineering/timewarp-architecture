@@ -5,12 +5,12 @@
   `review/round-1/fable.md`
 - **Decided by:** the implement oracle under `ganda task work 458`. Steven may overturn any row.
   Each follow-on task's spec says what it covers; implementation happens on that task, not here.
-- **Outcome:** 16 accepted (11 follow-on tasks, 458-001…458-011, cover M-02…M-16; M-01's task is
-  pending), 1 rejected (M-17), 1 linter note recorded. No finding deferred.
+- **Outcome:** 16 accepted (M-01 resolved by operator action and task 524; 11 follow-on tasks,
+  458-001…458-011, cover M-02…M-16), 1 rejected (M-17), 1 linter note recorded. No finding deferred.
 
 | ID | Severity | Decision | Follow-on task |
 |----|----------|----------|----------------|
-| M-01 | blocker | **Accept** — operator action on the live host first; the follow-on task is filed after remediation (held, see below) | pending |
+| M-01 | blocker | **Accept** — resolved: operator stopped the host and rotated credentials; route removed by task 524 (PR #690). No duplicate task filed. | [524](../../done/524-remove-api-debug-config-endpoint-from-common-server-module/task.md) |
 | M-02 | major | **Accept** | [458-001](../../to-do/458-001-publish-session-cookie-and-per-operation-security-requirements-in-open-api/task.md) |
 | M-03 | major | **Accept** | [458-002](../../to-do/458-002-publish-typed-ids-as-string-uuid-in-open-api-schemas/task.md) |
 | M-04 | major | **Accept** | [458-003](../../to-do/458-003-document-feedback-attachment-upload-and-download-as-binary-in-open-api/task.md) |
@@ -46,13 +46,18 @@ Follow-on tasks are grouped by the owner that has to change, so one change fixes
 No dependency order is required between them. 458-010 renames routes; 458-007 coordinates the
 sign-out routes with it.
 
-## M-01 (held)
+## M-01 (resolved)
 
-M-01 is about the live host, not the document, and needs operator action that this task cannot take.
-This repository is public, so the reviewer's text and the follow-on task stay out of it until that
-action is done. When it is, a resumed walk on this task:
+M-01 was about the live host, not the document. While it was open, the reviewer's text stayed out
+of this public repository. It is resolved:
 
-1. confirms the condition is gone with the same unauthenticated `GET`,
-2. restores the reviewer's F-001 text in `review/round-1/fable.md`, the held sentence in
-   `review/round-1/grok-4.7.md` G-009, and M-01 in `review/findings.md`,
-3. files the structural follow-on task (code change plus a smoke check) and links it in this table.
+- **Operator (2026-11-25):** the Development host behind `arch.timewarp.work` was stopped (the
+  route answers `502`, checked again on resume with one status-only `GET`), and every exposed
+  rotatable credential was rotated.
+- **Structural fix:** task 524 (PR #690, merged on `master`) removed `/api/debug-config` from
+  `CommonServerModule.ConfigureEndpoints` in every environment and added the `Development`-host
+  regression test `common-server-module-endpoints-tests.cs` asserting `404 Not Found`. That covers
+  the follow-on this disposition promised, so no second task was filed.
+- **Restored:** the reviewer's F-001 text in `review/round-1/fable.md`, the G-009 sentence in
+  `review/round-1/grok-4.7.md`, and M-01 in `review/findings.md`. None of them holds a credential
+  value; F-001 names configuration keys only.

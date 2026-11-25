@@ -18,7 +18,7 @@
 
 | ID | Severity | Title | Found by | Verified |
 |----|----------|-------|----------|----------|
-| M-01 | blocker | [held] operator security finding on the live host | Fable F-001 | live GET |
+| M-01 | blocker | `/api/debug-config` was live on the public host and dumped the api-server configuration | Fable F-001 | live GET + source |
 | M-02 | major | Cookie-session operations have no `security`; no session scheme; dual-scheme operations look bearer-only | **Both** G-001, F-003, F-012 | snapshot + source + live |
 | M-03 | major | Typed-id schemas (`PrincipalId`, `CredentialId`, nullable) have no `type` | **Both** G-002, F-008 | snapshot |
 | M-04 | major | Attachment upload and download are documented as JSON objects | **Both** G-003, F-004, F-005 | snapshot + source |
@@ -41,15 +41,28 @@ Counts after merge: 1 blocker, 9 major, 6 minor, 1 nit, plus one linter note.
 
 ---
 
-## M-01 — [held] operator security finding on the live host
+## M-01 — `/api/debug-config` was live on the public host and dumped the api-server configuration
 
 - **Severity:** blocker · **Lens:** security, doc-vs-reality · **Found by:** Fable F-001 only
-- **Status:** held. This repository is public. The finding concerns the live host. Its text is held
-  outside the repository until the operator has remediated it. Grok did not find it.
+- **Pointers:** `/info/description` (the "Routes outside this document" note);
+  `/x-timewarp-excluded-routes`. The route was served but is neither an operation nor an exclusion.
 - **Verified:** the merger reproduced the reviewer's evidence with one unauthenticated `GET`
-  on 2026-11-24 and kept no copy of the response.
-- **Restore:** when remediation is confirmed, this section and `round-1/fable.md` F-001 get the
-  reviewer's original text back, and the follow-on task is filed.
+  on 2026-11-24 (`200 text/plain`, a `key=value (provider)` configuration dump from an api-server
+  in `Development`) and kept no copy of the response. Source at the snapshot's time:
+  `source/foundation/foundation-server/common-server-module.cs` mapped the route whenever
+  `IsDevelopment()` was true, and the YARP ingress forwarded `/api/*` to that api-server. Grok did
+  not find it; G-009 noted only that the public host served the Development-only `/health`.
+- **Merged fix:** (1) operator: take the Development host off the public ingress and rotate every
+  credential whose name appeared in the dump; (2) structural: remove the route from
+  `CommonServerModule` in every environment and add a regression test that `GET /api/debug-config`
+  returns `404`.
+- **Owner:** host config (the arch.timewarp.work deployment) first; then
+  `common-server-module.cs` (foundation-server).
+- **Resolution (2026-11-25):** the operator stopped the Development host (the public host answers
+  `502` for the route) and rotated the exposed credentials. The structural fix is task 524 (PR #690),
+  merged on `master`: `CommonServerModule.ConfigureEndpoints` is an empty hook, and
+  `tests/container-apps/web/web-server-integration-tests/common-server-module-endpoints-tests.cs`
+  boots a `Development` host and asserts `GET /api/debug-config` is `404 Not Found`.
 
 ## M-02 — Cookie-session operations have no `security`; no session scheme; dual-scheme operations look bearer-only
 
@@ -192,7 +205,8 @@ Counts after merge: 1 blocker, 9 major, 6 minor, 1 nit, plus one linter note.
 - **Pointers:** `/paths/~1api~1health/get/description`; `/x-timewarp-excluded-routes`
 - **Verified:** the health description names `GET /web-server/alive`; live it returns 200 `Healthy`;
   it is not a path and not in the six exclusions, while `info.description` says a missing path is an
-  exclusion. Part of G-009 is held with M-01.
+  exclusion. G-009 also noted that the public host served the Development-only `/health`;
+  that cause is M-01.
 - **Merged fix:** list liveness in `x-timewarp-excluded-routes` from `IngressPaths` constants and
   generate the health description from the same constants.
 - **Owner:** transformer (`open-api-discovery-coverage.cs`).

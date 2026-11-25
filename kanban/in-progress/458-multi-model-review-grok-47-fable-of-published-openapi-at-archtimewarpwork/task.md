@@ -97,8 +97,8 @@ Acceptance criteria:
 - [x] Grok 4.7 review → `review/round-1/grok-4.7.md`
 - [x] Fable review → `review/round-1/fable.md`
 - [x] Merge + verify → `review/findings.md`
-- [ ] Disposition with follow-on task links → `disposition.md` (written; 11 tasks linked; M-01's
-      task waits on operator remediation, see `disposition.md` "M-01 (held)")
+- [x] Disposition with follow-on task links → `disposition.md` (11 tasks linked; M-01 resolved by
+      operator remediation and task 524, see `disposition.md` "M-01 (resolved)")
 
 ## Notes
 
@@ -125,6 +125,15 @@ Acceptance criteria:
   review step) whose kitchen has not landed yet; landing it from here would interfere with that
   walk, so it was left alone. This branch merged `origin/master` to clear its own drift.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 07a96c22-b168-4636-8e11-0e512ab5c2ea, max-turns 500, Blocked — 2026-11-24T20:57:40Z
+- Resumed implement walk (Claude Opus 5.5, 2026-11-25): merged `origin/master` (brings task 524
+  and task 315; the `## Blocked` and `## Unblock update` sections conflicted and both were kept).
+  Restored `review/round-1/fable.md` and `review/round-1/grok-4.7.md` verbatim from the held copies
+  after scanning them for credential values (none; F-001 names keys only). Rewrote M-01 in
+  `review/findings.md` and the M-11 note, and marked M-01 accepted and resolved by task 524 in
+  `disposition.md`; no duplicate follow-on task. Verified 524: `common-server-module.cs`
+  `ConfigureEndpoints` is empty on `master`, and its regression test passes here. One status-only
+  `GET /api/debug-config` returned `502` (host stopped).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1e52fc46-6601-493b-985a-0d52f398d820, max-turns 500, Done — 2026-11-25T01:08:18Z
 
 ## Results
 
@@ -133,9 +142,12 @@ Acceptance criteria:
 | Build | `./bin/dev build` | pass (exit 0, 0 warnings, 0 errors; client-name scan passed) |
 | Test files | none | no test file added or edited; no production code changed (kanban-only) |
 | Audit | `ganda repo audit` | first run: 1 failure `kanban-landed` (315 kitchen drift and this branch behind master); merged `origin/master`; rerun: 1 failure `kanban-landed` for task 315 only (foreign live walk, not landed by this task); 9 pass, 1 skip |
+| Build (resume, 2026-11-25) | `./bin/dev build` | pass (exit 0, build succeeded; client-name scan passed) |
+| 524 regression (resume) | `./bin/dev test --project web-server-integration-tests --filter-class ConfigureEndpoints_Given_Development_` | pass (1/1). `common-server-module-endpoints-tests.cs` is not a standalone runfile (no `#if !JARIBU_MULTI` guard), so it ran through its project. No test file added or edited here. |
+| Audit (resume) | `ganda repo audit` | pass (exit 0): "Repository passes"; `kanban-landed` now passes. One advisory warning, `vscode-window-icon`: this worktree has no `.vscode/settings.json`, a git-ignored local file, so there is nothing to commit for it. |
 
-Review outcome: 17 merged findings (1 blocker held, 9 major, 6 minor, 1 nit) plus one linter note;
-16 accepted, 1 rejected (M-17). Both models agreed on M-02, M-03, M-04, M-05, M-06, M-13, M-14, M-15.
+Review outcome: 17 merged findings (1 blocker, resolved by task 524 and operator action; 9 major,
+6 minor, 1 nit) plus one linter note; 16 accepted, 1 rejected (M-17). Both models agreed on M-02, M-03, M-04, M-05, M-06, M-13, M-14, M-15.
 
 ### How to validate
 
@@ -143,9 +155,25 @@ Review outcome: 17 merged findings (1 blocker held, 9 major, 6 minor, 1 nit) plu
   in this folder; then open `review/findings.md` and `disposition.md` and follow each 458-0NN link;
   `ganda kanban show 458-001` … `458-011`.
 - **Expect:** hash `496a0506…9b98` and `64` paths (matches `review/snapshot-meta.md`); every
-  disposition row except M-01 (held) and M-17 (rejected) links an existing to-do child task; both
+  disposition row except M-01 and M-17 (rejected) links an existing to-do child task, and M-01
+  links done task 524; both
   `review/round-1/grok-4.7.md` and `review/round-1/fable.md` exist and contain no secret values.
 
 ## Blocked
 
 2026-11-24: The operator must fix the held live-host security finding first: rotate the exposed credentials and take the endpoint down (details in the walk log summary and ~/.local/state/timewarp/task-458-held/fable.md F-001). Then resume this walk to restore the F-001 text, file its follow-on task, and rerun ganda repo audit after task 315 lands its kitchen.
+
+## Unblock update (2026-11-25)
+
+Operator remediation is complete:
+
+- The local dev Aspire host serving `/api/debug-config` on `arch.timewarp.work` has been stopped (verified `HTTP 502`; no longer serving `/api/debug-config`).
+- All exposed rotatable credentials have been rotated (`OTEL_EXPORTER_OTLP_HEADERS` was Aspire's ephemeral dashboard OTLP key and `ASPIRE_USER_SECRETS_ID` is the public csproj GUID).
+- The structural code fix **already landed on `master`**: **Task 524** (PR #690, `kanban/done/524-remove-api-debug-config-endpoint-from-common-server-module/task.md`) removed `/api/debug-config` from `CommonServerModule` and added a `404` regression test.
+- Task 315 (PR #689) also merged to `master`, clearing the earlier `kanban-landed` drift.
+
+Resumed walk actions:
+1. Merge `origin/master` into this branch.
+2. Restore the held F-001 text in `review/round-1/fable.md`, the held sentence in `review/round-1/grok-4.7.md` (G-009), and M-01 in `review/findings.md` from `~/.local/state/timewarp/task-458-held/` (strictly zero secret values).
+3. Update `disposition.md` and the checklist: mark M-01 accepted and resolved by [524](../../done/524-remove-api-debug-config-endpoint-from-common-server-module/task.md) (PR #690) — do **not** file a duplicate follow-on task. Because `arch.timewarp.work` is currently stopped (`HTTP 502`), verify the removal from Task 524's merged code and `404` regression test rather than expecting a live host response.
+4. Run `./bin/dev build` and `ganda repo audit`, commit, and finish.

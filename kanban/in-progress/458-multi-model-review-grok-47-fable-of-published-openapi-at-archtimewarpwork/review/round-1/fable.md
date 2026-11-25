@@ -16,7 +16,7 @@
   `/openapi/v1.json`, `/openapi/v1.yaml`, `/scalar/v1`, `/api/Hello` with and without `name`,
   `/api/settings/assistant`, `/api/identity/sign-in-methods`, `/api/identity/session`,
   `/api/identity/entra/choice`, `/api/identity/entra/challenge`, `/api/Users/Current/Profile`,
-  `/identity/sign-out/antiforgery-token`, one route held under F-001, and the cookie- or bearer-protected
+  `/identity/sign-out/antiforgery-token`, `/api/debug-config`, and the cookie- or bearer-protected
   GETs `/api/settings`, `/api/agent-chat/configuration`, `/api/Feedback`, `/api/Roles`,
   `/api/admin/feedback`, `/api/identity/credentials`, `/api/agent-links`, `/api/identity/agent/me`,
   `/api/Users/Current/xai-api-key`, `/api/settings/entra-tenant` (each expected to 401 and did).
@@ -28,14 +28,34 @@ Severity counts: **blocker 1 · major 7 · minor 7 · nit 3** (18 findings).
 
 ---
 
-### F-001 — [held] operator security finding on the live host
+### F-001 — `/api/debug-config` is live on the public host and dumps the api-server configuration, including secret-bearing environment variables
 
 - **Severity:** blocker
 - **Lens:** security, doc-vs-reality
-- **Status:** The reviewer's full text for this finding is held outside the repository until the
-  operator has remediated it on the live host. This repository is public. The merger replaced only
-  this section; every other section of this file is the reviewer's text unchanged. When the
-  remediation is confirmed, the original section is restored here and in `review/findings.md`.
+- **Pointer:** `/info/description` (the "Routes outside this document" note) and
+  `/x-timewarp-excluded-routes` — the document claims to list the public routes that are not
+  operations; this one is served and is not listed because it is supposed not to exist in production.
+- **Evidence:** `GET https://arch.timewarp.work/api/debug-config` returned `200 text/plain` with 129
+  lines of `key=value (provider)` configuration. The body says `applicationName=api-server`,
+  `ASPNETCORE_ENVIRONMENT=Development`, and lists 96 entries from `EnvironmentVariablesConfigurationProvider`.
+  Key *names* present include `CLOUDFLARE_API_TOKEN`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
+  `XAI_API_KEY`, `SIGNOZ_API_KEY`, `TYPESAFE_API_KEY`, `X_CLIENT_SECRET`, `OTEL_EXPORTER_OTLP_HEADERS`,
+  `ASPIRE_USER_SECRETS_ID`, plus `HOME`, `USER`, `PATH`, `CLAUDE_CONFIG_DIR`, `GROK_HOME`, local file
+  paths, and a `TRACEPARENT`. Values were present in the response; I did not record them and deleted
+  my scratch copy. Source: `source/foundation/foundation-server/common-server-module.cs:54-64` maps the
+  route only when `IsDevelopment()`, and its Design region says it "may include secrets". The web
+  server's YARP ingress forwards every prefix in `goldens/ingress/WebServerApiRoutePrefixes.g.cs`
+  (`api/Feedback` … `api/tip`) and `/api/debug-config` evidently reaches an api-server process that is
+  running in the Development environment behind the public Caddy.
+- **Proposed fix:** (1) Rotate every credential whose name appears above; treat them as disclosed.
+  (2) Run the public api-server with `ASPNETCORE_ENVIRONMENT=Production`, or stop forwarding
+  unmatched `/api/*` to it. (3) Make the leak impossible rather than environment-dependent: remove
+  `/api/debug-config` from the published foundation package (or require an explicit opt-in option that
+  the hosts never set), and add a smoke check to `dev template-smoke` / CI that `GET /api/debug-config`
+  on a started host returns 404. (4) Consider adding the route to a "must be 404" list that
+  `OpenApiDiscoveryCoverage` or a test asserts, so the document's exclusion list and reality agree.
+- **Owner:** host config (the arch.timewarp.work deployment) first; then `common-server-module.cs`
+  (foundation-server) for the structural fix.
 
 ---
 
