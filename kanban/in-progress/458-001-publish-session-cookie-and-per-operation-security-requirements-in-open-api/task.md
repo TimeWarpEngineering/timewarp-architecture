@@ -70,6 +70,7 @@ Owner: transformer: `source/foundation/foundation-server/open-api-bearer-securit
   transformers, writes every `AddAuth` scheme onto an endpoint whose `AuthSchemeNames` is null. Before
   this change that put `JWTBearerAuth` on authorized endpoints with no `AuthSchemes`. The schemes now
   go into components from our own document transformer, and `AddAuth` is not called.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a71ad024-775d-4100-a707-04170ed8ba15, max-turns 500, Done — 2026-11-25T20:08:38Z
 
 ## Results
 
