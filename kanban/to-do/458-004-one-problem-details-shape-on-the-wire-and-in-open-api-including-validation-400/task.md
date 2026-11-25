@@ -19,13 +19,12 @@ challenge), and bearer 401/403 and payment 402/503 use their own inline problem 
 - Test: `GET /api/Hello` without `name` is `application/problem+json` and the published schema lists
   `errors`.
 
-Owner: host config (FastEndpoints error builder in `common-server-module.cs`); transformers `open-api-one-of.cs`, `open-api-bearer-security-server.cs`, payment responses.
+Owner: host config (`UseFastEndpoints` error builder in `source/container-apps/web/projects/web-server/program.cs` and `source/container-apps/api/projects/api-server/program.cs`, or a shared helper in `common-server-module.cs`); transformers `open-api-one-of.cs`, `open-api-bearer-security-server.cs`, `open-api-payment-responses-server.cs`; `challenge-entra-endpoint-server.cs`.
 
 ## Checklist
 
 - [ ] Implement the requirements above
 - [ ] Tests or document checks named above pass
-- [ ] Re-fetch the live document after deploy and confirm the finding is gone
 
 ## Notes
 
@@ -37,6 +36,7 @@ Owner: host config (FastEndpoints error builder in `common-server-module.cs`); t
   (AGENTS.md: "When two things must agree, generate one from the other or add a build check").
 - OpenAPI tests live in `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`.
 - Skill: `tw-web-api-contracts`.
+- Post-deploy verification: re-fetch the live OpenAPI document after deploy and confirm the finding is gone.
 
 ## Session
 
