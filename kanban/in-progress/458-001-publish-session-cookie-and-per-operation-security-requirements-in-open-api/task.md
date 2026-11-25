@@ -50,6 +50,10 @@ Owner: transformer: `source/foundation/foundation-server/open-api-bearer-securit
 - [x] Implement the requirements above
 - [x] Tests or document checks named above pass
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -71,6 +75,8 @@ Owner: transformer: `source/foundation/foundation-server/open-api-bearer-securit
   this change that put `JWTBearerAuth` on authorized endpoints with no `AuthSchemes`. The schemes now
   go into components from our own document transformer, and `AddAuth` is not called.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a71ad024-775d-4100-a707-04170ed8ba15, max-turns 500, Done — 2026-11-25T20:08:38Z
+- Review oracle (2026-11-26): round 1, effort 3, roster general. Reviewer grok 4.7 (xAI), session 01a21453-33e4-7922-8c4a-7099963f9482, turn cap 200. Disposition clean, 0 open findings.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21453-33e4-7922-8c4a-7099963f9482, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T20:17:52Z
 
 ## Results
 
@@ -127,3 +133,11 @@ Expect: 6/6 pass. In the live document, `components.securitySchemes.IdentitySess
 `JWTBearerAuth` requirement and an `IdentitySessionCookie` requirement, and its description starts
 the auth sentence with "Accepts"; `GET /api/hello` has `security: []`; Redocly `security-defined`
 reports 0 errors.
+
+### Review
+
+- Round 1. Roster: general. Effort 3 (1354 lines). Session 01a21453-33e4-7922-8c4a-7099963f9482.
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count 0.
+- Disposition: clean. The goal restatement matches the original task. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- This review read the diff and the recorded gates. It did not re-run build, test, or audit.
