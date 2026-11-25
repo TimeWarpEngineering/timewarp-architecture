@@ -97,8 +97,8 @@ Acceptance criteria:
 - [x] Grok 4.7 review → `review/round-1/grok-4.7.md`
 - [x] Fable review → `review/round-1/fable.md`
 - [x] Merge + verify → `review/findings.md`
-- [ ] Disposition with follow-on task links → `disposition.md` (written; 11 tasks linked; M-01's
-      task waits on operator remediation, see `disposition.md` "M-01 (held)")
+- [x] Disposition with follow-on task links → `disposition.md` (11 tasks linked; M-01 resolved by
+      operator remediation and task 524, see `disposition.md` "M-01 (resolved)")
 
 ## Notes
 
@@ -125,6 +125,14 @@ Acceptance criteria:
   review step) whose kitchen has not landed yet; landing it from here would interfere with that
   walk, so it was left alone. This branch merged `origin/master` to clear its own drift.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 07a96c22-b168-4636-8e11-0e512ab5c2ea, max-turns 500, Blocked — 2026-11-24T20:57:40Z
+- Resumed implement walk (Claude Opus 5.5, 2026-11-25): merged `origin/master` (brings task 524
+  and task 315; the `## Blocked` and `## Unblock update` sections conflicted and both were kept).
+  Restored `review/round-1/fable.md` and `review/round-1/grok-4.7.md` verbatim from the held copies
+  after scanning them for credential values (none; F-001 names keys only). Rewrote M-01 in
+  `review/findings.md` and the M-11 note, and marked M-01 accepted and resolved by task 524 in
+  `disposition.md`; no duplicate follow-on task. Verified 524: `common-server-module.cs`
+  `ConfigureEndpoints` is empty on `master`, and its regression test passes here. One status-only
+  `GET /api/debug-config` returned `502` (host stopped).
 
 ## Results
 
@@ -133,9 +141,12 @@ Acceptance criteria:
 | Build | `./bin/dev build` | pass (exit 0, 0 warnings, 0 errors; client-name scan passed) |
 | Test files | none | no test file added or edited; no production code changed (kanban-only) |
 | Audit | `ganda repo audit` | first run: 1 failure `kanban-landed` (315 kitchen drift and this branch behind master); merged `origin/master`; rerun: 1 failure `kanban-landed` for task 315 only (foreign live walk, not landed by this task); 9 pass, 1 skip |
+| Build (resume, 2026-11-25) | `./bin/dev build` | pass (exit 0, build succeeded; client-name scan passed) |
+| 524 regression (resume) | `./bin/dev test --project web-server-integration-tests --filter-class ConfigureEndpoints_Given_Development_` | pass (1/1). `common-server-module-endpoints-tests.cs` is not a standalone runfile (no `#if !JARIBU_MULTI` guard), so it ran through its project. No test file added or edited here. |
+| Audit (resume) | `ganda repo audit` | pass (exit 0): "Repository passes"; `kanban-landed` now passes. One advisory warning, `vscode-window-icon`: this worktree has no `.vscode/settings.json`, a git-ignored local file, so there is nothing to commit for it. |
 
-Review outcome: 17 merged findings (1 blocker held, 9 major, 6 minor, 1 nit) plus one linter note;
-16 accepted, 1 rejected (M-17). Both models agreed on M-02, M-03, M-04, M-05, M-06, M-13, M-14, M-15.
+Review outcome: 17 merged findings (1 blocker, resolved by task 524 and operator action; 9 major,
+6 minor, 1 nit) plus one linter note; 16 accepted, 1 rejected (M-17). Both models agreed on M-02, M-03, M-04, M-05, M-06, M-13, M-14, M-15.
 
 ### How to validate
 
@@ -143,7 +154,8 @@ Review outcome: 17 merged findings (1 blocker held, 9 major, 6 minor, 1 nit) plu
   in this folder; then open `review/findings.md` and `disposition.md` and follow each 458-0NN link;
   `ganda kanban show 458-001` … `458-011`.
 - **Expect:** hash `496a0506…9b98` and `64` paths (matches `review/snapshot-meta.md`); every
-  disposition row except M-01 (held) and M-17 (rejected) links an existing to-do child task; both
+  disposition row except M-01 and M-17 (rejected) links an existing to-do child task, and M-01
+  links done task 524; both
   `review/round-1/grok-4.7.md` and `review/round-1/fable.md` exist and contain no secret values.
 
 ## Blocked
