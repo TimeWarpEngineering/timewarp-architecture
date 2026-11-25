@@ -81,6 +81,7 @@ Acceptance:
 - 2026-11-26 implement (ganda task work): gap confirmed (a packed-template app had no `tools/`
   and no `.timewarp/`); CLI shipped; flag-off variants generated and their CLIs compiled by hand
   before template-smoke.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 6d4c1964-3d12-477f-a328-0e9a3b18524b, max-turns 500, Done — 2026-11-25T21:28:46Z
 
 ## Results (required before done)
 
