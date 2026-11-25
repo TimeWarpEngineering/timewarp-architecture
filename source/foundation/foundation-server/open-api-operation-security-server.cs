@@ -90,7 +90,7 @@ internal static class OpenApiOperationSecurity
     }
   }
 
-  private static Task TransformAsync
+  private static async Task TransformAsync
   (
     OpenApiOperation operation,
     OpenApiOperationTransformerContext context,
@@ -99,19 +99,18 @@ internal static class OpenApiOperationSecurity
     CancellationToken cancellationToken
   )
   {
-    _ = cancellationToken;
     EndpointDefinition? endpoint = context.Description.ActionDescriptor.EndpointMetadata
       .OfType<EndpointDefinition>()
       .SingleOrDefault();
     if (endpoint is null || context.Document is null)
     {
-      return Task.CompletedTask;
+      return;
     }
 
     if (IsAnonymous(endpoint, context.Description.HttpMethod))
     {
       operation.Security = [];
-      return Task.CompletedTask;
+      return;
     }
 
     bool acceptsAgent = agentBearer is not null && Lists(endpoint, agentBearer.SchemeName);
@@ -119,7 +118,7 @@ internal static class OpenApiOperationSecurity
       && (Lists(endpoint, sessionCookie.SchemeName) || (sessionCookie.IsDefaultScheme && ListsNone(endpoint)));
     if (!acceptsAgent && !acceptsSession)
     {
-      return Task.CompletedTask;
+      return;
     }
 
     List<OpenApiSecurityRequirement> requirements = [];
@@ -149,10 +148,9 @@ internal static class OpenApiOperationSecurity
     );
     if (acceptsAgent)
     {
-      OpenApiBearerSecurity.DocumentBearerFailures(operation, endpoint);
+      IOpenApiSchema problem = await OpenApiProblemDetails.ReferenceAsync(context, cancellationToken).ConfigureAwait(false);
+      OpenApiBearerSecurity.DocumentBearerFailures(operation, endpoint, problem);
     }
-
-    return Task.CompletedTask;
   }
 
   private static bool IsAnonymous(EndpointDefinition endpoint, string? httpMethod)

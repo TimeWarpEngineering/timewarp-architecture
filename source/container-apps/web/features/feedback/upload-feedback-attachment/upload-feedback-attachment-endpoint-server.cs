@@ -62,10 +62,8 @@ public sealed class UploadFeedbackAttachmentEndpoint
     catch (BadHttpRequestException exception)
       when (exception.StatusCode == StatusCodes.Status413PayloadTooLarge && !HttpContext.Response.HasStarted)
     {
-      SharedProblemDetails problem = FeedbackAttachmentHttp.TooLarge();
-      HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
-      HttpContext.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
-      await HttpContext.Response.WriteAsJsonAsync(problem, cancellationToken).ConfigureAwait(false);
+      await SharedProblemDetailsHttp.WriteAsync(HttpContext.Response, FeedbackAttachmentHttp.TooLarge(), cancellationToken)
+        .ConfigureAwait(false);
     }
   }
 }

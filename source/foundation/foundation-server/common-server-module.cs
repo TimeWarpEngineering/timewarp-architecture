@@ -30,7 +30,10 @@
 // MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
 // DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
 // applies the bearer. OpenApiOneOf publishes the OneOf response union as its wire shape
-// (success body at 200, SharedProblemDetails as problem+json). OpenApiPublicServer replaces
+// (success body at 200, SharedProblemDetails as problem+json). OpenApiProblemDetails completes
+// that one problem component (errors, extension members), documents 400 on operations with a
+// validator, and after the host callback checks that every problem+json response references it.
+// OpenApiPublicServer replaces
 // the document's servers with the forwarded public origin, and Scalar's Servers list stays
 // empty and follows that document.
 // documentPublicWebRoutes (web-server only) adds GET /api/health and the /api tip alias,
@@ -151,6 +154,9 @@ public class CommonServerModule : IAspNetModule
         options.ConfigureOpenApi = openApiOptions =>
         {
           // After FastEndpoints' operation transformer, which is registered before this callback.
+          // Before OpenApiOneOf: its schema transformer drops the union's members, and a schema
+          // transformer registered after it never reaches the SharedProblemDetails arm.
+          OpenApiProblemDetails.Register(openApiOptions);
           OpenApiOneOf.Register(openApiOptions);
           OpenApiDeleteRequestBody.Register(openApiOptions);
           OpenApiOperationSecurity.Register(openApiOptions, agentBearer, sessionCookie);
@@ -162,6 +168,8 @@ public class CommonServerModule : IAspNetModule
           }
 
           configureOpenApi?.Invoke(openApiOptions);
+          // Last: every transformer that writes a problem response has run.
+          OpenApiProblemDetails.RegisterDocumentCheck(openApiOptions);
         };
       }
     );

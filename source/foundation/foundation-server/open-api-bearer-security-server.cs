@@ -11,7 +11,8 @@
 // Scopes are the OpenAPI reading of the policy already on the endpoint, not Roles and
 // not runtime Scopes() checks. An unmapped policy still requires the bearer and an empty
 // scope list.
-// 401 and 403 bodies are application/problem+json. WWW-Authenticate follows RFC 6750 when
+// 401 and 403 bodies are application/problem+json and reference the one SharedProblemDetails
+// component (OpenApiProblemDetails), which is what the bearer handlers write. WWW-Authenticate follows RFC 6750 when
 // the bearer handler challenges, and is omitted on a handler-level 401 or 403. An existing
 // response description is kept and the bearer note is appended. The header is not required.
 // OpenApiOperationSecurity decides which operations accept the bearer and writes
@@ -32,7 +33,6 @@ internal static class OpenApiBearerSecurity
 {
   internal const string SchemeName = "JWTBearerAuth";
 
-  private const string ProblemJson = "application/problem+json";
   private const string WwwAuthenticate = "WWW-Authenticate";
 
   private const string UnauthorizedDescription =
@@ -115,18 +115,20 @@ internal static class OpenApiBearerSecurity
     return ordered;
   }
 
-  internal static void DocumentBearerFailures(OpenApiOperation operation, EndpointDefinition endpoint)
+  internal static void DocumentBearerFailures(OpenApiOperation operation, EndpointDefinition endpoint, IOpenApiSchema problem)
   {
     ArgumentNullException.ThrowIfNull(operation);
     ArgumentNullException.ThrowIfNull(endpoint);
-    DocumentBearerFailure(operation, endpoint, "401", UnauthorizedDescription, UnauthorizedHeader);
-    DocumentBearerFailure(operation, endpoint, "403", ForbiddenDescription, ForbiddenHeader);
+    ArgumentNullException.ThrowIfNull(problem);
+    DocumentBearerFailure(operation, endpoint, problem, "401", UnauthorizedDescription, UnauthorizedHeader);
+    DocumentBearerFailure(operation, endpoint, problem, "403", ForbiddenDescription, ForbiddenHeader);
   }
 
   private static void DocumentBearerFailure
   (
     OpenApiOperation operation,
     EndpointDefinition endpoint,
+    IOpenApiSchema problem,
     string statusCode,
     string description,
     string headerDescription
@@ -153,23 +155,7 @@ internal static class OpenApiBearerSecurity
     }
 
     response.Description = AppendNote(described, description);
-    response.Content ??= new Dictionary<string, IOpenApiMediaType>();
-    if (!response.Content.ContainsKey(ProblemJson))
-    {
-      response.Content[ProblemJson] = new OpenApiMediaType
-      {
-        Schema = new OpenApiSchema
-        {
-          Type = JsonSchemaType.Object,
-          Properties = new Dictionary<string, IOpenApiSchema>
-          {
-            ["title"] = new OpenApiSchema { Type = JsonSchemaType.String },
-            ["status"] = new OpenApiSchema { Type = JsonSchemaType.Integer },
-            ["detail"] = new OpenApiSchema { Type = JsonSchemaType.String }
-          }
-        }
-      };
-    }
+    OpenApiProblemDetails.SetContent(response, problem);
 
     response.Headers ??= new Dictionary<string, IOpenApiHeader>();
     if (response.Headers.TryGetValue(WwwAuthenticate, out IOpenApiHeader? existingHeader) && existingHeader is OpenApiHeader header)

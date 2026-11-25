@@ -4,7 +4,9 @@
 
 #region Design
 // FastEndpoints infers the success body, so the document otherwise shows only 200.
-// 402 and 503 are SharedProblemDetails plus, on 402 only, the PAYMENT-REQUIRED header.
+// 402 and 503 are SharedProblemDetails plus, on 402 only, the PAYMENT-REQUIRED header. Each body
+// schema is allOf: a $ref to the one SharedProblemDetails component (OpenApiProblemDetails), then
+// the extension members the payment gate adds (payment, reason or error and ok, tip on the tip jar).
 // That header is base64 x402 v2 JSON (x402Version, accepts, resource), so the header schema
 // carries contentEncoding base64 and the decoded object as contentSchema.
 // Routes come from the contract RouteTemplate constants. The bare /api alias is a rewrite
@@ -31,8 +33,6 @@ using TimeWarp.X402;
 /// </summary>
 internal static class OpenApiPaymentResponses
 {
-  private const string ProblemJson = "application/problem+json";
-
   private static readonly string TipRoute = Normalize(SubmitTip.Query.RouteTemplate);
   private static readonly string MeteredRoute = Normalize(InvokeMeteredCapability.Query.RouteTemplate);
 
@@ -70,26 +70,30 @@ internal static class OpenApiPaymentResponses
     return Task.CompletedTask;
   }
 
-  private static Task DocumentPaidOperationAsync
+  private static async Task DocumentPaidOperationAsync
   (
     OpenApiOperation operation,
     OpenApiOperationTransformerContext context,
     CancellationToken cancellationToken
   )
   {
-    _ = cancellationToken;
     string path = Normalize(context.Description.RelativePath);
     string? method = context.Description.HttpMethod;
-    if (IsTip(path, method))
+    bool tip = IsTip(path, method);
+    if (!tip && !IsMetered(path, method))
     {
-      DocumentTip(operation, ReadTipResource(context.ApplicationServices));
-    }
-    else if (IsMetered(path, method))
-    {
-      DocumentMetered(operation, ReadMeteredResource(context.ApplicationServices));
+      return;
     }
 
-    return Task.CompletedTask;
+    IOpenApiSchema problem = await OpenApiProblemDetails.ReferenceAsync(context, cancellationToken).ConfigureAwait(false);
+    if (tip)
+    {
+      DocumentTip(operation, ReadTipResource(context.ApplicationServices), problem);
+    }
+    else
+    {
+      DocumentMetered(operation, ReadMeteredResource(context.ApplicationServices), problem);
+    }
   }
 
   private static bool IsTip(string path, string? method) =>
@@ -101,7 +105,7 @@ internal static class OpenApiPaymentResponses
     string.Equals(path, MeteredRoute, StringComparison.OrdinalIgnoreCase)
     && string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase);
 
-  private static void DocumentTip(OpenApiOperation operation, string resource)
+  private static void DocumentTip(OpenApiOperation operation, string resource, IOpenApiSchema problem)
   {
     operation.Description = AppendNote
     (
@@ -112,11 +116,11 @@ internal static class OpenApiPaymentResponses
       + "Free and discovery routes never return 402. "
       + "Challenge resource.url is " + resource + ", including when the caller used the /api discovery alias."
     );
-    DocumentPaymentRequired(operation, resource, includeTip: true);
-    DocumentUnavailable(operation, includeTip: true);
+    DocumentPaymentRequired(operation, resource, problem, includeTip: true);
+    DocumentUnavailable(operation, problem, includeTip: true);
   }
 
-  private static void DocumentMetered(OpenApiOperation operation, string resource)
+  private static void DocumentMetered(OpenApiOperation operation, string resource, IOpenApiSchema problem)
   {
     operation.Description = AppendNote
     (
@@ -128,8 +132,8 @@ internal static class OpenApiPaymentResponses
       + "Free and discovery routes never return 402."
     );
     NoteSuccessDebit(operation);
-    DocumentPaymentRequired(operation, resource, includeTip: false);
-    DocumentUnavailable(operation, includeTip: false);
+    DocumentPaymentRequired(operation, resource, problem, includeTip: false);
+    DocumentUnavailable(operation, problem, includeTip: false);
   }
 
   private static void NoteSuccessDebit(OpenApiOperation operation)
@@ -148,7 +152,7 @@ internal static class OpenApiPaymentResponses
     operation.Responses["200"] = new OpenApiResponse { Description = note };
   }
 
-  private static void DocumentPaymentRequired(OpenApiOperation operation, string resource, bool includeTip)
+  private static void DocumentPaymentRequired(OpenApiOperation operation, string resource, IOpenApiSchema problem, bool includeTip)
   {
     string description =
       "Payment is enabled and the call is unpaid or the payment signature was rejected. "
@@ -158,11 +162,7 @@ internal static class OpenApiPaymentResponses
       + "Challenge resource.url is " + resource + ".";
 
     OpenApiResponse response = EnsureResponse(operation, "402", description);
-    response.Content ??= new Dictionary<string, IOpenApiMediaType>();
-    if (!response.Content.ContainsKey(ProblemJson))
-    {
-      response.Content[ProblemJson] = new OpenApiMediaType { Schema = ProblemSchema(includeTip) };
-    }
+    OpenApiProblemDetails.SetContent(response, PaymentRequiredSchema(problem, includeTip));
 
     response.Headers ??= new Dictionary<string, IOpenApiHeader>();
     if (response.Headers.TryGetValue(PaymentHeaders.PaymentRequired, out IOpenApiHeader? existing) && existing is OpenApiHeader header)
@@ -229,7 +229,7 @@ internal static class OpenApiPaymentResponses
       },
     };
 
-  private static void DocumentUnavailable(OpenApiOperation operation, bool includeTip)
+  private static void DocumentUnavailable(OpenApiOperation operation, IOpenApiSchema problem, bool includeTip)
   {
     const string description =
       "Payment is disabled or misconfigured. The body is application/problem+json (error, payment, ok). "
@@ -237,55 +237,50 @@ internal static class OpenApiPaymentResponses
       + "Free and discovery routes never return 402.";
 
     OpenApiResponse response = EnsureResponse(operation, "503", description);
-    response.Content ??= new Dictionary<string, IOpenApiMediaType>();
-    if (!response.Content.ContainsKey(ProblemJson))
-    {
-      response.Content[ProblemJson] = new OpenApiMediaType { Schema = UnavailableSchema(includeTip) };
-    }
+    OpenApiProblemDetails.SetContent(response, UnavailableSchema(problem, includeTip));
   }
 
-  private static OpenApiSchema ProblemSchema(bool includeTip)
+  /// <summary>
+  /// SharedProblemDetails plus the 402 extension members the payment gate writes.
+  /// </summary>
+  private static OpenApiSchema PaymentRequiredSchema(IOpenApiSchema problem, bool includeTip)
   {
-    Dictionary<string, IOpenApiSchema> properties = new()
+    Dictionary<string, IOpenApiSchema> members = new()
     {
-      ["title"] = new OpenApiSchema { Type = JsonSchemaType.String },
-      ["status"] = new OpenApiSchema { Type = JsonSchemaType.Integer },
-      ["detail"] = new OpenApiSchema { Type = JsonSchemaType.String },
       ["payment"] = new OpenApiSchema { Type = JsonSchemaType.Boolean },
       ["reason"] = new OpenApiSchema { Type = JsonSchemaType.String },
     };
-    if (includeTip)
-    {
-      properties["tip"] = new OpenApiSchema { Type = JsonSchemaType.Boolean };
-    }
-
-    return new OpenApiSchema
-    {
-      Type = JsonSchemaType.Object,
-      Properties = properties,
-    };
+    return WithMembers(problem, members, includeTip);
   }
 
-  private static OpenApiSchema UnavailableSchema(bool includeTip)
+  /// <summary>
+  /// SharedProblemDetails plus the 503 extension members the payment gate writes.
+  /// </summary>
+  private static OpenApiSchema UnavailableSchema(IOpenApiSchema problem, bool includeTip)
   {
-    Dictionary<string, IOpenApiSchema> properties = new()
+    Dictionary<string, IOpenApiSchema> members = new()
     {
-      ["title"] = new OpenApiSchema { Type = JsonSchemaType.String },
-      ["status"] = new OpenApiSchema { Type = JsonSchemaType.Integer },
-      ["detail"] = new OpenApiSchema { Type = JsonSchemaType.String },
       ["payment"] = new OpenApiSchema { Type = JsonSchemaType.Boolean },
       ["error"] = new OpenApiSchema { Type = JsonSchemaType.String },
       ["ok"] = new OpenApiSchema { Type = JsonSchemaType.Boolean },
     };
+    return WithMembers(problem, members, includeTip);
+  }
+
+  private static OpenApiSchema WithMembers(IOpenApiSchema problem, Dictionary<string, IOpenApiSchema> members, bool includeTip)
+  {
     if (includeTip)
     {
-      properties["tip"] = new OpenApiSchema { Type = JsonSchemaType.Boolean };
+      members["tip"] = new OpenApiSchema { Type = JsonSchemaType.Boolean };
     }
 
     return new OpenApiSchema
     {
-      Type = JsonSchemaType.Object,
-      Properties = properties,
+      AllOf =
+      [
+        problem,
+        new OpenApiSchema { Type = JsonSchemaType.Object, Properties = members },
+      ],
     };
   }
 

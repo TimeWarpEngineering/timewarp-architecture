@@ -11,6 +11,9 @@
 // challenges with 403 Sign-in disabled when EntraSignInEnabled is false — existing sessions stay.
 // OpenAPI would omit 401 and 403 because AllowAnonymous suppresses them. Summary states the
 // anonymous bootstrap choice, and Description lists the handler statuses (400, 401, 403, 404).
+// The 400 and 403 bodies are SharedProblemDetails (EntraTicketHttp.WriteProblemAsync), so they are
+// declared as that type, not ProducesProblem's MVC ProblemDetails, and the document has one
+// problem schema (task 458-004).
 // prompt=select_account is on OpenIdConnectOptions; the test fake handler ignores it.
 // FastEndpoints auto-sends 204 unless Send.* or MarkResponseStart runs — Challenge/Redirect write
 // headers without HasStarted on TestServer, so we mark after ChallengeAsync.
@@ -22,6 +25,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 
 using System.Security.Claims;
 using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Foundation.Features;
 
 public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
 {
@@ -47,9 +51,9 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
       {
         builder
           .WithTags("Identity")
-          .ProducesProblem(400)
+          .Produces<SharedProblemDetails>(400, SharedProblemDetailsHttp.MediaType)
           .Produces(401)
-          .ProducesProblem(403)
+          .Produces<SharedProblemDetails>(403, SharedProblemDetailsHttp.MediaType)
           .Produces(404);
       }
     );
