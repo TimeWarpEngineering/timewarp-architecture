@@ -107,6 +107,18 @@ internal static class AdminFeedbackAuthorizationFixture
     return document.RootElement.GetProperty("feedbackItemId").GetGuid();
   }
 
+  /// <summary>Files a bug report that records the page it was filed from (task 521).</summary>
+  public static async Task<Guid> FileFeedbackFromPageAsync(HttpClient client, string title, string pagePath)
+  {
+    HttpResponseMessage response = await PostAsync(
+      client,
+      "api/Feedback",
+      new { kind = "BugReport", title, body = "Body for " + title, emailCopy = false, pagePath });
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    using JsonDocument document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+    return document.RootElement.GetProperty("feedbackItemId").GetGuid();
+  }
+
   public static async Task<Guid> UploadAttachmentAsync(HttpClient client, string fileName, byte[] body)
   {
     using HttpRequestMessage request = new(HttpMethod.Post, UploadFeedbackAttachment.Command.RouteTemplate);

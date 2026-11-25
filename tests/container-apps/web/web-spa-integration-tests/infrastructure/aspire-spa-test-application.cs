@@ -155,5 +155,6 @@ public class AspireSpaTestApplication : ISpaTestApplication
     // NotificationState.NavigationListener (same registration shape as web-spa program.cs).
     services.AddScoped<NavigationManager, TestNavigationManager>();
     services.AddScoped<TimeWarp.Architecture.Features.NotificationState.NavigationListener>();
+    services.AddScoped<TimeWarp.Architecture.Features.Applications.NavigationHistory>();
   }
 }

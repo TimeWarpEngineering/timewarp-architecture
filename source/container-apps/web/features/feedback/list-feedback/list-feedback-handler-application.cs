@@ -11,6 +11,7 @@
 // distinct owners (never per row), and only with the caller's admin.profiles.read.
 // Severity null is every severity. Unset is passed through as a real filter (task 378).
 // ActivityFrom passes through to the store (task 520); it needs no scope beyond feedback.read.
+// AppVersion and PagePath (task 521) copy from the item; feedback.read is enough to see them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -118,7 +119,9 @@ public sealed class ListFeedback
           filedAt: item.FiledAt,
           lastActivityAt: item.LastActivityAt,
           ownerDisplayName: ownerNames.GetValueOrDefault(item.OwnerPrincipalId),
-          severity: FeedbackContractMap.ToContract(item.Severity)))
+          severity: FeedbackContractMap.ToContract(item.Severity),
+          appVersion: item.AppVersion,
+          pagePath: item.PagePath))
       ];
       return new Response(totalCount: result.TotalCount, items: items, page: page, pageSize: pageSize);
     }

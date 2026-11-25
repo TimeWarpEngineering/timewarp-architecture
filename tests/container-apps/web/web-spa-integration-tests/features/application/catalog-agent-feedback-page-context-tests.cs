@@ -91,7 +91,14 @@ public partial class CatalogAgent_Should
   {
     using FeedbackSpa spa = new();
     using SpaTestScope scope = SpaTestScope.Create(spa);
-    scope.ServiceProvider.GetRequiredService<NavigationManager>().NavigateTo("/Feedback");
+    // Task 521 M1: Routes.razor activates NavigationHistory before the first click. A second
+    // open of /Feedback collapses RouteState's stack; the filing still records the page left.
+    _ = scope.ServiceProvider.GetRequiredService<NavigationHistory>();
+    NavigationManager navigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    navigation.NavigateTo("/Counter");
+    navigation.NavigateTo("/Feedback");
+    navigation.NavigateTo("/Weather?city=x");
+    navigation.NavigateTo("/Feedback");
     WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
 
     Task<string> invoke = dispatcher.InvokeTool
@@ -107,6 +114,7 @@ public partial class CatalogAgent_Should
     SubmitFeedback.Command sent = spa.Api.Requests.ShouldHaveSingleItem();
     sent.Kind.ShouldBe(FeedbackKind.Complaint);
     sent.Title.ShouldBe("The export failed");
+    sent.PagePath.ShouldBe("/Weather");
     using JsonDocument document = JsonDocument.Parse(receipt);
     JsonElement root = document.RootElement;
     root.GetProperty("action").GetString().ShouldBe("Feedback.SubmitFeedback");

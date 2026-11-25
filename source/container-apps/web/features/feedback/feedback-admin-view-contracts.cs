@@ -17,6 +17,8 @@
 // caller sees OwnerPrincipalId only. Severity (task 378) is on this view and not on the
 // filer's contracts. LastActivityAt (task 520) is too: FiledAt, then the newest thread entry's
 // time, including internal notes and severity changes the filer never sees.
+// Task 521: AppVersion (the server's version at filing) and PagePath (the app path the filer was
+// on) are admin-only too. Both are null on items filed before task 521 or filed without a path.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -36,6 +38,10 @@ public sealed class FeedbackAdminView : ICloneable
   public DateTimeOffset FiledAt { get; }
   /// <summary>FiledAt, then the time of the newest thread entry (task 520).</summary>
   public DateTimeOffset LastActivityAt { get; }
+  /// <summary>The app's informational version when the item was filed (task 521). Null on older items.</summary>
+  public string? AppVersion { get; }
+  /// <summary>The app path the filer was on, without query or fragment (task 521). Null when not sent.</summary>
+  public string? PagePath { get; }
   /// <summary>Whether the filer's profile has an email. The handler reads it from the profile slice.</summary>
   [Computed]
   public bool FilerHasEmail { get; }
@@ -60,7 +66,9 @@ public sealed class FeedbackAdminView : ICloneable
     IReadOnlyList<GetFeedback.Attachment>? attachments = null,
     IReadOnlyList<FeedbackActivityEntry>? activity = null,
     string? ownerDisplayName = null,
-    FeedbackSeverity severity = FeedbackSeverity.Unset)
+    FeedbackSeverity severity = FeedbackSeverity.Unset,
+    string? appVersion = null,
+    string? pagePath = null)
   {
     FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
     OwnerPrincipalId = Guard.Against.NullOrEmpty(ownerPrincipalId);
@@ -90,6 +98,8 @@ public sealed class FeedbackAdminView : ICloneable
     Attachments = attachments ?? [];
     Activity = activity ?? [];
     OwnerDisplayName = ownerDisplayName;
+    AppVersion = appVersion;
+    PagePath = pagePath;
   }
 
   /// <summary>Deterministic sample for mock mode: one item under review with a reply and a note.</summary>
@@ -114,6 +124,8 @@ public sealed class FeedbackAdminView : ICloneable
         new FeedbackActivityEntry(2, FeedbackActivityKind.AdminReply, admin, "Thanks, we are looking.", null, null, filedAt.AddHours(2)),
         new FeedbackActivityEntry(3, FeedbackActivityKind.InternalNote, admin, "Reproduced locally.", null, null, filedAt.AddHours(3)),
       ],
-      ownerDisplayName: "Ada Lovelace");
+      ownerDisplayName: "Ada Lovelace",
+      appVersion: "1.0.0-mock",
+      pagePath: "/Counter");
   }
 }

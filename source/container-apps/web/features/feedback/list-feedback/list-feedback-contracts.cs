@@ -29,6 +29,8 @@
 // poller holding feedback:read finds an older item that changed (a filer reply, a status or
 // severity change, an admin reply, a note) without opening every item. It ANDs with the other
 // filters like FiledFrom does. Items carry LastActivityAt; SortBy accepts LastActivityAt.
+// Task 521: Items carry AppVersion and PagePath (null on older items), so an intake tool reading
+// many app instances can tell which build and page each filing came from without opening it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -126,6 +128,10 @@ public static partial class ListFeedback
     public DateTimeOffset FiledAt { get; }
     /// <summary>FiledAt, then the time of the newest thread entry (task 520).</summary>
     public DateTimeOffset LastActivityAt { get; }
+    /// <summary>The app's informational version when the item was filed (task 521). Null on older items.</summary>
+    public string? AppVersion { get; }
+    /// <summary>The app path the filer was on, without query or fragment (task 521). Null when not sent.</summary>
+    public string? PagePath { get; }
     /// <summary>The owner's profile display name (task 336). The handler reads it from the profile slice.</summary>
     [Computed]
     public string? OwnerDisplayName { get; }
@@ -139,7 +145,9 @@ public static partial class ListFeedback
       DateTimeOffset filedAt,
       DateTimeOffset lastActivityAt,
       string? ownerDisplayName = null,
-      FeedbackSeverity severity = FeedbackSeverity.Unset)
+      FeedbackSeverity severity = FeedbackSeverity.Unset,
+      string? appVersion = null,
+      string? pagePath = null)
     {
       FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
       OwnerPrincipalId = Guard.Against.NullOrEmpty(ownerPrincipalId);
@@ -165,6 +173,8 @@ public static partial class ListFeedback
       FiledAt = filedAt;
       LastActivityAt = lastActivityAt;
       OwnerDisplayName = ownerDisplayName;
+      AppVersion = appVersion;
+      PagePath = pagePath;
     }
   }
 
@@ -194,7 +204,9 @@ public static partial class ListFeedback
         DateTimeOffset.Parse("2026-10-09T00:00:00Z"),
         DateTimeOffset.Parse("2026-10-09T03:00:00Z"),
         "Ada Lovelace",
-        FeedbackSeverity.Medium),
+        FeedbackSeverity.Medium,
+        appVersion: "1.0.0-mock",
+        pagePath: "/Counter"),
       new(
         Guid.Parse("55555555-5555-5555-5555-555555555555"),
         owner,

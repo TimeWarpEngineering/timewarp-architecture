@@ -241,6 +241,9 @@ public static class Program
     // Clears the shell notification region on route change (task 247 rule 4). Activated by
     // Routes.razor's @inject; composed into web-server prerender through this same method.
     serviceCollection.AddScoped<NotificationState.NavigationListener>();
+    // Visited addresses, newest first (task 521: the page a feedback filing records). Activated by
+    // Routes.razor's @inject so it sees the first navigation.
+    serviceCollection.AddScoped<NavigationHistory>();
 
     // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IWebServerApiService>

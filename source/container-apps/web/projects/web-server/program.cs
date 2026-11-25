@@ -70,6 +70,7 @@ using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Mail;
 using TimeWarp.Architecture.Features.Tip;
+using TimeWarp.Architecture.Versioning;
 using TimeWarp.Foundation.Common.Infrastructure;
 using TimeWarp.State.DevTools.Export;
 
@@ -175,6 +176,8 @@ public partial class Program : IAspNetProgram
     FeedbackModule.ConfigureServices(serviceCollection, configuration);
 #endif
     MailModule.ConfigureServices(serviceCollection, configuration);
+    // Task 521: the version a feedback filing records; read from this assembly, never the client.
+    serviceCollection.AddSingleton<IAppVersionAccessor, AssemblyAppVersionAccessor>();
     InMemoryAgentHumanLinkStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if postgres

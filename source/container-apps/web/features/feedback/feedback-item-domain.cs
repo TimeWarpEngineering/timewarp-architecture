@@ -19,6 +19,13 @@
 // a poller can ask "what changed since T" with one list filter. Every append goes through
 // Append, the one writer. The invariant ties it to the last entry by Sequence (FiledAt when
 // there is none), which is also how the migration backfills existing rows.
+// Task 521: AppVersion (the server's informational version) and PagePath (the app path the filer
+// was on, no query or fragment) are filing fields, fixed at File like the rest. Both are optional
+// and null on rows filed before they existed. File refuses a path that is not app-relative
+// (must start with one '/', no '?', '#', backslash, whitespace or control characters) so a token in
+// a query value or a foreign URL can never be stored; the contract validator applies the same
+// rule first. A blank version or path is stored as null. MaxAppVersionLength and
+// MaxPagePathLength are duplicated on the contract like the other lengths.
 // Who may call the admin mutations is the endpoint's permission check; the aggregate only
 // guards what it can know (owner identity for filer replies, non-empty principals).
 // Activity is ordered by Sequence; EF loads owned rows in no particular order, so the getter
@@ -37,6 +44,8 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
   public const int MaxTitleLength = 200;
   public const int MaxBodyLength = 8000;
   public const int MaxMessageLength = 4000;
+  public const int MaxAppVersionLength = 128;
+  public const int MaxPagePathLength = 512;
 
   private readonly List<FeedbackActivity> ActivityList = [];
 
@@ -46,7 +55,9 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
     FeedbackKind kind,
     string title,
     string body,
-    DateTimeOffset filedAt)
+    DateTimeOffset filedAt,
+    string? appVersion,
+    string? pagePath)
     : base(id)
   {
     OwnerPrincipalId = ownerPrincipalId;
@@ -54,6 +65,8 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
     Title = title;
     Body = body;
     FiledAt = filedAt;
+    AppVersion = appVersion;
+    PagePath = pagePath;
     Status = FeedbackStatus.New;
     LastActivityAt = filedAt;
   }
@@ -63,6 +76,13 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
   public string Title { get; }
   public string Body { get; }
   public DateTimeOffset FiledAt { get; }
+
+  /// <summary>The web-server's informational version when the item was filed (task 521). Null on older rows.</summary>
+  public string? AppVersion { get; }
+
+  /// <summary>The app path the filer was on, without query or fragment (task 521). Null when not sent.</summary>
+  public string? PagePath { get; }
+
   public FeedbackStatus Status { get; private set; }
   public FeedbackSeverity Severity { get; private set; } = FeedbackSeverity.Unset;
 
@@ -78,7 +98,9 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
     FeedbackKind kind,
     string title,
     string body,
-    DateTimeOffset filedAt)
+    DateTimeOffset filedAt,
+    string? appVersion = null,
+    string? pagePath = null)
   {
     RequirePrincipal(ownerPrincipalId, nameof(ownerPrincipalId));
     if (!Enum.IsDefined(kind))
@@ -88,7 +110,47 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
 
     string trimmedTitle = RequireText(title, MaxTitleLength, nameof(title));
     string trimmedBody = RequireText(body, MaxBodyLength, nameof(body));
-    return new FeedbackItem(FeedbackItemId.New(), ownerPrincipalId, kind, trimmedTitle, trimmedBody, filedAt);
+    string? version = OptionalText(appVersion, MaxAppVersionLength, nameof(appVersion));
+    string? path = OptionalText(pagePath, MaxPagePathLength, nameof(pagePath));
+    if (path is not null && !IsAppRelativePath(path))
+    {
+      throw new ArgumentException(
+        "Page path must be an app-relative path with no query string or fragment.",
+        nameof(pagePath));
+    }
+
+    return new FeedbackItem(
+      FeedbackItemId.New(),
+      ownerPrincipalId,
+      kind,
+      trimmedTitle,
+      trimmedBody,
+      filedAt,
+      version,
+      path);
+  }
+
+  /// <summary>
+  /// True when <paramref name="path"/> starts with exactly one '/' and holds no query, fragment,
+  /// backslash, whitespace or control character (task 521).
+  /// </summary>
+  public static bool IsAppRelativePath(string path)
+  {
+    ArgumentNullException.ThrowIfNull(path);
+    if (path.Length == 0 || path[0] != '/' || (path.Length > 1 && path[1] == '/'))
+    {
+      return false;
+    }
+
+    foreach (char character in path)
+    {
+      if (character is '?' or '#' or '\\' || char.IsWhiteSpace(character) || char.IsControl(character))
+      {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /// <summary>True when <see cref="ChangeStatus"/> would accept <paramref name="status"/>.</summary>
@@ -199,6 +261,18 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
     return trimmed;
   }
 
+  private static string? OptionalText(string? value, int maxLength, string name)
+  {
+    if (string.IsNullOrWhiteSpace(value))
+    {
+      return null;
+    }
+
+    string trimmed = value.Trim();
+    ArgumentOutOfRangeException.ThrowIfGreaterThan(trimmed.Length, maxLength, name);
+    return trimmed;
+  }
+
   private sealed class Invariants : AbstractValidator<FeedbackItem>
   {
     public Invariants()
@@ -207,6 +281,11 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
       RuleFor(item => item.Kind).IsInEnum();
       RuleFor(item => item.Title).NotEmpty().MaximumLength(MaxTitleLength);
       RuleFor(item => item.Body).NotEmpty().MaximumLength(MaxBodyLength);
+      RuleFor(item => item.AppVersion).MaximumLength(MaxAppVersionLength);
+      RuleFor(item => item.PagePath)
+        .MaximumLength(MaxPagePathLength)
+        .Must(path => path is null || IsAppRelativePath(path))
+        .WithMessage("PagePath must be an app-relative path with no query string or fragment.");
       RuleFor(item => item.Status).IsInEnum();
       RuleFor(item => item.Severity).IsInEnum();
       RuleFor(item => item.Activity)
