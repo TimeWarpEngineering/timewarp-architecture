@@ -133,6 +133,7 @@ Acceptance criteria:
   `disposition.md`; no duplicate follow-on task. Verified 524: `common-server-module.cs`
   `ConfigureEndpoints` is empty on `master`, and its regression test passes here. One status-only
   `GET /api/debug-config` returned `502` (host stopped).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1e52fc46-6601-493b-985a-0d52f398d820, max-turns 500, Done — 2026-11-25T01:08:18Z
 
 ## Results
 
