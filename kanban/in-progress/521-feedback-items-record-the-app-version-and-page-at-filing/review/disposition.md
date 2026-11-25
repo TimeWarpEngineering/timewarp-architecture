@@ -1,13 +1,13 @@
 # Disposition — task 521
 
 **Date:** 2026-11-25
-**Outcome:** withheld
-**Rounds:** 2
-**Final open count:** 1
+**Outcome:** clean
+**Rounds:** 3
+**Final open count:** 0
 
 ## Summary
 
-Round 1 found no issues. Round 2 re-checked the filing change and the case-insensitive `PropertyName` assertion. That assertion is not a finding. One bug is open: a later filing in the same circuit stores a stale page because `RouteState` drops the page just left when `/Feedback` is opened again (`review/round-2/merged.md`, M1). There is no exit disposition until that finding is fixed or marked wontfix.
+Three rounds, general reviewer only. Round 1 raised nothing. Round 2 raised M1 (bug): a second open of `/Feedback` made `RouteState` drop the page just left, so a later filing stored an older page. Fix `0beb777fe` records visits on a scoped `NavigationHistory` and the submit reads that list. Round 3 re-checked that delta and found no new issues. M1 is fixed. Nothing is open and nothing was wontfix.
 
 ## Exception log (if accepted-exceptions)
 

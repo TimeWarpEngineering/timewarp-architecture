@@ -75,11 +75,14 @@ Acceptance, as I will prove it:
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21306-6ddc-72e1-9d85-ae25d926b44b, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T14:15:41Z
 - 2026-11-25 review round 2 fix pass (M1): the page path now comes from a new scoped
   `NavigationHistory` (visits recorded on `LocationChanged`, never truncated), not `RouteState.Routes`.
+- Reviewer round 3: grok session 01a21316-13a0-7852-88ab-ae54764f1798 (2026-11-25), effort 2, roster general. M1 fixed, no new findings.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21316-13a0-7852-88ab-ae54764f1798, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-25T14:30:13Z
 
 ## Review
 
 - Round 1: no findings
-- Round 2: Blocked — open M1
+- Round 2: M1 open (stale page after a second `/Feedback`)
+- Round 3: Done
 ## Notes
 
 - Domain: `features/feedback/feedback-item-domain.cs` (`File`). Submit: `features/feedback/submit-feedback/`.
@@ -186,9 +189,10 @@ Gates:
 
 ### Review
 
-- Rounds: 2. Roster: general. Effort: 3.
+- Rounds: 3. Roster: general. Effort: 3 for rounds 1–2, 2 for round 3 (by-diff).
 - Round 1 counts: bug 0, suggestion 0, nit 0.
-- Round 2 counts: bug 1 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 1 (M1).
-- Disposition: withheld. No wontfix and no escalation. The implementer restatement matches the original task (no misread). M1 is open: a later filing in the same circuit stores a stale page because `RouteState` drops the page just left when `/Feedback` is opened again.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Round 2 raised M1 (bug, open at the close of that round).
+- Round 3 counts (final): bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
+- Disposition: clean. No wontfix and no escalation. The implementer restatement matches the original task (no misread). M1 is fixed: submit reads `NavigationHistory` (visits recorded on `LocationChanged`, not truncated) instead of `RouteState.Routes`. Round 3 found no new issues.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
