@@ -74,11 +74,13 @@ Done when:
 - Review oracle: reviewed by reviewer-grok (grok, vendor xai, model grok-4.7, session 01a211e9-0052-7612-b27f-f40bb2e390fc), effort 3, roster general, round 1, disposition clean — 2026-11-25
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a211e9-0052-7612-b27f-f40bb2e390fc, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T09:02:29Z
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 68bc2246-0cb5-4b5d-b02c-6c3965d53b97, max-turns 500, Done — 2026-11-25T12:43:21Z
+- Review oracle: reviewed by reviewer-grok (grok, vendor xai, model grok-4.7, session 01a212bb-86ba-7273-8559-294134f9f34c), effort 3, roster general, round 2, disposition clean — 2026-11-25
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a212bb-86ba-7273-8559-294134f9f34c, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-25T12:49:12Z
 
 ## Review
 
 - Round 1: Done
-
+- Round 2: Done
 ## Notes
 
 - Today's list filters: `Status`, `Severity`, `Kind`, `FiledFrom`, `FiledTo`, `IncludeClosed`, `Search`; sort `FiledAt`, `Title`, `Kind`, `Status` (`features/feedback/list-feedback/`).
@@ -174,10 +176,11 @@ Expect: all tests pass; `ActivityFrom_Should_ReturnAnOldItemOnlyAfterAFilerReply
 
 ### Review
 
-- Round 1, roster general, effort 3 (by-diff, 1038 lines). Reviewer did not re-run build, test, or audit.
+- Round 1, roster general, effort 3 (by-diff, 1038 lines). Reviewer did not re-run build, test, or audit. Counts: bug 0, suggestion 0, nit 0.
+- Round 2, roster general, effort 3 (by-diff, 1040 lines). Re-checked the branch after the PR #692 `feedback-owner-name-tests.cs` constructor fix. Reviewer did not re-run build, test, or audit.
 - Counts: bug 0, suggestion 0, nit 0. Open 0. Fixed 0. Wontfix 0.
 - Disposition: clean. The implementer restatement matches the original task (no misread).
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`. Round 1 files left in place.
 
 ## Blocked
 

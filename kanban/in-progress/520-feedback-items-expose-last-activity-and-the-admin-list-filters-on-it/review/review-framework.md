@@ -2,15 +2,15 @@
 
 **Date:** 2026-11-25
 **Host task:** kanban/in-progress/520-feedback-items-expose-last-activity-and-the-admin-list-filters-on-it/
-**Diff scope:** branch `task/520-feedback-items-expose-last-activity-and-the-admin` vs `master` (22 files, +917/−121). Product change is `LastActivityAt` on the feedback aggregate, the Postgres migration and backfill, the admin list filter and sort, and the tests named in `## Results`. Audit baselines shrink for EF-generated files after ganda 723.
+**Diff scope:** branch `task/520-feedback-items-expose-last-activity-and-the-admin` vs `master` (23 files, +919/−121). Product change is `LastActivityAt` on the feedback aggregate, the Postgres migration and backfill, the admin list filter and sort, and the tests named in `## Results`. Round 2 re-checks that diff after the PR #692 compile fix in `feedback-owner-name-tests.cs`. Audit baselines shrink for EF-generated files after ganda 723.
 **Plan / brief:** task 520 — a `feedback:read` poller can ask which feedback items changed since a time, without reading every item's detail.
-**Effort:** 3 (by-diff, 1038 lines changed)
+**Effort:** 3 (by-diff, 1040 lines changed)
 **Reviewer roster:** general
-**Session IDs:** reviewer-grok session 01a211e9-0052-7612-b27f-f40bb2e390fc
+**Session IDs:** round 1 reviewer-grok session 01a211e9-0052-7612-b27f-f40bb2e390fc; round 2 reviewer-grok session 01a212bb-86ba-7273-8559-294134f9f34c
 
 ## Budget (by-diff)
 
-- Lines changed: 1038
+- Lines changed: 1040
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
