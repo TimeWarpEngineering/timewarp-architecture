@@ -139,3 +139,4 @@ response is a `$ref` to it (payment 402/503 as the first `allOf` member). After 
 
 - Created: 2227132 (2026-11-24)
 - 2026-11-26 implementer: wire fix (SharedProblemDetailsHttp), OpenApiProblemDetails transformer + document check, bearer/payment/Entra point at the one component; gates in ## Results.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f65f0311-2aa8-474a-86cf-18838ef9b251, max-turns 500, Done — 2026-11-25T22:19:59Z
