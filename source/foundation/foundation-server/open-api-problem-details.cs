@@ -30,7 +30,8 @@
 // status. A ProducesProblem call registers MVC ProblemDetails; when every response that used it
 // was rewritten to SharedProblemDetails, the unreferenced component is removed. The throw makes
 // /openapi/{doc}.json return 500 with the cause, so the OpenAPI tests fail instead of the
-// document carrying a second problem shape.
+// document carrying a second problem shape. CollectReferences and CollectOperationReferences are
+// internal so OpenApiBinaryContent prunes its Stream components by the same reference walk.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -271,7 +272,7 @@ public static class OpenApiProblemDetails
     }
   }
 
-  private static void CollectOperationReferences(OpenApiOperation operation, HashSet<string> referenced)
+  internal static void CollectOperationReferences(OpenApiOperation operation, HashSet<string> referenced)
   {
     foreach (IOpenApiParameter parameter in operation.Parameters ?? [])
     {
@@ -300,7 +301,7 @@ public static class OpenApiProblemDetails
   /// <summary>
   /// Adds every component id <paramref name="schema"/> references, not counting a reference to <paramref name="selfId"/>.
   /// </summary>
-  private static void CollectReferences(IOpenApiSchema? schema, HashSet<string> referenced, string? selfId)
+  internal static void CollectReferences(IOpenApiSchema? schema, HashSet<string> referenced, string? selfId)
   {
     if (schema is OpenApiSchemaReference reference)
     {

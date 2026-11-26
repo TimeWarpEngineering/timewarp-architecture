@@ -169,6 +169,8 @@ public class CommonServerModule : IAspNetModule
           OpenApiTypedId.Register(openApiOptions);
           OpenApiOneOf.Register(openApiOptions);
           OpenApiDeleteRequestBody.Register(openApiOptions);
+          // After OpenApiOneOf: the binary 2xx content replaces the success arm OneOf split out.
+          OpenApiBinaryContent.Register(openApiOptions);
           OpenApiOperationSecurity.Register(openApiOptions, agentBearer, sessionCookie);
 
           OpenApiPublicServer.Register(openApiOptions);

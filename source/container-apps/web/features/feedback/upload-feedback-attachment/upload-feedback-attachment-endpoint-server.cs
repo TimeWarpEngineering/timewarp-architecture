@@ -18,12 +18,15 @@
 // turns that 413 into the same application/problem+json response instead of an unhandled error.
 // WithTags("Feedback") is the tag the generator gives its siblings (namespace leaf), so Scalar
 // groups this operation with them. Tags are not accepts metadata, so ClearDefaultAccepts keeps it.
+// FileContentMetadata carries the name and size limits OpenApiBinaryContent publishes on the
+// X-File-Name header and the 413. It is not accepts metadata either.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
 using Microsoft.AspNetCore.Http.Metadata;
 using TimeWarp.Architecture.Features.Feedback.Application;
+using TimeWarp.Foundation;
 using TimeWarp.Foundation.Features;
 
 /// <summary>POST api/feedback/attachments</summary>
@@ -43,6 +46,10 @@ public sealed class UploadFeedbackAttachmentEndpoint
     {
       string[] contentTypes = FeedbackAttachmentRules.AllowedContentTypes;
       builder.WithTags("Feedback");
+      builder.WithMetadata(new FileContentMetadata(
+        ContentTypes: [],
+        MaxFileNameLength: FeedbackAttachmentRules.MaxFileNameLength,
+        MaxBytes: FeedbackAttachmentRules.MaxBytes));
       builder.ClearDefaultAccepts();
       builder.Finally(endpointBuilder =>
       {
