@@ -40,6 +40,10 @@ Acceptance:
 - [x] Implement the requirements above
 - [x] Tests or document checks named above pass
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -58,6 +62,8 @@ Acceptance:
 - Implement (2026-11-26): `OpenApiTypedId` schema transformer added; root cause of the first
   failing run was registration order (see Results).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3ea3591e-7a5a-4e0f-875f-06ddb9996f43, max-turns 500, Done — 2026-11-26T00:58:22Z
+- Review (2026-11-26): round 1, effort 2, roster general. Reviewer: grok session 01a2155c-7760-7680-b020-1670544592ee. Disposition clean, 0 open findings.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2155c-7760-7680-b020-1670544592ee, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-26T01:09:24Z
 
 ## Results
 
@@ -98,3 +104,11 @@ Expect: 4/4 pass. In the document, `components.schemas.TimeWarpIdentityPrincipal
 `SystemNullableOfTimeWarpIdentityPrincipalId` is `{ "type": ["null","string"], "format": "uuid" }`,
 and no component schema is `{}`. Post-deploy: re-fetch `https://arch.timewarp.work/openapi/v1.json`
 and confirm the same.
+
+### Review
+
+- Round 1, effort 2, roster general (`review/round-1/general.md`).
+- Counts: bug 0, suggestion 0, nit 0; open 0, fixed 0, wontfix 0.
+- Disposition: clean (`review/disposition.md`). No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- The implementer restatement matches the task. No misread.
