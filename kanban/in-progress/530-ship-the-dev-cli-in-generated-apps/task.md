@@ -78,6 +78,7 @@ required. readme says the same.
 - Round 1: Blocked — open M1, M2
 - Round 2: Done
 - Round 3: Done
+- Round 4: Done
 ## Notes
 
 - Found 2026-11-25 while scoping the instance CI workflow (task 531) and the release deploy job
@@ -115,12 +116,16 @@ Fix:
 - 2026-11-26 implement (merge-conflict fix pass): merged origin/master (87 commits), see Results ›
   Merge-conflict fix pass.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 6f96f8fe-4af1-4825-beab-8f99a4ef0a5e, max-turns 500, Done — 2026-11-26T07:15:33Z
+- Review oracle round 4: grok session 01a216b5-ca35-7622-9303-ffeb97dea72c (2026-11-26), effort 3, roster general
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a216b5-ca35-7622-9303-ffeb97dea72c, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a216b5-ca35-7622-9303-ffeb97dea72c, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T07:21:40Z
 
 ## Learnings
 
 - No misread. The Goal restatement matches the original task (ship the dev CLI, drop template-only commands, refuse or exclude flag-off commands, smoke `dev build` on the default variant and `--matrix`). The Goal line says `dev db` is excluded without postgres; Results and the code also exclude it when web is off. That tighter coupling is finding M1, not a conflict with the task.
 - Round 2 re-checked the restatement, including the fix-pass paragraph, against the original task. Still no misread. Naming web when the web tree is gone, and refusing `dev deploy` without web, is the review fix. It matches the task rule that a flag-off command is excluded or refuses cleanly.
 - Round 3 re-checked the restatement against the original task over the full branch. Still no misread. `regenerate-generated` is excluded because its inputs do not ship, which is the task's "when it applies" clause with nothing to apply. The web coupling on `dev db` and `dev deploy migrate` remains the round 1 fix, not a conflict with the task.
+- Round 4 re-checked the restatement against the original task after the origin/master merge. Still no misread. The Goal acceptance line says `open` and `deploy` refuse naming the missing feature and does not mention the compose/kubernetes limit added in the merge. That line is behind the fix, not a conflict with the task. The original rule is that a flag-off command is excluded or refuses cleanly. aca and aca-neon still deploy and open without yarp, because task 527 serves web-server there, so those commands are not dead.
 
 ## Results
 
@@ -197,7 +202,9 @@ Round 2 (general, effort 2): re-reviewed the fix delta. M1 and M2 stay fixed. No
 
 Round 3 (general, effort 3): re-reviewed the full branch. Product code is unchanged since the fix. M1 and M2 stay fixed. No new findings.
 
-Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. Disposition: clean. Final open count: 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`.
+Round 4 (general, effort 3): re-reviewed the branch after the origin/master merge. M1 and M2 stay fixed. Yarp is refused only on compose and kubernetes. No new findings.
+
+Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. Disposition: clean. Final open count: 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-4/merged.md`, `review/disposition.md`.
 
 ### Review fix pass (round 1 → round 2)
 
