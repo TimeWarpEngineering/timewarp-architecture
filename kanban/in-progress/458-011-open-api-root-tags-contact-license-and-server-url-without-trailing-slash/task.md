@@ -43,6 +43,10 @@ Acceptance criteria:
 - [x] Implement the requirements above
 - [x] Tests or document checks named above pass
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -62,6 +66,9 @@ Acceptance criteria:
 - 2026-11-26 implement (ganda task work): shared root-tags transformer and check, document info
   (contact, license, tag descriptions), trailing-slash trim, web-server tag map, tests, skill row.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session df953187-d6b4-4f20-8f86-e8851d5da501, max-turns 500, Done — 2026-11-26T02:57:52Z
+- 2026-11-26 review round 1 (ganda task work): general only, effort 3. Disposition clean (0 open).
+- Review oracle: grok session 01a215c9-dbc2-75f2-91ca-3573a507a588, max-turns 200 (2026-11-26)
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a215c9-dbc2-75f2-91ca-3573a507a588, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T03:12:57Z
 
 ## Results
 
@@ -132,3 +139,12 @@ set of operation tags and each has a description; `info.contact.url` is the repo
 trailing slash. After deploy, `curl -s https://arch.timewarp.work/openapi/v1.json | jq '.tags | length, .info.contact, .info.license, .servers'`
 shows the same, and Spectral `operation-tag-defined` and Redocly `no-server-trailing-slash` no
 longer fire.
+
+### Review
+
+Round 1, effort 3, roster general. Counts: bug 0, suggestion 0, nit 0 (open 0, fixed 0, wontfix 0). Disposition: **clean**. No wontfix and no escalation. The implementer restatement matches the original requirements and the grooming note (descriptions from web-server, servers test updated for the trimmed URL). No misread.
+
+- `review/review-framework.md`
+- `review/round-1/general.md`
+- `review/round-1/merged.md`
+- `review/disposition.md`
