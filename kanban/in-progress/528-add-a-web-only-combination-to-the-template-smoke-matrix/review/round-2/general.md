@@ -1,0 +1,11 @@
+# Round 2 — general
+**Date:** 2026-11-26
+**Scope reviewed:** branch `task/528-add-a-web-only-combination-to-the-template-smoke` vs `master` (template-smoke matrix, runner, tier-1 artifact table, command option, co-located Jaribu reference, nightly job). Compared with `## Goal (implementer restatement)` and the original task. Round 1 raised no findings; this pass re-read the same product diff after the kitchen-only implement resume.
+
+## Summary
+
+`SmokeWebOnly` is `--api false --grpc false --yarp false` with web and postgres left at their template defaults (on) and `ExcludedFamilies` api, grpc, and yarp. `FamilyTestArtifacts` matches the `.template.config/template.json` excludes: the api integration project and `api-test-server-application.cs` under `!api`; the superhero test folder under `!web` and `!grpc`; the yarp integration project under `!web` and `!yarp`; the grpc route test under all three; `yarp-test-server-application.cs` under `!yarp` only. Those six paths exist in this tree, so the all-flags-on presence half is not vacuous. `SmokeNoGrpc` and `SmokeNoYarp` now list `grpc` and `yarp`. The co-located and aggregator tables still name only web and api, so that list change does not assert absence of an artifact those tables do not have. `--variant` selects one matrix name (ordinal ignore case) and an unknown name exits 1 before packing; a missing option stays null and the old `--matrix` / `SmokeDefault` selection remains. The nightly job runs `template-smoke --matrix --app-tests` with no name filter. `dev template-publish-smoke` still generates only `PublishSmokeDefault` and `PublishSmokeNoPostgres`. The `aca` and `aca-neon` suites live in generated `aspire-tests`: with yarp off they still publish and assert that no container app is external, and the passkey facts are compiled only when yarp is on. Recorded results cover build, audit, skill lint, `SmokeWebOnly --app-tests` (aspire-tests 70/70), the artifact table against `dotnet new` for the default and each single flag plus the smoke output, and `--variant Nope`. The later implement commit only normalized Results headings. The goal restatement matches the original task. Gates were not re-run.
+
+## Issues
+
+<!-- None. -->
