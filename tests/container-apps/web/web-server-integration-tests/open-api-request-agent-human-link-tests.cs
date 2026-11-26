@@ -6,7 +6,9 @@
 // The handler links the calling agent to the human the body names. There is no self-link
 // default, so omitting the id must read as required in the document, not as an optional field.
 // The host is the OpenAPI pipeline only: FastEndpoints discovers the one generated endpoint, and
-// CommonServerModule.AddOpenApi runs the document transformers. No mediator graph.
+// CommonServerModule.AddOpenApi runs the document transformers. No mediator graph. The contract
+// validators are registered as web-server registers them, because required comes from the
+// Validator's NotEmpty (OpenApiValidatorRequired), not from an attribute on the property.
 // FastEndpoints 9 on the .NET 11 OpenAPI stack writes the XML <example> as an examples array.
 #endregion
 
@@ -15,6 +17,7 @@ namespace OpenApiRequestAgentHumanLink_;
 using System.Net;
 using System.Text.Json;
 using FastEndpoints;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
@@ -49,6 +52,7 @@ public class RequestAgentHumanLink_Given_
       options.Assemblies = [typeof(Program).Assembly];
       options.Filter = type => string.Equals(type.Name, EndpointName, StringComparison.Ordinal);
     });
+    builder.Services.AddValidatorsFromAssemblyContaining<RequestAgentHumanLink.Validator>();
     CommonServerModule.AddOpenApi(builder.Services, "v1", "Test API");
     App = builder.Build();
     App.UseFastEndpoints(config =>

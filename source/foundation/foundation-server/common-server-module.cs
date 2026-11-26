@@ -34,7 +34,10 @@
 // that one problem component (errors, extension members), documents 400 on operations with a
 // validator, and after the host callback checks that every problem+json response references it.
 // OpenApiTypedId publishes every [TypedId] struct as string uuid, the Guid string its converter
-// writes, and Nullable<T> of one as [null, string] uuid.
+// writes, and Nullable<T> of one as [null, string] uuid. OpenApiValidatorRequired publishes
+// required from each request's validators (unconditional NotEmpty/NotNull) on the body schema
+// and query parameters, and its document check, registered last, fails a request member that
+// lost required.
 // OpenApiPublicServer replaces
 // the document's servers with the forwarded public origin, and Scalar's Servers list stays
 // empty and follows that document.
@@ -169,6 +172,8 @@ public class CommonServerModule : IAspNetModule
           OpenApiTypedId.Register(openApiOptions);
           OpenApiOneOf.Register(openApiOptions);
           OpenApiDeleteRequestBody.Register(openApiOptions);
+          // After OpenApiDeleteRequestBody: the DELETE query parameters it adds can be required.
+          OpenApiValidatorRequired.Register(openApiOptions);
           // After OpenApiOneOf: the binary 2xx content replaces the success arm OneOf split out.
           OpenApiBinaryContent.Register(openApiOptions);
           OpenApiOperationSecurity.Register(openApiOptions, agentBearer, sessionCookie);
@@ -180,8 +185,9 @@ public class CommonServerModule : IAspNetModule
           }
 
           configureOpenApi?.Invoke(openApiOptions);
-          // Last: every transformer that writes a problem response has run.
+          // Last: every transformer that writes a problem response or rewrites a request has run.
           OpenApiProblemDetails.RegisterDocumentCheck(openApiOptions);
+          OpenApiValidatorRequired.RegisterDocumentCheck(openApiOptions);
         };
       }
     );
