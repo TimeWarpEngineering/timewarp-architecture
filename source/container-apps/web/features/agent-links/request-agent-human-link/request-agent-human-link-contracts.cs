@@ -7,9 +7,10 @@
 // from identity:read — requesting a human link is the agent's identity graph, not credential
 // material. Not required for paid service. Handler rejects non-Agent callers and missing humans.
 // HumanPrincipalId is the only target: there is no self-link or default human, so an omitted id
-// binds to Guid.Empty and the Validator returns 400. [Required] only marks the property required
-// in the OpenAPI document; the Validator is the runtime rule. The required keyword would break
-// the new() constraint that HttpMethod<TRequest> in AgentLinkOnboardingPrompt relies on.
+// binds to Guid.Empty and the Validator returns 400. The Validator's NotEmpty also publishes
+// humanPrincipalId as required in the OpenAPI document (OpenApiValidatorRequired), so the
+// contract carries no [Required]. The required keyword would break the new() constraint that
+// HttpMethod<TRequest> in AgentLinkOnboardingPrompt relies on.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentLinks;
@@ -31,7 +32,6 @@ public static partial class RequestAgentHumanLink
     /// or guesses a human, so an omitted or empty id is a 400 validation problem.
     /// </summary>
     /// <example>3f2504e0-4f89-41d3-9a0c-0305e82c3301</example>
-    [System.ComponentModel.DataAnnotations.Required]
     public Guid HumanPrincipalId { get; set; }
   }
 
