@@ -80,6 +80,10 @@ Acceptance:
 - [x] `readme.md`: a generated app includes CI; what to configure in the repo (required check `ci`,
       variables).
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Steven's decision 2026-11-25: ship a `.github/` for generated apps, purpose-built.
@@ -94,6 +98,8 @@ Acceptance:
 - 2026-11-26 implement (ganda task work): app workflow, setup-ci pack, green key for the ci gate,
   template-smoke check, readme. `dev workflow` phases run by hand in generated apps (see Results).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 582162b7-1afd-4c49-9dfa-857b3355486d, max-turns 500, Done — 2026-11-26T09:54:55Z
+- Review oracle: Grok, session `01a21747-afa1-7391-a314-fa0c42db50b1`, effort 3, roster general, round 1, disposition clean (2026-11-26)
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21747-afa1-7391-a314-fa0c42db50b1, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T10:05:22Z
 
 ## Results
 
@@ -190,3 +196,13 @@ Expect:
    lists exactly `.github/workflows/workflow.yml` and `.github/actions/setup-ci/action.yml`. The
    workflow is identical to `.github/app-workflows/workflow.yml`.
 3. The same CI-workflow line, and the variant succeeds.
+
+### Review
+
+- Round 1, roster general, effort 3. Counts: bug 0, suggestion 0, nit 0 (open 0, fixed 0, wontfix 0).
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- No misread. The `## Goal (implementer restatement)` matches the task: the two `.github/` files, a thin `dev workflow` trigger (classify, fast, integration, publish, required `ci`), no template-repo jobs, an unfiltered `pull_request`, hosted runners unless a repository variable is set, a recorded green-key decision, one `setup-ci` source mapped in at generation, a flag-off-safe workflow, template-smoke checks, and the readme. "Nothing else under `.github/`" is the same constraint smoke enforces.
