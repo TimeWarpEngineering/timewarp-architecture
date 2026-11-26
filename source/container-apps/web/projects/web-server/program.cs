@@ -265,7 +265,8 @@ public partial class Program : IAspNetProgram
         OpenApiPaymentResponses.Register(options);
         OpenApiAgentReviewerGuide.Register(options);
       },
-      sessionCookie: OpenApiSessionCookieRegistration.Create()
+      sessionCookie: OpenApiSessionCookieRegistration.Create(),
+      excludedWebRoutes: WebServerOpenApiExcludedRoutes.All
     );
   }
 

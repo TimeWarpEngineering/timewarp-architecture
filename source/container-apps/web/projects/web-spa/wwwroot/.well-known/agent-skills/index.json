@@ -13,7 +13,7 @@
       "type": "skill-md",
       "description": "Locate agent-facing discovery surfaces on a TimeWarp.Architecture template host (llms.txt, auth.md, OpenAPI, MCP/A2A cards, Agent Skills index, markdown negotiation). Use when scanning or onboarding against this host.",
       "url": "/.well-known/agent-skills/host-discovery/SKILL.md",
-      "digest": "sha256:d28d6c6bac453fe8a15f9c74a55fe5ccc09b56d17f1841956bc0e4d7d9f4eecd"
+      "digest": "sha256:5d57dd1bd6f37ce461ded33ec1033773f68fa79adddc36f3a72d88584dac0da9"
     }
   ]
 }

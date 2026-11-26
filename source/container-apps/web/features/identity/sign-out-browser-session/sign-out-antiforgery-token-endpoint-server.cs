@@ -13,6 +13,8 @@
 // OpenAPI Summary states the anonymous choice. The handler does not return 401 or 403.
 // WithTags("Identity") is the tag the generator gives its siblings (namespace leaf), so Scalar
 // groups this operation with them.
+// OpenAPI (task 458-007): 200 application/json with the AntiforgeryToken record this handler
+// writes, not FastEndpoints' default 204 for a request-less endpoint.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -31,8 +33,16 @@ public sealed class SignOutAntiforgeryTokenEndpoint : EndpointWithoutRequest
       summary.Description =
         "Intentionally anonymous. A signed-out browser receives an anonymous antiforgery token "
         + "and the sign-out POST stays an idempotent no-op.";
+      summary.Responses[200] = "The antiforgery form field name and request token for POST "
+        + SignOutBrowserSession.Path + ". The response also sets the antiforgery cookie.";
     });
-    Description(builder => builder.WithTags("Identity"));
+    Description
+    (
+      builder => builder
+        .WithTags("Identity")
+        .ClearDefaultProduces(StatusCodes.Status204NoContent)
+        .Produces<SignOutBrowserSession.AntiforgeryToken>(StatusCodes.Status200OK, "application/json")
+    );
   }
 
   public override async Task HandleAsync(CancellationToken cancellationToken)

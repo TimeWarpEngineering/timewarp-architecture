@@ -1,5 +1,5 @@
 #region Purpose
-// The public web OpenAPI document names health, the tip alias, and the excluded discovery documents.
+// The public web OpenAPI document names health, the tip alias, and every served route that is not an operation.
 #endregion
 
 #region Design
@@ -7,6 +7,9 @@
 // flag is what web-server passes. A second host without the flag is the api-server case: those
 // routes must stay absent. llms.txt and the discovery skill must name the same excluded paths
 // the document lists, because agents read both.
+// Liveness is listed from IngressPaths.WebServerAlivePath, the constant the health description
+// names (task 458-007), and HealthEndpointPaths.Alive, the path web-server itself serves. The
+// real-host route walk is open-api-served-route-coverage-tests.cs.
 #endregion
 
 namespace OpenApiDiscoveryCoverage_;
@@ -18,6 +21,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
 using TimeWarp.Foundation;
+using TimeWarp.Foundation.Configuration;
 
 [TestTag("OpenApi")]
 public class Document_Given_
@@ -92,7 +96,7 @@ public class Document_Given_
     string description = operation.GetProperty("description").GetString()!;
     description.ShouldContain("text/plain");
     description.ShouldContain("PostgresDbContext");
-    description.ShouldContain("/web-server/alive");
+    description.ShouldContain("Liveness is GET " + IngressPaths.WebServerAlivePath + ".");
     JsonElement responses = operation.GetProperty("responses");
     responses.GetProperty("200").GetProperty("content").TryGetProperty("text/plain", out _).ShouldBeTrue();
     responses.TryGetProperty("503", out _).ShouldBeTrue();
@@ -137,7 +141,37 @@ public class Document_Given_
       listed.Add(entry.GetProperty("path").GetString()!);
     }
 
-    listed.SetEquals(ExcludedPaths).ShouldBeTrue(string.Join(", ", listed));
+    listed.SetEquals([.. ExcludedPaths, IngressPaths.WebServerAlivePath, HealthEndpointPaths.Alive])
+      .ShouldBeTrue(string.Join(", ", listed));
+  }
+
+  public static async Task Liveness_Should_Be_Listed_Not_An_Operation()
+  {
+    using JsonDocument document = await DocumentAsync();
+    JsonElement root = document.RootElement;
+    root.GetProperty("paths").TryGetProperty(IngressPaths.WebServerAlivePath, out _).ShouldBeFalse();
+
+    JsonElement entry = root.GetProperty("x-timewarp-excluded-routes").EnumerateArray()
+      .Single(candidate => candidate.GetProperty("path").GetString() == IngressPaths.WebServerAlivePath);
+    entry.GetProperty("method").GetString().ShouldBe("GET");
+    string reason = entry.GetProperty("reason").GetString()!;
+    reason.ShouldContain(HealthEndpointPaths.Alive);
+    reason.ShouldContain(IngressPaths.WebServerHealthPath);
+
+    string description = root.GetProperty("info").GetProperty("description").GetString()!;
+    description.ShouldContain("`GET " + IngressPaths.WebServerAlivePath + "`");
+    description.ShouldContain("`GET " + HealthEndpointPaths.Alive + "`");
+    description.ShouldContain("Not listed: Razor pages, static files");
+  }
+
+  public static async Task Unlisted_Families_Should_Name_What_The_Route_Walk_Skips()
+  {
+    using JsonDocument document = await DocumentAsync();
+    string description = document.RootElement.GetProperty("info").GetProperty("description").GetString()!;
+    foreach (string family in new[] { "Razor pages", "static files", "Blazor framework routes", "/openapi/v1.json", "/scalar/v1", "Development-only routes" })
+    {
+      description.ShouldContain(family);
+    }
   }
 
   public static async Task ScalarPage_Should_Load_The_Document()
@@ -193,6 +227,7 @@ public class Document_Given_
     llms.ShouldContain("x-timewarp-excluded-routes");
     llms.ShouldContain("/scalar/v1");
     llms.ShouldContain("GET|POST /api");
+    llms.ShouldContain(IngressPaths.WebServerAlivePath);
     skill.ShouldContain("x-timewarp-excluded-routes");
     skill.ShouldContain("/scalar/v1");
     return Task.CompletedTask;
