@@ -70,6 +70,7 @@ Acceptance:
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 9ed4eca8-118b-4161-a5bf-46b6515adb34, max-turns 500, Done — 2026-11-25T23:09:09Z
 - Review oracle: general (grok, model grok-4.7), session 01a214f8-7953-7ee1-929d-42ae433fbde6, effort 2, roster general, max-turns 120, round 1, clean — 2026-11-26
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a214f8-7953-7ee1-929d-42ae433fbde6, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-25T23:17:22Z
+- Implement oracle (resume): the walk stopped at results because the Results headings carried `(required before done)` (fixed in 46b3ee819). No product change since the recorded gates, so they stand — 2026-11-26
 
 ## Results
 
