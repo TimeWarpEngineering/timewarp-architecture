@@ -79,6 +79,7 @@ required. readme says the same.
 - Round 2: Done
 - Round 3: Done
 - Round 4: Done
+- Round 5: Done
 ## Notes
 
 - Found 2026-11-25 while scoping the instance CI workflow (task 531) and the release deploy job
@@ -96,6 +97,18 @@ PR #709 parked at merge (`NoChecks`) because `task/530-ship-the-dev-cli-in-gener
 Fix:
 1. Run `git merge origin/master` and resolve the conflict in `tools/dev-cli/services/template-smoke/template-smoke-runner.cs` cleanly (preserving both task 528's `SmokeWebOnly` matrix coverage and task 530's generated dev-CLI smoke checks, plus any `open-command.cs` auto-merge from task 527).
 2. Re-verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests`, `./bin/dev template-smoke --matrix`, and `ganda repo audit`, then commit and push so PR #709 triggers CI and merges.
+
+### CI fix pass (PR #709 — `ci (fast)` 1/435 failure in `dev-cli-tests`)
+
+All other CI jobs on PR #709 passed (`ci (integration)`, `ci (publish)`, `template-smoke`, `Lint skill specs`, `classify`, `green-key`). Only 1 of 435 tests in `dev-cli-tests` failed:
+
+`AspireDeploy_.NeverAutomated_Given_.CiWorkflowsAndDevWorkflow_Should_NeverDeploy` (`tests/tools/dev-cli-tests/aspire-deploy-never-automated-given-tests.cs:57`) regex-scans `tools/dev-cli/endpoints/workflow-command.cs` for `dev deploy` and flagged two prose strings (not invocations):
+- `tools/dev-cli/endpoints/workflow-command.cs:37`: `//     and names \`dev deploy\`.`
+- `tools/dev-cli/endpoints/workflow-command.cs:96`: `Terminal.WriteErrorLine("Error: release mode packs and pushes the template's NuGet packages. This app publishes no packages: deploy with \`dev deploy\`.".Red());`
+
+Fix:
+1. Reword lines 37 and 96 in `tools/dev-cli/endpoints/workflow-command.cs` (e.g. avoid the literal `dev deploy` substring in comment/error text so the existing `NeverAutomated` guard stays intact until task 529 updates it).
+2. Verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests` (435/435 pass), and `ganda repo audit`, then commit and push so PR #709 goes green and merges.
 
 ## Session
 
@@ -119,6 +132,9 @@ Fix:
 - Review oracle round 4: grok session 01a216b5-ca35-7622-9303-ffeb97dea72c (2026-11-26), effort 3, roster general
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a216b5-ca35-7622-9303-ffeb97dea72c, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a216b5-ca35-7622-9303-ffeb97dea72c, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T07:21:40Z
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0eb9293a-08e1-498b-80eb-698dd41f500b, max-turns 500, Done — 2026-11-26T08:23:11Z
+- Review oracle round 5: grok session 01a216f3-b45d-7f62-aeae-f0842ce951c7 (2026-11-26), effort 3, roster general
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a216f3-b45d-7f62-aeae-f0842ce951c7, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T08:33:45Z
 
 ## Learnings
 
@@ -126,6 +142,7 @@ Fix:
 - Round 2 re-checked the restatement, including the fix-pass paragraph, against the original task. Still no misread. Naming web when the web tree is gone, and refusing `dev deploy` without web, is the review fix. It matches the task rule that a flag-off command is excluded or refuses cleanly.
 - Round 3 re-checked the restatement against the original task over the full branch. Still no misread. `regenerate-generated` is excluded because its inputs do not ship, which is the task's "when it applies" clause with nothing to apply. The web coupling on `dev db` and `dev deploy migrate` remains the round 1 fix, not a conflict with the task.
 - Round 4 re-checked the restatement against the original task after the origin/master merge. Still no misread. The Goal acceptance line says `open` and `deploy` refuse naming the missing feature and does not mention the compose/kubernetes limit added in the merge. That line is behind the fix, not a conflict with the task. The original rule is that a flag-off command is excluded or refuses cleanly. aca and aca-neon still deploy and open without yarp, because task 527 serves web-server there, so those commands are not dead.
+- Round 5 re-checked the restatement against the original task after the CI prose fix. Still no misread. The release-mode refusal no longer contains the literal `dev deploy`. That sentence is the template-only NuGet path, which the task says to drop or refuse. It is not the flag-off rule that a refusal names the missing feature.
 
 ## Results
 
@@ -204,7 +221,9 @@ Round 3 (general, effort 3): re-reviewed the full branch. Product code is unchan
 
 Round 4 (general, effort 3): re-reviewed the branch after the origin/master merge. M1 and M2 stay fixed. Yarp is refused only on compose and kubernetes. No new findings.
 
-Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. Disposition: clean. Final open count: 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-4/merged.md`, `review/disposition.md`.
+Round 5 (general, effort 3): re-reviewed the branch after the CI prose fix in `workflow-command.cs`. M1 and M2 stay fixed. The release-mode refusal still exits 1 and does not deploy. No new findings.
+
+Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. Disposition: clean. Final open count: 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-5/merged.md`, `review/disposition.md`.
 
 ### Review fix pass (round 1 → round 2)
 
@@ -253,6 +272,19 @@ Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 
   - Manual, in a `git init` checkout with only `web-server.csproj`: `dev open` and `dev deploy`
     (compose default) refuse naming yarp; `dev open --target aca` passes the feature check and stops at
     the AppHost preflight.
+  - `ganda repo audit`: passed all checks.
+
+### CI fix pass (PR #709, `NeverAutomated` guard)
+
+- `workflow-command.cs`: the Design comment (line 37) and the release-mode refusal (line 96) no
+  longer contain the literal `dev deploy`, which `CiWorkflowsAndDevWorkflow_Should_NeverDeploy`
+  reads as an invocation. The refusal now says an operator deploys the app with this CLI's deploy
+  command. No behavior change.
+- Gates (CI fix pass):
+  - `dotnet run --file tools/dev-cli/dev.cs -- self-install`: installed (dev-cli changed).
+  - `./bin/dev build`: passed (0 warnings, 0 errors).
+  - `./bin/dev test tests/tools/dev-cli-tests/aspire-deploy-never-automated-given-tests.cs`: 2/2
+    passed (dev-cli-tests class, not a standalone runfile).
   - `ganda repo audit`: passed all checks.
 
 ### How to validate
