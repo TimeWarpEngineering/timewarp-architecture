@@ -77,6 +77,7 @@ required. readme says the same.
 
 - Round 1: Blocked — open M1, M2
 - Round 2: Done
+- Round 3: Done
 ## Notes
 
 - Found 2026-11-25 while scoping the instance CI workflow (task 531) and the release deploy job
@@ -97,13 +98,19 @@ required. readme says the same.
 - Review oracle: grok session 01a2149c-8f0e-7c20-a0c6-5ae91cc3abd7 (2026-11-26), effort 3, roster general, round 1
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2149c-8f0e-7c20-a0c6-5ae91cc3abd7, max-turns 200, artifacts general.md, merged.md — 2026-11-25T21:41:33Z
 - Review oracle round 2: grok session 01a214ad-d381-7e20-abcd-77224169cb95 (2026-11-26), effort 2, roster general
+- Review oracle round 3: grok session 01a21623-3f19-7df0-800e-0fd7f7bfe862 (2026-11-26), effort 3, roster general
+- 2026-11-26 implement (walk resume): the results compute failed only because the headings said
+  "(required before done)"; 91cbf8c5f normalized them. No product work remained, so the gates were not rerun.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a2b2c78e-6093-4098-80e9-bdb6c4f4cda3, max-turns 500, Done — 2026-11-26T04:35:30Z
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21623-3f19-7df0-800e-0fd7f7bfe862, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T04:42:31Z
 
 ## Learnings
 
 - No misread. The Goal restatement matches the original task (ship the dev CLI, drop template-only commands, refuse or exclude flag-off commands, smoke `dev build` on the default variant and `--matrix`). The Goal line says `dev db` is excluded without postgres; Results and the code also exclude it when web is off. That tighter coupling is finding M1, not a conflict with the task.
 - Round 2 re-checked the restatement, including the fix-pass paragraph, against the original task. Still no misread. Naming web when the web tree is gone, and refusing `dev deploy` without web, is the review fix. It matches the task rule that a flag-off command is excluded or refuses cleanly.
+- Round 3 re-checked the restatement against the original task over the full branch. Still no misread. `regenerate-generated` is excluded because its inputs do not ship, which is the task's "when it applies" clause with nothing to apply. The web coupling on `dev db` and `dev deploy migrate` remains the round 1 fix, not a conflict with the task.
 
-## Results (required before done)
+## Results
 
 The generated app now ships the dev CLI: `tools/Directory.Build.props`, `tools/dev-cli/`,
 `.timewarp/dev.jsonc` and `.envrc` are on the pack allow-list. `tools/agent-identity-cli` and
@@ -176,7 +183,9 @@ Round 1 (general, effort 3): 1 bug, 1 suggestion, 0 nits, both open at the end o
 
 Round 2 (general, effort 2): re-reviewed the fix delta. M1 and M2 stay fixed. No new findings.
 
-Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. Disposition: clean. Final open count: 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+Round 3 (general, effort 3): re-reviewed the full branch. Product code is unchanged since the fix. M1 and M2 stay fixed. No new findings.
+
+Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. Disposition: clean. Final open count: 0. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ### Review fix pass (round 1 → round 2)
 
@@ -200,7 +209,7 @@ Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 
     `app-features.cs` is compiled unconditionally in every variant (round-1 matrix passed).
   - `ganda repo audit`: passed all checks.
 
-### How to validate (required before done)
+### How to validate
 
 Smoke: `./bin/dev template-smoke` (add `--matrix` for every flag-off variant).
 Expect: each variant prints "Generated app ships the dev CLI without its template-only files." and
