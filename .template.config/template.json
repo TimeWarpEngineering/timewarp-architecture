@@ -150,6 +150,7 @@
             "source/container-apps/web/projects/web-spa/source/features/feedback-paste.ts",
             "source/container-apps/web/projects/web-spa/features/application/screenshot-state/screenshot-state.capture-for-feedback.cs",
             "tests/container-apps/web/web-server-integration-tests/features/feedback/**",
+            "tests/container-apps/web/web-server-integration-tests/open-api-binary-content-tests.cs",
             "tests/common/timewarp-testing/postgres-web-host.cs",
             "tests/container-apps/web/web-spa-integration-tests/features/feedback/feedback-details-layout-tests.cs",
             "tests/container-apps/web/web-spa-integration-tests/features/feedback/feedback-page-path-tests.cs",

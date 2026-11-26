@@ -112,6 +112,8 @@ Fix:
   "(required before done)"; 91cbf8c5f normalized them. No product work remained, so the gates were not rerun.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a2b2c78e-6093-4098-80e9-bdb6c4f4cda3, max-turns 500, Done — 2026-11-26T04:35:30Z
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21623-3f19-7df0-800e-0fd7f7bfe862, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T04:42:31Z
+- 2026-11-26 implement (merge-conflict fix pass): merged origin/master (87 commits), see Results ›
+  Merge-conflict fix pass.
 
 ## Learnings
 
@@ -218,6 +220,33 @@ Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 
     `app-features.cs` is compiled unconditionally in every variant (round-1 matrix passed).
   - `ganda repo audit`: passed all checks.
 
+### Merge-conflict fix pass (origin/master merge)
+
+- `template-smoke-runner.cs`: kept task 528's `SelectVariants` (`--variant`) and task 530's
+  `HasFlagOff` plus generated dev-CLI checks; both Design notes kept. `open-command.cs` auto-merged.
+- Semantic conflict with task 527 (web-server is the public app on aca and aca-neon without yarp):
+  `dev deploy` and `dev open` now refuse a missing yarp only on compose and kubernetes. New pure helper
+  `AspireDeploy.ServesThroughIngress(target)` (unknown target is false, so preflight reports it); the
+  web check on `dev deploy` stays for every target. readme and the Design regions say the same.
+- Boy-scout: master's `open-api-binary-content-tests.cs` (task 458-003) uses `Features.Feedback`,
+  which `--postgres false` removes, so SmokeNoPostgres failed to build. Added it to the `(!postgres)`
+  exclude in `template.json`.
+- Gates (merge pass):
+  - `dotnet run --file tools/dev-cli/dev.cs -- self-install`: installed (dev-cli changed).
+  - `./bin/dev build`: passed (0 warnings, 0 errors).
+  - `./bin/dev test tests/tools/dev-cli-tests/aspire-deploy-targets-given-tests.cs`: passed (new
+    `OnlyComposeAndKubernetes_Should_ServeThroughTheIngress`; dev-cli-tests class, not a standalone runfile).
+  - `./bin/dev test tests/tools/dev-cli-tests/app-features-tests.cs`: passed (dev-cli-tests class).
+  - `./bin/dev template-smoke --matrix`: SmokeDefault, SmokeNoApi, SmokeNoWeb, SmokeNoGrpc, SmokeNoYarp
+    and SmokeWebOnly built OK and the first five passed the generated `dev build`; SmokeNoPostgres
+    failed (the test above). The run hit the harness time limit during SmokeWebOnly's generated-CLI step.
+  - `./bin/dev template-smoke --variant SmokeNoPostgres` (after the exclude): SUCCEEDED.
+  - `./bin/dev template-smoke --variant SmokeWebOnly`: SUCCEEDED (generated `dev build` passed).
+  - Manual, in a `git init` checkout with only `web-server.csproj`: `dev open` and `dev deploy`
+    (compose default) refuse naming yarp; `dev open --target aca` passes the feature check and stops at
+    the AppHost preflight.
+  - `ganda repo audit`: passed all checks.
+
 ### How to validate
 
 Smoke: `./bin/dev template-smoke` (add `--matrix` for every flag-off variant).
@@ -226,6 +255,8 @@ Expect: each variant prints "Generated app ships the dev CLI without its templat
 
 Smoke (flag-off refusals): generate with `--web false`, then in it `dev deploy migrate` and `dev deploy`.
 Expect: both exit 1 with "needs the web feature ... generated with --web false".
+Smoke (no yarp): generate with `--yarp false`, then `dev open --no-browser` and `dev open --target aca --no-browser`.
+Expect: the first refuses naming yarp; the second passes the feature check (aca serves web-server).
 
 Smoke (by hand): `dotnet new timewarp-architecture -n Shop` from the packed template, then in it
 `git init && dotnet run tools/dev-cli/dev.cs -- --help` and `-- self-install`.
