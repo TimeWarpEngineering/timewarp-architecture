@@ -14,6 +14,11 @@
 // documented interface; it is visible in the operator's own process list for the bundle's lifetime,
 // accepted for an operator-run verb on the operator's machine. The operator's IP is --client-ip, else what
 // https://api.ipify.org reports.
+// Public app (task 527): `dev open` and `dev deploy` smoke ask az for the external container app named
+// ingress or web-server. With the yarp flag that is the ingress; without it the AppHost makes
+// web-server external instead. Exactly one must answer; the name picks the smoke paths
+// (DeployPipeline.SmokePathsFor). The query filters by name so another app in a shared resource
+// group is never opened.
 #endregion
 
 namespace DevCli.Services;
@@ -45,12 +50,40 @@ internal static class DeployAca
     + $"dotnet user-secrets set '{AzureResourceGroupConfigurationKey}' '<name>' --project '{appHostProject}'. "
     + "List them with: az group list --query \"[].name\" --output tsv";
 
-  /// <summary><c>az containerapp show</c> of the ingress container app: its public FQDN.</summary>
-  internal static string[] BuildIngressFqdnArguments(string resourceGroup, string subscriptionId) =>
+  /// <summary>
+  /// <c>az containerapp list</c> of the external container app named ingress or web-server: one
+  /// <c>name&lt;TAB&gt;fqdn</c> line per match (task 527).
+  /// </summary>
+  internal static string[] BuildPublicAppArguments(string resourceGroup, string subscriptionId) =>
   [
-    "containerapp", "show", "--name", DeployOperate.IngressResourceName, "--resource-group", resourceGroup, "--subscription", subscriptionId,
-    "--query", "properties.configuration.ingress.fqdn", "--output", "tsv",
+    "containerapp", "list", "--resource-group", resourceGroup, "--subscription", subscriptionId,
+    "--query",
+    $"[?properties.configuration.ingress.external && (name=='{DeployOperate.IngressResourceName}' || name=='{DeployOperate.WebServerResourceName}')]"
+      + ".[name, properties.configuration.ingress.fqdn]",
+    "--output", "tsv",
   ];
+
+  /// <summary>The single external app <see cref="BuildPublicAppArguments"/> printed; null when none, several, or the call failed.</summary>
+  internal static AcaPublicApp? ParsePublicApp(bool succeeded, string output)
+  {
+    string[] lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    if (!succeeded || lines.Length != 1)
+    {
+      return null;
+    }
+
+    string[] fields = lines[0].Split('\t', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    return fields.Length == 2 ? new AcaPublicApp(fields[0], fields[1]) : null;
+  }
+
+  /// <summary>Why <see cref="ParsePublicApp"/> found no single public app, for the refusal line.</summary>
+  internal static string NoPublicAppReason(bool succeeded, string output, string error)
+  {
+    int count = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+    return !succeeded ? error
+      : count == 0 ? $"no external container app named {DeployOperate.IngressResourceName} or {DeployOperate.WebServerResourceName}"
+      : $"{count} external container apps named {DeployOperate.IngressResourceName} or {DeployOperate.WebServerResourceName}; the AppHost publishes one";
+  }
 
   /// <summary>The single trimmed value an <c>--output tsv</c> query printed; null when none (or the call failed).</summary>
   internal static string? ParseSingleValue(bool succeeded, string output)

@@ -18,7 +18,7 @@
 //   PublishTarget (publish-target.cs): Publish:Target and the compute environment (Compose,
 //     Kubernetes, aca, aca-neon), with each target's production-safety posture;
 //   WebServerResource (web-server-resource.cs): run-mode exposure, State DevTools, published Entra
-//     parameters, mock-auth opt-in;
+//     parameters, mock-auth opt-in, and the aca/aca-neon public app when there is no yarp flag;
 //   PostgresResources (postgres-resources.cs): the database per target and web-migrations;
 //   IngressResource (ingress-resource.cs): the YARP ingress, its ports, routes and health check;
 //   AcaNeonCompute (aca-neon-compute.cs): aca-neon container-app scale;
@@ -94,6 +94,11 @@ internal class Program
     };
 #if yarp
     IngressResource.Add(builder, publishTarget, projects);
+#else
+#if web
+    // No YARP ingress: on aca and aca-neon web-server is the public container app (task 527).
+    WebServerResource.PublishAsContainerAppsEdge(publishTarget, webServer);
+#endif
 #endif
     AcaNeonCompute.ApplyTo(publishTarget, projects);
     builder.Build().Run();

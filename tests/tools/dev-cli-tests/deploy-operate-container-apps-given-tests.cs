@@ -1,5 +1,5 @@
 #region Purpose
-// Gates the aca per-target command construction (bundle + firewall rule) for `dev open` / `dev deploy migrate`.
+// Gates the aca per-target command construction (public app, bundle + firewall rule) for `dev open` / `dev deploy migrate`.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -30,16 +30,36 @@ public class ContainerApps_Given_
     return Task.CompletedTask;
   }
 
-  public static Task Open_Should_QueryTheIngressContainerAppsFqdn()
+  public static Task Open_Should_QueryTheExternalIngressOrWebServerApp()
   {
-    DeployAca.BuildIngressFqdnArguments("rg", Subscription).ShouldBe(
+    // Task 527: the external app is the ingress with the yarp flag and web-server without it.
+    DeployAca.BuildPublicAppArguments("rg", Subscription).ShouldBe(
     [
-      "containerapp", "show", "--name", "ingress", "--resource-group", "rg", "--subscription", Subscription,
-      "--query", "properties.configuration.ingress.fqdn", "--output", "tsv",
+      "containerapp", "list", "--resource-group", "rg", "--subscription", Subscription,
+      "--query",
+      "[?properties.configuration.ingress.external && (name=='ingress' || name=='web-server')].[name, properties.configuration.ingress.fqdn]",
+      "--output", "tsv",
     ]);
     DeployAca.ParseSingleValue(true, "ingress.happy.eastus.azurecontainerapps.io\n").ShouldBe("ingress.happy.eastus.azurecontainerapps.io");
     DeployAca.ParseSingleValue(false, "x").ShouldBeNull();
     DeployAca.ParseSingleValue(true, "a\nb").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task PublicApp_Should_BeTheOneNameAndFqdnLine()
+  {
+    DeployAca.ParsePublicApp(true, "ingress\tingress.happy.eastus.azurecontainerapps.io\n")
+      .ShouldBe(new AcaPublicApp("ingress", "ingress.happy.eastus.azurecontainerapps.io"));
+    DeployAca.ParsePublicApp(true, "web-server\tweb-server.happy.eastus.azurecontainerapps.io\r\n")
+      .ShouldBe(new AcaPublicApp("web-server", "web-server.happy.eastus.azurecontainerapps.io"));
+    DeployAca.ParsePublicApp(false, "ingress\tx").ShouldBeNull();
+    DeployAca.ParsePublicApp(true, "").ShouldBeNull();
+    DeployAca.ParsePublicApp(true, "ingress\ta\nweb-server\tb").ShouldBeNull();
+    DeployAca.ParsePublicApp(true, "ingress").ShouldBeNull();
+
+    DeployAca.NoPublicAppReason(true, "", "").ShouldContain("no external container app named ingress or web-server");
+    DeployAca.NoPublicAppReason(true, "ingress\ta\nweb-server\tb", "").ShouldContain("2 external container apps");
+    DeployAca.NoPublicAppReason(false, "", "ERROR: denied").ShouldBe("ERROR: denied");
     return Task.CompletedTask;
   }
 

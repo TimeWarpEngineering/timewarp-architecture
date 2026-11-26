@@ -17,7 +17,8 @@
 // `env: [ { name: '…' value|secretRef: … } ]`, `secrets: [ … ]`, `@secure() param …`). Arrays are
 // sliced by bracket matching outside quoted strings.
 // Rule set = the Compose/Kubernetes rules plus the two ACA-specific ones:
-//   - only the YARP ingress container app has external ingress (none at all without the yarp flag);
+//   - exactly one container app has external ingress: the YARP ingress, or web-server without the
+//     yarp flag (task 527; none at all when neither exists);
 //   - no Aspire dashboard: Aspire emits it as a managedEnvironments/dotNetComponents resource of
 //     componentType AspireDashboard on a public URL unless WithDashboard(false);
 //   - no mock auth; no app runs as Development/Testing (browser-log forwarding and the REPL are
@@ -40,7 +41,8 @@
 // ingress block without `external` fails rather than defaulting to internal.
 // Every rule is conditional on what the template flags emitted (no web/postgres → their rules skip).
 // The Flexible Server pin compiles only with web and postgres (postgres is declared inside the web
-// block). The passkey-host fact compiles only with web and yarp, which is where that environment is set.
+// block). The ingress passkey-host fact compiles only with web and yarp; without yarp the web-server
+// passkey-host fact checks web-server's own host instead.
 // State DevTools (task 335-001) is run-mode only: no timewarp-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
@@ -101,19 +103,22 @@ public partial class AcaPublish_Given_
 
   public static async Task Publish_Should_OnlyExposeTheIngressOutsideTheEnvironment()
   {
-    bool hasIngress = ContainerApps.Any(app => app.Name == IngressApp);
+    // Task 527: without the yarp flag there is no ingress app, and web-server is the public one.
+    string? publicApp = ContainerApps.Any(app => app.Name == IngressApp) ? IngressApp
+      : ContainerApps.Any(app => app.Name == WebServerApp) ? WebServerApp
+      : null;
     foreach (ContainerApp app in ContainerApps)
     {
-      bool expected = hasIngress && app.Name == IngressApp;
+      bool expected = app.Name == publicApp;
       if (app.Ingress is { } ingress)
       {
         string external = Field(ingress, "external").ShouldNotBeNull($"container app '{app.Name}' has an ingress block without an `external` field");
         external.ShouldBeOneOf(["true", "false"], $"container app '{app.Name}' ingress external is '{external}', not a literal");
-        (external == "true").ShouldBe(expected, $"container app '{app.Name}' external ingress is {external}; only the YARP ingress may be external");
+        (external == "true").ShouldBe(expected, $"container app '{app.Name}' external ingress is {external}; only '{publicApp}' may be external");
       }
       else
       {
-        expected.ShouldBeFalse($"container app '{app.Name}' has no ingress block; the YARP ingress must be external");
+        expected.ShouldBeFalse($"container app '{app.Name}' has no ingress block; it must be the external app");
       }
 
       app.Text.ShouldNotContain("additionalPortMappings", Case.Sensitive, $"container app '{app.Name}' opens extra ports");

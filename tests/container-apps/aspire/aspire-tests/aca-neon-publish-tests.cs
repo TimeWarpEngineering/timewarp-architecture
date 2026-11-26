@@ -12,8 +12,8 @@
 // web-migrations container and no neon-direct parameter. The longer EF retry is on web-server only.
 // CPU is emitted as json('0.25'). Azure.Provisioning formats the double with the invariant culture.
 // The pooled-string fact compiles only with web and postgres: Neon is declared inside that AppHost block.
-// The passkey-host fact compiles only with web and yarp. Without yarp there is no ingress, so no
-// container app is external. SigNoz (task 417) is run-mode only: the in-proc publish passes
+// The passkey-host fact compiles only with web: the ingress host with yarp, web-server's own host
+// without. Without yarp there is no ingress, so web-server is the one external app (task 527). SigNoz (task 417) is run-mode only: the in-proc publish passes
 // Observability:SigNoz:Url, and the Bicep still does not name signoz. Without that argument the
 // absence check would pass even if the run-mode gate were removed.
 // Publish logs MissingParameterValueException while Aspire copies the two
@@ -134,17 +134,20 @@ public partial class AcaNeonPublish_Given_
     // Task 417: PublishInProcAsync sets Observability:SigNoz:Url. The Bicep still does not name signoz.
     all.ShouldNotContain("signoz");
 
-    bool hasIngress = Modules.Values.Any(text => text.Contains("name: 'ingress'", StringComparison.Ordinal));
+    // Task 527: without the YARP ingress, web-server is the one external app.
+    string? publicApp = HasModule("ingress") ? "ingress"
+      : HasModule("web-server") ? "web-server"
+      : null;
     int external = ExternalTrue().Count(all);
-    if (!hasIngress)
+    if (publicApp is null)
     {
-      external.ShouldBe(0, "without the YARP ingress no container app may set external: true");
+      external.ShouldBe(0, "with neither the ingress nor web-server no container app may set external: true");
       await Task.CompletedTask;
       return;
     }
 
-    external.ShouldBe(1, "only the ingress container app may set external: true");
-    ModuleContaining("name: 'ingress'").ShouldContain("external: true");
+    external.ShouldBe(1, $"only the {publicApp} container app may set external: true");
+    ModuleContaining($"name: '{publicApp}'").ShouldContain("external: true");
     await Task.CompletedTask;
   }
 
@@ -168,8 +171,8 @@ public partial class AcaNeonPublish_Given_
     await Task.CompletedTask;
   }
 
-  // Exists only with web and yarp: without them there is no web-server or ingress host to check
-  // (Jaribu JARIBU1002 refuses a test that reaches no assertion).
+  // Exists only with web: without it there is no web-server to check (Jaribu JARIBU1002 refuses a
+  // test that reaches no assertion). With yarp the public host is the ingress; without, web-server.
 #if web
 #if yarp
   public static async Task Publish_Should_AllowTheIngressHostForPasskeys()
@@ -187,6 +190,14 @@ public partial class AcaNeonPublish_Given_
     value.Contains("entra", StringComparison.OrdinalIgnoreCase).ShouldBeTrue(value);
     webServer.ShouldNotContain("SignInOptions__Methods__0");
     webServer.ShouldNotContain("SignInOptions__Methods__1");
+    await Task.CompletedTask;
+  }
+#else
+  public static async Task Publish_Should_AllowTheWebServerHostForPasskeys()
+  {
+    string webServer = ModuleContaining("name: 'web-server'");
+    webServer.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
+    webServer.ShouldContain("web-server.${aca_env_outputs_azure_container_apps_environment_default_domain}");
     await Task.CompletedTask;
   }
 #endif
@@ -222,6 +233,9 @@ public partial class AcaNeonPublish_Given_
     KeyValuePair<string, string> module = Modules.Single(candidate => candidate.Value.Contains(needle, StringComparison.Ordinal));
     return module.Value;
   }
+
+  private static bool HasModule(string appName) =>
+    Modules.Values.Any(text => text.Contains($"name: '{appName}'", StringComparison.Ordinal));
 
   private static bool ContainsParameter(string text, string parameterName)
   {

@@ -205,15 +205,18 @@ string, and it does not refuse.
 One command, after `az login` and the two Neon secrets. Set `Azure:Location` and
 `Azure:ResourceGroup` as well. Passkeys accept the ingress host on the first deploy
 (`ingress.<environment domain>` is added to `WebAuthnOptions:AllowedRpIds`). A custom domain also
-needs `Parameters:passkey-rp-host` set to that bare DNS name.
+needs `Parameters:passkey-rp-host` set to that bare DNS name. An app without the yarp flag has no
+ingress: web-server is the external container app, smoke and `dev open` use its FQDN, and
+`web-server.<environment domain>` is the allowed passkey host.
 
 ```bash
 dev deploy --target aca-neon   # publish, deploy, migrate, smoke, open the app (--no-browser prints the URL)
 ```
 
 `dev deploy` publishes the migrations bundle, deploys, migrates on the direct connection, then
-requests `GET /web-server/alive` and `GET /api/identity/sign-in-methods`. It retries a Neon cold
-start. It does not request `/api/health`.
+smokes the public app: `GET /web-server/alive` and `GET /api/identity/sign-in-methods` on the
+ingress, or `GET /alive` and `GET /api/identity/sign-in-methods` on web-server when the app has no
+yarp flag. It retries a Neon cold start. It does not request `/api/health`.
 
 Operator steps, when you want one of them alone:
 
@@ -237,14 +240,23 @@ check (`CanConnectAsync`) and wakes Neon. It is not a poll.
 
 ## Smoke
 
-After migrate (the first request may wait while Neon wakes):
+After migrate (the first request may wait while Neon wakes). With the yarp flag the public app is
+the ingress:
 
 ```bash
 curl -fsS "https://<ingress-fqdn>/web-server/alive"
 curl -fsS "https://<ingress-fqdn>/api/identity/sign-in-methods"
 ```
 
-- `/web-server/alive` does not query Postgres. Expect HTTP 200. Publish emits no HTTP probe
+Without the yarp flag the public app is web-server. `/web-server/alive` is an ingress rewrite and
+404s there; web-server maps `/alive` itself:
+
+```bash
+curl -fsS "https://<web-server-fqdn>/alive"
+curl -fsS "https://<web-server-fqdn>/api/identity/sign-in-methods"
+```
+
+- `/web-server/alive` (ingress) and `/alive` (web-server) do not query Postgres. Expect HTTP 200. Publish emits no HTTP probe
   (Compose, Kubernetes, and Azure Container Apps), so nothing polls this path. `/health` is
   Development-only and is not mapped in this deployment.
 - `/api/health` is anonymous and runs the `PostgresDbContext` check. That opens a connection and
@@ -253,7 +265,8 @@ curl -fsS "https://<ingress-fqdn>/api/identity/sign-in-methods"
   and a small JSON body (`methods`). A 500 after a cold start usually means the replica is still
   waiting on Neon, or migrate has not been run.
 
-`dev open --target aca-neon` prints or opens `https://<ingress-fqdn>`.
+`dev open --target aca-neon` prints or opens the public app's URL: `https://<ingress-fqdn>`, or
+`https://<web-server-fqdn>` without the yarp flag.
 
 ## Scale-to-zero
 

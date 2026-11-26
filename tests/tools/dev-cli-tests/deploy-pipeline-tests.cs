@@ -134,6 +134,15 @@ public class Smoke_Given_
     return Task.CompletedTask;
   }
 
+  public static Task WebServerPublicApp_Should_SmokeItsOwnAlivePath()
+  {
+    // Task 527: without the yarp flag web-server is the public aca app and has no /web-server/alive route.
+    DeployPipeline.SmokePathsFor("web-server").ShouldBe(["/alive", "/api/identity/sign-in-methods"]);
+    DeployPipeline.SmokePathsFor("ingress").ShouldBe(DeployPipeline.SmokePaths);
+    string.Join(' ', DeployPipeline.WebServerSmokePaths).ShouldNotContain("/api/health");
+    return Task.CompletedTask;
+  }
+
   public static Task Retry_Should_CoverAColdStartAndNotAClientError()
   {
     DeployPipeline.ShouldRetrySmoke(null).ShouldBeTrue();

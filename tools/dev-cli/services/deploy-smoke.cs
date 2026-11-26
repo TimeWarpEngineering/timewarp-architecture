@@ -16,19 +16,19 @@ using System.Net.Http;
 /// <summary>Outcome of one ingress smoke: whether every path returned success, and the lines to print.</summary>
 internal sealed record DeploySmokeResult(bool Ok, IReadOnlyList<string> Lines);
 
-/// <summary>GETs <see cref="DeployPipeline.SmokePaths"/> on a deployed ingress.</summary>
+/// <summary>GETs the smoke paths (<see cref="DeployPipeline.SmokePaths"/> by default) on a deployed app.</summary>
 internal static class DeploySmoke
 {
   /// <summary>
-  /// Requests each smoke path on <paramref name="baseUrl"/>. Retries a cold start. Returns false when a path
+  /// Requests each of <paramref name="paths"/> on <paramref name="baseUrl"/>. Retries a cold start. Returns false when a path
   /// does not succeed inside the budget.
   /// </summary>
-  internal static async Task<DeploySmokeResult> CheckAsync(string baseUrl, CancellationToken cancellationToken)
+  internal static async Task<DeploySmokeResult> CheckAsync(string baseUrl, IReadOnlyList<string> paths, CancellationToken cancellationToken)
   {
     using HttpClient client = new() { Timeout = DeployPipeline.SmokeAttemptTimeout };
     DateTime deadline = DateTime.UtcNow + DeployPipeline.SmokeBudget;
     List<string> lines = [];
-    foreach (string path in DeployPipeline.SmokePaths)
+    foreach (string path in paths)
     {
       string url = DeployPipeline.SmokeUrl(baseUrl, path);
       while (true)

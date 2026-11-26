@@ -59,7 +59,8 @@
 // Task 393: a deployed target's public host is on WebAuthnOptions:AllowedRpIds. Azure Container
 // Apps uses ingress.<environment default domain> (GetOutput of
 // AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN, not the ingress endpoint, so web-server and
-// ingress do not cycle). Compose and Kubernetes serve localhost, already allowed.
+// ingress do not cycle). Compose and Kubernetes serve localhost, already allowed. Without the yarp
+// flag the template leaves this file out; WebServerResource allows web-server.<domain> (task 527).
 // A custom domain is the optional passkey-rp-host parameter, emitted only when it is set and is
 // not localhost. dev deploy copies that user secret into the aspire environment.
 // Guarded by aspire-tests/ingress-smoke-tests.cs (tasks 117, 070-008, 305): request-level smokes
@@ -279,16 +280,12 @@ internal static class IngressResource
         builder.AddParameter(PasskeyRpHostParameterName, passkeyRpHost!.Trim(), publishValueAsDefault: true));
     }
 
-    if (publishTarget.ContainerApps is not null)
+    if (publishTarget.ContainerAppPublicHost(YarpResourceName) is { } ingressHost)
     {
       // Public output on Aspire.Hosting.Azure.AppContainers 13.6.4. ingress.<domain> does not
       // reference the ingress endpoint (that would cycle web-server and ingress).
-      global::Aspire.Hosting.Azure.BicepOutputReference defaultDomain = publishTarget.ContainerApps.GetOutput(
-        "AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN");
       string allowedRpIdIndex = extraPasskeyHost ? "1" : "0";
-      projects.WebServer.WithEnvironment(
-        $"WebAuthnOptions__AllowedRpIds__{allowedRpIdIndex}",
-        ReferenceExpression.Create($"{YarpResourceName}.{defaultDomain}"));
+      projects.WebServer.WithEnvironment($"WebAuthnOptions__AllowedRpIds__{allowedRpIdIndex}", ingressHost);
     }
 
     yarp = yarp.WithReference(projects.WebServer);

@@ -101,8 +101,8 @@ never deploys.
 ```bash
 dev deploy                                  # compose: publish, deploy, migrate, smoke, open the app
 dev deploy --target kubernetes              # same path; opens a LoadBalancer address; otherwise prints the dev open hint
-dev deploy --target aca                     # same path; Azure Container Apps + Flexible Server; opens the ingress (az login first)
-dev deploy --target aca-neon                # same path; ACA (min replicas 0) + Neon; opens the ingress
+dev deploy --target aca                     # same path; Azure Container Apps + Flexible Server; opens the public app (az login first)
+dev deploy --target aca-neon                # same path; ACA (min replicas 0) + Neon; opens the public app
 dev deploy --target compose --yes           # no prompt; aspire deploy --non-interactive; still opens the app
 dev deploy --no-browser                     # print the URL and open nothing
 ```
@@ -115,7 +115,9 @@ and names a nearby Azure region (`ap-southeast-1` → `southeastasia`). A locati
 region's nearby set (for example `us-east-1` with `eastus` or `eastus2`) stays quiet. The warning
 does not print the connection string and does not stop the deploy.
 
-Smoke is `GET /web-server/alive` and `GET /api/identity/sign-in-methods`. It retries a cold start
+Smoke on the ingress is `GET /web-server/alive` and `GET /api/identity/sign-in-methods`. Without
+the yarp flag (aca, aca-neon) it hits web-server's FQDN: `GET /alive` and the same identity path
+(`/web-server/alive` is an ingress rewrite). It retries a cold start
 (a Neon wake-up or a scale-to-zero replica). It does not request `/api/health`. A target with no
 `platform/postgres/migrations` folder beside the AppHost skips migrate and says so.
 
@@ -138,8 +140,9 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
 
 - **`dev deploy`** runs publish, then `aspire deploy --apphost <csproj> --environment Production --
   --Publish:Target=<target> --Parameters:<name>=<value> …`, then migrate when the app has a database,
-  then smoke, then opens the ingress the way `dev open` does. `--no-browser` prints the URL and
-  opens nothing. It forwards the target's deploy parameters (below) after the preflight (below). It asks
+  then smoke, then opens the public app (ingress, or web-server without yarp) the way `dev open`
+  does. `--no-browser` prints the URL and opens nothing. It forwards the target's deploy
+  parameters (below) after the preflight (below). It asks
   for confirmation before anything runs; `--yes` skips the prompt and adds `--non-interactive` on
   `aspire deploy`. Without a terminal and without `--yes` it refuses. The deploy step runs Aspire
   attached to the terminal, so a prompt it still shows (e.g. aca's location and resource group)
@@ -224,11 +227,12 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
   one is refused with that hint); `--controller-namespace` / `--controller-service` name a
   controller other than the kind recipe's. compose: `http://localhost:<port>` from `--port`, else
   `INGRESS_PORT` in the published `.env`, else the `ingress-port` parameter. With no `--port` and no
-  `ingress-port` anywhere, `dev open` refuses rather than guess a port. aca and aca-neon: `https://<fqdn>` of the `ingress` container app
-  (`az containerapp show --name ingress --resource-group <rg> --query
-  properties.configuration.ingress.fqdn`).
-  Passkeys: the deploy adds the public ingress host to `WebAuthnOptions:AllowedRpIds`; a custom
-  domain is `passkey-rp-host`. See [passkey-hosts.md](references/passkey-hosts.md).
+  `ingress-port` anywhere, `dev open` refuses rather than guess a port. aca and aca-neon: `https://<fqdn>` of the external container app named `ingress`, or
+  `web-server` when the app has no yarp flag (`az containerapp list --resource-group <rg> --query
+  "[?properties.configuration.ingress.external && (name=='ingress' || name=='web-server')].[name, properties.configuration.ingress.fqdn]"`).
+  Exactly one must answer.
+  Passkeys: the deploy adds the public app's host (`ingress.` or, without yarp, `web-server.<env
+  domain>`) to `WebAuthnOptions:AllowedRpIds`; a custom domain is `passkey-rp-host`. See [passkey-hosts.md](references/passkey-hosts.md).
 - **aca and aca-neon resource group** for `dev open`, and for `dev deploy migrate --target aca`:
   `--resource-group`, else `Azure__ResourceGroup`, else the AppHost
   user secret `Azure:ResourceGroup` — the values `dev deploy` uses; the subscription
@@ -272,7 +276,7 @@ extend the suite when you add a new publish-mode branch.
 | TimeWarp.State DevTools inspector (`timewarp-devtools`, `TIMEWARP_STATE_DEVTOOLS_ENDPOINT`, its CORS origin variables) | an unauthenticated UI showing every action and state snapshot of web-server and the browser | `AddTimeWarpStateDevTools()` / `WithTimeWarpStateDevTools()` and the ingress CORS origins run in the AppHost's `IsRunMode` block only. web-server exports spans and maps `/_timewarp/state-devtools` only in Development with the endpoint set. The browser exporter (`TimeWarp.State.DevTools.Wasm`) is a Debug-only reference and a Debug-only call, so no Release build or published WASM bundle contains it. In `dev run` the dashboard links it as **TimeWarp DevTools** |
 | SigNoz dashboard link (`signoz`) | an operator-chosen URL; committing one would point every generated app at one host | Run mode only, and only when `Observability:SigNoz:Url` is an absolute `https` URL. Unset adds nothing. Any other value fails AppHost startup and names the key. `AddExternalService` also excludes it from the manifest. In `dev run` the dashboard links it as **SigNoz**. This does not export telemetry |
 | Aspire dashboard in the deployment | a second, unauthenticated UI and port | `WithDashboard(false)` on every environment — point `OTEL_EXPORTER_OTLP_ENDPOINT` at your own collector. ACA deploys it as a public `dotNetComponents` resource unless disabled |
-| Any host port / externally reachable service besides the ingress | every extra exposure is an unaudited entry point | Compose: only the ingress publishes a port (`ingress-port`). Kubernetes: every Service is `ClusterIP`; the cluster Ingress is the only way in. ACA: only the ingress container app has `external: true`; web, api and grpc are internal |
+| Any host port / externally reachable service besides the ingress | every extra exposure is an unaudited entry point | Compose: only the ingress publishes a port (`ingress-port`). Kubernetes: every Service is `ClusterIP`; the cluster Ingress is the only way in. ACA: exactly one container app has `external: true`: the ingress, or web-server when the app has no yarp flag; the others are internal |
 | Secret literals | literals end up in images, repos and logs | secrets are parameters (below) |
 | Debug/Trace logging, EF Core SQL, sensitive-data logging | per-query SQL and parameter values fill disks and leak data | every host's base `appsettings.json` is `Default: Information` with EF Core (and `.Database.Command`), HTTP client, Polly, YARP and gRPC at Warning; only `appsettings.Development.json` adds Debug, for the app's own namespaces. `EnableSensitiveDataLogging` is gated on `IsDevelopment()`. A guard test checks the committed files; the publish suites reject any `Logging__LogLevel__*` at Debug/Trace |
 
@@ -287,8 +291,8 @@ Rules for new code:
   template flag** — every flag combination must publish.
 - Anything dev-convenient (REPL, mock auth, log forwarding, State DevTools, the SigNoz link, dashboard commands) is run-mode or
   Development-only. Publish runs as Production.
-- Without the `yarp` flag there is no ingress: the published output exposes nothing, and the
-  operator adds their own edge.
+- Without the `yarp` flag, Compose and Kubernetes expose nothing (the operator adds an edge). On
+  `aca`/`aca-neon` web-server stays the one external app (`PublishAsContainerAppsEdge`).
 
 ### SigNoz link on the local dashboard
 
@@ -414,6 +418,9 @@ Azure Container Apps) loads the same table from the AppHost onto the AddYarp ima
   reverse proxy or load balancer).
 - **Azure Container Apps:** the ingress container app is the only one with external ingress (ACA
   terminates HTTPS on its public FQDN); web, api and grpc have internal ingress only.
+- **Without the yarp flag:** on `aca` and `aca-neon` web-server is the one external container app
+  (public host `web-server.<environment domain>`, used by smoke, `dev open` and passkeys). Compose
+  publishes no host port and Kubernetes has no Ingress; put your own edge proxy in front.
 - **Kubernetes:** the chart carries one `networking.k8s.io` Ingress (`cluster-ingress`) whose
   default backend is the YARP ingress' http endpoint. TLS terminates at the cluster's ingress
   controller. The class is the `ingress-class` parameter (default `nginx`).
@@ -447,7 +454,7 @@ target uses nothing Azure-specific, so the same chart runs on any cluster.
 Choose ACA for a small or mostly idle app with no cluster to share; choose AKS (the Kubernetes
 target) when a cluster exists, is shared, or the deployment must stay portable. The publish-only
 AppHost provisions a Container Apps environment (no dashboard), ingress/web/api/grpc container
-apps (only the ingress external) and an Azure Database for PostgreSQL Flexible Server whose firewall
+apps (only the ingress external; web-server without the yarp flag) and an Azure Database for PostgreSQL Flexible Server whose firewall
 rule is `AllowAllAzureIps` (the admin password is the barrier; `aca-publish-tests` pins the rule).
 The first deploy is `dev deploy --target aca` (publish, deploy, migrate, smoke, open the app; `--no-browser` prints the URL).
 `dev deploy migrate --target aca --resource-group <rg>` and `dev open --target aca --resource-group <rg>`
