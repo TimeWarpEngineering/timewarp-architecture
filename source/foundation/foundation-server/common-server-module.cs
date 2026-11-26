@@ -33,6 +33,8 @@
 // (success body at 200, SharedProblemDetails as problem+json). OpenApiProblemDetails completes
 // that one problem component (errors, extension members), documents 400 on operations with a
 // validator, and after the host callback checks that every problem+json response references it.
+// OpenApiTypedId publishes every [TypedId] struct as string uuid, the Guid string its converter
+// writes, and Nullable<T> of one as [null, string] uuid.
 // OpenApiPublicServer replaces
 // the document's servers with the forwarded public origin, and Scalar's Servers list stays
 // empty and follows that document.
@@ -160,9 +162,11 @@ public class CommonServerModule : IAspNetModule
         options.ConfigureOpenApi = openApiOptions =>
         {
           // After FastEndpoints' operation transformer, which is registered before this callback.
-          // Before OpenApiOneOf: its schema transformer drops the union's members, and a schema
-          // transformer registered after it never reaches the SharedProblemDetails arm.
+          // Before OpenApiOneOf: each schema transformer walks the tree on its own, parent first,
+          // and OneOf's drops the union's members, so a schema transformer registered after it
+          // never reaches the SharedProblemDetails arm or any type inside a response.
           OpenApiProblemDetails.Register(openApiOptions);
+          OpenApiTypedId.Register(openApiOptions);
           OpenApiOneOf.Register(openApiOptions);
           OpenApiDeleteRequestBody.Register(openApiOptions);
           OpenApiOperationSecurity.Register(openApiOptions, agentBearer, sessionCookie);
