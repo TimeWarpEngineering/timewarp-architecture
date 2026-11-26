@@ -106,3 +106,4 @@ After deploy, re-fetch `https://arch.timewarp.work/openapi/v1.json` and confirm 
 
 - Created: 2227132 (2026-11-24)
 - 2026-11-26 implement: binary upload/download OpenAPI transformer, metadata, document test.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session cd1fe30a-c096-4dd5-b901-1b70e43761d1, max-turns 500, Done — 2026-11-26T01:32:51Z
