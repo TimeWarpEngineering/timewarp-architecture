@@ -69,6 +69,7 @@ Acceptance:
 - Round 1: Blocked — open M1, M2
 - Round 1 fix pass: M1, M2 fixed (docs)
 - Round 2: Done
+- Round 3: Done
 ## Notes
 
 - Files: `source/container-apps/aspire/projects/aspire-app-host/web-server-resource.cs`,
@@ -87,8 +88,11 @@ Acceptance:
 - Review oracle round 1: general (grok), effort 2, roster general (2026-11-26). Open findings M1 and M2. Disposition not written.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a213cf-6b25-7be1-a81a-a6cee28d804d, max-turns 120, artifacts general.md, merged.md — 2026-11-25T17:54:12Z
 - Review oracle round 2: general (grok, vendor xai, model grok-4.7), effort 1, roster general, session 01a213db-6840-7c21-a2f8-208335593a6c, max-turns 80 (2026-11-26). M1 and M2 verified fixed. No new findings. Disposition clean. Artifacts `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f5dca003-2f08-4372-8f85-8d041b724639, max-turns 500, Done — 2026-11-26T03:52:21Z
+- Review oracle round 3: general (grok, vendor xai, model grok-4.7), effort 3, roster general, session 01a215fb-be05-78a3-8c93-fe573e815e87, max-turns 200 (2026-11-26). M1 and M2 still fixed. No new findings. Disposition clean. Artifacts `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a215fb-be05-78a3-8c93-fe573e815e87, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T04:00:32Z
 
-## Results (required before done)
+## Results
 
 What changed:
 
@@ -177,7 +181,16 @@ Review round 2 (2026-11-26), roster general, effort 1:
 - The implementer restatement matches the original requirements. No misread. No `## Learnings` entry.
 - Gates were not re-run. The fix-pass record above covers this docs-only delta.
 
-### How to validate (required before done)
+Review round 3 (2026-11-26), roster general, effort 3:
+
+- Re-read the branch vs merge-base `e7a75497d` (HEAD `c5b0dc04d`), product commit `46209caed` and docs fix `575761ebb`. M1 and M2 still fixed. No new findings.
+- Counts (final): bug 0 open, 2 fixed, 0 wontfix. suggestion 0. nit 0.
+- Disposition: clean. Final open count 0. Rounds: 3.
+- Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
+- The implementer restatement matches the original requirements. No misread. No `## Learnings` entry.
+- Gates were not re-run. The implementer `## Results` and the fix-pass record cover this diff.
+
+### How to validate
 
 Smoke: `./bin/dev test --project aspire-tests --filter-class AcaPublish_Given_` and
 `--filter-class AcaNeonPublish_Given_`; then generate `dotnet new timewarp-architecture --yarp false`

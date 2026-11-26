@@ -2,19 +2,19 @@
 
 **Date:** 2026-11-26
 **Host task:** kanban/in-progress/527-expose-web-server-externally-on-aca-targets-when-yarp-is-off/
-**Diff scope:** Round 2 reviews fix commit `575761ebb` (docs for M1 and M2: `skills/tw-deploy/SKILL.md`, `references/azure-container-apps.md`, `references/azure-container-apps-neon.md`). Round 1 reviewed the branch vs merge-base `e7a75497d` (master), product commit `46209caed`.
+**Diff scope:** Round 3 reviews the branch `task/527-expose-web-server-externally-on-aca-targets-when` against merge-base `e7a75497d` (HEAD `c5b0dc04d`), including product commit `46209caed` and docs fix `575761ebb`. Round 2 reviewed fix commit `575761ebb` only. Round 1 reviewed the same branch vs `e7a75497d`, product commit `46209caed`.
 **Plan / brief:** With `--yarp false`, publish targets `aca` and `aca-neon` make web-server the one external container app, allow `web-server.<environment default domain>` as a passkey RP ID, and point `dev deploy` smoke and `dev open` at that app. Compose, Kubernetes, run mode, and yarp-on stay as they are.
-**Effort:** 1 for round 2 (general). Round 1 was effort 2.
+**Effort:** 3 for round 3 (general). Round 2 was effort 1. Round 1 was effort 2.
 **Reviewer roster:** general
-**Session IDs:** review oracle (grok), round 1, 2026-11-26, session `01a213cf-6b25-7be1-a81a-a6cee28d804d`. Round 2 session `01a213db-6840-7c21-a2f8-208335593a6c` (grok), 2026-11-26. Implementer session `921b3c23-b8be-4d17-94ac-f2d0de39bfef` (claude), recorded on `task.md`.
+**Session IDs:** review oracle (grok), round 1, 2026-11-26, session `01a213cf-6b25-7be1-a81a-a6cee28d804d`. Round 2 session `01a213db-6840-7c21-a2f8-208335593a6c` (grok), 2026-11-26. Round 3 session `01a215fb-be05-78a3-8c93-fe573e815e87` (grok), 2026-11-26. Implementer session `921b3c23-b8be-4d17-94ac-f2d0de39bfef` (claude). Fix-pass implementer session `f5dca003-2f08-4372-8f85-8d041b724639` (claude). Both are recorded on `task.md`.
 
 ## Budget (by-diff)
 
-- Lines changed: 169
-- Effort: 1
+- Lines changed: 833
+- Effort: 3
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 80 (--max-turns; cursor uncapped)
+- Turn cap: 200 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
