@@ -71,7 +71,7 @@ Acceptance:
 - Review oracle: general (grok, model grok-4.7), session 01a214f8-7953-7ee1-929d-42ae433fbde6, effort 2, roster general, max-turns 120, round 1, clean — 2026-11-26
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a214f8-7953-7ee1-929d-42ae433fbde6, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-25T23:17:22Z
 
-## Results (required before done)
+## Results
 
 - `SmokeWebOnly` added to `SmokeMatrix` (`--api false --grpc false --yarp false`, web and postgres
   on, `ExcludedFamilies` api, grpc, yarp). Header comment updated.
@@ -112,7 +112,7 @@ Gates:
 - `./bin/dev template-smoke --variant Nope`: unknown-variant message, exit 1.
 - `ganda repo audit`: passed (tree 71705b933145, all checks pass).
 
-### How to validate (required before done)
+### How to validate
 
 - Smoke: `dotnet run --file tools/dev-cli/dev.cs -- self-install`, then
   `./bin/dev template-smoke --variant SmokeWebOnly --app-tests` (needs Docker).
