@@ -28,7 +28,8 @@
 // template-smoke: those need Docker and always run hosted, so their image is not in the key. The workflow pulls no container
 // image by tag (Testcontainers' postgres tag is a string in the tree), so there is no image line.
 //
-// Gates: ci (the ci-group matrix), skill (skill-lint), template (template-smoke). A marker is a
+// Gates: ci (the ci-group matrix), skill (skill-lint), template (template-smoke). A generated app
+// (task 531) ships this file and the ledger; its workflow has the ci gate only. A marker is a
 // GitHub Actions artifact named green-key-v1-<gate>-<key>. Artifacts are repo-scoped, so a master
 // push sees a pull request's marker (the Actions cache is branch-scoped and would not). Each gate
 // runs the whole of its check over the tree, whatever the diff, so a marker means "this gate passed
@@ -238,6 +239,17 @@ internal static class GreenKey
       jobs.Template && !hitGates.Contains(GateTemplate));
   }
 
+  /// <summary>
+  /// The green_key and green_key_writer output lines for <paramref name="jobs"/> (after
+  /// <see cref="ApplyHits"/>). The writer is on only for a candidate with a key and a gate left on.
+  /// </summary>
+  internal static string[] OutputLines(GreenKeyObservation green, WorkflowJobs jobs)
+  {
+    ArgumentNullException.ThrowIfNull(green);
+    bool writer = green.Writer && IsKey(green.Key) && (jobs.Ci || jobs.Skill || jobs.Template);
+    return [$"{KeyOutputName}={green.Key}", $"{WriterOutputName}={(writer ? "true" : "false")}"];
+  }
+
   private static bool TryParseRow(string line, out GreenKeyMarker row, out bool expired)
   {
     row = null!;
@@ -282,6 +294,12 @@ internal static class GreenKey
   }
 }
 
+/// <summary>
+/// Which path-gated CI jobs run: ci-group, and in the template repository skill-lint and
+/// template-smoke. A generated app has the ci gate only, so its Skill and Template are false.
+/// </summary>
+internal readonly record struct WorkflowJobs(bool Ci, bool Skill, bool Template);
+
 /// <summary>One hashed tree entry.</summary>
 internal readonly record struct GreenKeyEntry(string Path, string Blob);
 
@@ -290,3 +308,12 @@ internal readonly record struct GreenKeyEventClass(bool Candidate, string Reason
 
 /// <summary>An earlier green marker: its artifact, run, and commit.</summary>
 internal sealed record GreenKeyMarker(long ArtifactId, long RunId, string Commit, DateTimeOffset Created);
+
+/// <summary>
+/// One classify run's ledger result. <c>Key</c> is empty when none was computed; <c>Writer</c> lets
+/// the green-key job upload markers; <c>HitGates</c> lists the gates that already passed on the key.
+/// </summary>
+internal sealed record GreenKeyObservation(string Key, bool Writer, IReadOnlyList<string> HitGates)
+{
+  internal static GreenKeyObservation None { get; } = new("", false, []);
+}

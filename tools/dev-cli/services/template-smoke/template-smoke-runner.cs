@@ -36,6 +36,7 @@
 // locally without paying for every variant. An unknown name fails before packing.
 // Task 530: every variant asserts the dev CLI shipped (after generate) and runs it from its runfile
 // after the solution build: `--help` lists the app commands, then `dev build` passes.
+// Task 531: every variant asserts the app's CI workflow and setup-ci shipped (after generate).
 #endregion
 
 namespace DevCli.Services;
@@ -228,6 +229,10 @@ internal sealed class TemplateSmokeRunner
 
         // Task 530: the dev CLI ships without its template-only files.
         if (!Harness.DevCli.AssertDevCliShipped(outputDir, dbExpected))
+          return Task.FromResult(false);
+
+        // Task 531: the app's CI workflow and setup-ci ship, and the workflow has the app's shape.
+        if (!Harness.CiWorkflow.AssertCiWorkflowShipped(outputDir))
           return Task.FromResult(false);
 
         // Task 288: matrix names carry no separators, so the kebab name is the lower-cased name.

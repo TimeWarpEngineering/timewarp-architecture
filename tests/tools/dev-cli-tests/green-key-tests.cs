@@ -212,7 +212,21 @@ public class SelectMarker_Given_
 
     GreenKey.ApplyHits(jobs, [GreenKey.GateCi]).ShouldBe(new WorkflowJobs(false, true, false));
     GreenKey.ApplyHits(jobs, [GreenKey.GateTemplate]).ShouldBe(jobs);
-    GreenKey.ApplyHits(jobs, []).ShouldBe(jobs);
+        GreenKey.ApplyHits(jobs, []).ShouldBe(jobs);
+    return Task.CompletedTask;
+  }
+
+  public static Task Writer_Should_NeedACandidateAKeyAndAGateLeftOn()
+  {
+    string key = new('a', 64);
+    var candidate = new GreenKeyObservation(key, Writer: true, HitGates: []);
+    var ciOnly = new WorkflowJobs(Ci: true, Skill: false, Template: false);
+    var none = new WorkflowJobs(Ci: false, Skill: false, Template: false);
+
+    GreenKey.OutputLines(candidate, ciOnly).ShouldBe([$"green_key={key}", "green_key_writer=true"]);
+    GreenKey.OutputLines(candidate, none).ShouldBe([$"green_key={key}", "green_key_writer=false"]);
+    GreenKey.OutputLines(candidate with { Writer = false }, ciOnly)[1].ShouldBe("green_key_writer=false");
+    GreenKey.OutputLines(GreenKeyObservation.None, ciOnly).ShouldBe(["green_key=", "green_key_writer=false"]);
     return Task.CompletedTask;
   }
 }

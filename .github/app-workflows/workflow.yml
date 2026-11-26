@@ -1,0 +1,190 @@
+name: CI
+
+# The generated app's CI (task 531). Thin trigger: this file says when to run and on which runner.
+# Every decision and check is `dev workflow` (tools/dev-cli/endpoints/workflow-command.cs, Design
+# region); shared runner setup is .github/actions/setup-ci. Jobs:
+#   classify   the ci output and the green key from `dev workflow --phase classify`
+#   ci-group   ci (fast), ci (integration), ci (publish): one `dev workflow` phase each. publish runs
+#              `dev publish all` and the production-safety suites over its outputs; nothing deploys
+#   ci         the required check over ci-group. Make `ci` the required status check on the default
+#              branch: `ganda pr merge` waits for it
+#   green-key  uploads a green-key marker after ci-group passes
+#
+# Runner. Every job runs on ubuntu-latest by default. To run classify, ci (fast), and ci (publish) on
+# self-hosted runners, set the repository variable CI_RUNNER_LABELS to a JSON array of runner labels,
+# for example ["self-hosted", "linux"]. Only a push, or a pull request whose head branch lives in
+# this repository, uses them: a fork pull request runs untrusted code on hosted runners. ci
+# (integration) stays hosted on every event, because Testcontainers and aspire-tests need a Docker
+# daemon. Delete the variable to go back to hosted runners without a code change.
+#
+# Green key. Classify hashes the committed tree (minus kanban task content), the SDK, and the runner
+# into a key, and turns off ci-group when it already passed on the same key in an earlier same-repo
+# run. So the push that merges a green pull request, or a kanban-only push, does not run CI again.
+# Rules: tools/dev-cli/services/green-key.cs. Fork pull requests and workflow_dispatch never skip.
+# To force a full run, add the trailer `Green-Key: full-run` to the head commit, or dispatch this
+# workflow.
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - 'feature/**'
+    # A kanban-only or docs-only push gets no run. Required checks gate pull requests, not pushes,
+    # so nothing waits on a push this filter skips.
+    paths:
+      - 'source/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'msbuild/**'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - '.timewarp/**'
+      - 'Directory.Build.props'
+      - 'Directory.Build.targets'
+      - 'Directory.Packages.props'
+      - '*.slnx'
+      - 'global.json'
+      - '.editorconfig'
+      - 'BannedSymbols.txt'
+      - 'aspire.config.json'
+  # No paths filter: every pull request reports `ci`. `ganda pr merge` treats a branch as
+  # CI-configured when a workflow triggers on pull_request, and refuses a pull request that
+  # registers no check. A non-build pull request skips ci-group, and the skipped ci-group passes.
+  pull_request:
+    types: [opened, synchronize, reopened]
+  # A manual run is a full run on hosted runners: no green-key skip.
+  workflow_dispatch:
+
+# A newer pull request run, or a newer push to the same branch, cancels the older one. A dispatch
+# gets a group of its own (run_id) and is never cancelled.
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+    github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) ||
+    github.event_name == 'push' && format('push-{0}', github.ref) ||
+    format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  classify:
+    runs-on: >-
+      ${{ vars.CI_RUNNER_LABELS != '' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
+      fromJSON(vars.CI_RUNNER_LABELS) || 'ubuntu-latest' }}
+    permissions:
+      contents: read
+      actions: read  # green-key marker lookup (gh api actions/artifacts)
+    outputs:
+      # A classify step that wrote nothing turns ci-group on.
+      ci: ${{ steps.classify.outputs.ci || 'true' }}
+      green_key: ${{ steps.classify.outputs.green_key }}
+      green_key_writer: ${{ steps.classify.outputs.green_key_writer || 'false' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}  # base...head needs the merge base
+
+      - uses: ./.github/actions/setup-ci
+        with:
+          nuget-cache: restore  # only the dev CLI's packages; a ci-group job saves the full set
+
+      - name: Classify changed paths and look up the green key
+        id: classify
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow --phase classify
+
+  ci-group:
+    needs: [classify]
+    if: always() && !cancelled() && needs.classify.outputs.ci == 'true'
+    name: ci (${{ matrix.name }})
+    # matrix.hosted keeps a leg on ubuntu-latest on every event (see the header).
+    runs-on: >-
+      ${{ vars.CI_RUNNER_LABELS != '' && !matrix.hosted &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
+      fromJSON(vars.CI_RUNNER_LABELS) || 'ubuntu-latest' }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: fast
+            args: --phase test --group fast
+          - name: integration
+            args: --phase test --group integration
+            hosted: true  # Testcontainers and aspire-tests need Docker
+          - name: publish
+            args: --phase publish
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-ci
+        with:
+          dev-certs: 'true'
+          aspire-cli: 'true'
+
+      - name: Run CI pipeline
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}
+
+      - name: Upload coverage
+        if: success() && matrix.name != 'publish'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ matrix.name }}
+          path: artifacts/coverage
+          if-no-files-found: warn
+
+  ci:
+    # The required check. A skipped ci-group (non-build change or green-key hit) passes; a failed or
+    # cancelled group fails. A failed classify fails too: its skip of ci-group must not read as a pass.
+    needs: [classify, ci-group]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: All CI groups passed
+        env:
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          GROUP_RESULT: ${{ needs.ci-group.result }}
+        run: |
+          Write-Host "classify: $env:CLASSIFY_RESULT ci-group: $env:GROUP_RESULT"
+          if ($env:CLASSIFY_RESULT -ne 'success') { exit 1 }
+          if ($env:GROUP_RESULT -ne 'success' -and $env:GROUP_RESULT -ne 'skipped') { exit 1 }
+
+  green-key:
+    # Uploads the ci marker (green-key-v1-ci-<key>, see tools/dev-cli/services/green-key.cs) when
+    # ci-group passed on this run's key. green_key_writer is true only for a same-repo push or pull
+    # request whose classify computed a key and left ci-group on. A marker is one small file.
+    needs: [classify, ci-group]
+    if: |
+      always() && !cancelled() &&
+      needs.classify.result == 'success' &&
+      needs.classify.outputs.green_key_writer == 'true' &&
+      needs.ci-group.result == 'success'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Stage marker
+        env:
+          GREEN_KEY: ${{ needs.classify.outputs.green_key }}
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/green-key | Out-Null
+          [ordered]@{ format = 'green-key-v1'; key = $env:GREEN_KEY; run = $env:GITHUB_RUN_ID; commit = $env:GITHUB_SHA } |
+            ConvertTo-Json -Compress | Set-Content -Path artifacts/green-key/marker.json
+
+      - name: Upload ci marker
+        uses: actions/upload-artifact@v7
+        with:
+          name: green-key-v1-ci-${{ needs.classify.outputs.green_key }}
+          path: artifacts/green-key/marker.json
+          if-no-files-found: error
+          retention-days: 90

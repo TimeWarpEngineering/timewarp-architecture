@@ -27,15 +27,20 @@
 // PullRequestBuildClassifier.RequiresBuild (TimeWarp.Nuru.DevCli) with this repo's additions in
 // .timewarp/dev.jsonc pullRequestBuild. The test and publish phases do not classify: their shallow
 // checkout cannot diff, and the classify job already gated them.
+// Green key (services/green-key.cs, services/green-key-ledger.cs): classify turns ci off when the ci
+// gate already passed on this tree, and writes green_key and green_key_writer for the workflow's
+// green-key job, which uploads the marker after ci-group passes.
 //
 // Template repository and generated app (task 530). The template pack ships this file to every
-// generated app. Three paths are the template repository's own and live in
+// generated app, with that app's workflow.yml (task 531; its source here is
+// .github/app-workflows/workflow.yml, which .template.config/template.json renames into place). Three paths are the template repository's own and live in
 // WorkflowTemplateRepository (endpoints/workflow-template-repository.cs), which template.json
 // excludes from generated apps; the call sites here are templateRepository regions:
 //   - Release mode packs and pushes the platform packages and the template, then runs
 //     template-publish-smoke. A generated app publishes no packages, so its release mode refuses
 //     and names the operator-run deploy command.
-//   - Classify also writes the skill and template outputs and the green key.
+//   - Classify also writes the skill and template outputs, from the changed-path rules in
+//     services/workflow-path-classes.cs. A generated app's classify writes ci and the green key only.
 //   - Whenever the test step includes the fast group, the regenerated feature filename grammar and
 //     ingress golden must show no diff.
 // --api-key is a templateRepository region too: only the NuGet push reads it.
@@ -109,7 +114,10 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 #if templateRepository
           await new WorkflowTemplateRepository(Terminal, RepoCleanService, RepoRoot, Ct).ClassifyAsync(decision);
 #else
-          await WriteOutputsAsync(Terminal, [$"ci={Bool(decision.RequiresBuild)}"], Ct);
+          var pathJobs = new WorkflowJobs(Ci: decision.RequiresBuild, Skill: false, Template: false);
+          GreenKeyObservation green = await GreenKeyLedger.ObserveAsync(Terminal, RepoRoot, pathJobs, Ct);
+          WorkflowJobs jobs = GreenKey.ApplyHits(pathJobs, green.HitGates);
+          await WriteOutputsAsync(Terminal, [$"ci={Bool(jobs.Ci)}", .. GreenKey.OutputLines(green, jobs)], Ct);
 #endif
           return Unit.Value;
         }

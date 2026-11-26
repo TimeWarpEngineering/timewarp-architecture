@@ -11,6 +11,10 @@ name: CI/CD
 #   template-smoke  pack, install, generate, build; the nightly runs the flag-off matrix
 #   green-key       uploads a green-key marker for each gate that passed (task 504)
 #
+# This is the template repository's own workflow and does not ship. A generated app gets
+# .github/app-workflows/workflow.yml (task 531): classify, ci-group, ci, and green-key for the ci
+# gate, on hosted runners unless that repository sets CI_RUNNER_LABELS. setup-ci ships to both.
+#
 # Runner (task 504, as timewarp-nuru 539). A push, or a pull request whose head branch lives in this
 # repo, runs classify, ci-group, and skill-lint on the wslc container runners on TWE-001 (labels
 # self-hosted, twe-001, wslc; org runner group 3, which allows this public repo:

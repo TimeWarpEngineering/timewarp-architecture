@@ -112,8 +112,7 @@ internal sealed class WorkflowTemplateRepository
         $"ci={WorkflowCommand.Bool(jobs.Ci)}",
         $"skill={WorkflowCommand.Bool(jobs.Skill)}",
         $"template={WorkflowCommand.Bool(jobs.Template)}",
-        $"{GreenKey.KeyOutputName}={green.Key}",
-        $"{GreenKey.WriterOutputName}={WorkflowCommand.Bool(green.Writer && GreenKey.IsKey(green.Key) && (jobs.Ci || jobs.Skill || jobs.Template))}",
+        .. GreenKey.OutputLines(green, jobs),
       ],
       Ct);
   }
