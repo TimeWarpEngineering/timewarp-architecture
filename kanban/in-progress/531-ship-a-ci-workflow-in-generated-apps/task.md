@@ -93,6 +93,7 @@ Acceptance:
 - Created: f7eccb81-87c9-4fb4-a0c4-0fb7417d4a2f (2026-11-25)
 - 2026-11-26 implement (ganda task work): app workflow, setup-ci pack, green key for the ci gate,
   template-smoke check, readme. `dev workflow` phases run by hand in generated apps (see Results).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 582162b7-1afd-4c49-9dfa-857b3355486d, max-turns 500, Done — 2026-11-26T09:54:55Z
 
 ## Results
 
