@@ -57,6 +57,7 @@ Acceptance:
 - Created: 2227132 (2026-11-24)
 - Implement (2026-11-26): `OpenApiTypedId` schema transformer added; root cause of the first
   failing run was registration order (see Results).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3ea3591e-7a5a-4e0f-875f-06ddb9996f43, max-turns 500, Done — 2026-11-26T00:58:22Z
 
 ## Results
 
