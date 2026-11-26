@@ -7,7 +7,10 @@
 // GET /api/health is MapHealthChecks. The body is the status name as text/plain. The Postgres
 // check, when registered, opens a connection, so this is not the liveness probe.
 // GET and POST /api are TipDiscoveryAlias rewrites of /api/tip. The alias is its own path so a
-// missing entry is not read as a missing route. The payment contract stays on /api/tip.
+// missing entry is not read as a missing route. Its responses (content and headers), parameters,
+// and request body are shallow copies of the /api/tip operation of the same verb, taken after the
+// operation transformers ran (a host's payment 402/503 included), so the alias cannot document
+// less than the route it rewrites to (task 458-009).
 // /.well-known discovery documents are excluded. info.description is what Scalar renders, and
 // x-timewarp-excluded-routes is the same list for a reader that does not parse markdown.
 // Both point at /llms.txt.
@@ -157,41 +160,68 @@ internal static class OpenApiDiscoveryCoverage
 
     const string description =
       AliasSentence + " "
-      + "The contract, including 402 PAYMENT-REQUIRED and 503 when payment is disabled or misconfigured, "
-      + "is the /api/tip operation in this document. The challenge resource stays /api/tip. Anonymous.";
+      + "The responses, parameters, and request body are copied from the /api/tip operation, "
+      + "including 402 PAYMENT-REQUIRED and 503 when payment is disabled or misconfigured. Anonymous.";
 
+    document.Paths.TryGetValue(TipPath, out IOpenApiPathItem? tipPathItem);
     OpenApiPathItem pathItem = new();
     pathItem.AddOperation
     (
       HttpMethod.Get,
-      AnonymousOperation
-      (
-        document,
-        "getApiTipAlias",
-        "Discovery alias of GET /api/tip",
-        description,
-        "Tip",
-        ("200", new OpenApiResponse { Description = "Same success response as GET /api/tip." }),
-        ("402", new OpenApiResponse { Description = "Same 402 PAYMENT-REQUIRED challenge as GET /api/tip." }),
-        ("503", new OpenApiResponse { Description = "Same 503 as GET /api/tip when payment is disabled or misconfigured." })
-      )
+      AliasOperation(document, tipPathItem, HttpMethod.Get, "getApiTipAlias", description)
     );
     pathItem.AddOperation
     (
       HttpMethod.Post,
-      AnonymousOperation
-      (
-        document,
-        "postApiTipAlias",
-        "Discovery alias of POST /api/tip",
-        description,
-        "Tip",
-        ("200", new OpenApiResponse { Description = "Same success response as POST /api/tip." }),
-        ("402", new OpenApiResponse { Description = "Same 402 PAYMENT-REQUIRED challenge as POST /api/tip." }),
-        ("503", new OpenApiResponse { Description = "Same 503 as POST /api/tip when payment is disabled or misconfigured." })
-      )
+      AliasOperation(document, tipPathItem, HttpMethod.Post, "postApiTipAlias", description)
     );
     document.Paths.Add(TipAliasPath, pathItem);
+  }
+
+  /// <summary>
+  /// The alias operation for one verb. Responses, parameters, and the request body are copies of
+  /// the /api/tip operation of that verb, so a transformer that documents /api/tip documents the
+  /// alias too. Without that operation the alias says only that it follows /api/tip.
+  /// </summary>
+  private static OpenApiOperation AliasOperation
+  (
+    OpenApiDocument document,
+    IOpenApiPathItem? tipPathItem,
+    HttpMethod method,
+    string operationId,
+    string description
+  )
+  {
+    string verb = method.Method.ToUpperInvariant();
+    OpenApiOperation operation = AnonymousOperation
+    (
+      document,
+      operationId,
+      "Discovery alias of " + verb + " " + TipPath,
+      description,
+      "Tip"
+    );
+
+    OpenApiOperation? tip = null;
+    _ = tipPathItem?.Operations?.TryGetValue(method, out tip);
+    if (tip?.Responses is null || tip.Responses.Count == 0)
+    {
+      operation.Responses!.Add("200", new OpenApiResponse { Description = "Same responses as " + verb + " " + TipPath + "." });
+      return operation;
+    }
+
+    foreach (KeyValuePair<string, IOpenApiResponse> entry in tip.Responses)
+    {
+      operation.Responses!.Add(entry.Key, entry.Value.CreateShallowCopy());
+    }
+
+    if (tip.Parameters is not null)
+    {
+      operation.Parameters = [.. tip.Parameters.Select(static parameter => parameter.CreateShallowCopy())];
+    }
+
+    operation.RequestBody = tip.RequestBody?.CreateShallowCopy();
+    return operation;
   }
 
   private static void NoteCanonicalTip(OpenApiDocument document)
