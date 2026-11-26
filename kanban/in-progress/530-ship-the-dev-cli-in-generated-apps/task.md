@@ -87,6 +87,15 @@ required. readme says the same.
   includes `tools/` at all.
 - The first instance repo has its own older `tools/dev-cli`. After this task it takes the template's.
 
+### Merge-conflict fix pass (PR #709 — `CONFLICTING` against `origin/master`)
+
+PR #709 parked at merge (`NoChecks`) because `task/530-ship-the-dev-cli-in-generated-apps` has a content merge conflict against `origin/master` in:
+- `tools/dev-cli/services/template-smoke/template-smoke-runner.cs` (after tasks 527 and 528 merged).
+
+Fix:
+1. Run `git merge origin/master` and resolve the conflict in `tools/dev-cli/services/template-smoke/template-smoke-runner.cs` cleanly (preserving both task 528's `SmokeWebOnly` matrix coverage and task 530's generated dev-CLI smoke checks, plus any `open-command.cs` auto-merge from task 527).
+2. Re-verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests`, `./bin/dev template-smoke --matrix`, and `ganda repo audit`, then commit and push so PR #709 triggers CI and merges.
+
 ## Session
 
 - Created: f7eccb81-87c9-4fb4-a0c4-0fb7417d4a2f (2026-11-25)
