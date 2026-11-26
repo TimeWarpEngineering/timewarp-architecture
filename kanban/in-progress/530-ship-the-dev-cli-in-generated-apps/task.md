@@ -99,6 +99,7 @@ required. readme says the same.
 - Review oracle round 2: grok session 01a214ad-d381-7e20-abcd-77224169cb95 (2026-11-26), effort 2, roster general
 - 2026-11-26 implement (walk resume): the results compute failed only because the headings said
   "(required before done)"; 91cbf8c5f normalized them. No product work remained, so the gates were not rerun.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a2b2c78e-6093-4098-80e9-bdb6c4f4cda3, max-turns 500, Done — 2026-11-26T04:35:30Z
 
 ## Learnings
 
