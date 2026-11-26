@@ -86,6 +86,10 @@ Acceptance criteria:
 - [x] `dev template-smoke` asserts the deploy job is present in the generated workflow.
 - [x] `dev lint-skills` passes.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Not in scope: a `dev bootstrap-oidc` command that creates the OIDC login. Archived task 323 left
@@ -105,6 +109,8 @@ Acceptance criteria:
 
 - Created: f7eccb81-87c9-4fb4-a0c4-0fb7417d4a2f (2026-11-25)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4ab94756-4b94-4b6f-a09d-3c3e40c74b22, max-turns 500, Done — 2026-11-26T10:37:50Z
+- Review oracle: grok session 01a2176e-f942-73f3-8fbe-c8fa2931659b (2026-11-26), effort 3, roster general, round 1
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2176e-f942-73f3-8fbe-c8fa2931659b, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-26T10:48:09Z
 
 ## Results
 
@@ -168,3 +174,7 @@ Expect: both files pass; template-smoke prints "Generated app ships its CI workf
 and "Template smoke SUCCEEDED". In an instance with the setup in
 `skills/tw-deploy/references/release-deploy.md`, publishing a release starts a run where only
 `deploy` runs (in `Production`), and a push or pull request run shows `deploy` skipped.
+
+### Review disposition
+
+Round 1, roster general, effort 3. Counts: bug 0, suggestion 0, nit 0 (all open/fixed/wontfix zero). Disposition: clean. No wontfix and no escalation. The implementer restatement matches the original task; no misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`. Review did not re-run build, test, or audit.
