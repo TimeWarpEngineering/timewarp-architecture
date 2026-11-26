@@ -267,6 +267,19 @@ Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 
     the AppHost preflight.
   - `ganda repo audit`: passed all checks.
 
+### CI fix pass (PR #709, `NeverAutomated` guard)
+
+- `workflow-command.cs`: the Design comment (line 37) and the release-mode refusal (line 96) no
+  longer contain the literal `dev deploy`, which `CiWorkflowsAndDevWorkflow_Should_NeverDeploy`
+  reads as an invocation. The refusal now says an operator deploys the app with this CLI's deploy
+  command. No behavior change.
+- Gates (CI fix pass):
+  - `dotnet run --file tools/dev-cli/dev.cs -- self-install`: installed (dev-cli changed).
+  - `./bin/dev build`: passed (0 warnings, 0 errors).
+  - `./bin/dev test tests/tools/dev-cli-tests/aspire-deploy-never-automated-given-tests.cs`: 2/2
+    passed (dev-cli-tests class, not a standalone runfile).
+  - `ganda repo audit`: passed all checks.
+
 ### How to validate
 
 Smoke: `./bin/dev template-smoke` (add `--matrix` for every flag-off variant).
