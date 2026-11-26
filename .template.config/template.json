@@ -19,10 +19,14 @@
       "modifiers": [
         {
           "condition": "(true)",
+          "rename": {
+            ".github/app-workflows/workflow.yml": ".github/workflows/workflow.yml"
+          },
           "exclude": [
             "**/bin/**",
             "**/obj/**",
             "artifacts/**",
+            ".github/workflows/**",
             "tools/agent-identity-cli/**",
             "tools/fix-analyzer-debug.reg",
             "tools/dev-cli/vally-cli.version",
@@ -37,8 +41,6 @@
             "tools/dev-cli/services/client-name-scan.cs",
             "tools/dev-cli/services/feature-filename-grammar-generator.cs",
             "tools/dev-cli/services/generated-ingress-prefixes.cs",
-            "tools/dev-cli/services/green-key.cs",
-            "tools/dev-cli/services/green-key-ledger.cs",
             "tools/dev-cli/services/jaribu-aggregator-summary-gate.cs",
             "tools/dev-cli/services/skill-spec-lint.cs",
             "tools/dev-cli/services/template-nupkg.cs",

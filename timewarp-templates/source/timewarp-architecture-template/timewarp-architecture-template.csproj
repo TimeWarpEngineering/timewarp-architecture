@@ -45,6 +45,14 @@
              PackagePath="content\templates\TimeWarp.Architecture\tools\dev-cli\%(RecursiveDir)%(FileName)%(Extension)" />
     <Content Include="..\..\..\.timewarp\dev.jsonc"
              PackagePath="content\templates\TimeWarp.Architecture\.timewarp\%(FileName)%(Extension)" />
+    <!-- .github/: the generated app's CI (task 531). setup-ci is the one source both workflows use;
+         this repo's own .github/workflows/ stays out. The app's workflow packs from
+         .github/app-workflows/ (outside .github/workflows/, so it never runs here), and
+         .template.config/template.json renames it to .github/workflows/workflow.yml at generation. -->
+    <Content Include="..\..\..\.github\actions\setup-ci\**\*"
+             PackagePath="content\templates\TimeWarp.Architecture\.github\actions\setup-ci\%(RecursiveDir)%(FileName)%(Extension)" />
+    <Content Include="..\..\..\.github\app-workflows\workflow.yml"
+             PackagePath="content\templates\TimeWarp.Architecture\.github\app-workflows\%(FileName)%(Extension)" />
     <Content Include="..\..\..\skills\**\*"
              Exclude="..\..\..\skills\**\analysis\**"
              PackagePath="content\templates\TimeWarp.Architecture\skills\%(RecursiveDir)%(FileName)%(Extension)" />

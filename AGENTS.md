@@ -5,7 +5,8 @@ Guidance for coding agents in this repository. `CLAUDE.md` includes this file (`
 This repository is the `dotnet new timewarp-architecture` template. Root `source/` and `tests/`
 are the template content (`.template.config/`). `timewarp-templates/` packs that content as a
 NuGet template. A change here ships to every generated app. This file is the monorepo agent
-guide and is not in the pack. Generated apps get `skills/` and the dev CLI (`tools/dev-cli/`).
+guide and is not in the pack. Generated apps get `skills/`, the dev CLI (`tools/dev-cli/`), and CI (`.github/`: the app workflow,
+whose source is `.github/app-workflows/workflow.yml`, and `.github/actions/setup-ci`).
 Its template-only parts are excluded in `template.json` or sit in `templateRepository` regions,
 which generation strips.
 

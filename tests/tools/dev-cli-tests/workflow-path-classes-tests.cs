@@ -78,6 +78,7 @@ public class IsTemplatePath_Given_
       "./tools/dev-cli/endpoints/template-smoke-command.cs",
       ".github/workflows/workflow.yml",
       ".github/actions/setup-ci/action.yml",
+      ".github/app-workflows/workflow.yml",
     ];
 
     foreach (string path in paths)

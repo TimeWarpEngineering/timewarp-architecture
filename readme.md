@@ -47,6 +47,22 @@ dotnet new timewarp-architecture -n MyTimeWarpApp
   generated without a feature, a command that needs it (`entra` without web; `deploy` without web;
   `open` and `deploy` to compose or kubernetes without yarp, while aca and aca-neon serve web-server;
   `deploy migrate` without postgres or web) stops and names the flag that is off.
+- `.github/`: CI. `workflows/workflow.yml` runs on every pull request and on pushes to `master`,
+  `main` and `feature/**`. Its jobs are classify, then `ci (fast)`, `ci (integration)` and
+  `ci (publish)` (each one `dev workflow` phase; publish runs `dev publish all` and its
+  production-safety suites and deploys nothing), then `ci`, the one check over them.
+  `actions/setup-ci/action.yml` installs .NET from `global.json`, the NuGet cache and the pinned
+  Aspire CLI. A push or pull request whose tree already passed (a merge of a green pull request, a
+  kanban-only change) skips the CI groups through a green-key marker; the trailer
+  `Green-Key: full-run` on the head commit, or a manual run of the workflow, runs them anyway.
+
+  To configure the repository on GitHub:
+  - Make `ci` a required status check on the default branch (a ruleset or branch protection).
+    `ganda pr merge` waits for it.
+  - Runners are `ubuntu-latest`. To run classify, `ci (fast)` and `ci (publish)` on self-hosted
+    runners, set the repository variable `CI_RUNNER_LABELS` to a JSON array of labels, such as
+    `["self-hosted", "linux"]`. `ci (integration)` stays hosted: it needs Docker. Fork pull
+    requests always run hosted.
 
 ### In-app Ask (xAI Grok)
 

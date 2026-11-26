@@ -21,6 +21,8 @@
       // The template content and the ingress golden build from these roots, markdown included
       // (the template pack ships its readme).
       "timewarp-templates/**", ".template.config/**", "goldens/**",
+      // The generated app's workflow (task 531): dev-cli-tests check its shape.
+      ".github/app-workflows/**",
       //#endif
       ".github/actions/**"
     ],

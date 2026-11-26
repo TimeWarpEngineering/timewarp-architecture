@@ -10,7 +10,8 @@
 // TemplateSmokeGeneration (generate + SmokeOneAsync + environment), and
 // TemplateSmokeInitializerAssets (host-free import-graph check), and TemplateSmokeBrandSurfaces
 // (task 513: configuration-only rebrand leaves no template brand), and TemplateSmokeDevCli (task 530:
-// the generated app's dev CLI ships, lists the app commands, and runs `dev build`).
+// the generated app's dev CLI ships, lists the app commands, and runs `dev build`), and
+// TemplateSmokeCiWorkflow (task 531: the generated app's CI workflow and setup-ci ship).
 #endregion
 
 namespace DevCli.Services;
@@ -30,6 +31,7 @@ internal sealed class TemplateSmokeHarness
     InitializerAssets = new TemplateSmokeInitializerAssets(terminal);
     BrandSurfaces = new TemplateSmokeBrandSurfaces(terminal);
     DevCli = new TemplateSmokeDevCli(terminal, repoRoot);
+    CiWorkflow = new TemplateSmokeCiWorkflow(terminal, repoRoot);
   }
 
   public TemplateSmokeArchitectureSuffixes Suffixes { get; }
@@ -47,4 +49,6 @@ internal sealed class TemplateSmokeHarness
   public TemplateSmokeBrandSurfaces BrandSurfaces { get; }
 
   public TemplateSmokeDevCli DevCli { get; }
+
+  public TemplateSmokeCiWorkflow CiWorkflow { get; }
 }

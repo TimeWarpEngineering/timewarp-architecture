@@ -12,6 +12,8 @@
 // Any failure (no key, gh missing or refused) is logged and reads as a miss, so the gate runs: a
 // ledger problem can cost a rebuild but never skips one. Every line starts with green-key-v1 and
 // also goes to GITHUB_STEP_SUMMARY.
+// The template pack ships this file and green-key.cs to generated apps (task 531): an app's workflow
+// has the ci gate only, so the skill and template gates are a templateRepository region.
 #endregion
 
 namespace DevCli.Services;
@@ -89,7 +91,14 @@ internal static class GreenKeyLedger
     List<string> hits = [];
     if (eventClass.Candidate && !force && !string.IsNullOrWhiteSpace(repository))
     {
-      (string Gate, bool Needed)[] gates = [(GreenKey.GateCi, pathJobs.Ci), (GreenKey.GateSkill, pathJobs.Skill), (GreenKey.GateTemplate, pathJobs.Template)];
+      (string Gate, bool Needed)[] gates =
+      [
+        (GreenKey.GateCi, pathJobs.Ci),
+#if templateRepository
+        (GreenKey.GateSkill, pathJobs.Skill),
+        (GreenKey.GateTemplate, pathJobs.Template),
+#endif
+      ];
       foreach ((string gate, bool needed) in gates)
       {
         if (!needed)
@@ -170,13 +179,4 @@ internal static class GreenKeyLedger
   private static string Bool(bool value) => value ? "true" : "false";
 
   private static string OneLine(string value) => value.Replace('\r', ' ').Replace('\n', ' ');
-}
-
-/// <summary>
-/// One classify run's ledger result. <c>Key</c> is empty when none was computed; <c>Writer</c> lets
-/// the green-key job upload markers; <c>HitGates</c> lists the gates that already passed on the key.
-/// </summary>
-internal sealed record GreenKeyObservation(string Key, bool Writer, IReadOnlyList<string> HitGates)
-{
-  internal static GreenKeyObservation None { get; } = new("", false, []);
 }

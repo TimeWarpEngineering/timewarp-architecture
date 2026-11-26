@@ -14,7 +14,8 @@
 // Skill lint: SKILL.md or eval.yaml anywhere, .vally.yaml, evals/, skills/.
 // Template smoke: the template content roots (source/, tests/, timewarp-templates/,
 // .template.config/, msbuild/) and the root files the generated app inherits, including the dev
-// CLI's .timewarp/dev.jsonc and .envrc (task 530; tools/dev-cli/ is a CI root above).
+// CLI's .timewarp/dev.jsonc and .envrc (task 530; tools/dev-cli/ is a CI root above), and the
+// generated app's workflow under .github/app-workflows/ (task 531).
 // A push event carries before/after SHAs; an all-zero before (a new branch) has no base, and the
 // caller treats an unknown diff as "every job runs".
 #endregion
@@ -32,7 +33,7 @@ internal static class WorkflowPathClasses
   private static readonly string[] SkillRoots = ["evals/", "skills/"];
 
   private static readonly string[] TemplateRoots =
-    ["source/", "tests/", "timewarp-templates/", ".template.config/", "msbuild/"];
+    ["source/", "tests/", "timewarp-templates/", ".template.config/", "msbuild/", ".github/app-workflows/"];
 
   private static readonly string[] TemplateRootFiles =
     ["Directory.Build.props", "Directory.Packages.props", "timewarp-architecture.slnx", ".timewarp/dev.jsonc", ".envrc"];
@@ -125,6 +126,3 @@ internal static class WorkflowPathClasses
   private static bool StartsWithAny(string path, string[] roots) =>
     roots.Any(root => path.StartsWith(root, StringComparison.Ordinal));
 }
-
-/// <summary>Which path-gated CI jobs run: ci-group, skill-lint, template-smoke.</summary>
-internal readonly record struct WorkflowJobs(bool Ci, bool Skill, bool Template);
