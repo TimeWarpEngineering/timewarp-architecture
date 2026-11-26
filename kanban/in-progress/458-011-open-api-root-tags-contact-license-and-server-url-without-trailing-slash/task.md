@@ -61,6 +61,7 @@ Acceptance criteria:
 - Created: 2227132 (2026-11-24)
 - 2026-11-26 implement (ganda task work): shared root-tags transformer and check, document info
   (contact, license, tag descriptions), trailing-slash trim, web-server tag map, tests, skill row.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session df953187-d6b4-4f20-8f86-e8851d5da501, max-turns 500, Done — 2026-11-26T02:57:52Z
 
 ## Results
 
