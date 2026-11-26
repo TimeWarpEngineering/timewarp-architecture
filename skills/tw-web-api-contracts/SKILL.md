@@ -135,8 +135,7 @@ public static partial class GetAgentIdentity
 }
 ```
 
-**Policy names (TWA0024):** `[EndpointAuthorize] Policy` must equal a policy the hosting server registers (web: `PermissionIds.*`;
-named policies via `AddPolicy`). Prefer a contracts-visible const over a literal.
+**Policy names (TWA0024):** `[EndpointAuthorize] Policy` must equal a policy the hosting server registers (web: `PermissionIds.*`; named policies via `AddPolicy`). Prefer a contracts-visible const over a literal.
 
 **Scheme lists:** hosted `[EndpointAuthorize]` must set `AuthenticationSchemes` (`AuthenticationSchemeNames` on web); permission
 policies carry no scheme list, so omitting it authenticates only the host default scheme. Details and per-surface table:
@@ -470,6 +469,7 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 | A `UserId` (caller id) on a hosted request, or a paging member the handler ignores | Published as a parameter a client must fill and the server never reads. The handler reads the principal; declare only members the handler uses |
 | Re-validating in the handler or enabling FE FluentValidation | Validation is `FluentValidationBehavior` on the mediator only |
 | `[Required]` on a request member so OpenAPI lists it as required | Write `NotEmpty()` / `NotNull()` in the `Validator`; the document takes `required` from it |
+| A new slice's first web-server operation with no tag description | Add its tag (the namespace leaf under `Features`) to `WebServerOpenApiTags.Descriptions`; `/openapi/v1.json` returns 500 naming a missing one |
 | `required init` Response with invariants | `Guid.Empty` slips through — ctor + `Guard` |
 | Copying paths/casing from another repo | Read existing contracts in **this** repo first |
 

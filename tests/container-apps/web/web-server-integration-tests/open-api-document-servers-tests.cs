@@ -6,7 +6,8 @@
 // A tiny host, not the full web graph: CommonServerModule is the only OpenAPI wiring, which is what
 // serves /openapi/v1.json. Microsoft.AspNetCore.OpenApi fills servers from the request host; the
 // public-origin transformer must replace that when X-Forwarded-Proto and X-Forwarded-Host are set,
-// and must leave the listening address alone when they are absent. Scalar's page must not embed its
+// and must leave the listening address alone when they are absent. Neither URL ends in "/" (task
+// 458-011): a client joins it with a path that starts with "/". Scalar's page must not embed its
 // own servers list — the UI base URL comes from the document.
 #endregion
 
@@ -25,7 +26,7 @@ using TimeWarp.Foundation;
 [TestTag("OpenApi")]
 public class Servers_Given_
 {
-  private const string PublicOrigin = "https://arch.timewarp.work/";
+  private const string PublicOrigin = "https://arch.timewarp.work";
 
   private static WebApplication? App;
   private static HttpClient? Client;
@@ -79,6 +80,7 @@ public class Servers_Given_
     string serverUrl = await ReadServerUrlAsync(request);
 
     serverUrl.ShouldBe(PublicOrigin);
+    serverUrl.ShouldNotEndWith("/");
   }
 
   public static async Task NoForwardedHeaders_Should_KeepTheListenAddress()
@@ -87,6 +89,7 @@ public class Servers_Given_
 
     serverUrl.ShouldStartWith("http://127.0.0.1:");
     serverUrl.ShouldNotContain("arch.timewarp.work");
+    serverUrl.ShouldNotEndWith("/");
   }
 
   public static async Task MalformedForwardedHost_Should_KeepTheListenAddress()

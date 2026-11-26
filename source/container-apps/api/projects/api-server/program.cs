@@ -119,7 +119,9 @@ public class Program : IAspNetProgram
       serviceCollection,
       ApiVersion,
       ApiTitle,
-      AgentBearerPolicies.OpenApiBearer()
+      AgentBearerPolicies.OpenApiBearer(),
+      // Contact and license from repository metadata; root tags are declared without descriptions.
+      documentInfo: OpenApiDocumentInfo.FromAssembly(typeof(Program).Assembly, tagDescriptions: null)
     );
     serviceCollection.AddGeneratedMediator();
   }

@@ -39,8 +39,12 @@
 // and query parameters, and its document check, registered last, fails a request member that
 // lost required.
 // OpenApiPublicServer replaces
-// the document's servers with the forwarded public origin, and Scalar's Servers list stays
-// empty and follows that document.
+// the document's servers with the forwarded public origin, writes every server URL without a
+// trailing slash, and Scalar's Servers list stays empty and follows that document.
+// documentInfo (host-supplied) sets info.contact and info.license from the host assembly's
+// repository metadata and names the root tag descriptions. OpenApiRootTags runs after the host
+// callback and declares every operation tag at the root; its check, registered last, fails an
+// undeclared tag, and an undescribed one when the host passed descriptions.
 // documentPublicWebRoutes (web-server only) adds GET /api/health and the /api tip alias,
 // and records /.well-known discovery documents and liveness in info.description plus
 // x-timewarp-excluded-routes; excludedWebRoutes appends the host's own non-operation routes.
@@ -129,6 +133,10 @@ public class CommonServerModule : IAspNetModule
   /// Host routes that are served but are not operations. Listed only when
   /// <paramref name="documentPublicWebRoutes"/> is true.
   /// </param>
+  /// <param name="documentInfo">
+  /// Contact, license, and root tag descriptions. When null, root tags are declared without
+  /// descriptions and info has no contact or license.
+  /// </param>
   public static void AddOpenApi
   (
     IServiceCollection serviceCollection,
@@ -138,7 +146,8 @@ public class CommonServerModule : IAspNetModule
     bool documentPublicWebRoutes = false,
     Action<OpenApiOptions>? configureOpenApi = null,
     OpenApiSessionCookie? sessionCookie = null,
-    IReadOnlyList<OpenApiExcludedRoute>? excludedWebRoutes = null
+    IReadOnlyList<OpenApiExcludedRoute>? excludedWebRoutes = null,
+    OpenApiDocumentInfo? documentInfo = null
   )
   {
     if (agentBearer is not null)
@@ -184,10 +193,15 @@ public class CommonServerModule : IAspNetModule
             OpenApiDiscoveryCoverage.Register(openApiOptions, excludedWebRoutes);
           }
 
+          documentInfo?.Register(openApiOptions);
+
           configureOpenApi?.Invoke(openApiOptions);
-          // Last: every transformer that writes a problem response or rewrites a request has run.
+          // After the host callback: operations a host transformer adds are counted.
+          OpenApiRootTags.Register(openApiOptions, documentInfo?.TagDescriptions);
+          // Last: every transformer that writes a problem response, rewrites a request, or tags an operation has run.
           OpenApiProblemDetails.RegisterDocumentCheck(openApiOptions);
           OpenApiValidatorRequired.RegisterDocumentCheck(openApiOptions);
+          OpenApiRootTags.RegisterDocumentCheck(openApiOptions, documentInfo?.TagDescriptions);
         };
       }
     );
