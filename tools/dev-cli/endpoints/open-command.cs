@@ -21,10 +21,11 @@
 //     publishes the host port itself.
 // Neither target has a hard-coded port: with no --port and no ingress-port anywhere the verb refuses
 // (DeployKubernetes.NoIngressPortMessage) instead of guessing a shared default such as 8080.
-//   - aca: https://<fqdn> of the ingress container app from `az containerapp show … --query
-//     properties.configuration.ingress.fqdn`, in the preflight's subscription and the resource group
+//   - aca: https://<fqdn> of the external container app named ingress, or web-server when the app has
+//     no yarp flag (task 527), from `az containerapp list … --query` (DeployAca.BuildPublicAppArguments),
+//     in the preflight's subscription and the resource group
 //     from --resource-group, Azure__ResourceGroup or the AppHost user secret Azure:ResourceGroup.
-//   - aca-neon uses that same ingress FQDN. It does not open the Neon console.
+//   - aca-neon uses that same public FQDN. It does not open the Neon console.
 // Browser: DeployBrowser.OpenAsync, shared with `dev deploy`. Candidates come from
 // DeployBrowserChoice.BrowserLaunchers (WSL: wslview, then explorer.exe, then xdg-open). --no-browser,
 // a non-interactive terminal, or no launcher on PATH prints the URL and is not a failure.
@@ -40,8 +41,8 @@ using System.Net.Sockets;
 [NuruRouteExample("open --target kubernetes", Description = "Forward localhost:<ingress-port> (the ingress-port parameter committed in the AppHost appsettings.json) to the kind ingress-nginx controller and open the browser (Ctrl+C stops the forward)")]
 [NuruRouteExample("open --target kubernetes --port 9090", Description = "Forward a different local port than ingress-port")]
 [NuruRouteExample("open", Description = "Open the compose deployment at http://localhost:<ingress-port>")]
-[NuruRouteExample("open --target aca --no-browser", Description = "Print the ingress container app's https URL")]
-[NuruRouteExample("open --target aca-neon --no-browser", Description = "Print the ingress container app's https URL for the Neon deployment")]
+[NuruRouteExample("open --target aca --no-browser", Description = "Print the public container app's https URL (ingress, or web-server without the yarp flag)")]
+[NuruRouteExample("open --target aca-neon --no-browser", Description = "Print the public container app's https URL for the Neon deployment")]
 internal sealed class OpenCommand : ICommand<Unit>
 {
   [Option("target", "t", Description = "Deploy target: compose | kubernetes | aca | aca-neon (default: compose, the AppHost's Publish:Target default)")]
@@ -75,7 +76,8 @@ internal sealed class OpenCommand : ICommand<Unit>
     public async ValueTask<Unit> Handle(OpenCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
-      if (!AppFeatures.Require(Terminal, "dev open", AppFeatures.Yarp)) return Unit.Value;
+      bool needsIngress = AspireDeploy.ServesThroughIngress(command.Target);
+      if (needsIngress && !AppFeatures.Require(Terminal, "dev open on compose or kubernetes", AppFeatures.Yarp)) return Unit.Value;
 
       DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev open", command.Target, PreflightScope.Open, ct);
       if (preflight is null) return Unit.Value;
@@ -222,17 +224,20 @@ internal sealed class OpenCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine(resourceGroup.Detail);
-      string[] arguments = DeployAca.BuildIngressFqdnArguments(resourceGroup.Name, preflight.AzureSubscriptionId!);
-      CommandOutput? show = await AspireDeployPreflight.ProbeAsync("az", arguments, ct);
-      string? fqdn = DeployAca.ParseSingleValue(show?.Success == true, show?.Stdout ?? "");
-      if (fqdn is null)
+      string[] arguments = DeployAca.BuildPublicAppArguments(resourceGroup.Name, preflight.AzureSubscriptionId!);
+      CommandOutput? list = await AspireDeployPreflight.ProbeAsync("az", arguments, ct);
+      AcaPublicApp? publicApp = DeployAca.ParsePublicApp(list?.Success == true, list?.Stdout ?? "");
+      if (publicApp is null)
       {
-        string reason = show?.TimedOut == true ? AspireDeployCluster.ProbeTimedOutMessage("az", arguments) : AspireDeployCluster.FirstLine(show?.Stderr ?? "", "no FQDN returned");
-        Fail($"Could not read the {DeployOperate.IngressResourceName} container app's FQDN (`az {string.Join(' ', arguments)}`: {reason}). Is the app deployed to {resourceGroup.Name}?");
+        string reason = list?.TimedOut == true
+          ? AspireDeployCluster.ProbeTimedOutMessage("az", arguments)
+          : DeployAca.NoPublicAppReason(list?.Success == true, list?.Stdout ?? "", list is null ? "az is not on PATH" : AspireDeployCluster.FirstLine(list.Stderr, $"exit {list.ExitCode}"));
+        Fail($"Could not read the public container app's FQDN (`az {string.Join(' ', arguments)}`: {reason}). Is the app deployed to {resourceGroup.Name}?");
         return;
       }
 
-      await DeployBrowser.OpenAsync(Terminal, $"https://{fqdn}", command.NoBrowser, ct);
+      Terminal.WriteLine($"Public container app: {publicApp.Name}");
+      await DeployBrowser.OpenAsync(Terminal, $"https://{publicApp.Fqdn}", command.NoBrowser, ct);
     }
 
     private static bool IsPortFree(int port)

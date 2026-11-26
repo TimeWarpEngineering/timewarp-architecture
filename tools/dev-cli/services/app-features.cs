@@ -8,8 +8,9 @@
 // where `dotnet new` removed a feature's projects. template.json excludes `dev db` from an app
 // without postgres or web. The commands below stay, because shared deploy code compiles them in,
 // and each checks its feature before any preflight: entra (web: the web-server user secrets),
-// open (yarp: the ingress resource it addresses), deploy (yarp, then web: its smoke step requests
-// web-server paths through the ingress), deploy migrate (postgres: the EF migrations).
+// open (yarp on compose and kubernetes: the ingress it addresses), deploy (web: its smoke step
+// requests web-server paths; then yarp on compose and kubernetes), deploy migrate (postgres: the EF
+// migrations). aca and aca-neon need no yarp: without it web-server is the public app (task 527).
 // `dev run` skips its web-only xAI key warning instead of refusing.
 // A feature is present when its marker path exists under the repository root. Each marker is a
 // path template.json removes with that flag off. This repository has every feature.

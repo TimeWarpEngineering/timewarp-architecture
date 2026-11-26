@@ -36,6 +36,8 @@
 // identity-session scheme and cookie name, so cookie routes publish IdentitySessionCookie.
 // documentPublicWebRoutes: this host serves /api/health, the /api tip alias, and the SPA
 // discovery documents. The OpenAPI note is how an agent learns a missing path is an exclusion.
+// documentInfo: WebServerOpenApiTags names every root tag's description and reads contact and
+// license from this assembly's repository metadata (task 458-011).
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
 // empty Queries already use EmptyRequestBinder at runtime).
 // Task 145-009 R2-1: ConfigureServices has an explicit-environment 3-arg overload (Main passes
@@ -265,7 +267,9 @@ public partial class Program : IAspNetProgram
         OpenApiPaymentResponses.Register(options);
         OpenApiAgentReviewerGuide.Register(options);
       },
-      sessionCookie: OpenApiSessionCookieRegistration.Create()
+      sessionCookie: OpenApiSessionCookieRegistration.Create(),
+      excludedWebRoutes: WebServerOpenApiExcludedRoutes.All,
+      documentInfo: WebServerOpenApiTags.DocumentInfo()
     );
   }
 

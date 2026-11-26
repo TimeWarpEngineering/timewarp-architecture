@@ -1,18 +1,29 @@
 #region Purpose
-// Documents HTTP 402 and 503 on the tip jar and metered capability, and states that free routes never return 402.
+// Documents HTTP 402, 503, and the x402 request and settlement headers on the tip jar and metered
+// capability, and states that free routes never return 402.
 #endregion
 
 #region Design
 // FastEndpoints infers the success body, so the document otherwise shows only 200.
-// 402 and 503 are SharedProblemDetails plus, on 402 only, the PAYMENT-REQUIRED header.
+// 402 and 503 are SharedProblemDetails plus, on 402 only, the PAYMENT-REQUIRED header. Each body
+// schema is allOf: a $ref to the one SharedProblemDetails component (OpenApiProblemDetails), then
+// the extension members the payment gate adds (payment, reason or error and ok, tip on the tip jar).
 // That header is base64 x402 v2 JSON (x402Version, accepts, resource), so the header schema
 // carries contentEncoding base64 and the decoded object as contentSchema.
+// Each paid operation also lists the optional request header PAYMENT-SIGNATURE (the client's
+// signed x402 payload) and the optional PAYMENT-RESPONSE header on 200 (the settlement result,
+// present when an x402 payment settled), both named from PaymentHeaders.
 // Routes come from the contract RouteTemplate constants. The bare /api alias is a rewrite
-// onto the tip jar, not its own operation. Free and discovery operations are left without
+// onto the tip jar. OpenApiDiscoveryCoverage copies the tip operations' responses and
+// parameters onto it after these operation transformers run, so it carries the same 402 and 503.
+// Free and discovery operations are left without
 // 402 or 503. Challenge resource.url is TipOptions.Resource or MeteredCapabilityOptions.Resource,
-// read from the host services, not a second copy of the route. The document description says
-// so, so a 402 on a paid operation is not read
-// as a response of this document, health, or identity ceremonies.
+// read from the host services, not a second copy of the route.
+// info.description gets the payment note as its own paragraph. The "documented only on" list is
+// read from the finished document (every operation with a 402), and every other operation with a
+// 503 (GET /api/health is Unhealthy) is named as a non-payment 503, so the note cannot drift from
+// the operations. This document transformer runs after OpenApiDiscoveryCoverage's, which adds the
+// alias and health operations.
 // Metered calls still require bearer scope demo:invoke. That scope authorizes the attempt;
 // payment is separate, and a 200 debits the ledger.
 #endregion
@@ -31,17 +42,17 @@ using TimeWarp.X402;
 /// </summary>
 internal static class OpenApiPaymentResponses
 {
-  private const string ProblemJson = "application/problem+json";
-
   private static readonly string TipRoute = Normalize(SubmitTip.Query.RouteTemplate);
   private static readonly string MeteredRoute = Normalize(InvokeMeteredCapability.Query.RouteTemplate);
 
-  private static readonly string FreeRoutesNever402 =
-    "Free and discovery operations never return HTTP 402. "
-    + $"HTTP 402 and HTTP 503 are documented only on GET and POST /{TipRoute} and on GET /{MeteredRoute}. "
-    + "This document, health, identity ceremonies, and other free routes are not payment challenges. "
-    + "The bare /api path is a discovery alias of the tip jar, not a separate operation, and follows the tip jar. "
-    + "Disabled or misconfigured payment returns 503 on those paid routes and does not return 402.";
+  internal const string PaymentHeading = "## Payment";
+
+  private const string SignatureDescription =
+    "x402 v2 signed payment payload, base64-encoded JSON. Optional: send it to pay for this call "
+    + "after a 402 challenge. A rejected signature returns 402 again.";
+
+  private const string SettlementDescription =
+    "x402 v2 settlement result, base64-encoded JSON. Present when an x402 payment settled for this call.";
 
   internal static void Register(OpenApiOptions openApiOptions)
   {
@@ -66,30 +77,98 @@ internal static class OpenApiPaymentResponses
     _ = context;
     _ = cancellationToken;
     document.Info ??= new OpenApiInfo();
-    document.Info.Description = AppendNote(document.Info.Description, FreeRoutesNever402);
+    string? existing = document.Info.Description;
+    if (existing?.Contains(PaymentHeading, StringComparison.Ordinal) == true)
+    {
+      return Task.CompletedTask;
+    }
+
+    string note = PaymentNote(document);
+    document.Info.Description = string.IsNullOrWhiteSpace(existing)
+      ? note
+      : existing.TrimEnd() + "\n\n" + note;
     return Task.CompletedTask;
   }
 
-  private static Task DocumentPaidOperationAsync
+  /// <summary>
+  /// The info.description payment paragraph, built from the operations in the finished document.
+  /// </summary>
+  private static string PaymentNote(OpenApiDocument document)
+  {
+    List<string> paid = [];
+    List<string> otherUnavailable = [];
+    foreach (KeyValuePair<string, IOpenApiPathItem> path in document.Paths ?? [])
+    {
+      if (path.Value.Operations is null)
+      {
+        continue;
+      }
+
+      foreach (KeyValuePair<HttpMethod, OpenApiOperation> operation in path.Value.Operations)
+      {
+        OpenApiResponses? responses = operation.Value.Responses;
+        string name = "`" + operation.Key.Method.ToUpperInvariant() + " " + path.Key + "`";
+        if (responses?.ContainsKey("402") == true)
+        {
+          paid.Add(name);
+        }
+        else if (responses?.ContainsKey("503") == true)
+        {
+          otherUnavailable.Add(name);
+        }
+      }
+    }
+
+    string note =
+      PaymentHeading + "\n\n"
+      + "Free and discovery operations never return HTTP 402. "
+      + "HTTP 402 and the payment HTTP 503 are documented only on " + JoinNames(paid) + ". "
+      + "This document, health, identity ceremonies, and other free routes are not payment challenges. "
+      + "The bare /api path is a discovery alias of the tip jar and carries the tip jar's responses. "
+      + "Disabled or misconfigured payment returns 503 on those paid routes and does not return 402. "
+      + "A paid call may send " + PaymentHeaders.PaymentSignature + " and a settled 200 carries "
+      + PaymentHeaders.PaymentResponse + ".";
+    if (otherUnavailable.Count > 0)
+    {
+      note += " The 503 on " + JoinNames(otherUnavailable)
+        + " is that route's own status (such as Unhealthy), not a payment response.";
+    }
+
+    return note;
+  }
+
+  private static string JoinNames(List<string> names) =>
+    names.Count switch
+    {
+      0 => "no operation",
+      1 => names[0],
+      _ => string.Join(", ", names[..^1]) + " and " + names[^1],
+    };
+
+  private static async Task DocumentPaidOperationAsync
   (
     OpenApiOperation operation,
     OpenApiOperationTransformerContext context,
     CancellationToken cancellationToken
   )
   {
-    _ = cancellationToken;
     string path = Normalize(context.Description.RelativePath);
     string? method = context.Description.HttpMethod;
-    if (IsTip(path, method))
+    bool tip = IsTip(path, method);
+    if (!tip && !IsMetered(path, method))
     {
-      DocumentTip(operation, ReadTipResource(context.ApplicationServices));
-    }
-    else if (IsMetered(path, method))
-    {
-      DocumentMetered(operation, ReadMeteredResource(context.ApplicationServices));
+      return;
     }
 
-    return Task.CompletedTask;
+    IOpenApiSchema problem = await OpenApiProblemDetails.ReferenceAsync(context, cancellationToken).ConfigureAwait(false);
+    if (tip)
+    {
+      DocumentTip(operation, ReadTipResource(context.ApplicationServices), problem);
+    }
+    else
+    {
+      DocumentMetered(operation, ReadMeteredResource(context.ApplicationServices), problem);
+    }
   }
 
   private static bool IsTip(string path, string? method) =>
@@ -101,7 +180,7 @@ internal static class OpenApiPaymentResponses
     string.Equals(path, MeteredRoute, StringComparison.OrdinalIgnoreCase)
     && string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase);
 
-  private static void DocumentTip(OpenApiOperation operation, string resource)
+  private static void DocumentTip(OpenApiOperation operation, string resource, IOpenApiSchema problem)
   {
     operation.Description = AppendNote
     (
@@ -112,11 +191,12 @@ internal static class OpenApiPaymentResponses
       + "Free and discovery routes never return 402. "
       + "Challenge resource.url is " + resource + ", including when the caller used the /api discovery alias."
     );
-    DocumentPaymentRequired(operation, resource, includeTip: true);
-    DocumentUnavailable(operation, includeTip: true);
+    DocumentPaymentHeaders(operation);
+    DocumentPaymentRequired(operation, resource, problem, includeTip: true);
+    DocumentUnavailable(operation, problem, includeTip: true);
   }
 
-  private static void DocumentMetered(OpenApiOperation operation, string resource)
+  private static void DocumentMetered(OpenApiOperation operation, string resource, IOpenApiSchema problem)
   {
     operation.Description = AppendNote
     (
@@ -128,8 +208,9 @@ internal static class OpenApiPaymentResponses
       + "Free and discovery routes never return 402."
     );
     NoteSuccessDebit(operation);
-    DocumentPaymentRequired(operation, resource, includeTip: false);
-    DocumentUnavailable(operation, includeTip: false);
+    DocumentPaymentHeaders(operation);
+    DocumentPaymentRequired(operation, resource, problem, includeTip: false);
+    DocumentUnavailable(operation, problem, includeTip: false);
   }
 
   private static void NoteSuccessDebit(OpenApiOperation operation)
@@ -148,7 +229,60 @@ internal static class OpenApiPaymentResponses
     operation.Responses["200"] = new OpenApiResponse { Description = note };
   }
 
-  private static void DocumentPaymentRequired(OpenApiOperation operation, string resource, bool includeTip)
+  /// <summary>
+  /// Optional PAYMENT-SIGNATURE on the request and PAYMENT-RESPONSE on the 200.
+  /// </summary>
+  private static void DocumentPaymentHeaders(OpenApiOperation operation)
+  {
+    operation.Parameters ??= [];
+    bool hasSignature = operation.Parameters.Any
+    (
+      static parameter => parameter.In == ParameterLocation.Header
+        && string.Equals(parameter.Name, PaymentHeaders.PaymentSignature, StringComparison.OrdinalIgnoreCase)
+    );
+    if (!hasSignature)
+    {
+      operation.Parameters.Add
+      (
+        new OpenApiParameter
+        {
+          Name = PaymentHeaders.PaymentSignature,
+          In = ParameterLocation.Header,
+          Required = false,
+          Description = SignatureDescription,
+          Schema = Base64JsonSchema(),
+        }
+      );
+    }
+
+    operation.Responses ??= new OpenApiResponses();
+    if (!operation.Responses.TryGetValue("200", out IOpenApiResponse? existing) || existing is not OpenApiResponse success)
+    {
+      success = new OpenApiResponse { Description = "Success." };
+      operation.Responses["200"] = success;
+    }
+
+    success.Headers ??= new Dictionary<string, IOpenApiHeader>();
+    if (!success.Headers.ContainsKey(PaymentHeaders.PaymentResponse))
+    {
+      success.Headers[PaymentHeaders.PaymentResponse] = new OpenApiHeader
+      {
+        Required = false,
+        Description = SettlementDescription,
+        Schema = Base64JsonSchema(),
+      };
+    }
+  }
+
+  private static OpenApiSchema Base64JsonSchema() =>
+    new()
+    {
+      Type = JsonSchemaType.String,
+      ContentEncoding = "base64",
+      ContentMediaType = "application/json",
+    };
+
+  private static void DocumentPaymentRequired(OpenApiOperation operation, string resource, IOpenApiSchema problem, bool includeTip)
   {
     string description =
       "Payment is enabled and the call is unpaid or the payment signature was rejected. "
@@ -158,11 +292,7 @@ internal static class OpenApiPaymentResponses
       + "Challenge resource.url is " + resource + ".";
 
     OpenApiResponse response = EnsureResponse(operation, "402", description);
-    response.Content ??= new Dictionary<string, IOpenApiMediaType>();
-    if (!response.Content.ContainsKey(ProblemJson))
-    {
-      response.Content[ProblemJson] = new OpenApiMediaType { Schema = ProblemSchema(includeTip) };
-    }
+    OpenApiProblemDetails.SetContent(response, PaymentRequiredSchema(problem, includeTip));
 
     response.Headers ??= new Dictionary<string, IOpenApiHeader>();
     if (response.Headers.TryGetValue(PaymentHeaders.PaymentRequired, out IOpenApiHeader? existing) && existing is OpenApiHeader header)
@@ -229,7 +359,7 @@ internal static class OpenApiPaymentResponses
       },
     };
 
-  private static void DocumentUnavailable(OpenApiOperation operation, bool includeTip)
+  private static void DocumentUnavailable(OpenApiOperation operation, IOpenApiSchema problem, bool includeTip)
   {
     const string description =
       "Payment is disabled or misconfigured. The body is application/problem+json (error, payment, ok). "
@@ -237,55 +367,50 @@ internal static class OpenApiPaymentResponses
       + "Free and discovery routes never return 402.";
 
     OpenApiResponse response = EnsureResponse(operation, "503", description);
-    response.Content ??= new Dictionary<string, IOpenApiMediaType>();
-    if (!response.Content.ContainsKey(ProblemJson))
-    {
-      response.Content[ProblemJson] = new OpenApiMediaType { Schema = UnavailableSchema(includeTip) };
-    }
+    OpenApiProblemDetails.SetContent(response, UnavailableSchema(problem, includeTip));
   }
 
-  private static OpenApiSchema ProblemSchema(bool includeTip)
+  /// <summary>
+  /// SharedProblemDetails plus the 402 extension members the payment gate writes.
+  /// </summary>
+  private static OpenApiSchema PaymentRequiredSchema(IOpenApiSchema problem, bool includeTip)
   {
-    Dictionary<string, IOpenApiSchema> properties = new()
+    Dictionary<string, IOpenApiSchema> members = new()
     {
-      ["title"] = new OpenApiSchema { Type = JsonSchemaType.String },
-      ["status"] = new OpenApiSchema { Type = JsonSchemaType.Integer },
-      ["detail"] = new OpenApiSchema { Type = JsonSchemaType.String },
       ["payment"] = new OpenApiSchema { Type = JsonSchemaType.Boolean },
       ["reason"] = new OpenApiSchema { Type = JsonSchemaType.String },
     };
-    if (includeTip)
-    {
-      properties["tip"] = new OpenApiSchema { Type = JsonSchemaType.Boolean };
-    }
-
-    return new OpenApiSchema
-    {
-      Type = JsonSchemaType.Object,
-      Properties = properties,
-    };
+    return WithMembers(problem, members, includeTip);
   }
 
-  private static OpenApiSchema UnavailableSchema(bool includeTip)
+  /// <summary>
+  /// SharedProblemDetails plus the 503 extension members the payment gate writes.
+  /// </summary>
+  private static OpenApiSchema UnavailableSchema(IOpenApiSchema problem, bool includeTip)
   {
-    Dictionary<string, IOpenApiSchema> properties = new()
+    Dictionary<string, IOpenApiSchema> members = new()
     {
-      ["title"] = new OpenApiSchema { Type = JsonSchemaType.String },
-      ["status"] = new OpenApiSchema { Type = JsonSchemaType.Integer },
-      ["detail"] = new OpenApiSchema { Type = JsonSchemaType.String },
       ["payment"] = new OpenApiSchema { Type = JsonSchemaType.Boolean },
       ["error"] = new OpenApiSchema { Type = JsonSchemaType.String },
       ["ok"] = new OpenApiSchema { Type = JsonSchemaType.Boolean },
     };
+    return WithMembers(problem, members, includeTip);
+  }
+
+  private static OpenApiSchema WithMembers(IOpenApiSchema problem, Dictionary<string, IOpenApiSchema> members, bool includeTip)
+  {
     if (includeTip)
     {
-      properties["tip"] = new OpenApiSchema { Type = JsonSchemaType.Boolean };
+      members["tip"] = new OpenApiSchema { Type = JsonSchemaType.Boolean };
     }
 
     return new OpenApiSchema
     {
-      Type = JsonSchemaType.Object,
-      Properties = properties,
+      AllOf =
+      [
+        problem,
+        new OpenApiSchema { Type = JsonSchemaType.Object, Properties = members },
+      ],
     };
   }
 

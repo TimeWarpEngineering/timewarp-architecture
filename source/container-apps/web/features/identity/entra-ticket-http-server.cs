@@ -22,6 +22,7 @@ using System.Security.Claims;
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Foundation.Features;
 using TimeWarp.Foundation.Types;
 
 public static class EntraTicketHttp
@@ -126,9 +127,13 @@ public static class EntraTicketHttp
     ArgumentNullException.ThrowIfNull(httpContext);
     ArgumentNullException.ThrowIfNull(problem);
 
-    httpContext.Response.StatusCode = problem.Status ?? StatusCodes.Status400BadRequest;
-    httpContext.Response.ContentType = "application/problem+json";
-    await httpContext.Response.WriteAsJsonAsync(problem, ContractSerializationDefaults.Options, cancellationToken);
+    await SharedProblemDetailsHttp.WriteAsync
+    (
+      httpContext.Response,
+      problem,
+      ContractSerializationDefaults.Options,
+      cancellationToken
+    );
     httpContext.MarkResponseStart();
   }
 

@@ -10,8 +10,11 @@
 // is unchanged; every publish-only branch in this AppHost is IsPublishMode/IsRunMode-gated, never flag-gated, so
 // every template flag combination publishes. Production-safety posture of the output:
 //   - only the ingress has a host port (ingress-port parameter; the Ingress:Port/HttpPort pins are
-//     run-mode only); web-server is external in run mode only, so a combination without the yarp
-//     flag publishes no host port at all — the operator adds one for their own edge proxy, and the compose dashboard is disabled (it would publish an unauthenticated second port —
+//     run-mode only); on Compose (and Kubernetes) web-server is external in run mode only, so a
+//     combination without the yarp flag publishes no host port at all — the operator adds one for
+//     their own edge proxy. The Azure targets differ: without the yarp flag web-server is their one
+//     external container app (task 527, WebServerResource Design). The compose dashboard is
+//     disabled (it would publish an unauthenticated second port —
 //     point OTEL_EXPORTER_OTLP_ENDPOINT at your own collector instead);
 //   - secrets are .env parameters: postgres-password (AddPostgres' generated secret) and the Entra
 //     settings (entra-client-secret is a secret parameter; Entra defaults to off). entra-enabled
@@ -86,8 +89,11 @@
 // posture of the Bicep:
 //   - WithDashboard(enable: false): otherwise Aspire adds an AspireDashboard dotNetComponents resource
 //     on a public URL;
-//   - only the YARP ingress container app is external (WithExternalHttpEndpoints in the aca branch);
-//     web-server is external in run mode only, so web, api and grpc get internal ingress;
+//   - exactly one container app is external. With the yarp flag it is the YARP ingress
+//     (WithExternalHttpEndpoints in the aca branch) and web, api and grpc get internal ingress.
+//     Without the yarp flag it is web-server (WebServerResource.PublishAsContainerAppsEdge, task
+//     527): ACA's managed ingress is the edge, its public host web-server.<default domain> is an
+//     allowed passkey RP ID, and api and grpc stay internal;
 //   - Postgres is Azure Database for PostgreSQL Flexible Server (AddAzurePostgresFlexibleServer +
 //     WithPasswordAuthentication), never a container app on an Azure Files share. Password auth (not
 //     Entra auth) keeps PostgresDbModule's plain Npgsql connection string unchanged. The admin
@@ -159,6 +165,26 @@ internal sealed record PublishTarget
   /// <summary>True for Publish:Target=aca-neon (task 317).</summary>
   internal bool IsContainerAppsNeon =>
     string.Equals(Name, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase);
+
+  /// <summary>
+  /// The public host Azure Container Apps gives the external app named <paramref name="appName"/>:
+  /// <c>&lt;appName&gt;.&lt;environment default domain&gt;</c>. Null when the target is not aca or aca-neon.
+  /// </summary>
+  /// <remarks>
+  /// Built from the environment's default-domain output, not the app's own endpoint, so web-server can
+  /// carry the host without referencing the ingress (a cycle) or itself (task 393, task 527).
+  /// </remarks>
+  internal ReferenceExpression? ContainerAppPublicHost(string appName)
+  {
+    if (ContainerApps is null)
+    {
+      return null;
+    }
+
+    global::Aspire.Hosting.Azure.BicepOutputReference defaultDomain = ContainerApps.GetOutput(
+      "AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN");
+    return ReferenceExpression.Create($"{appName}.{defaultDomain}");
+  }
 
   /// <summary>Reads the target and declares its compute environment. An unknown target throws.</summary>
   internal static PublishTarget Declare(IDistributedApplicationBuilder builder)

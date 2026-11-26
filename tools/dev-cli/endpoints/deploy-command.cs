@@ -11,8 +11,9 @@
 // `dev workflow` mode calls this verb. This command is the DeployGroup's empty route, so `dev deploy`
 // runs it and `dev deploy --help` lists it beside `migrate` (a separate `deploy` route would be
 // shadowed by the group's help table). The migrate step is `dev deploy migrate --yes`, run through
-// DeployMigrateCommand.Handler and handed to the runner as a delegate. It refuses without yarp (the
-// ingress) or web (the smoke paths are web-server's), services/app-features.cs.
+// DeployMigrateCommand.Handler and handed to the runner as a delegate. It refuses without web (the
+// smoke paths are web-server's), and without yarp on compose and kubernetes, which serve through the
+// ingress. aca and aca-neon expose web-server when yarp is off (task 527). services/app-features.cs.
 #endregion
 
 namespace DevCli.Commands;
@@ -46,8 +47,9 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
 
     public async ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
-      if (!AppFeatures.Require(Terminal, "dev deploy", AppFeatures.Yarp)) return Unit.Value;
       if (!AppFeatures.Require(Terminal, "dev deploy", AppFeatures.Web)) return Unit.Value;
+      bool needsIngress = AspireDeploy.ServesThroughIngress(command.Target);
+      if (needsIngress && !AppFeatures.Require(Terminal, "dev deploy to compose or kubernetes", AppFeatures.Yarp)) return Unit.Value;
 
       await DeployRunner.RunAsync(
         Terminal,

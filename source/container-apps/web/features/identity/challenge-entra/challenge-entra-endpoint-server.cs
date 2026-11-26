@@ -11,17 +11,24 @@
 // challenges with 403 Sign-in disabled when EntraSignInEnabled is false — existing sessions stay.
 // OpenAPI would omit 401 and 403 because AllowAnonymous suppresses them. Summary states the
 // anonymous bootstrap choice, and Description lists the handler statuses (400, 401, 403, 404).
+// The 400 and 403 bodies are SharedProblemDetails (EntraTicketHttp.WriteProblemAsync), so they are
+// declared as that type, not ProducesProblem's MVC ProblemDetails, and the document has one
+// problem schema (task 458-004).
 // prompt=select_account is on OpenIdConnectOptions; the test fake handler ignores it.
 // FastEndpoints auto-sends 204 unless Send.* or MarkResponseStart runs — Challenge/Redirect write
 // headers without HasStarted on TestServer, so we mark after ChallengeAsync.
 // WithTags("Identity") is the tag the generator gives its siblings (namespace leaf), so Scalar
 // groups this operation with them.
+// OpenAPI (task 458-007): 302 with Location replaces FastEndpoints' default 204, and the mode and
+// returnUrl query parameters the handler reads are declared (BrowserNavigationOpenApi's Design
+// region). mode's enum is the EntraTicketProcessor constants the handler compares against.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 using System.Security.Claims;
 using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Foundation.Features;
 
 public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
 {
@@ -36,6 +43,7 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
         + "Link mode returns 401 when identity-session is missing. "
         + "Sign-in disabled returns 403. An unlisted Microsoft 365 method returns 404. "
         + "mode must be link or bootstrap (400). Success is an OIDC redirect.";
+      summary.Responses[302] = "OIDC redirect to the Microsoft identity platform authorize endpoint.";
       summary.Responses[400] = "mode must be link or bootstrap.";
       summary.Responses[401] = "Link mode without an identity session.";
       summary.Responses[403] = "Entra sign-in is disabled.";
@@ -47,10 +55,41 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
       {
         builder
           .WithTags("Identity")
-          .ProducesProblem(400)
+          .ClearDefaultProduces(StatusCodes.Status204NoContent)
+          .Produces(StatusCodes.Status302Found)
+          .Produces<SharedProblemDetails>(400, SharedProblemDetailsHttp.MediaType)
           .Produces(401)
-          .ProducesProblem(403)
-          .Produces(404);
+          .Produces<SharedProblemDetails>(403, SharedProblemDetailsHttp.MediaType)
+          .Produces(404)
+          .AddOpenApiOperationTransformer((operation, context, cancellationToken) =>
+          {
+            _ = context;
+            _ = cancellationToken;
+            BrowserNavigationOpenApi.AddQuery
+            (
+              operation,
+              "mode",
+              "link adds Microsoft 365 to the signed-in principal. bootstrap signs in or creates one.",
+              required: true,
+              EntraTicketProcessor.ModeLink,
+              EntraTicketProcessor.ModeBootstrap
+            );
+            BrowserNavigationOpenApi.AddQuery
+            (
+              operation,
+              "returnUrl",
+              "Local path to return to after sign-in. A missing or non-local path, or a sign-in page, becomes /.",
+              required: false
+            );
+            BrowserNavigationOpenApi.AddLocation
+            (
+              operation,
+              "302",
+              "The Microsoft identity platform authorize URL.",
+              example: null
+            );
+            return Task.CompletedTask;
+          });
       }
     );
   }

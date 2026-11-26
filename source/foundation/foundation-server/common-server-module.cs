@@ -30,12 +30,25 @@
 // MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
 // DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
 // applies the bearer. OpenApiOneOf publishes the OneOf response union as its wire shape
-// (success body at 200, SharedProblemDetails as problem+json). OpenApiPublicServer replaces
-// the document's servers with the forwarded public origin, and Scalar's Servers list stays
-// empty and follows that document.
+// (success body at 200, SharedProblemDetails as problem+json). OpenApiProblemDetails completes
+// that one problem component (errors, extension members), documents 400 on operations with a
+// validator, and after the host callback checks that every problem+json response references it.
+// OpenApiTypedId publishes every [TypedId] struct as string uuid, the Guid string its converter
+// writes, and Nullable<T> of one as [null, string] uuid. OpenApiValidatorRequired publishes
+// required from each request's validators (unconditional NotEmpty/NotNull) on the body schema
+// and query parameters, and its document check, registered last, fails a request member that
+// lost required.
+// OpenApiPublicServer replaces
+// the document's servers with the forwarded public origin, writes every server URL without a
+// trailing slash, and Scalar's Servers list stays empty and follows that document.
+// documentInfo (host-supplied) sets info.contact and info.license from the host assembly's
+// repository metadata and names the root tag descriptions. OpenApiRootTags runs after the host
+// callback and declares every operation tag at the root; its check, registered last, fails an
+// undeclared tag, and an undescribed one when the host passed descriptions.
 // documentPublicWebRoutes (web-server only) adds GET /api/health and the /api tip alias,
-// and records /.well-known discovery documents in info.description plus
-// x-timewarp-excluded-routes. ExcludeNonFastEndpoints stays on. Api-server does not opt in.
+// and records /.well-known discovery documents and liveness in info.description plus
+// x-timewarp-excluded-routes; excludedWebRoutes appends the host's own non-operation routes.
+// ExcludeNonFastEndpoints stays on. Api-server does not opt in.
 // configureOpenApi runs after those transformers so a host can add product responses
 // (payment 402/503) without putting product routes in this assembly.
 #endregion
@@ -107,7 +120,7 @@ public class CommonServerModule : IAspNetModule
   /// </param>
   /// <param name="documentPublicWebRoutes">
   /// When true, the document lists <c>GET /api/health</c> and the <c>GET|POST /api</c> tip alias,
-  /// and records the <c>/.well-known/*</c> discovery documents as excluded routes.
+  /// and records the <c>/.well-known/*</c> discovery documents and liveness as excluded routes.
   /// Api-server leaves this false: those routes are not on that host.
   /// </param>
   /// <param name="configureOpenApi">
@@ -115,6 +128,14 @@ public class CommonServerModule : IAspNetModule
   /// </param>
   /// <param name="sessionCookie">
   /// Browser session scheme and cookie name. When null, the document does not advertise the session cookie.
+  /// </param>
+  /// <param name="excludedWebRoutes">
+  /// Host routes that are served but are not operations. Listed only when
+  /// <paramref name="documentPublicWebRoutes"/> is true.
+  /// </param>
+  /// <param name="documentInfo">
+  /// Contact, license, and root tag descriptions. When null, root tags are declared without
+  /// descriptions and info has no contact or license.
   /// </param>
   public static void AddOpenApi
   (
@@ -124,7 +145,9 @@ public class CommonServerModule : IAspNetModule
     OpenApiAgentBearer? agentBearer,
     bool documentPublicWebRoutes = false,
     Action<OpenApiOptions>? configureOpenApi = null,
-    OpenApiSessionCookie? sessionCookie = null
+    OpenApiSessionCookie? sessionCookie = null,
+    IReadOnlyList<OpenApiExcludedRoute>? excludedWebRoutes = null,
+    OpenApiDocumentInfo? documentInfo = null
   )
   {
     if (agentBearer is not null)
@@ -151,17 +174,34 @@ public class CommonServerModule : IAspNetModule
         options.ConfigureOpenApi = openApiOptions =>
         {
           // After FastEndpoints' operation transformer, which is registered before this callback.
+          // Before OpenApiOneOf: each schema transformer walks the tree on its own, parent first,
+          // and OneOf's drops the union's members, so a schema transformer registered after it
+          // never reaches the SharedProblemDetails arm or any type inside a response.
+          OpenApiProblemDetails.Register(openApiOptions);
+          OpenApiTypedId.Register(openApiOptions);
           OpenApiOneOf.Register(openApiOptions);
           OpenApiDeleteRequestBody.Register(openApiOptions);
+          // After OpenApiDeleteRequestBody: the DELETE query parameters it adds can be required.
+          OpenApiValidatorRequired.Register(openApiOptions);
+          // After OpenApiOneOf: the binary 2xx content replaces the success arm OneOf split out.
+          OpenApiBinaryContent.Register(openApiOptions);
           OpenApiOperationSecurity.Register(openApiOptions, agentBearer, sessionCookie);
 
           OpenApiPublicServer.Register(openApiOptions);
           if (documentPublicWebRoutes)
           {
-            OpenApiDiscoveryCoverage.Register(openApiOptions);
+            OpenApiDiscoveryCoverage.Register(openApiOptions, excludedWebRoutes);
           }
 
+          documentInfo?.Register(openApiOptions);
+
           configureOpenApi?.Invoke(openApiOptions);
+          // After the host callback: operations a host transformer adds are counted.
+          OpenApiRootTags.Register(openApiOptions, documentInfo?.TagDescriptions);
+          // Last: every transformer that writes a problem response, rewrites a request, or tags an operation has run.
+          OpenApiProblemDetails.RegisterDocumentCheck(openApiOptions);
+          OpenApiValidatorRequired.RegisterDocumentCheck(openApiOptions);
+          OpenApiRootTags.RegisterDocumentCheck(openApiOptions, documentInfo?.TagDescriptions);
         };
       }
     );

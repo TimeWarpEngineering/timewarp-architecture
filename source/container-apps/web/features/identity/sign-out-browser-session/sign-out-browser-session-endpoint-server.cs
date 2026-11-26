@@ -16,6 +16,8 @@
 // MarkResponseStart after writing the redirect so FastEndpoints does not replace it with 204.
 // WithTags("Identity") is the tag the generator gives its siblings (namespace leaf), so Scalar
 // groups this operation with them.
+// OpenAPI (task 458-007): the operation states the wire contract, not FastEndpoints' default 204:
+// 303 with Location, 400, and the antiforgery form field (BrowserNavigationOpenApi's Design region).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -30,7 +32,37 @@ public sealed class SignOutBrowserSessionEndpoint : EndpointWithoutRequest
     Post(SignOutBrowserSession.Path.TrimStart('/'));
     AllowAnonymous();
     AllowFormData(urlEncoded: true);
-    Description(builder => builder.WithTags("Identity"));
+    Summary(summary =>
+    {
+      summary.Description =
+        "Intentionally anonymous. A browser form post that ends the identity session: an expired "
+        + "session still signs out. Call GET " + SignOutBrowserSession.AntiforgeryTokenPath
+        + " first for the form field and the antiforgery cookie.";
+      summary.Responses[303] = "The session is ended (or there was none). Location is "
+        + SignOutBrowserSession.RedirectPath + ".";
+      summary.Responses[400] = "The antiforgery token is missing or invalid. Nothing is cleared. The body is empty.";
+    });
+    Description
+    (
+      builder => builder
+        .WithTags("Identity")
+        .ClearDefaultProduces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status303SeeOther)
+        .Produces(StatusCodes.Status400BadRequest)
+        .AddOpenApiOperationTransformer((operation, context, cancellationToken) =>
+        {
+          _ = cancellationToken;
+          BrowserNavigationOpenApi.SetAntiforgeryForm(operation, context);
+          BrowserNavigationOpenApi.AddLocation
+          (
+            operation,
+            "303",
+            "The sign-in page.",
+            SignOutBrowserSession.RedirectPath
+          );
+          return Task.CompletedTask;
+        })
+    );
   }
 
   public override async Task HandleAsync(CancellationToken cancellationToken)

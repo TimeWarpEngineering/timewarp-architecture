@@ -44,9 +44,9 @@ dotnet new timewarp-architecture -n MyTimeWarpApp
   `dev --help`. It has the app commands: `build`, `test`, `run`, `db` (with postgres and web),
   `publish`, `deploy` (and `deploy migrate`), `open`, `deprovision`, `entra`, `workflow`, `clean`,
   `audit`. This repository's own template, release and skill-lint commands are not in it. In an app
-  generated without a feature, a command that needs it (`entra` without web; `open` without yarp;
-  `deploy` without yarp or web; `deploy migrate` without postgres or web) stops and names the flag
-  that is off.
+  generated without a feature, a command that needs it (`entra` without web; `deploy` without web;
+  `open` and `deploy` to compose or kubernetes without yarp, while aca and aca-neon serve web-server;
+  `deploy migrate` without postgres or web) stops and names the flag that is off.
 
 ### In-app Ask (xAI Grok)
 

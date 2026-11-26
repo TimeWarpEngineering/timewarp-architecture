@@ -8,6 +8,8 @@
 // Writes the response manually (not SendAsync) because the endpoint's declared response type is
 // the OneOf union — success serializes as bare TResponse, failure as application/problem+json
 // with the problem's own Status (default 400), so clients never see the union wrapper.
+// SharedProblemDetailsHttp writes the problem; it passes the media type to WriteAsJsonAsync,
+// which otherwise replaces the Content-Type with application/json.
 // MVC BaseEndpoint was removed (task 131 F-002): the template's only HTTP ingress for contracts
 // is generated FastEndpoints; reintroduce MVC only via a deliberate future decision.
 #endregion
@@ -39,12 +41,7 @@ public abstract class BaseFastEndpoint<TRequest, TResponse> : Endpoint<TRequest,
         HttpContext.Response.ContentType = "application/json";
         await HttpContext.Response.WriteAsJsonAsync(success, cancellationToken);
       },
-      async problem =>
-      {
-        HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
-        HttpContext.Response.StatusCode = problem.Status ?? 400;
-        await HttpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
-      }
+      problem => SharedProblemDetailsHttp.WriteAsync(HttpContext.Response, problem, cancellationToken)
     );
   }
 }

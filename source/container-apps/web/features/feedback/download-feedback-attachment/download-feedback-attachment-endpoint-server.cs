@@ -13,13 +13,15 @@
 // A feedback.file.self route policy would 403 a read-only feedback admin whose role lacks
 // the filing permission.
 // Description.WithTags("Feedback") is the tag the generator gives its siblings (namespace leaf),
-// so Scalar groups this operation with them.
+// so Scalar groups this operation with them. FileContentMetadata lists the allow-listed media
+// types, which OpenApiBinaryContent publishes as the binary 200 content.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
 using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Architecture.Features.Feedback.Application;
+using TimeWarp.Foundation;
 using TimeWarp.Foundation.Features;
 
 /// <summary>GET api/feedback/attachments/{id}</summary>
@@ -34,7 +36,9 @@ public sealed class DownloadFeedbackAttachmentEndpoint
       AuthenticationSchemeNames.IdentitySession,
       AuthenticationSchemeNames.MockIdentitySession,
       AuthenticationSchemeNames.AgentToken);
-    Description(builder => builder.WithTags("Feedback"));
+    Description(builder => builder
+      .WithTags("Feedback")
+      .WithMetadata(new FileContentMetadata(FeedbackAttachmentRules.AllowedContentTypes)));
   }
 
   /// <inheritdoc />
@@ -63,11 +67,6 @@ public sealed class DownloadFeedbackAttachmentEndpoint
         await using Stream content = success.Content;
         await content.CopyToAsync(HttpContext.Response.Body, cancellationToken).ConfigureAwait(false);
       },
-      async problem =>
-      {
-        HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
-        HttpContext.Response.StatusCode = problem.Status ?? StatusCodes.Status400BadRequest;
-        await HttpContext.Response.WriteAsJsonAsync(problem, cancellationToken).ConfigureAwait(false);
-      });
+      problem => SharedProblemDetailsHttp.WriteAsync(HttpContext.Response, problem, cancellationToken));
   }
 }

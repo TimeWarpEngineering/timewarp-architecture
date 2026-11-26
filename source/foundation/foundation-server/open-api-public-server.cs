@@ -1,5 +1,5 @@
 #region Purpose
-// Replaces the OpenAPI servers entry with the caller's public origin when a proxy forwarded it.
+// Replaces the OpenAPI servers entry with the caller's public origin when a proxy forwarded it, and trims trailing slashes.
 #endregion
 
 #region Design
@@ -16,6 +16,9 @@
 // header value, then the first comma-separated entry; proto is honored only for http and https;
 // a forwarded host that is not a host is refused. This transformer applies that origin only when
 // a forwarded value is present, so a direct request keeps the framework server.
+// Every server URL is written without a trailing slash, the forwarded one and the framework one:
+// clients join the server URL and a path that starts with "/", so "https://host/" would become
+// "https://host//api/..." (Redocly no-server-trailing-slash). A URL that is only "/" is kept.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -24,7 +27,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 
 /// <summary>
-/// Points the OpenAPI <c>servers</c> entry at the forwarded public origin.
+/// Points the OpenAPI <c>servers</c> entry at the forwarded public origin, without a trailing slash.
 /// </summary>
 internal static class OpenApiPublicServer
 {
@@ -43,13 +46,28 @@ internal static class OpenApiPublicServer
   {
     _ = cancellationToken;
     string? publicServerUrl = TryResolve(context.ApplicationServices);
-    if (publicServerUrl is null)
+    if (publicServerUrl is not null)
     {
-      return Task.CompletedTask;
+      document.Servers = [new OpenApiServer { Url = publicServerUrl }];
     }
 
-    document.Servers = [new OpenApiServer { Url = publicServerUrl }];
+    foreach (OpenApiServer server in document.Servers ?? [])
+    {
+      server.Url = WithoutTrailingSlash(server.Url);
+    }
+
     return Task.CompletedTask;
+  }
+
+  internal static string? WithoutTrailingSlash(string? url)
+  {
+    if (url is null)
+    {
+      return null;
+    }
+
+    string trimmed = url.TrimEnd('/');
+    return trimmed.Length == 0 ? url : trimmed;
   }
 
   private static string? TryResolve(IServiceProvider services)

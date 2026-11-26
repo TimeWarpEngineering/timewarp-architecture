@@ -1,5 +1,6 @@
 #region Purpose
-// Gates `dev deploy` / `dev deprovision` target parsing: default target, case-insensitive resolution, and the unknown-target refusal.
+// Gates `dev deploy` / `dev deprovision` target parsing: default target, case-insensitive resolution, the unknown-target refusal,
+// and which targets need the yarp ingress.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -33,6 +34,17 @@ public class Targets_Given_
     string message = AspireDeploy.UnknownTargetMessage("swarm");
     message.ShouldContain("'swarm'");
     message.ShouldContain("compose, kubernetes, aca, aca-neon");
+    return Task.CompletedTask;
+  }
+
+  public static Task OnlyComposeAndKubernetes_Should_ServeThroughTheIngress()
+  {
+    AspireDeploy.ServesThroughIngress(null).ShouldBeTrue();
+    AspireDeploy.ServesThroughIngress("compose").ShouldBeTrue();
+    AspireDeploy.ServesThroughIngress("kubernetes").ShouldBeTrue();
+    AspireDeploy.ServesThroughIngress("aca").ShouldBeFalse();
+    AspireDeploy.ServesThroughIngress("ACA-NEON").ShouldBeFalse();
+    AspireDeploy.ServesThroughIngress("swarm").ShouldBeFalse();
     return Task.CompletedTask;
   }
 }

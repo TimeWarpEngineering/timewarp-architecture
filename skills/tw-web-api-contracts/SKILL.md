@@ -135,8 +135,7 @@ public static partial class GetAgentIdentity
 }
 ```
 
-**Policy names (TWA0024):** `[EndpointAuthorize] Policy` must equal a policy the hosting server registers (web: `PermissionIds.*`;
-named policies via `AddPolicy`). Prefer a contracts-visible const over a literal.
+**Policy names (TWA0024):** `[EndpointAuthorize] Policy` must equal a policy the hosting server registers (web: `PermissionIds.*`; named policies via `AddPolicy`). Prefer a contracts-visible const over a literal.
 
 **Scheme lists:** hosted `[EndpointAuthorize]` must set `AuthenticationSchemes` (`AuthenticationSchemeNames` on web); permission
 policies carry no scheme list, so omitting it authenticates only the host default scheme. Details and per-surface table:
@@ -378,6 +377,17 @@ return $"{GetRoute()}?{this.GetQueryString(collection)}";
 
 - Compose shared validators via `SetValidator`.
 - Empty validator is valid: `public sealed class Validator : AbstractValidator<Query>;`
+- **The validator is the source of OpenAPI `required`.** `OpenApiValidatorRequired` reads the
+  validators `FluentValidationBehavior` runs. A member is published as required (body schema
+  `required`, or a required query parameter) when an unconditional `NotEmpty()` or `NotNull()`
+  rejects the value the member keeps when the caller omits it. Rules reached through
+  `RuleFor(x => x).SetValidator(...)` and `Include(...)` count. These do not make a member
+  required: a rule under `When`/`Unless`, `RuleForEach`, a named rule set, a nested path
+  (`x => x.Address.Street`), and `NotNull()` on a member with a non-null initializer (`= []`),
+  because omission keeps the initializer and passes.
+- Do not add `[Required]` or the `required` keyword to mark the document. Write the rule in the
+  validator. A document check fails `/openapi/{doc}.json` (500, naming the operation and member)
+  when a later transformer drops `required` from a member that has such a rule.
 - Do **not** add isolated validator unit tests in the contracts test project — FluentValidation
   is tested at integration level.
 
@@ -458,6 +468,8 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 | Treating `IAuthApiRequest` as if it secures the route | It's a member-less marker — `[EndpointAuthorize]` is the sole server-auth marker; TWA0014 flags pairing `IAuthApiRequest` with `[EndpointAllowAnonymous]` |
 | A `UserId` (caller id) on a hosted request, or a paging member the handler ignores | Published as a parameter a client must fill and the server never reads. The handler reads the principal; declare only members the handler uses |
 | Re-validating in the handler or enabling FE FluentValidation | Validation is `FluentValidationBehavior` on the mediator only |
+| `[Required]` on a request member so OpenAPI lists it as required | Write `NotEmpty()` / `NotNull()` in the `Validator`; the document takes `required` from it |
+| A new slice's first web-server operation with no tag description | Add its tag (the namespace leaf under `Features`) to `WebServerOpenApiTags.Descriptions`; `/openapi/v1.json` returns 500 naming a missing one |
 | `required init` Response with invariants | `Guid.Empty` slips through — ctor + `Guard` |
 | Copying paths/casing from another repo | Read existing contracts in **this** repo first |
 

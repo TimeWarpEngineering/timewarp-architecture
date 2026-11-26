@@ -5,7 +5,8 @@
 #region Design
 // Process half of the smoke step (the pure step text is services/deploy-pipeline.cs, tested by
 // dev-cli-tests; the HTTP calls are services/deploy-smoke.cs). The URL is the one `dev open` uses:
-// compose is http://localhost:<ingress-port>, ACA is https://<ingress fqdn>, kubernetes with an
+// compose is http://localhost:<ingress-port>, ACA is https://<fqdn> of the external container app
+// (the ingress, or web-server without the yarp flag; task 527), kubernetes with an
 // external address is that address. Kubernetes without an external address smokes through a
 // temporary kubectl port-forward that is cancelled after the checks, prints the
 // `dev open --target kubernetes` hint, and does not keep a foreground forward. Smoke retries a cold
@@ -95,20 +96,21 @@ internal static class DeploySmokeRunner
     }
 
     terminal.WriteLine(resourceGroup.Detail);
-    string[] arguments = DeployAca.BuildIngressFqdnArguments(resourceGroup.Name, preflight.AzureSubscriptionId);
-    CommandOutput? show = await AspireDeployPreflight.ProbeAsync("az", arguments, ct);
-    string? fqdn = DeployAca.ParseSingleValue(show?.Success == true, show?.Stdout ?? "");
-    if (fqdn is null)
+    string[] arguments = DeployAca.BuildPublicAppArguments(resourceGroup.Name, preflight.AzureSubscriptionId);
+    CommandOutput? list = await AspireDeployPreflight.ProbeAsync("az", arguments, ct);
+    AcaPublicApp? publicApp = DeployAca.ParsePublicApp(list?.Success == true, list?.Stdout ?? "");
+    if (publicApp is null)
     {
-      string reason = show?.TimedOut == true
+      string reason = list?.TimedOut == true
         ? AspireDeployCluster.ProbeTimedOutMessage("az", arguments)
-        : AspireDeployCluster.FirstLine(show?.Stderr ?? "", "no FQDN returned");
-      terminal.WriteErrorLine($"Could not read the {DeployOperate.IngressResourceName} container app's FQDN (`az {string.Join(' ', arguments)}`: {reason}). The deployment is up.".Red());
+        : DeployAca.NoPublicAppReason(list?.Success == true, list?.Stdout ?? "", list is null ? "az is not on PATH" : AspireDeployCluster.FirstLine(list.Stderr, $"exit {list.ExitCode}"));
+      terminal.WriteErrorLine($"Could not read the public container app's FQDN (`az {string.Join(' ', arguments)}`: {reason}). The deployment is up.".Red());
       return 1;
     }
 
-    string url = $"https://{fqdn}";
-    int exit = await SmokeAtAsync(terminal, url, ct);
+    terminal.WriteLine($"Public container app: {publicApp.Name}");
+    string url = $"https://{publicApp.Fqdn}";
+    int exit = await SmokeAtAsync(terminal, url, ct, DeployPipeline.SmokePathsFor(publicApp.Name));
     if (exit == 0)
     {
       await AnnounceAsync(terminal, preflight.Target, url, noBrowser, ct);
@@ -231,9 +233,9 @@ internal static class DeploySmokeRunner
     }
   }
 
-  private static async Task<int> SmokeAtAsync(ITerminal terminal, string url, CancellationToken ct)
+  private static async Task<int> SmokeAtAsync(ITerminal terminal, string url, CancellationToken ct, IReadOnlyList<string>? paths = null)
   {
-    DeploySmokeResult result = await DeploySmoke.CheckAsync(url, ct);
+    DeploySmokeResult result = await DeploySmoke.CheckAsync(url, paths ?? DeployPipeline.SmokePaths, ct);
     foreach (string line in result.Lines)
     {
       terminal.WriteLine(line);

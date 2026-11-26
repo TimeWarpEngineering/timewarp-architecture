@@ -33,6 +33,10 @@ internal static class DeployOperate
 {
   // AppHost constants.cs: YarpResourceName, PostgresResourceName, PostgresDatabaseResourceName (dev-cli-tests agree).
   internal const string IngressResourceName = "ingress";
+
+  // AppHost WebServerProjectResourceName (ServiceNames.WebServiceName; dev-cli-tests agree). Without the
+  // yarp flag it is the public container app on aca and aca-neon (task 527).
+  internal const string WebServerResourceName = "web-server";
   internal const string PostgresResourceName = "postgres";
   internal const string PostgresDatabaseName = "postgres-db";
   internal const string PostgresStatefulSet = "statefulset/postgres-statefulset";

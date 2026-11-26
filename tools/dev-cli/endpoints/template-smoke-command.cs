@@ -9,11 +9,14 @@
 
 namespace DevCli.Commands;
 
-[NuruRoute("template-smoke", Description = "Pack/install template and smoke-build the default generated app (--matrix: each flag off too)")]
+[NuruRoute("template-smoke", Description = "Pack/install template and smoke-build the default generated app (--matrix: each flag off and web-only too)")]
 internal sealed class TemplateSmokeCommand : ICommand<Unit>
 {
-  [Option("matrix", "m", Description = "Smoke every SmokeMatrix variant (defaults + each flag off), not only SmokeDefault")]
+  [Option("matrix", "m", Description = "Smoke every SmokeMatrix variant (defaults, each flag off, web-only), not only SmokeDefault")]
   public bool Matrix { get; set; }
+
+  [Option("variant", Description = "Smoke only this SmokeMatrix variant by name (for example SmokeWebOnly)")]
+  public string? Variant { get; set; }
 
   [Option("app-tests", Description = "Also run each generated app's test projects (aspire, integration, Playwright; needs Docker)")]
   public bool AppTests { get; set; }
@@ -29,7 +32,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
 
     public async ValueTask<Unit> Handle(TemplateSmokeCommand command, CancellationToken ct)
     {
-      await new TemplateSmokeRunner(Terminal).RunAsync(command.Matrix, command.AppTests, ct);
+      await new TemplateSmokeRunner(Terminal).RunAsync(command.Matrix, command.Variant, command.AppTests, ct);
       return Unit.Value;
     }
   }

@@ -3,7 +3,9 @@
 Web-server's `WebAuthnOptions:AllowedRpIds` includes the public
 ingress host. The C# default is `localhost`, which covers compose and a kind port-forward. Azure
 Container Apps adds `ingress.<environment domain>` (the Container Apps environment's domain
-output, not the ingress endpoint, so web-server and ingress do not cycle). A custom domain is the
+output, not the ingress endpoint, so web-server and ingress do not cycle). An app without the yarp
+flag has no ingress; on Azure Container Apps web-server is the public app and adds
+`web-server.<environment domain>` instead. A custom domain is the
 optional AppHost parameter `passkey-rp-host` (a bare DNS name, no scheme or port). Set it in
 AppHost user secrets or `Parameters__passkey-rp-host`. `dev deploy` copies a user-secret value
 into the aspire environment. It is emitted only when it is set and is not `localhost`. A custom

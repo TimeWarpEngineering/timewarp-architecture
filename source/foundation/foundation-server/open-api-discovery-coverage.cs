@@ -7,10 +7,22 @@
 // GET /api/health is MapHealthChecks. The body is the status name as text/plain. The Postgres
 // check, when registered, opens a connection, so this is not the liveness probe.
 // GET and POST /api are TipDiscoveryAlias rewrites of /api/tip. The alias is its own path so a
-// missing entry is not read as a missing route. The payment contract stays on /api/tip.
+// missing entry is not read as a missing route. Its responses (content and headers), parameters,
+// and request body are shallow copies of the /api/tip operation of the same verb, taken after the
+// operation transformers ran (a host's payment 402/503 included), so the alias cannot document
+// less than the route it rewrites to (task 458-009).
 // /.well-known discovery documents are excluded. info.description is what Scalar renders, and
 // x-timewarp-excluded-routes is the same list for a reader that does not parse markdown.
 // Both point at /llms.txt.
+// Liveness (task 458-007) is listed, not an operation: it reports the process, not this API. Its
+// entry and the health description both read IngressPaths.WebServerAlivePath, so they cannot name
+// different probes. The host adds its own non-operation routes (OpenApiExcludedRoute) from the
+// constants its Map calls use. info.description names the families that are not listed (Razor
+// pages, static files, Blazor framework routes, this document, Scalar, and Development-only
+// routes), so "a missing path is an exclusion" stays true. The web-server discovery-coverage test
+// skips exactly those families, enumerates the served routes and methods, and fails on an
+// unlisted one. MapDefaultEndpoints also serves HealthEndpointPaths.Alive in every environment,
+// and the ingress catch-all forwards a public /alive to web-server, so that path is listed too.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -29,6 +41,10 @@ internal static class OpenApiDiscoveryCoverage
 
   internal const string HealthPath = TimeWarp.Foundation.Configuration.IngressPaths.WebServerHealthPath;
 
+  internal const string AlivePath = TimeWarp.Foundation.Configuration.IngressPaths.WebServerAlivePath;
+
+  internal const string LivenessSentence = "Liveness is GET " + AlivePath + ".";
+
   internal const string TipAliasPath = TimeWarp.Foundation.Configuration.IngressPaths.TipDiscoveryAliasPath;
 
   internal const string TipPath = "/api/tip";
@@ -38,27 +54,55 @@ internal static class OpenApiDiscoveryCoverage
   internal const string AliasSentence =
     "GET and POST /api and /api/ rewrite to /api/tip before routing.";
 
-  private readonly record struct ExcludedRoute(string Path, string Reason);
+  internal const string UnlistedFamilies =
+    "Razor pages, static files (such as `/llms.txt`), Blazor framework routes (`/_framework`, `/_blazor`), "
+    + "this document (`/openapi/v1.json`), Scalar (`/scalar/v1`), and Development-only routes";
 
-  private static readonly ExcludedRoute[] ExcludedRoutes =
+  private const string LlmsPath = "/llms.txt";
+
+  private static readonly OpenApiExcludedRoute[] SharedRoutes =
   [
-    new("/.well-known/mcp/server-card.json", "Static MCP server card. capabilities.tools is false."),
-    new("/.well-known/mcp.json", "Alias of /.well-known/mcp/server-card.json."),
-    new("/.well-known/agent-skills/index.json", "Static Agent Skills index."),
-    new("/.well-known/agent-card.json", "Unsigned A2A agent card. No JSON-RPC task endpoint."),
-    new("/.well-known/agent.json", "Alias of /.well-known/agent-card.json."),
-    new("/.well-known/webmcp.json", "Generated WebMCP document for the browser, not this REST API."),
+    new("GET", "/.well-known/mcp/server-card.json", "Static MCP server card. capabilities.tools is false.", LlmsPath),
+    new("GET", "/.well-known/mcp.json", "Alias of /.well-known/mcp/server-card.json.", LlmsPath),
+    new("GET", "/.well-known/agent-skills/index.json", "Static Agent Skills index.", LlmsPath),
+    new("GET", "/.well-known/agent-card.json", "Unsigned A2A agent card. No JSON-RPC task endpoint.", LlmsPath),
+    new("GET", "/.well-known/agent.json", "Alias of /.well-known/agent-card.json.", LlmsPath),
+    new("GET", "/.well-known/webmcp.json", "Generated WebMCP document for the browser, not this REST API.", LlmsPath),
+    new
+    (
+      "GET",
+      AlivePath,
+      "Liveness probe. The ingress forwards it to web-server "
+      + TimeWarp.Foundation.Configuration.HealthEndpointPaths.Alive
+      + ", which runs only the self check and opens no dependency. The body is text/plain: Healthy (200) "
+      + "or Unhealthy (503). Readiness is GET " + HealthPath + ".",
+      LlmsPath
+    ),
+    new
+    (
+      "GET",
+      TimeWarp.Foundation.Configuration.HealthEndpointPaths.Alive,
+      "The same self check as GET " + AlivePath + ", served by MapDefaultEndpoints in every environment. "
+      + "The ingress forwards an unmatched public path to web-server, so this path answers too. "
+      + "The body is text/plain: Healthy (200) or Unhealthy (503).",
+      LlmsPath
+    ),
   ];
 
-  internal static void Register(OpenApiOptions openApiOptions)
+  internal static void Register(OpenApiOptions openApiOptions, IReadOnlyList<OpenApiExcludedRoute>? hostRoutes)
   {
     ArgumentNullException.ThrowIfNull(openApiOptions);
-    openApiOptions.AddDocumentTransformer(AddCoverageAsync);
+    OpenApiExcludedRoute[] routes = [.. SharedRoutes, .. hostRoutes ?? []];
+    openApiOptions.AddDocumentTransformer
+    (
+      (document, context, cancellationToken) => AddCoverageAsync(document, routes, context, cancellationToken)
+    );
   }
 
   private static Task AddCoverageAsync
   (
     OpenApiDocument document,
+    OpenApiExcludedRoute[] routes,
     OpenApiDocumentTransformerContext context,
     CancellationToken cancellationToken
   )
@@ -74,8 +118,8 @@ internal static class OpenApiDiscoveryCoverage
     AddHealth(document);
     AddTipAlias(document);
     NoteCanonicalTip(document);
-    NoteExclusions(document);
-    document.AddExtension(ExtensionName, new JsonNodeExtension(ExcludedArray()));
+    NoteExclusions(document, routes);
+    document.AddExtension(ExtensionName, new JsonNodeExtension(ExcludedArray(routes)));
     return Task.CompletedTask;
   }
 
@@ -98,7 +142,7 @@ internal static class OpenApiDiscoveryCoverage
         "Anonymous ASP.NET health check. The body is text/plain and is one status name: "
         + "Healthy, Degraded, or Unhealthy. 200 is Healthy or Degraded. 503 is Unhealthy. "
         + "When the PostgresDbContext check is registered, this route opens a database connection. "
-        + "Do not use it as an uptime probe. Liveness is GET /web-server/alive.",
+        + "Do not use it as an uptime probe. " + LivenessSentence,
         "Health",
         ("200", PlainText("Healthy or Degraded. The body is that status name.")),
         ("503", PlainText("Unhealthy. The body is Unhealthy."))
@@ -116,41 +160,68 @@ internal static class OpenApiDiscoveryCoverage
 
     const string description =
       AliasSentence + " "
-      + "The contract, including 402 PAYMENT-REQUIRED and 503 when payment is disabled or misconfigured, "
-      + "is the /api/tip operation in this document. The challenge resource stays /api/tip. Anonymous.";
+      + "The responses, parameters, and request body are copied from the /api/tip operation, "
+      + "including 402 PAYMENT-REQUIRED and 503 when payment is disabled or misconfigured. Anonymous.";
 
+    document.Paths.TryGetValue(TipPath, out IOpenApiPathItem? tipPathItem);
     OpenApiPathItem pathItem = new();
     pathItem.AddOperation
     (
       HttpMethod.Get,
-      AnonymousOperation
-      (
-        document,
-        "getApiTipAlias",
-        "Discovery alias of GET /api/tip",
-        description,
-        "Tip",
-        ("200", new OpenApiResponse { Description = "Same success response as GET /api/tip." }),
-        ("402", new OpenApiResponse { Description = "Same 402 PAYMENT-REQUIRED challenge as GET /api/tip." }),
-        ("503", new OpenApiResponse { Description = "Same 503 as GET /api/tip when payment is disabled or misconfigured." })
-      )
+      AliasOperation(document, tipPathItem, HttpMethod.Get, "getApiTipAlias", description)
     );
     pathItem.AddOperation
     (
       HttpMethod.Post,
-      AnonymousOperation
-      (
-        document,
-        "postApiTipAlias",
-        "Discovery alias of POST /api/tip",
-        description,
-        "Tip",
-        ("200", new OpenApiResponse { Description = "Same success response as POST /api/tip." }),
-        ("402", new OpenApiResponse { Description = "Same 402 PAYMENT-REQUIRED challenge as POST /api/tip." }),
-        ("503", new OpenApiResponse { Description = "Same 503 as POST /api/tip when payment is disabled or misconfigured." })
-      )
+      AliasOperation(document, tipPathItem, HttpMethod.Post, "postApiTipAlias", description)
     );
     document.Paths.Add(TipAliasPath, pathItem);
+  }
+
+  /// <summary>
+  /// The alias operation for one verb. Responses, parameters, and the request body are copies of
+  /// the /api/tip operation of that verb, so a transformer that documents /api/tip documents the
+  /// alias too. Without that operation the alias says only that it follows /api/tip.
+  /// </summary>
+  private static OpenApiOperation AliasOperation
+  (
+    OpenApiDocument document,
+    IOpenApiPathItem? tipPathItem,
+    HttpMethod method,
+    string operationId,
+    string description
+  )
+  {
+    string verb = method.Method.ToUpperInvariant();
+    OpenApiOperation operation = AnonymousOperation
+    (
+      document,
+      operationId,
+      "Discovery alias of " + verb + " " + TipPath,
+      description,
+      "Tip"
+    );
+
+    OpenApiOperation? tip = null;
+    _ = tipPathItem?.Operations?.TryGetValue(method, out tip);
+    if (tip?.Responses is null || tip.Responses.Count == 0)
+    {
+      operation.Responses!.Add("200", new OpenApiResponse { Description = "Same responses as " + verb + " " + TipPath + "." });
+      return operation;
+    }
+
+    foreach (KeyValuePair<string, IOpenApiResponse> entry in tip.Responses)
+    {
+      operation.Responses!.Add(entry.Key, entry.Value.CreateShallowCopy());
+    }
+
+    if (tip.Parameters is not null)
+    {
+      operation.Parameters = [.. tip.Parameters.Select(static parameter => parameter.CreateShallowCopy())];
+    }
+
+    operation.RequestBody = tip.RequestBody?.CreateShallowCopy();
+    return operation;
   }
 
   private static void NoteCanonicalTip(OpenApiDocument document)
@@ -173,52 +244,59 @@ internal static class OpenApiDiscoveryCoverage
     }
   }
 
-  private static void NoteExclusions(OpenApiDocument document)
+  private static void NoteExclusions(OpenApiDocument document, OpenApiExcludedRoute[] routes)
   {
     if (document.Info.Description?.Contains(OutsideHeading, StringComparison.Ordinal) == true)
     {
       return;
     }
 
-    string note = Description();
+    string note = Description(routes);
     document.Info.Description = string.IsNullOrWhiteSpace(document.Info.Description)
       ? note
       : document.Info.Description.TrimEnd() + "\n\n" + note;
   }
 
-  private static string Description()
+  private static string Description(OpenApiExcludedRoute[] routes)
   {
     string lines =
       OutsideHeading + "\n\n"
-      + "This document includes the web-server FastEndpoints operations, `GET /api/health`, "
+      + "This document includes the web-server FastEndpoints operations, `GET " + HealthPath + "`, "
       + "and `GET` and `POST /api` (a rewrite alias of `/api/tip`, including `/api/`).\n\n"
-      + "The discovery documents below are not operations. A missing path is this exclusion, "
-      + "not a missing route. Scalar ([/scalar/v1](/scalar/v1)) shows this note. "
-      + "Index: [/llms.txt](/llms.txt). The same list is `" + ExtensionName + "`.\n";
+      + "The routes below are served but are not operations. A missing path is one of these "
+      + "exclusions, not a missing route. Not listed: " + UnlistedFamilies + ". "
+      + "Scalar ([/scalar/v1](/scalar/v1)) shows this note. "
+      + "Index: [" + LlmsPath + "](" + LlmsPath + "). The same list is `" + ExtensionName + "`.\n";
 
-    foreach (ExcludedRoute route in ExcludedRoutes)
+    foreach (OpenApiExcludedRoute route in routes)
     {
-      lines += "\n- `GET " + route.Path + "` — " + route.Reason + " [" + route.Path + "](" + route.Path + ")";
+      lines += "\n- `" + route.Method + " " + route.Path + "` — " + route.Reason;
+      if (route.See is not null)
+      {
+        lines += " See [" + route.See + "](" + route.See + ").";
+      }
     }
 
     return lines;
   }
 
-  private static JsonArray ExcludedArray()
+  private static JsonArray ExcludedArray(OpenApiExcludedRoute[] routes)
   {
     JsonArray array = [];
-    foreach (ExcludedRoute route in ExcludedRoutes)
+    foreach (OpenApiExcludedRoute route in routes)
     {
-      array.Add
-      (
-        new JsonObject
-        {
-          ["path"] = route.Path,
-          ["method"] = "GET",
-          ["reason"] = route.Reason,
-          ["see"] = "/llms.txt",
-        }
-      );
+      JsonObject entry = new()
+      {
+        ["path"] = route.Path,
+        ["method"] = route.Method,
+        ["reason"] = route.Reason,
+      };
+      if (route.See is not null)
+      {
+        entry["see"] = route.See;
+      }
+
+      array.Add(entry);
     }
 
     return array;

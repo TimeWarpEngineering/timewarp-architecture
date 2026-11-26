@@ -5,8 +5,10 @@
 // Regression gate for task 115: template sourceName is TimeWarp.Architecture, so package-id literals
 // TimeWarp.Architecture.* used to rewrite to SmokeDefault.* and break restore. Smoke always generates
 // with names different from sourceName (SmokeDefault, SmokeNoPostgres, ...) so rewrite bugs surface.
-// Matrix: defaults plus each flag off on its own (task 373 added web, grpc and yarp - a flag nobody
-// generates off is a flag whose off output nobody builds).
+// Matrix: defaults, each flag off on its own (task 373 added web, grpc and yarp - a flag nobody
+// generates off is a flag whose off output nobody builds), plus one multi-flag shape: SmokeWebOnly
+// (task 528), the web-only app (api, grpc and yarp off; postgres on) the first instance repo uses.
+// Not the power set - only combinations an org repo is generated with.
 // Packs the template AND monorepo platform packages (foundation + analyzers/generators/attributes +
 // modules + identity) into a local feed. TimeWarp.Contracts restores from nuget.org at the
 // Directory.Packages.props pin. Published nuget.org pins lag monorepo API surface; smoke validates
@@ -63,8 +65,9 @@ internal static class TemplateSmokeMatrix
     ("SmokeNoPostgres", ["--postgres", "false"], []),
     ("SmokeNoApi", ["--api", "false"], ["api"]),
     ("SmokeNoWeb", ["--web", "false"], ["web"]),
-    ("SmokeNoGrpc", ["--grpc", "false"], []),
-    ("SmokeNoYarp", ["--yarp", "false"], []),
+    ("SmokeNoGrpc", ["--grpc", "false"], ["grpc"]),
+    ("SmokeNoYarp", ["--yarp", "false"], ["yarp"]),
+    ("SmokeWebOnly", ["--api", "false", "--grpc", "false", "--yarp", "false"], ["api", "grpc", "yarp"]),
   ];
 
   // Task 288: generate-only (no build) — a dotted name must reach the AppHost deploy parameters as a

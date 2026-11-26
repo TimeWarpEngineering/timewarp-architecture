@@ -7,6 +7,11 @@
 // the files tiers 1-2 check. Task 136: aggregators are not in .slnx, so tier 3 runs them by directory.
 // RequiredFamilies lets a flag-off entry assert the artifacts are ABSENT. A new family aggregator needs
 // a JaribuFamilyAggregators entry.
+// Task 528: FamilyTestArtifacts names the flag-owned test projects and files outside those two tables
+// (the api and yarp integration projects, the grpc superhero tests), so an excluded grpc or yarp family
+// has something to assert absent. Each entry lists every flag whose exclude removes it (template.json
+// excludes tests/container-apps/yarp/** under !web as well as !yarp), so the presence half holds in
+// every variant.
 #endregion
 
 namespace DevCli.Services;
@@ -47,6 +52,22 @@ internal static class TemplateSmokeTestTables
     (["web"], "tests/container-apps/web/web-jaribu-tests"),
     (["api"], "tests/container-apps/api/api-jaribu-tests"),
     (["web", "api"], "tests/common/timewarp-testing-tests"),
+  ];
+
+  /// <summary>
+  /// Flag-owned test projects and files (task 528), relative to the generated app root. Tier 1
+  /// asserts each is ABSENT when any of its required families is excluded (an orphan the family
+  /// exclude no longer covers) and PRESENT otherwise (a renamed path would make the absence check
+  /// pass vacuously). RequiredFamilies mirrors the template.json conditions that exclude the path.
+  /// </summary>
+  public static readonly (string[] RequiredFamilies, string RelativePath)[] FamilyTestArtifacts =
+  [
+    (["api"], "tests/container-apps/api/api-server-integration-tests"),
+    (["api"], "tests/common/timewarp-testing/applications/api-test-server-application.cs"),
+    (["web", "grpc"], "tests/container-apps/web/web-spa-integration-tests/features/superhero"),
+    (["web", "yarp"], "tests/container-apps/yarp/yarp-integration-tests"),
+    (["web", "yarp", "grpc"], "tests/container-apps/yarp/yarp-integration-tests/grpc-route-ingress-path-tests.cs"),
+    (["yarp"], "tests/common/timewarp-testing/applications/yarp-test-server-application.cs"),
   ];
 
   // The exact guarded lines a template-safe co-located runfile preamble must contain, verbatim,
