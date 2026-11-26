@@ -131,8 +131,10 @@ namespace Your.Slice.Namespace
   still need a `JaribuFamilyAggregators` entry (`RequiredFamilies` + `RelativeProjectDir`).
 - `dev template-smoke` smokes the `SmokeDefault` variant only, which is the PR and push CI gate.
   `--matrix` adds every flag-off variant (`SmokeNoPostgres`, `SmokeNoApi`, `SmokeNoWeb`,
-  `SmokeNoGrpc`, `SmokeNoYarp`); run it locally when a change touches `#if flag` regions or
-  template symbols. `--app-tests` also runs each generated app's test projects (aspire-tests,
+  `SmokeNoGrpc`, `SmokeNoYarp`) and `SmokeWebOnly` (api, grpc and yarp off); run it locally when
+  a change touches `#if flag` regions or template symbols. `--variant <name>` runs one of them.
+  Flag-owned test projects and files outside the aggregators are listed in `FamilyTestArtifacts`;
+  a new one needs an entry there. `--app-tests` also runs each generated app's test projects (aspire-tests,
   integration, Playwright) under the tier 3 gate, and the aspire-tests need Docker. CI runs
   `--matrix --app-tests` nightly from `master`. To run that nightly against a branch without
   waiting, dispatch it: `gh workflow run workflow.yml --ref <branch> -f mode=nightly`. A failed
