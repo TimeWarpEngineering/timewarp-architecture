@@ -103,7 +103,7 @@ required. readme says the same.
 - No misread. The Goal restatement matches the original task (ship the dev CLI, drop template-only commands, refuse or exclude flag-off commands, smoke `dev build` on the default variant and `--matrix`). The Goal line says `dev db` is excluded without postgres; Results and the code also exclude it when web is off. That tighter coupling is finding M1, not a conflict with the task.
 - Round 2 re-checked the restatement, including the fix-pass paragraph, against the original task. Still no misread. Naming web when the web tree is gone, and refusing `dev deploy` without web, is the review fix. It matches the task rule that a flag-off command is excluded or refuses cleanly.
 
-## Results (required before done)
+## Results
 
 The generated app now ships the dev CLI: `tools/Directory.Build.props`, `tools/dev-cli/`,
 `.timewarp/dev.jsonc` and `.envrc` are on the pack allow-list. `tools/agent-identity-cli` and
@@ -200,7 +200,7 @@ Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 
     `app-features.cs` is compiled unconditionally in every variant (round-1 matrix passed).
   - `ganda repo audit`: passed all checks.
 
-### How to validate (required before done)
+### How to validate
 
 Smoke: `./bin/dev template-smoke` (add `--matrix` for every flag-off variant).
 Expect: each variant prints "Generated app ships the dev CLI without its template-only files." and
