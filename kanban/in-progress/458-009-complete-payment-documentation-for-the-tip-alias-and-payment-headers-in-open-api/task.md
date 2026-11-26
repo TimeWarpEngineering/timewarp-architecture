@@ -44,6 +44,10 @@ operations, the paragraph break, the generated 402 list, and the health 503 sent
 - [x] Implement the requirements above
 - [x] Tests or document checks named above pass
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -62,6 +66,8 @@ operations, the paragraph break, the generated 402 list, and the health 503 sent
 - Implemented 2026-11-26: alias cloned from tip operations in `OpenApiDiscoveryCoverage`; payment
   headers and generated info paragraph in `OpenApiPaymentResponses`.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f1f39aa1-f015-42fe-9442-cd6f0300f678, max-turns 500, Done — 2026-11-26T00:27:22Z
+- Review oracle: grok, session 01a21540-1598-7c31-8624-4a6865ab51c8, effort 2, roster general, round 1, clean — 2026-11-26
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21540-1598-7c31-8624-4a6865ab51c8, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-26T00:34:46Z
 
 ## Results
 
@@ -105,4 +111,11 @@ Expect: all tests pass. In the document, `paths./api.get` and `paths./api.post` 
 blank line then `## Payment`, lists exactly `GET /api`, `POST /api`, `GET /api/tip`,
 `POST /api/tip`, `GET /api/demo/metered-capability` as documenting 402, and says the 503 on
 `GET /api/health` is not a payment response.
+
+### Review
+
+- Round 1, roster general, effort 2. Counts: bug 0, suggestion 0, nit 0 (all open/fixed/wontfix zero).
+- Disposition: clean. No wontfix and no escalation. The implementer restatement matches the task; no misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Gates were not re-run. The implementer's recorded build, the two OpenAPI test files (11/11 and 8/8), and `ganda repo audit` cover this diff.
 
