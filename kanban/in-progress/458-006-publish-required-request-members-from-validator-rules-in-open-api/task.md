@@ -64,6 +64,7 @@ Acceptance:
 - Implemented 2026-11-26 (implement oracle, ganda task work). FastEndpoints sets FluentValidation's
   global `PropertyNameResolver` (camelCase), so the member name comes from the rule's lambda, not
   `IValidationRule.PropertyName`.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b60be27f-5fba-4a2b-8da0-eb8fdb9415ed, max-turns 500, Done — 2026-11-26T02:10:46Z
 
 ## Results
 
