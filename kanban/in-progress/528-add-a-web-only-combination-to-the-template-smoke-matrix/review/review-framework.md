@@ -6,11 +6,11 @@
 **Plan / brief:** Add `SmokeWebOnly` (`--api false --grpc false --yarp false`, web and postgres on) to `dev template-smoke --matrix`, with `ExcludedFamilies` api, grpc, and yarp so an orphaned test project from any of those families fails the smoke. Nightly `template-smoke --matrix --app-tests` picks it up. Publish coverage for `aca` and `aca-neon` is the generated app's aspire-tests under `--app-tests`.
 **Effort:** 2
 **Reviewer roster:** general
-**Session IDs:** review oracle grok session `01a214f8-7953-7ee1-929d-42ae433fbde6`; implementer session `9ed4eca8-118b-4161-a5bf-46b6515adb34` (recorded on task.md)
+**Session IDs:** round 1 review oracle grok session `01a214f8-7953-7ee1-929d-42ae433fbde6`; round 2 review oracle grok session `01a21611-38e1-7761-a8c6-445da2101485`; implementer sessions `9ed4eca8-118b-4161-a5bf-46b6515adb34` and `be63c1b1-6ee6-498d-b4c0-ee1a24212741` (recorded on task.md). Round 2 re-reviews the same diff; round 1 files stay frozen.
 
 ## Budget (by-diff)
 
-- Lines changed: 281
+- Lines changed: 373
 - Effort: 2
 - TCB hits: none
 - Roster axes: general

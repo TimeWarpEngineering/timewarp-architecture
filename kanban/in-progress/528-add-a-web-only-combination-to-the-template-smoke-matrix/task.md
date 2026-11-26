@@ -54,7 +54,7 @@ Acceptance:
 ## Review
 
 - Round 1: Done
-
+- Round 2: Done
 ## Notes
 
 - One combination, not the full power set. We are the consumer; this is the shape our first instance uses.
@@ -72,6 +72,8 @@ Acceptance:
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a214f8-7953-7ee1-929d-42ae433fbde6, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-25T23:17:22Z
 - Implement oracle (resume): the walk stopped at results because the Results headings carried `(required before done)` (fixed in 46b3ee819). No product change since the recorded gates, so they stand — 2026-11-26
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session be63c1b1-6ee6-498d-b4c0-ee1a24212741, max-turns 500, Done — 2026-11-26T04:15:49Z
+- Review oracle: general (grok, model grok-4.7), session 01a21611-38e1-7761-a8c6-445da2101485, effort 2, roster general, max-turns 120, round 2, clean — 2026-11-26
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21611-38e1-7761-a8c6-445da2101485, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-26T04:22:07Z
 
 ## Results
 
@@ -126,7 +128,7 @@ Gates:
 
 ### Review disposition
 
-- Round 1, roster general, effort 2. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count 0.
+- Rounds 1 and 2, roster general, effort 2. Round 2 is the final ledger. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count 0.
 - Disposition: clean. No wontfix and no escalation.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`. Round 1 stays at `review/round-1/`.
 - The goal restatement matches the original task. No `## Learnings` misread.
