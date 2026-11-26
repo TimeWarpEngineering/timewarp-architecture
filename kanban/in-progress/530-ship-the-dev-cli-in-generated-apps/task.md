@@ -97,6 +97,18 @@ Fix:
 1. Run `git merge origin/master` and resolve the conflict in `tools/dev-cli/services/template-smoke/template-smoke-runner.cs` cleanly (preserving both task 528's `SmokeWebOnly` matrix coverage and task 530's generated dev-CLI smoke checks, plus any `open-command.cs` auto-merge from task 527).
 2. Re-verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests`, `./bin/dev template-smoke --matrix`, and `ganda repo audit`, then commit and push so PR #709 triggers CI and merges.
 
+### CI fix pass (PR #709 — `ci (fast)` 1/435 failure in `dev-cli-tests`)
+
+All other CI jobs on PR #709 passed (`ci (integration)`, `ci (publish)`, `template-smoke`, `Lint skill specs`, `classify`, `green-key`). Only 1 of 435 tests in `dev-cli-tests` failed:
+
+`AspireDeploy_.NeverAutomated_Given_.CiWorkflowsAndDevWorkflow_Should_NeverDeploy` (`tests/tools/dev-cli-tests/aspire-deploy-never-automated-given-tests.cs:57`) regex-scans `tools/dev-cli/endpoints/workflow-command.cs` for `dev deploy` and flagged two prose strings (not invocations):
+- `tools/dev-cli/endpoints/workflow-command.cs:37`: `//     and names \`dev deploy\`.`
+- `tools/dev-cli/endpoints/workflow-command.cs:96`: `Terminal.WriteErrorLine("Error: release mode packs and pushes the template's NuGet packages. This app publishes no packages: deploy with \`dev deploy\`.".Red());`
+
+Fix:
+1. Reword lines 37 and 96 in `tools/dev-cli/endpoints/workflow-command.cs` (e.g. avoid the literal `dev deploy` substring in comment/error text so the existing `NeverAutomated` guard stays intact until task 529 updates it).
+2. Verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests` (435/435 pass), and `ganda repo audit`, then commit and push so PR #709 goes green and merges.
+
 ## Session
 
 - Created: f7eccb81-87c9-4fb4-a0c4-0fb7417d4a2f (2026-11-25)
