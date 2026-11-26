@@ -62,7 +62,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2, M3
 - Round 1 fix pass: M1, M2, M3 fixed (disposition notes in `review/round-1/merged.md`).
-
+- Round 2: Done
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -92,6 +92,9 @@ Acceptance:
   `info.description` names every family the walk skips; dictation lists GET and CONNECT and the
   walk compares methods. The route walk moved to `open-api-served-route-coverage-tests.cs`
   (TWA0038, 500-line cap; it boots its own host graph).
+- 2026-11-26 review round 2: general (grok, session 01a21525-b904-71a3-be9e-aacba7815fa7), effort 2.
+  Re-verified M1, M2, M3 fixed. No new findings. Disposition clean.
+  `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Learnings
 
@@ -129,9 +132,8 @@ Acceptance:
   Development-only `/health` and DevTools config). A negative check (dropping `/brand.css` and
   `GET /chat-hub` from the list) made it fail naming both. New
   `open-api-browser-navigation-tests.cs` pins the three identity contracts.
-- Not changed: the api-server document (no opt-in). `/alive` itself is mapped by `Program.Main`
-  (`MapDefaultEndpoints`), which the test host does not run, so its listing is checked by the
-  tiny-host liveness test, not the route walk.
+- Not changed: the api-server document (no opt-in). `GET /alive` is on the shared exclusion list
+  and `Default_Endpoints_Should_Be_Listed` checks it (round 1 fix pass below).
 - Round 1 fix pass:
   - M1: shared exclusion list adds `GET /alive` (`HealthEndpointPaths.Alive`), the same self check
     as `/web-server/alive`, served in every environment and reachable through the ingress
@@ -148,7 +150,11 @@ Acceptance:
     /api/agent-chat/transcriptions/stream"; renaming the `/alive` entry failed
     `Default_Endpoints_Should_Be_Listed`. Both restored.
 - Follow-up: after deploy, re-fetch `https://arch.timewarp.work/openapi/v1.json` and confirm the
-  three identity operations have no 204 and `x-timewarp-excluded-routes` lists `/web-server/alive`.
+  three identity operations have no 204 and `x-timewarp-excluded-routes` lists `/web-server/alive`
+  and `/alive`, with the dictation path listed for GET and CONNECT.
+- Review disposition: clean after 2 rounds, roster general (effort 3, then effort 2). Final counts:
+  bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 2 fixed / 0 wontfix; nit 0.
+  Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### Gates
 

@@ -2,19 +2,19 @@
 
 **Date:** 2026-11-26
 **Host task:** kanban/in-progress/458-007-document-or-exclude-browser-navigation-routes-and-liveness-in-open-api/
-**Diff scope:** branch `task/458-007-document-or-exclude-browser-navigation-routes-and` vs `master` (3 commits, 917 lines). Product diff is the OpenAPI browser-navigation contracts, `x-timewarp-excluded-routes`, and the discovery-coverage tests. Untracked kitchen: `review/`.
-**Plan / brief:** task.md requirements and `## Goal (implementer restatement)`. Document the three identity browser routes from the endpoint declarations, or exclude them. List liveness from `IngressPaths` and generate the health description from the same constants. Extend discovery coverage so each served non-operation route is listed.
-**Effort:** 3 (general only; by-diff budget)
+**Diff scope:** Round 2 reviews commit `fd3552530` against its parent (the fix for round 1). Product files: `web-server-open-api-excluded-routes.cs`, `llms.txt`, `open-api-discovery-coverage.cs`, `open-api-discovery-coverage-tests.cs`, and new `open-api-served-route-coverage-tests.cs`. Round 1 stays under `review/round-1/`.
+**Plan / brief:** task.md requirements and `## Goal (implementer restatement)`. Round 2 re-checks M1 (`GET /alive`), M2 (unlisted families in `info.description`), and M3 (dictation CONNECT and a method-aware walk).
+**Effort:** round 1 was 3; round 2 is 2 (general only; by-diff budget)
 **Reviewer roster:** general
-**Session IDs:** grok session 01a21512-9948-7c90-8a6c-a0777e930e7a (GANDA_SESSION 2759271)
+**Session IDs:** round 1 grok session 01a21512-9948-7c90-8a6c-a0777e930e7a (GANDA_SESSION 2759271); round 2 grok session 01a21525-b904-71a3-be9e-aacba7815fa7
 
 ## Budget (by-diff)
 
-- Lines changed: 917
-- Effort: 3
+- Lines changed: 568
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
