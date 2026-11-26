@@ -142,7 +142,9 @@ Host=<endpoint>.<region>.aws.neon.tech;Database=neondb;Username=<role>;Password=
 
 ## Where the secrets go
 
-Set them on the **AppHost** user secrets, or as environment variables for one shell. Do **not**
+Set them on the **AppHost** user secrets, or as environment variables for one shell. The release
+deploy job reads them from the GitHub Actions secrets `NEON_POOLED_CONNECTION_STRING` and
+`NEON_DIRECT_CONNECTION_STRING` ([release-deploy.md](release-deploy.md)). Do **not**
 commit them and do **not** put them in `appsettings.json`. `dev deploy` refuses a value found in
 appsettings. It does **not** put these on the `aspire` command line (they would show up in the
 process list and in the plan), and the plan does not print them.
@@ -212,6 +214,10 @@ ingress: web-server is the external container app, smoke and `dev open` use its 
 ```bash
 dev deploy --target aca-neon   # publish, deploy, migrate, smoke, open the app (--no-browser prints the URL)
 ```
+
+From GitHub Actions, a published release runs the same command in the app workflow's `deploy` job
+(`--yes --no-browser`, Azure login over OIDC). A merge never deploys. Setup and the federated
+credential subject: [release-deploy.md](release-deploy.md).
 
 `dev deploy` publishes the migrations bundle, deploys, migrates on the direct connection, then
 smokes the public app: `GET /web-server/alive` and `GET /api/identity/sign-in-methods` on the

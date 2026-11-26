@@ -38,7 +38,15 @@ internal static partial class AppCiWorkflowShape
 
   private const string SetupActionName = "setup-ci";
 
-  internal static readonly string[] RequiredJobs = ["classify", "ci-group", "ci", "green-key"];
+  internal const string DeployJob = "deploy";
+
+  internal static readonly string[] RequiredJobs = ["classify", "ci-group", "ci", "green-key", DeployJob];
+
+  /// <summary>The one deploy line the deploy job runs.</summary>
+  internal const string DeployCommandLine = "dotnet run --file tools/dev-cli/dev.cs -- deploy --target $env:DEPLOY_TARGET --yes --no-browser";
+
+  /// <summary>The condition classify and ci carry so a deploy run runs no CI.</summary>
+  internal const string SkipOnDeployRun = "github.event_name != 'release' && !inputs.deploy";
 
   internal static readonly string[] TemplateOnlyJobs = ["release", "skill-lint", "template-smoke"];
 
@@ -58,7 +66,6 @@ internal static partial class AppCiWorkflowShape
     "vally",
     "nuget/login",
     "NUGET_API_KEY",
-    "id-token",
     ".template.config",
     "timewarp-templates",
     "templateRepository",
@@ -98,8 +105,93 @@ internal static partial class AppCiWorkflowShape
 
     if (AspireVersionSources.WorkflowInstallError(yaml) is { } aspireError) errors.Add(aspireError);
 
+    errors.AddRange(DeployJobErrors(yaml, paths));
+
     return errors;
   }
+
+  /// <summary>Deploying or minting an OIDC token outside the deploy job, then problems with that job when it exists.</summary>
+  internal static IEnumerable<string> DeployJobErrors(string yaml, HashSet<string> paths)
+  {
+    ArgumentNullException.ThrowIfNull(yaml);
+    ArgumentNullException.ThrowIfNull(paths);
+    string[] outside = [.. OutsideJob(yaml, DeployJob)];
+    if (outside.Any(line => line.Contains("id-token", StringComparison.OrdinalIgnoreCase)))
+      yield return "id-token appears outside the deploy job.";
+
+    foreach (string line in Commands(outside).Where(line => DeployInvocation().IsMatch(line)))
+      yield return $"Deploys outside the deploy job: {line}";
+
+    if (!paths.Contains($"jobs/{DeployJob}")) yield break;
+
+    if (!ReleasePublished().IsMatch(yaml)) yield return "on.release must be types: [published].";
+    if (!paths.Contains("on/workflow_dispatch/inputs/deploy")) yield return "on.workflow_dispatch has no deploy input.";
+
+    string[] deploy = JobLines(yaml, DeployJob);
+    string condition = deploy.Select(line => line.Trim()).FirstOrDefault(line => line.StartsWith("if:", StringComparison.Ordinal)) ?? "";
+    if (!condition.Contains("github.event_name == 'release'", StringComparison.Ordinal)
+      || !condition.Contains("github.event_name == 'workflow_dispatch' && inputs.deploy", StringComparison.Ordinal))
+    {
+      yield return "Job deploy must run only on a published release or a dispatch with deploy on.";
+    }
+
+    if (condition.Contains("push", StringComparison.Ordinal) || condition.Contains("pull_request", StringComparison.Ordinal))
+      yield return "Job deploy must not run on push or pull_request: a merge never deploys.";
+
+    string deployText = string.Join('\n', deploy);
+    foreach (string required in (string[])["environment: Production", "id-token: write", "uses: azure/login@"])
+    {
+      if (!deployText.Contains(required, StringComparison.Ordinal)) yield return $"Job deploy does not have '{required}'.";
+    }
+
+    foreach (string secretLogin in (string[])["client-secret", "creds:"])
+    {
+      if (yaml.Contains(secretLogin, StringComparison.Ordinal)) yield return $"Contains '{secretLogin}': Azure login is OIDC with no client secret.";
+    }
+
+    string[] invocations = [.. Commands(deploy).Where(line => DeployInvocation().IsMatch(line))];
+    if (invocations.Length != 1 || invocations[0] != DeployCommandLine)
+      yield return $"Job deploy must run one `{DeployCommandLine}`.";
+
+    foreach (string job in (string[])["classify", "ci"])
+    {
+      if (!string.Join('\n', JobLines(yaml, job)).Contains(SkipOnDeployRun, StringComparison.Ordinal))
+        yield return $"Job {job} must skip a deploy run ({SkipOnDeployRun}).";
+    }
+  }
+
+  /// <summary>The lines of <paramref name="yaml"/> with job <paramref name="job"/>'s block removed.</summary>
+  internal static IEnumerable<string> OutsideJob(string yaml, string job)
+  {
+    ArgumentNullException.ThrowIfNull(yaml);
+    bool inside = false;
+    foreach (string line in yaml.Split('\n'))
+    {
+      if (line == $"  {job}:") inside = true;
+      else if (inside && IsBlockEnd(line)) inside = false;
+
+      if (!inside) yield return line;
+    }
+  }
+
+  // The lines of the job's block: its key line through the line before the next line at indent two or less.
+  private static string[] JobLines(string yaml, string job)
+  {
+    string[] lines = yaml.Split('\n');
+    int start = Array.IndexOf(lines, $"  {job}:");
+    if (start < 0) return [];
+
+    int end = start + 1;
+    while (end < lines.Length && !IsBlockEnd(lines[end])) end++;
+    return lines[start..end];
+  }
+
+  private static bool IsBlockEnd(string line) =>
+    line.TrimEnd().Length > 0 && line.Length - line.TrimStart().Length <= 2;
+
+  // Lines that are not full-line comments, trimmed.
+  private static IEnumerable<string> Commands(IEnumerable<string> lines) =>
+    lines.Select(line => line.Trim()).Where(line => line.Length > 0 && line[0] != '#');
 
   /// <summary>
   /// Key paths of the block YAML in <paramref name="yaml"/>. Parse errors go to
@@ -281,6 +373,16 @@ internal static partial class AppCiWorkflowShape
 
   [GeneratedRegex(@"uses:\s*\./\.github/actions/(?<name>[A-Za-z0-9_.\-]+)", RegexOptions.CultureInvariant)]
   private static partial Regex LocalAction();
+
+  /// <summary>
+  /// A dev deploy, deprovision, or open verb (bin/dev or the dev.cs runfile; `deploy` covers `deploy migrate`), or a raw
+  /// aspire deploy or destroy.
+  /// </summary>
+  [GeneratedRegex(@"(\bdev(\.cs)?\s+(--\s+)?(deploy|deprovision|open)\b)|(\baspire\s+(deploy|destroy)\b)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+  internal static partial Regex DeployInvocation();
+
+  [GeneratedRegex(@"^  release:\n    types: \[published\]$", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+  private static partial Regex ReleasePublished();
 
   private sealed record Frame(int Indent, string Path, bool Sequence)
   {

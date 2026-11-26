@@ -6,7 +6,8 @@
 // Deploy guidance (operator map: target matrix, publish/deploy commands, production-safety rules, secrets,
 // migrations per target, ingress topology, runtime neutrality) lives in skills/tw-deploy/SKILL.md; the
 // Design regions of this project's files are its record. Keep the two in sync when publish-mode wiring changes. Deploying is
-// operator-run with `dev deploy` / `dev deprovision` — never a CI step. `dev deploy --target <t>`
+// `dev deploy` / `dev deprovision`, run by an operator. A merge never deploys; the app workflow's deploy job runs
+// `dev deploy` on a published release or a manual dispatch (task 529). `dev deploy --target <t>`
 // publishes, deploys, migrates when the app has a database, smokes the ingress, and prints the URL.
 // `dev deploy migrate` and `dev open` remain the one-step verbs (kind: `dev open` keeps a kubectl
 // port-forward of the ingress controller). Both wrap the by-hand commands recorded here.

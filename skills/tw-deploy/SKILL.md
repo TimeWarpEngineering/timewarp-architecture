@@ -1,6 +1,6 @@
 ---
 name: tw-deploy
-description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost. The first deploy is one command, `dev deploy --target <t>`: publish, deploy, migrate when the app has a database, smoke the ingress, and open the app (`--no-browser` prints the URL). Targets: Docker Compose, Kubernetes/Helm, Azure (AKS or Azure Container Apps), and Azure Container Apps + Neon. `dev publish`, `dev deploy migrate`, `dev open`, and `dev deprovision` are one-step operator verbs (never CI). Also: kind, production safety, secrets and parameters, the passkey ingress host, migrations per target, ingress topology, container-runtime neutrality. Invoke before deploying, adding a publish target, or touching publish-mode wiring in the AppHost. WHEN: deploy the app, first deploy, dev deploy, dev deprovision, dev open, migrate the deployed database, tear down a deployment, kind cluster, Helm, AKS, Azure Container Apps, Neon region, passkeys on a deployed host, production secrets, Podman."
+description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost. The first deploy is one command, `dev deploy --target <t>`: publish, deploy, migrate when the app has a database, smoke the ingress, and open the app (`--no-browser` prints the URL). Targets: Docker Compose, Kubernetes/Helm, Azure (AKS or Azure Container Apps), and Azure Container Apps + Neon. `dev publish`, `dev deploy migrate`, `dev open`, and `dev deprovision` are one-step verbs. A merge never deploys; a release may. Also: kind, production safety, secrets and parameters, the passkey ingress host, migrations per target, ingress topology, container-runtime neutrality. Invoke before deploying, adding a publish target, or touching publish-mode wiring in the AppHost. WHEN: deploy the app, first deploy, dev deploy, dev deprovision, dev open, migrate the deployed database, tear down a deployment, kind cluster, Helm, AKS, Azure Container Apps, Neon region, passkeys on a deployed host, production secrets, Podman, release deploy."
 when-to-use: deploy, deployment, dev deploy, dev deprovision, dev open, dev deploy migrate, port-forward, deprovision, aspire destroy, kind, local registry, aspire publish, aspire deploy, dev publish, compose.yaml, docker compose, Helm, helm install, Kubernetes, kubectl, AKS, Azure, Azure Container Apps, ACA, Bicep, Flexible Server, az login, Key Vault, Publish:Target, production safety, secrets, parameters, .env, values.yaml, migrations in production, ingress controller, container runtime, Podman, ASPIRE_CONTAINER_RUNTIME, Neon, aca-neon, Lakebase
 ---
 
@@ -76,10 +76,10 @@ dev publish all                             # all four publishes, then one safet
 - **`dev publish <target>` is the gate.** It runs the target's production-safety suite in
   aspire-tests against the generated files. Run it after any change to publish-mode wiring.
   `dev publish all` publishes every target and checks them in one aspire-tests run.
-- **Deploying is a deliberate, operator-run action — never automated in CI.** CI publishes and
-  runs the production-safety suites only; it never runs `aspire deploy`, `helm upgrade` or
-  `docker compose up` against a real environment. A deploy is run by an operator who has chosen
-  the target, the context and the parameter values, with `dev deploy` (below).
+- **A merge never deploys; a published release or a manual dispatch may.** CI on a push or pull
+  request publishes and runs the production-safety suites only; it never runs `aspire deploy`,
+  `helm upgrade` or `docker compose up`. A deploy is `dev deploy` (below), run by an operator, or by
+  the app workflow's `deploy` job on a release: [release-deploy.md](references/release-deploy.md).
 
 ## Aspire CLI version
 
@@ -95,8 +95,8 @@ prints the URL and opens nothing. With no terminal, or no opener on PATH (`wslvi
 `explorer.exe` on WSL), it prints the URL and still succeeds. `--yes` skips the prompt only; it
 does not change the browser. Kubernetes with no external address does not keep a port-forward: it
 prints the `dev open --target kubernetes` hint. It stops at the first failure and names the verb
-to re-run. **No CI job, workflow step or `dev workflow` mode calls it, and none may.** A merge
-never deploys.
+to re-run. **A merge never deploys.** The only workflow step that calls it is the app workflow's
+`deploy` job (a published release, or a dispatch with `deploy` on); no `dev workflow` mode does.
 
 ```bash
 dev deploy                                  # compose: publish, deploy, migrate, smoke, open the app

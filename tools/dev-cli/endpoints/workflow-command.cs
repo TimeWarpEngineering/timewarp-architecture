@@ -38,7 +38,8 @@
 // excludes from generated apps; the call sites here are templateRepository regions:
 //   - Release mode packs and pushes the platform packages and the template, then runs
 //     template-publish-smoke. A generated app publishes no packages, so its release mode refuses
-//     and names the operator-run deploy command.
+//     and names the deploy command. Its workflow's deploy job runs that command on a published
+//     release (task 529); no `dev workflow` mode deploys.
 //   - Classify also writes the skill and template outputs, from the changed-path rules in
 //     services/workflow-path-classes.cs. A generated app's classify writes ci and the green key only.
 //   - Whenever the test step includes the fast group, the regenerated feature filename grammar and
@@ -98,7 +99,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 #if templateRepository
         await new WorkflowTemplateRepository(Terminal, RepoCleanService, RepoRoot, Ct).RunReleaseAsync(command.ApiKey);
 #else
-        Terminal.WriteErrorLine("Error: release mode packs and pushes the template's NuGet packages. This app publishes no packages: an operator deploys it with this CLI's deploy command.".Red());
+        Terminal.WriteErrorLine("Error: release mode packs and pushes the template's NuGet packages. This app publishes no packages: its workflow's deploy job, or an operator, deploys it with this CLI's deploy command.".Red());
         Environment.ExitCode = 1;
 #endif
         return Unit.Value;

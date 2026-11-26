@@ -9,7 +9,8 @@
 // by both repositories, so the app's copy must equal this repository's byte for byte. The workflow
 // must equal its source (.github/app-workflows/workflow.yml): it has no flag regions, so every
 // variant gets the same file, and a template token that generation rewrote inside it fails here.
-// AppCiWorkflowShape.Check then parses it and checks the app's jobs and phases.
+// AppCiWorkflowShape.Check then parses it and checks the app's jobs and phases, including the release
+// deploy job (task 529): present, release- and dispatch-only, and the only job that deploys.
 #endregion
 
 namespace DevCli.Services;

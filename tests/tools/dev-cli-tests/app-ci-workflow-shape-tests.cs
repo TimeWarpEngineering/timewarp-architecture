@@ -26,6 +26,8 @@ public class Source_Given_
     errors.ShouldContain("Has the template repository's release job.");
     errors.ShouldContain("Has the template repository's template-smoke job.");
     errors.ShouldContain("Contains template-repository text 'wslc'.");
+    errors.ShouldContain("Missing job deploy.");
+    errors.ShouldContain("id-token appears outside the deploy job.");
     return Task.CompletedTask;
   }
 
@@ -102,6 +104,85 @@ public class Check_Given_
     string yaml = Source().Replace("args: --phase publish", "args: --phase test", StringComparison.Ordinal);
 
     AppCiWorkflowShape.Check(yaml).ShouldContain("Does not run `dev workflow --phase publish`.");
+    return Task.CompletedTask;
+  }
+
+  public static Task DeployOnPush_Should_Fail()
+  {
+    string yaml = Source().Replace(
+      "    if: github.event_name == 'release' ||",
+      "    if: github.event_name == 'push' || github.event_name == 'release' ||",
+      StringComparison.Ordinal);
+
+    AppCiWorkflowShape.Check(yaml).ShouldContain("Job deploy must not run on push or pull_request: a merge never deploys.");
+    return Task.CompletedTask;
+  }
+
+  public static Task MissingReleaseTrigger_Should_Fail()
+  {
+    string yaml = Source().Replace("  release:\n    types: [published]\n", "", StringComparison.Ordinal);
+
+    AppCiWorkflowShape.Check(yaml).ShouldContain("on.release must be types: [published].");
+    return Task.CompletedTask;
+  }
+
+  public static Task DeployWithoutEnvironment_Should_Fail()
+  {
+    string yaml = Source().Replace("    environment: Production\n", "", StringComparison.Ordinal);
+
+    AppCiWorkflowShape.Check(yaml).ShouldContain("Job deploy does not have 'environment: Production'.");
+    return Task.CompletedTask;
+  }
+
+  public static Task ClientSecretLogin_Should_Fail()
+  {
+    string yaml = Source().Replace(
+      "          client-id: ${{ vars.AZURE_CLIENT_ID }}\n",
+      "          client-id: ${{ vars.AZURE_CLIENT_ID }}\n          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}\n",
+      StringComparison.Ordinal);
+
+    AppCiWorkflowShape.Check(yaml).ShouldContain("Contains 'client-secret': Azure login is OIDC with no client secret.");
+    return Task.CompletedTask;
+  }
+
+  public static Task DeployInCiGroup_Should_Fail()
+  {
+    string yaml = Source().Replace(
+      "      - name: Run CI pipeline\n",
+      "      - name: Ship it\n        run: ./bin/dev deploy --target aca --yes\n\n      - name: Run CI pipeline\n",
+      StringComparison.Ordinal);
+
+    AppCiWorkflowShape.Check(yaml).ShouldContain("Deploys outside the deploy job: run: ./bin/dev deploy --target aca --yes");
+    return Task.CompletedTask;
+  }
+
+  public static Task IdTokenOutsideDeploy_Should_Fail()
+  {
+    string yaml = Source().Replace(
+      "      actions: read  # green-key marker lookup",
+      "      id-token: write\n      actions: read  # green-key marker lookup",
+      StringComparison.Ordinal);
+
+    AppCiWorkflowShape.Check(yaml).ShouldContain("id-token appears outside the deploy job.");
+    return Task.CompletedTask;
+  }
+
+  public static Task CiOnDeployRun_Should_Fail()
+  {
+    string yaml = Source().Replace(
+      "    if: always() && github.event_name != 'release' && !inputs.deploy\n",
+      "    if: always()\n",
+      StringComparison.Ordinal);
+
+    AppCiWorkflowShape.Check(yaml).ShouldContain($"Job ci must skip a deploy run ({AppCiWorkflowShape.SkipOnDeployRun}).");
+    return Task.CompletedTask;
+  }
+
+  public static Task InteractiveDeploy_Should_Fail()
+  {
+    string yaml = Source().Replace(" --yes --no-browser\n", "\n", StringComparison.Ordinal);
+
+    AppCiWorkflowShape.Check(yaml).ShouldContain($"Job deploy must run one `{AppCiWorkflowShape.DeployCommandLine}`.");
     return Task.CompletedTask;
   }
 
