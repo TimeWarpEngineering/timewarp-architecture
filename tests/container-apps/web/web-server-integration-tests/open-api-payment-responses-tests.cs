@@ -6,10 +6,13 @@
 // A tiny FastEndpoints host, not the full web graph. CommonServerModule.AddOpenApi is the
 // document pipeline, with the same agent-bearer map web-server registers and
 // OpenApiPaymentResponses.Register, which is the web host's extra callback.
-// Tip GET and POST share /api/tip and are anonymous, so each publishes security: [].
-// Metered GET requires demo:invoke. A free GET must not
-// gain 402 or 503. The bare /api alias is not its own operation. The document description
-// keeps the free-routes-never-402 statement.
+// documentPublicWebRoutes is on, as on web-server, so the /api alias and /api/health are in
+// the document. Tip GET and POST share /api/tip and are anonymous, so each publishes security: [].
+// Metered GET requires demo:invoke. A free GET must not gain 402 or 503. The alias operations
+// carry the same responses and parameters as the tip operations (task 458-009). Every paid
+// operation lists PAYMENT-SIGNATURE (request) and PAYMENT-RESPONSE (200). The payment note is its
+// own info.description paragraph, its 402 list is the operations with a 402, and the health 503
+// is named as not a payment response. Document checks only: no paid route is called.
 // Stub routes and asserted paths are the contract RouteTemplate values. The host sets
 // TipOptions.Resource and MeteredCapabilityOptions.Resource to paths other than those routes,
 // and the document must repeat the options values. Each 402 and 503 body is allOf over the one
@@ -32,6 +35,7 @@ using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Architecture.Payment;
 using TimeWarp.Architecture.Web.Server;
 using TimeWarp.Foundation;
+using TimeWarp.X402;
 using MeteredCapabilityOptions = TimeWarp.Architecture.Features.MeteredCapability.Application.MeteredCapabilityOptions;
 using TipOptions = TimeWarp.Architecture.Features.Tip.Application.TipOptions;
 
@@ -71,6 +75,7 @@ public class Document_Given_
       "v1",
       "Test API",
       OpenApiAgentBearerRegistration.Create(),
+      documentPublicWebRoutes: true,
       configureOpenApi: OpenApiPaymentResponses.Register
     );
     builder.Services.Configure<TipOptions>(static options => options.Resource = ConfiguredTipResource);
@@ -106,7 +111,86 @@ public class Document_Given_
     description.ShouldContain(MeteredPath);
     description.ShouldContain("bare /api");
     description.ShouldContain("discovery alias");
-    document.RootElement.GetProperty("paths").TryGetProperty("/api", out _).ShouldBeFalse();
+  }
+
+  public static async Task Info_Should_PutThePaymentNoteInItsOwnParagraph()
+  {
+    using JsonDocument document = await DocumentAsync();
+    string description = document.RootElement.GetProperty("info").GetProperty("description").GetString()!;
+    description.ShouldContain("## Routes outside this document");
+    int heading = description.IndexOf("\n\n## Payment\n\n", StringComparison.Ordinal);
+    heading.ShouldBeGreaterThan(0);
+    description.IndexOf("## Routes outside this document", StringComparison.Ordinal).ShouldBeLessThan(heading);
+  }
+
+  public static async Task Info_Should_ListExactlyTheOperationsThatDocument402()
+  {
+    using JsonDocument document = await DocumentAsync();
+    JsonElement root = document.RootElement;
+    string description = root.GetProperty("info").GetProperty("description").GetString()!;
+    const string lead = "documented only on ";
+    int start = description.IndexOf(lead, StringComparison.Ordinal) + lead.Length;
+    string list = description[start..description.IndexOf(". ", start, StringComparison.Ordinal)];
+
+    List<string> expected = [];
+    foreach (JsonProperty path in root.GetProperty("paths").EnumerateObject())
+    {
+      foreach (JsonProperty operation in path.Value.EnumerateObject())
+      {
+        string name = "`" + operation.Name.ToUpperInvariant() + " " + path.Name + "`";
+        if (operation.Value.GetProperty("responses").TryGetProperty("402", out _))
+        {
+          expected.Add(name);
+          list.ShouldContain(name);
+        }
+        else
+        {
+          list.ShouldNotContain(name);
+        }
+      }
+    }
+
+    expected.ShouldBe
+    (
+      ["`GET /api`", "`POST /api`", "`GET " + TipPath + "`", "`POST " + TipPath + "`", "`GET " + MeteredPath + "`"],
+      ignoreOrder: true
+    );
+  }
+
+  public static async Task Info_Should_SayTheHealth503IsNotPayment()
+  {
+    using JsonDocument document = await DocumentAsync();
+    JsonElement root = document.RootElement;
+    root.GetProperty("paths").GetProperty("/api/health").GetProperty("get").GetProperty("responses")
+      .TryGetProperty("503", out _).ShouldBeTrue();
+    string description = root.GetProperty("info").GetProperty("description").GetString()!;
+    description.ShouldContain("The 503 on `GET /api/health` is that route's own status");
+    description.ShouldContain("not a payment response");
+  }
+
+  public static async Task TipAlias_Should_CopyTheTipResponsesAndParameters()
+  {
+    foreach (string method in new[] { "get", "post" })
+    {
+      JsonElement alias = await OperationAsync("/api", method);
+      JsonElement tip = await OperationAsync(TipPath, method);
+      alias.GetProperty("responses").GetRawText().ShouldBe(tip.GetProperty("responses").GetRawText());
+      alias.GetProperty("parameters").GetRawText().ShouldBe(tip.GetProperty("parameters").GetRawText());
+      alias.GetProperty("security").GetArrayLength().ShouldBe(0);
+      AssertPaidResponses(alias, TipResource(), includeTip: true, checkDescription: false);
+      AssertPaymentHeaders(alias);
+    }
+  }
+
+  public static async Task PaidOperations_Should_DocumentSignatureAndSettlementHeaders()
+  {
+    AssertPaymentHeaders(await OperationAsync(TipPath, "get"));
+    AssertPaymentHeaders(await OperationAsync(TipPostPath, "post"));
+    AssertPaymentHeaders(await OperationAsync(MeteredPath, "get"));
+
+    JsonElement free = await OperationAsync("/api/hello", "get");
+    free.GetRawText().ShouldNotContain("PAYMENT-SIGNATURE");
+    free.GetRawText().ShouldNotContain("PAYMENT-RESPONSE");
   }
 
   public static async Task TipGet_Should_Document402And503()
@@ -164,9 +248,35 @@ public class Document_Given_
     responses.TryGetProperty("503", out _).ShouldBeFalse();
   }
 
-  private static void AssertPaidResponses(JsonElement operation, string resource, bool includeTip)
+  private static void AssertPaymentHeaders(JsonElement operation)
   {
-    operation.GetProperty("description").GetString()!.ShouldContain("never return 402");
+    JsonElement signature = operation.GetProperty("parameters").EnumerateArray()
+      .Single(parameter => parameter.GetProperty("name").GetString() == PaymentHeaders.PaymentSignature);
+    signature.GetProperty("in").GetString().ShouldBe("header");
+    if (signature.TryGetProperty("required", out JsonElement signatureRequired))
+    {
+      signatureRequired.GetBoolean().ShouldBeFalse();
+    }
+
+    signature.GetRawText().ShouldContain("base64");
+
+    JsonElement settlement = operation.GetProperty("responses").GetProperty("200").GetProperty("headers")
+      .GetProperty(PaymentHeaders.PaymentResponse);
+    if (settlement.TryGetProperty("required", out JsonElement settlementRequired))
+    {
+      settlementRequired.GetBoolean().ShouldBeFalse();
+    }
+
+    settlement.GetRawText().ShouldContain("base64");
+  }
+
+  private static void AssertPaidResponses(JsonElement operation, string resource, bool includeTip, bool checkDescription = true)
+  {
+    if (checkDescription)
+    {
+      operation.GetProperty("description").GetString()!.ShouldContain("never return 402");
+    }
+
     JsonElement responses = operation.GetProperty("responses");
 
     JsonElement paymentRequired = responses.GetProperty("402");
