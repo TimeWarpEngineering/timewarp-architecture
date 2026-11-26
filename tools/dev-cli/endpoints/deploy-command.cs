@@ -1,14 +1,15 @@
 #region Purpose
 // `dev deploy [--target compose|kubernetes|aca|aca-neon]`: one operator command from a checkout to a
-// live, migrated deployment. Never run by CI.
+// live, migrated deployment. Run by an operator, or by the app workflow's release deploy job.
 #endregion
 
 #region Design
 // Thin endpoint: the route, the options, and one call. The orchestration (preflight, plan,
 // confirmation, publish, deploy, migrate, smoke) is services/deploy-runner.cs (DeployRunner), and the
-// smoke step is services/deploy-smoke-runner.cs; their Design regions carry the behavior. Deploying is a
-// deliberate operator action, never a side effect of a merge (task 070-006): no workflow step and no
-// `dev workflow` mode calls this verb. This command is the DeployGroup's empty route, so `dev deploy`
+// smoke step is services/deploy-smoke-runner.cs; their Design regions carry the behavior. Deploying is
+// deliberate, never a side effect of a merge (task 070-006): the only workflow step that calls this verb
+// is the app workflow's deploy job, on a published release or a manual dispatch (task 529;
+// AppCiWorkflowShape refuses it anywhere else), and no `dev workflow` mode calls it. This command is the DeployGroup's empty route, so `dev deploy`
 // runs it and `dev deploy --help` lists it beside `migrate` (a separate `deploy` route would be
 // shadowed by the group's help table). The migrate step is `dev deploy migrate --yes`, run through
 // DeployMigrateCommand.Handler and handed to the runner as a delegate. It refuses without web (the
@@ -18,7 +19,7 @@
 
 namespace DevCli.Commands;
 
-[NuruRoute("", Description = "Publish, deploy, migrate when the app has a database, smoke the ingress, and open it in the browser (operator-run, never CI). --no-browser prints the URL. Asks unless --yes")]
+[NuruRoute("", Description = "Publish, deploy, migrate when the app has a database, smoke the ingress, and open it in the browser (operator-run, or the release deploy job; never on a merge). --no-browser prints the URL. Asks unless --yes")]
 [NuruRouteExample("deploy", Description = "One command for the default target (compose): publish, deploy, migrate, smoke")]
 [NuruRouteExample("deploy --target kubernetes", Description = "One command: publish, deploy the Helm chart to the current kubectl context, migrate, smoke")]
 [NuruRouteExample("deploy --target aca", Description = "One command: publish, provision Azure Container Apps + Flexible Server, migrate, smoke the ingress (az login first)")]

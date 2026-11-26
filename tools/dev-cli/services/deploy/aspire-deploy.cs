@@ -12,8 +12,9 @@
 // AspireDeploy (targets, deploy/destroy arguments), AspireDeployParameters, AspireDeploySecrets,
 // AspireDeployCluster, AspireDeployAzure, AspireDeployEnvironment and AspireDeployText.
 //
-// Deploying is an operator action, never CI (task 070-006): no workflow step or `dev workflow` mode
-// calls these verbs. The target is the AppHost's Publish:Target switch (publish-target.cs), passed through
+// Deploying is a deliberate action (task 070-006), never a side effect of a merge. An operator runs these
+// verbs; the one CI caller is the app workflow's deploy job, which runs `dev deploy` on a published release
+// or a manual dispatch (task 529). No `dev workflow` mode calls them. The target is the AppHost's Publish:Target switch (publish-target.cs), passed through
 // as `-- --Publish:Target=<name>` exactly like `dev publish`; the default is the AppHost's default
 // (compose).
 //

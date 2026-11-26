@@ -13,5 +13,5 @@ namespace DevCli.Commands;
 using TimeWarp.Nuru;
 
 /// <summary>Base for <c>dev deploy</c> and its subcommands.</summary>
-[NuruRouteGroup("deploy", Description = "Deploy with `aspire deploy`, and act on the deployment it made (operator-run, never CI)")]
+[NuruRouteGroup("deploy", Description = "Deploy with `aspire deploy`, and act on the deployment it made (operator-run; a merge never deploys)")]
 public abstract class DeployGroup;

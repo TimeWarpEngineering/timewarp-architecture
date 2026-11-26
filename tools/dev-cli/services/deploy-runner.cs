@@ -4,9 +4,10 @@
 #endregion
 
 #region Design
-// Deploying is a deliberate operator action, never a side effect of a merge (task 070-006): no
-// workflow step and no `dev workflow` mode calls this verb; CI stops at `dev publish` plus its
-// production-safety suites. Task 393 makes this the pit-of-success path. It runs
+// Deploying is deliberate, never a side effect of a merge (task 070-006). An operator runs this verb,
+// or the app workflow's deploy job does on a published release or a manual dispatch (task 529), with
+// --yes --no-browser and the values in the environment. No `dev workflow` mode calls it; CI on a push
+// or pull request stops at `dev publish` plus its production-safety suites. Task 393 makes this the pit-of-success path. It runs
 // DeployPipeline.RunAsync over DeployPipeline.Steps, stopping at the first non-zero exit
 // and naming the verb that retries that step:
 //   1. aspire publish into artifacts/aspire-output/<target> (files only; the safety suite stays on

@@ -9,6 +9,10 @@ name: CI
 #   ci         the required check over ci-group. Make `ci` the required status check on the default
 #              branch: `ganda pr merge` waits for it
 #   green-key  uploads a green-key marker after ci-group passes
+#   deploy     a published release, or a dispatch with deploy on, deploys the app to Azure.
+#              A merge never deploys. On a deploy run the CI jobs above do not run. Setup (Azure
+#              OIDC login, the Production environment, variables and secrets) is in the tw-deploy
+#              skill, references/release-deploy.md
 #
 # Runner. Every job runs on ubuntu-latest by default. To run classify, ci (fast), and ci (publish) on
 # self-hosted runners, set the repository variable CI_RUNNER_LABELS to a JSON array of runner labels,
@@ -53,8 +57,18 @@ on:
   # registers no check. A non-build pull request skips ci-group, and the skipped ci-group passes.
   pull_request:
     types: [opened, synchronize, reopened]
-  # A manual run is a full run on hosted runners: no green-key skip.
+  # A published release deploys (the deploy job). It runs no CI: the release's commit passed CI on
+  # its pull request.
+  release:
+    types: [published]
+  # A manual run is a full run on hosted runners: no green-key skip. With deploy on, it deploys the
+  # chosen ref instead and runs no CI.
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy this ref to Azure instead of running CI
+        type: boolean
+        default: false
 
 # A newer pull request run, or a newer push to the same branch, cancels the older one. A dispatch
 # gets a group of its own (run_id) and is never cancelled.
@@ -72,6 +86,7 @@ defaults:
 
 jobs:
   classify:
+    if: github.event_name != 'release' && !inputs.deploy
     runs-on: >-
       ${{ vars.CI_RUNNER_LABELS != '' &&
       (github.event_name == 'push' ||
@@ -147,8 +162,9 @@ jobs:
   ci:
     # The required check. A skipped ci-group (non-build change or green-key hit) passes; a failed or
     # cancelled group fails. A failed classify fails too: its skip of ci-group must not read as a pass.
+    # A deploy run has no CI, so no ci check.
     needs: [classify, ci-group]
-    if: always()
+    if: always() && github.event_name != 'release' && !inputs.deploy
     runs-on: ubuntu-latest
     steps:
       - name: All CI groups passed
@@ -188,3 +204,74 @@ jobs:
           path: artifacts/green-key/marker.json
           if-no-files-found: error
           retention-days: 90
+
+  deploy:
+    # A merge never deploys; a published release or a manual dispatch with deploy on does (task 529).
+    # The job runs the same `dev deploy` an operator runs: publish, aspire deploy, migrate when the
+    # app has a database, smoke. --yes because nobody can answer a prompt here; --no-browser prints
+    # the URL. Hosted runner: aspire deploy builds the images with Docker.
+    # Azure login is GitHub OIDC with no client secret. Federate the app registration on the subject
+    # repo:<owner>/<repo>:environment:Production, which covers the release run (a tag ref) and the
+    # dispatch. Add required reviewers to the Production environment to gate each deploy.
+    # Repository variables: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_LOCATION,
+    # AZURE_RESOURCE_GROUP; optional DEPLOY_TARGET (aca or aca-neon, default aca-neon) and
+    # PASSKEY_RP_HOST. Secrets for aca-neon: NEON_POOLED_CONNECTION_STRING and
+    # NEON_DIRECT_CONNECTION_STRING.
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.deploy)
+    runs-on: ubuntu-latest
+    environment: Production
+    timeout-minutes: 60
+    # One deploy at a time, and a new one waits instead of cancelling a deploy half way.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write  # the OIDC token azure/login exchanges
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-ci
+        with:
+          aspire-cli: 'true'
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Values reach `dev deploy` as environment variables, never on the command line. An unset
+      # variable or secret is left out instead of set empty, so it cannot override the AppHost's
+      # committed configuration. dev deploy refuses a missing Neon connection string by name.
+      - name: Deploy to Azure
+        env:
+          DEPLOY_TARGET: ${{ vars.DEPLOY_TARGET || 'aca-neon' }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          PASSKEY_RP_HOST: ${{ vars.PASSKEY_RP_HOST }}
+          NEON_POOLED_CONNECTION_STRING: ${{ secrets.NEON_POOLED_CONNECTION_STRING }}
+          NEON_DIRECT_CONNECTION_STRING: ${{ secrets.NEON_DIRECT_CONNECTION_STRING }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:DEPLOY_TARGET -notin @('aca', 'aca-neon')) {
+            Write-Host "DEPLOY_TARGET is '$env:DEPLOY_TARGET'. This job deploys to Azure: aca or aca-neon."
+            exit 1
+          }
+          $missing = @('AZURE_SUBSCRIPTION_ID', 'AZURE_LOCATION', 'AZURE_RESOURCE_GROUP') |
+            Where-Object { [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_)) }
+          if ($missing) {
+            Write-Host "Set the repository variables $($missing -join ', ') (tw-deploy, references/release-deploy.md)."
+            exit 1
+          }
+          $env:Azure__SubscriptionId = $env:AZURE_SUBSCRIPTION_ID
+          $env:Azure__Location = $env:AZURE_LOCATION
+          $env:Azure__ResourceGroup = $env:AZURE_RESOURCE_GROUP
+          if ($env:PASSKEY_RP_HOST) { ${env:Parameters__passkey-rp-host} = $env:PASSKEY_RP_HOST }
+          if ($env:NEON_POOLED_CONNECTION_STRING) { ${env:Parameters__neon-pooled-connection-string} = $env:NEON_POOLED_CONNECTION_STRING }
+          if ($env:NEON_DIRECT_CONNECTION_STRING) { ${env:Parameters__neon-direct-connection-string} = $env:NEON_DIRECT_CONNECTION_STRING }
+          dotnet run --file tools/dev-cli/dev.cs -- deploy --target $env:DEPLOY_TARGET --yes --no-browser
+          exit $LASTEXITCODE
