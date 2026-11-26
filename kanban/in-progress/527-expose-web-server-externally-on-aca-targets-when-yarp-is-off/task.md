@@ -88,7 +88,7 @@ Acceptance:
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a213cf-6b25-7be1-a81a-a6cee28d804d, max-turns 120, artifacts general.md, merged.md — 2026-11-25T17:54:12Z
 - Review oracle round 2: general (grok, vendor xai, model grok-4.7), effort 1, roster general, session 01a213db-6840-7c21-a2f8-208335593a6c, max-turns 80 (2026-11-26). M1 and M2 verified fixed. No new findings. Disposition clean. Artifacts `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
-## Results (required before done)
+## Results
 
 What changed:
 
@@ -177,7 +177,7 @@ Review round 2 (2026-11-26), roster general, effort 1:
 - The implementer restatement matches the original requirements. No misread. No `## Learnings` entry.
 - Gates were not re-run. The fix-pass record above covers this docs-only delta.
 
-### How to validate (required before done)
+### How to validate
 
 Smoke: `./bin/dev test --project aspire-tests --filter-class AcaPublish_Given_` and
 `--filter-class AcaNeonPublish_Given_`; then generate `dotnet new timewarp-architecture --yarp false`
