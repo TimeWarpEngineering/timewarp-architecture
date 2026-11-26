@@ -1,0 +1,23 @@
+<Project>
+  <!-- Task 458-011: bakes the repository metadata the OpenAPI document publishes into the host
+       assembly. OpenApiDocumentInfo.FromAssembly (foundation-server) reads these two keys for
+       info.contact.url and info.license, so the document follows Directory.Build.props instead of
+       repeating the URL and license in code. The contact URL is PackageProjectUrl, else
+       RepositoryUrl. The license is the SPDX PackageLicenseExpression. An empty property writes no
+       attribute, and FromAssembly then fails at startup with the key name. Import this from a
+       host project that passes OpenApiDocumentInfo.FromAssembly(typeof(Program).Assembly, …). -->
+  <PropertyGroup>
+    <OpenApiContactUrl Condition="'$(OpenApiContactUrl)' == ''">$(PackageProjectUrl)</OpenApiContactUrl>
+    <OpenApiContactUrl Condition="'$(OpenApiContactUrl)' == ''">$(RepositoryUrl)</OpenApiContactUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(OpenApiContactUrl)' != ''">
+      <_Parameter1>OpenApiContactUrl</_Parameter1>
+      <_Parameter2>$(OpenApiContactUrl)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(PackageLicenseExpression)' != ''">
+      <_Parameter1>OpenApiLicense</_Parameter1>
+      <_Parameter2>$(PackageLicenseExpression)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>
