@@ -32,6 +32,22 @@ dotnet new --install TimeWarp.Architecture
 dotnet new timewarp-architecture -n MyTimeWarpApp
 ```
 
+### What a generated app contains
+
+- `source/` and `tests/`: the container apps for the flags you chose, and their test projects.
+- `msbuild/` and the root build files (`*.slnx`, `Directory.Build.props`, `Directory.Packages.props`,
+  `global.json`, `.editorconfig`).
+- `skills/`: the agent skills the app's own code follows.
+- `kanban/`: an empty board.
+- `tools/dev-cli/`: the dev CLI, with `.timewarp/dev.jsonc` (its settings) and `.envrc` (puts
+  `bin/` on `PATH`). Bootstrap it once with `dotnet run tools/dev-cli/dev.cs -- self-install`, then
+  `dev --help`. It has the app commands: `build`, `test`, `run`, `db` (with postgres and web),
+  `publish`, `deploy` (and `deploy migrate`), `open`, `deprovision`, `entra`, `workflow`, `clean`,
+  `audit`. This repository's own template, release and skill-lint commands are not in it. In an app
+  generated without a feature, a command that needs it (`entra` without web; `deploy` without web;
+  `open` and `deploy` to compose or kubernetes without yarp, while aca and aca-neon serve web-server;
+  `deploy migrate` without postgres or web) stops and names the flag that is off.
+
 ### In-app Ask (xAI Grok)
 
 Ctrl-K **Ask** calls xAI through web-server. The key stays in user-secrets and is never sent to

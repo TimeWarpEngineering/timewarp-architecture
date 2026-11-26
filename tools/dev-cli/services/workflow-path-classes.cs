@@ -13,7 +13,8 @@
 // how CI itself runs, and dev lint-skills and dev template-smoke live in tools/dev-cli/.
 // Skill lint: SKILL.md or eval.yaml anywhere, .vally.yaml, evals/, skills/.
 // Template smoke: the template content roots (source/, tests/, timewarp-templates/,
-// .template.config/, msbuild/) and the root build files the generated app inherits.
+// .template.config/, msbuild/) and the root files the generated app inherits, including the dev
+// CLI's .timewarp/dev.jsonc and .envrc (task 530; tools/dev-cli/ is a CI root above).
 // A push event carries before/after SHAs; an all-zero before (a new branch) has no base, and the
 // caller treats an unknown diff as "every job runs".
 #endregion
@@ -34,7 +35,7 @@ internal static class WorkflowPathClasses
     ["source/", "tests/", "timewarp-templates/", ".template.config/", "msbuild/"];
 
   private static readonly string[] TemplateRootFiles =
-    ["Directory.Build.props", "Directory.Packages.props", "timewarp-architecture.slnx"];
+    ["Directory.Build.props", "Directory.Packages.props", "timewarp-architecture.slnx", ".timewarp/dev.jsonc", ".envrc"];
 
   /// <summary>
   /// The classify outputs. A null <paramref name="changed"/> (diff not read) turns on every job;

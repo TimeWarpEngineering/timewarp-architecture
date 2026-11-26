@@ -28,6 +28,35 @@
     <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
   </PropertyGroup>
 
+  <!-- The template pack ships this CLI to every generated app (task 530). .template.config/template.json
+       excludes the template-only command files. -->
+  <!--#if (templateRepository)-->
+  <!-- Template repository only: the computed templateRepository symbol (false at generation) strips
+       this block from generated apps. Here it sets DevCliTemplateRepository and the C# constant of the
+       same symbol, so the template-only regions of shared files compile; TWA0010 checks that agreement. -->
+  <PropertyGroup Label="Template repository">
+    <DevCliTemplateRepository>true</DevCliTemplateRepository>
+    <DefineConstants>$(DefineConstants);templateRepository</DefineConstants>
+  </PropertyGroup>
+  <!--#endif-->
+
+  <!-- check-version and release are TimeWarp.Nuru.DevCli content endpoints. They cut a NuGet release
+       from source/Directory.Build.props; a generated app publishes no packages, so its CLI compiles
+       without them. The package props add these Compile items after this file is read, so the removal
+       runs as a target before the compiler (and the endpoint generator) sees them. -->
+  <Target Name="RemoveTemplateRepositoryOnlyPackageEndpoints"
+          BeforeTargets="CoreCompile"
+          Condition="'$(DevCliTemplateRepository)' != 'true' and '$(NuruDevCliContentDirectory)' != ''">
+    <!-- Same spelling as the package's own Compile Include ($(NuruDevCliContentDirectory) is that
+         include's directory): a target-time Remove matches the item text, so a normalized FullPath
+         would not match. -->
+    <ItemGroup>
+      <Compile Remove="$(NuruDevCliContentDirectory)endpoints/check-version-command.cs" />
+      <Compile Remove="$(NuruDevCliContentDirectory)endpoints/release-command.cs" />
+      <Compile Remove="$(NuruDevCliContentDirectory)endpoints/release-command.guards.cs" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <!-- Include command files in compilation -->
     <Compile Include="global-usings.cs" />

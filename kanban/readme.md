@@ -3,6 +3,13 @@
 Columns, Definition of Ready, and Definition of Done are in [overview.md](overview.md).
 A task body starts from [task-template.md](task-template.md).
 
+## What an instance inherits
+
+A repo made from this template (an instance) starts with its `source/`, `tests/`, `msbuild/`,
+root build files, `skills/`, this empty board, and the dev CLI in `tools/dev-cli/` (with
+`.timewarp/dev.jsonc` and `.envrc`). An upstream task that changes any of them may need porting.
+The ledger below records that decision.
+
 ## Upstream sync ledger
 
 A repo made from this template is an instance. This template records no instance status.

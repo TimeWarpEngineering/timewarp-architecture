@@ -46,6 +46,8 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
 
     public async ValueTask<Unit> Handle(EntraSetupCommand command, CancellationToken ct)
     {
+      if (!AppFeatures.Require(Terminal, "dev entra setup", AppFeatures.Web)) return Unit.Value;
+
       EntraSetupOptions options = new(
         command.Name,
         command.Tenant,

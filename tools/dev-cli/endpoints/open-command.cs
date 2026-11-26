@@ -76,6 +76,8 @@ internal sealed class OpenCommand : ICommand<Unit>
     public async ValueTask<Unit> Handle(OpenCommand command, CancellationToken ct)
     {
       Environment.ExitCode = 0;
+      bool needsIngress = AspireDeploy.ServesThroughIngress(command.Target);
+      if (needsIngress && !AppFeatures.Require(Terminal, "dev open on compose or kubernetes", AppFeatures.Yarp)) return Unit.Value;
 
       DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev open", command.Target, PreflightScope.Open, ct);
       if (preflight is null) return Unit.Value;

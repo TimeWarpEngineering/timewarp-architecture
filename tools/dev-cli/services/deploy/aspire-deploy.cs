@@ -49,6 +49,14 @@ internal static class AspireDeploy
   /// <summary>aca and aca-neon both provision an Azure Container Apps environment.</summary>
   internal static bool IsAzureContainerApps(DeployTarget target) => target == ContainerApps || target == ContainerAppsNeon;
 
+  /// <summary>
+  /// True when <paramref name="targetName"/> (null is the default target) is served through the yarp
+  /// ingress: compose and kubernetes. aca and aca-neon expose web-server without the yarp flag
+  /// (task 527). An unknown name is false, so the preflight reports it.
+  /// </summary>
+  internal static bool ServesThroughIngress(string? targetName) =>
+    ResolveTarget(targetName) is { } target && !IsAzureContainerApps(target);
+
   /// <summary>Flexible Server and its Key Vault exist only on the aca target.</summary>
   internal static bool UsesFlexibleServer(DeployTarget target) => target == ContainerApps;
 

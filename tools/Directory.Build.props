@@ -28,9 +28,9 @@
          NoWarn covers it). No config sets a TWA id severity for those paths, so TWA0038 stays off for
          package content. A config that sets one by id would bypass this exemption.
        The analyzer wiring itself is in the root Directory.Build.props, shared with source/ and
-       tests/; this file opts in. tools/ is monorepo-only: the template pack project packs no tools/
-       path. Under tools/ the wiring's ProjectReference form applies; its package form is reached only
-       with an explicit -p:UseAnalyzerPackages=true.
+       tests/; this file opts in. The template pack ships this file and tools/dev-cli/ (task 530);
+       the rest of tools/ stays in this repository. Here the wiring's ProjectReference form applies.
+       A generated app has no source/analyzers, so the dev CLI there takes the package form.
        #endregion -->
 
   <PropertyGroup Label="Convention Analyzers">
