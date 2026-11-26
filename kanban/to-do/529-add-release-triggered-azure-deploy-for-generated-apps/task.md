@@ -77,6 +77,6 @@ likely
 
 - Created: f7eccb81-87c9-4fb4-a0c4-0fb7417d4a2f (2026-11-25)
 
-## Results (required before done)
+## Results
 
-### How to validate (required before done)
+### How to validate
