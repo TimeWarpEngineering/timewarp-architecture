@@ -50,14 +50,116 @@ Owner:
 - OpenAPI transformers & tests (`source/container-apps/web/platform/identity-host/open-api-agent-reviewer-guide-server.cs`, `source/foundation/foundation-server/`, `tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs`)
 - Skill docs (`skills/tw-web-api-contracts/SKILL.md`, `skills/tw-web-api-contracts/references/neutral-operations.md`)
 
+## Goal (implementer restatement)
+
+Make the published OpenAPI document name and describe every operation from the contract's
+`[Operation]` attribute, and make that attribute mandatory so the document cannot regress.
+
+Acceptance criteria:
+
+- Every hosted `[ApiEndpoint]` contract carries `[Operation("<resource>.<action>", Description = "…")]`.
+- `TWA0035` is a `Warning` (a build error under warnings-as-errors) and also fires when
+  `Description` is missing or whitespace. Analyzer tests, `AnalyzerReleases.Unshipped.md`, and the
+  `tw-web-api-contracts` skill say so.
+- Each OpenAPI `operationId` is the contract's `[Operation]` name (`roles.list`); the hand-added
+  health and `/api` alias operations use the same `<resource>.<action>` style.
+- `summary` is the `[Operation]` description. `description` is the XML `<summary>` and `<remarks>`,
+  without repeating the summary text.
+- The `JWTBearerAuth` reviewer guide names the four ceremony operations from their generated
+  `OperationName` constants, and its test reads the same constants.
+- Request parameters and schema properties carry their members' XML `<summary>`.
+- Schema component ids keep the `TimeWarpArchitectureFeatures` prefix.
+- A document check (and a test) fails when an operation has no `summary` or when an operation id
+  quoted in a description does not resolve to an operation in the document.
+
 ## Checklist
 
-- [ ] Backfill `[Operation("<resource>.<action>", Description = "…")]` on all hosted contracts that lack it
-- [ ] Promote `TWA0035` to `Warning` and require non-whitespace `Description`; update analyzer tests and `tw-web-api-contracts` skill docs
-- [ ] Emit OpenAPI `operationId` from `[Operation]` id, `summary` from `[Operation].Description`, `description` from XML docs, and parameter/property XML `<summary>` descriptions
-- [ ] Wire `open-api-agent-reviewer-guide-server.cs` to read contract `OperationName` constants and update `open-api-agent-reviewer-guide-tests.cs`
-- [ ] Add OpenAPI document tests asserting every operation has a `summary` and every quoted `operationId` resolves
-- [ ] Verify `./bin/dev build`, targeted `./bin/dev test` (analyzer, generator, and OpenAPI suites), `./bin/dev lint-skills`, and `ganda repo audit`
+- [x] Backfill `[Operation("<resource>.<action>", Description = "…")]` on all hosted contracts that lack it
+- [x] Promote `TWA0035` to `Warning` and require non-whitespace `Description`; update analyzer tests and `tw-web-api-contracts` skill docs
+- [x] Emit OpenAPI `operationId` from `[Operation]` id, `summary` from `[Operation].Description`, `description` from XML docs, and parameter/property XML `<summary>` descriptions
+- [x] Wire `open-api-agent-reviewer-guide-server.cs` to read contract `OperationName` constants and update `open-api-agent-reviewer-guide-tests.cs`
+- [x] Add OpenAPI document tests asserting every operation has a `summary` and every quoted `operationId` resolves
+- [x] Verify `./bin/dev build`, targeted `./bin/dev test` (analyzer, generator, and OpenAPI suites), `./bin/dev lint-skills`, and `ganda repo audit`
+
+## Results
+
+What changed:
+
+- **Contracts.** Every hosted contract now has `[Operation("<resource>.<action>", Description = "…")]`
+  (about 47 added: identity, settings, agent-chat, agent-links, admin/principals, analytics,
+  browser-logs, hello, metered-capability, tip, and the api-server weather and agent-bearer
+  samples). The four ceremony ids are `agent-key-registration.start`, `agent-key-registration.complete`,
+  `agent-token-issuance.start`, and `agent-token-issuance.complete`. Request, response, DTO, and
+  `I*Details` members got one-line XML `<summary>` text. The agent-links operations carry no
+  `Group`: a `Group` links them to the `AgentHumanLink` aggregate under TWA0041/TWA0042, and those
+  contracts do not project from that root. `api-contracts` gained `global using TimeWarp.Contracts;`.
+- **TWA0035** is `Warning` and also fires on a missing or whitespace `Description`
+  (`operation-attribute-analyzer.cs`, `AnalyzerReleases.Unshipped.md`, two new analyzer tests).
+- **Generator.** `EndpointDocumentationResolver` puts `[Operation].Description` first for the
+  summary. The description is the XML `<summary>` plus `<remarks>`, without a part equal to the
+  summary. The contracts generator writes an XML `<summary>` on each generated route member
+  ("The RoleId value in the route api/admin/roles/{RoleId:guid}."), so every path parameter has a
+  description.
+- **Foundation (`OpenApiOperationNames`, `OpenApiMemberDocumentation`, `OpenApiOperationName`).**
+  `operationId` is the request's generated `OperationName` and `summary` is its
+  `OperationDescription`. Hand-written `EndpointWithoutRequest` endpoints (Entra challenge,
+  sign-out, sign-out antiforgery token) pass `OpenApiOperationName` metadata. A parameter or
+  schema property that FastEndpoints left undescribed gets its member's XML summary, or the
+  summary on the same-named `I*Details` interface property. The document check (registered last)
+  fails on a repeated operationId and on a backtick-quoted operation id that resolves to nothing.
+  The summary and `<resource>.<action>` rules are a test on the real web-server document, not
+  the runtime check, because other test hosts publish probe endpoints with no contract (the
+  stricter runtime check failed 20 probe tests in other suites).
+- **Hand-added operations.** `getApiHealth` is now `health.get`. The `/api` aliases are the tip
+  operation id plus `-alias` (`tip.get-alias`, `tip.submit-alias`).
+- **Reviewer guide.** `JWTBearerAuth` quotes the four ceremony ids from `OperationName`
+  constants in backticks. The ceremony remarks quote their partner operation the same way.
+- **Skills.** `tw-web-api-contracts` SKILL.md and `references/neutral-operations.md` say TWA0035
+  is a warning that requires `Description`, and describe the OpenAPI projection.
+- Schema component ids keep the `TimeWarpArchitectureFeatures` prefix (as decided).
+
+Gates:
+
+- `./bin/dev build`: passed, 0 warnings, 0 errors.
+- `./bin/dev test --no-build tests/analyzers/timewarp-architecture-analyzers-tests/operation-attribute-analyzer-tests.cs`: passed 9/9.
+- `./bin/dev test --no-build tests/analyzers/timewarp-architecture-sourcegenerator-tests/fast-endpoint-source-generator-summary-tests.cs`: passed 11/11.
+- `./bin/dev test --no-build tests/analyzers/timewarp-architecture-sourcegenerator-tests/contracts-generator-core-tests.cs`: passed 15/15 (covers the contracts emitter change).
+- `./bin/dev test --no-build tests/analyzers/timewarp-architecture-sourcegenerator-tests/contracts-generator-route-tests.cs`: passed 1/1 (covers the contracts emitter change).
+- `./bin/dev test --no-build tests/container-apps/web/web-server-integration-tests/open-api-operation-names-tests.cs` (new): passed, Document_Given_ 9/9 and StaleQuote_Given_ 1/1.
+- `./bin/dev test --no-build tests/container-apps/web/web-server-integration-tests/open-api-agent-reviewer-guide-tests.cs` (edited, full web host): passed.
+- `./bin/dev test --no-build tests/container-apps/web/web-server-integration-tests/open-api-*-tests.cs` (every OpenAPI suite, which covers the foundation transformer change): 23 classes passed, 0 failed.
+- These test files have no `#if !JARIBU_MULTI` guard, so they are not standalone runfiles. Each ran through `./bin/dev test <file>`.
+- `./bin/dev lint-skills`: passed, 11/11 skills.
+- `./bin/dev check-version`: source 2.0.0-beta.32 is ahead of NuGet 2.0.0-beta.31, so no bump is needed.
+- `dev template-smoke` was not run. CI runs the default variant on the PR.
+- `ganda repo audit` (after the last product edit): passed, 43 checks, 0 failed. The 1 warning is `vscode-window-icon` (VS Code window-icon configuration), which this change does not touch.
+
+### How to validate
+
+Smoke: `./bin/dev build`, then `./bin/dev test tests/container-apps/web/web-server-integration-tests/open-api-operation-names-tests.cs tests/container-apps/web/web-server-integration-tests/open-api-agent-reviewer-guide-tests.cs`.
+After deploy, fetch `https://arch.timewarp.work/openapi/v1.json`.
+
+Expect: the build is clean. Both test files pass. In the document every `operationId` is
+`<resource>.<action>` (`roles.list`, `agent-key-registration.start`, `health.get`). Every
+operation has a `summary` equal to its `[Operation]` description. Every parameter has a
+`description`. The `JWTBearerAuth` description quotes the four ceremony ids in backticks, and each
+one is an operation. Removing a `Description` from any hosted contract fails the build with TWA0035.
+
+Follow-up: response-model and shared-library members outside the feature folders (for example
+`EntraAcceptedTenant` in `libraries/timewarp-identity`, and enum types) still have no XML
+summaries, so some schema properties stay undescribed. Nothing checks schema property
+descriptions yet.
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 3. Turn cap 200 (cursor uncapped).
+- Counts: bug 0, suggestion 0, nit 0. Open 0.
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -77,3 +179,7 @@ Owner:
 ## Session
 
 - Created: 2227132 (2026-11-24)
+- 2026-11-27 implement: backfilled `[Operation]` and member docs (three parallel helpers for the contract files), raised TWA0035, flipped the summary order, added `OpenApiOperationNames` and its document check and tests, and wired the reviewer guide to the `OperationName` constants.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3bbfb902-945d-4636-9476-e47faea8e15e, max-turns 500, Done — 2026-11-27T04:27:37Z
+- 2026-11-27 review: round 1 general (grok, model grok-4.7), effort 3, turn cap 200 (cursor uncapped), disposition clean. No reviewer session id was supplied to this launch.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md, disposition.md — 2026-11-27T04:36:39Z
