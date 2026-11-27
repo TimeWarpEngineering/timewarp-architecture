@@ -84,6 +84,7 @@ Acceptance:
 - 2026-11-27 implement (claude): packable set, master Packages-*, 6-step release, docs, tests. Dispatch
   mode `merge` (pack without publish through the release job) is gone: the release job no longer packs.
   `full` is now the default dispatch; `release` + `confirm` is break-glass.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f3e697be-5f6f-46a5-a94f-559a49b830d3, max-turns 500, Done — 2026-11-27T06:39:22Z
 
 ## Notes
 
