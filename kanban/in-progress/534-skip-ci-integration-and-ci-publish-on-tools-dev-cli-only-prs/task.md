@@ -17,6 +17,27 @@ Preserve safety:
 - Green-key markers (`tools/dev-cli/services/green-key.cs` and `green-key-ledger.cs`) and the required `ci` summary job in `.github/workflows/workflow.yml` must handle skipped `ci (integration)` / `ci (publish)` legs cleanly without breaking branch protection or green-key hits on a later `master` push.
 - Keep `.github/app-workflows/workflow.yml` (generated-app workflow) consistent if it shares any `classify` outputs or `WorkflowCommand` types.
 
+## Goal (implementer restatement)
+
+A pull request that edits only the dev CLI (plus docs or kanban) should not pay for `ci (integration)`
+(8 min, hosted Docker) and `ci (publish)` (4 min), and should not run `skill-lint` unless the edit
+touches what `dev lint-skills` runs.
+
+Acceptance:
+- classify writes a `ci_legs` matrix list. A pull request whose build paths are all under
+  `tools/dev-cli/` or `tests/tools/dev-cli-tests/` gets `["fast"]`; a dev CLI test-runner file adds
+  integration, a publish file adds publish, a host file (`dev.cs`, props, global usings,
+  `workflow-command.cs`) adds both. Any other build path (source/, tests/, root props,
+  `.github/workflows/`, `.github/actions/`) runs every leg.
+- push (master and feature), dispatch mode full, and an unknown diff always run every leg; Packages-*
+  staging on master is unchanged.
+- `skill-lint` turns on for skills/evals/vally paths, CI roots, and the dev CLI files lint-skills runs,
+  not for other `tools/dev-cli/` edits. `template-smoke` still runs for every `tools/dev-cli/` edit.
+- A run that skipped a leg writes no `ci` green-key marker (`ci_marker=false`), so the master push of
+  that tree runs every leg.
+- The generated-app workflow is unchanged and still compatible (its classify writes `ci` only).
+- dev-cli-tests cover these cases; build is 0 warnings.
+
 ## Requirements
 
 - [ ] Update `WorkflowPathClasses` (`tools/dev-cli/services/workflow-path-classes.cs`), `WorkflowTemplateRepository` (`tools/dev-cli/services/workflow-template-repository.cs`), and `.github/workflows/workflow.yml` so a PR changing only `tools/dev-cli/` (excluding publish/test-runner commands) skips `ci (integration)` and `ci (publish)`, and skips `skill-lint` unless skill-lint files (`lint-skills*`, `vally-cli.version`, `skills/`, `evals/`, `.vally.yaml`) or workflow/action files changed.

@@ -20,6 +20,12 @@
 //             request does. An unreadable dev.jsonc on a push builds.
 //   skill     WorkflowPathClasses.IsSkillPath over the changed paths (gates skill-lint).
 //   template  WorkflowPathClasses.IsTemplatePath over the changed paths (gates template-smoke).
+//   ci_legs   WorkflowPathClasses.ClassifyCiLegs (task 534): the JSON list of ci-group matrix legs.
+//             ci (fast) always; ci (integration) and ci (publish) unless a pull request changed
+//             only fast-only dev CLI paths and non-build paths. Every other event runs every leg.
+//   ci_marker true only when ci is on and every leg runs: workflow.yml uploads the ci green-key
+//             marker only then, so a pull request that skipped a leg cannot let the master push
+//             skip ci-group. The writer passed to GreenKey.OutputLines counts ci only then too.
 //   packages, pack, carry_run  ReleasePackages.OutputLines (services/release-packages.cs): whether
 //             this run publishes Packages-*, whether pack-only runs (ci-group off), and the earlier
 //             run pack-only carries forward (WorkflowTemplatePackages.FindCarryRunAsync).
@@ -63,7 +69,7 @@ internal sealed class WorkflowTemplateRepository
     Ct = ct;
   }
 
-  /// <summary>Writes ci, skill, and template to GITHUB_OUTPUT. A diff that cannot be read turns every job on.</summary>
+  /// <summary>Writes ci, skill, template, and the ci-group legs to GITHUB_OUTPUT. A diff that cannot be read turns every job on.</summary>
   public async Task ClassifyAsync(PullRequestBuildDecision decision, string? attestationMode)
   {
     IReadOnlyList<string>? changed = await ReadChangedPathsAsync(decision);
@@ -81,8 +87,14 @@ internal sealed class WorkflowTemplateRepository
     WorkflowJobs pathJobs = WorkflowPathClasses.Classify(
       changed,
       paths => !configRead || PullRequestBuildClassifier.RequiresBuild(paths, config));
+    bool pullRequest = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME") == PullRequestBuildClassifier.PullRequestEventName;
+    CiLegs legs = WorkflowPathClasses.ClassifyCiLegs(
+      changed,
+      pullRequest,
+      paths => !configRead || PullRequestBuildClassifier.RequiresBuild(paths, config));
     GreenKeyObservation green = await GreenKeyLedger.ObserveAsync(Terminal, RepoRoot, pathJobs, Ct);
     WorkflowJobs jobs = GreenKey.ApplyHits(pathJobs, green.HitGates);
+    if (jobs.Ci && !legs.Full) Terminal.WriteLine($"ci-group legs: {string.Join(", ", legs.Names)} (no ci green-key marker).");
 
     bool stages = ReleasePackages.StagesPackages(Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME"), Environment.GetEnvironmentVariable("GITHUB_REF"));
     long? carryRun = stages && !jobs.Ci ? await WorkflowTemplatePackages.FindCarryRunAsync(Terminal, RepoRoot, green.Key, Ct) : null;
@@ -101,7 +113,8 @@ internal sealed class WorkflowTemplateRepository
         $"ci={WorkflowCommand.Bool(jobs.Ci)}",
         $"skill={WorkflowCommand.Bool(jobs.Skill)}",
         $"template={WorkflowCommand.Bool(jobs.Template)}",
-        .. GreenKey.OutputLines(green, jobs),
+        .. legs.OutputLines(jobs.Ci),
+        .. GreenKey.OutputLines(green, jobs with { Ci = jobs.Ci && legs.Full }),
         .. ReleasePackages.OutputLines(stages, jobs.Ci, carryRun),
       ],
       Ct);

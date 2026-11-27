@@ -1,7 +1,7 @@
 #region Purpose
 // Guards `dev workflow --phase classify`: which changed paths turn on skill lint and template smoke,
-// how a push event's before/after SHAs are read, and how a known or unknown diff becomes the ci,
-// skill, and template outputs.
+// how a push event's before/after SHAs are read, how a known or unknown diff becomes the ci,
+// skill, and template outputs, and which ci-group legs run (with the ci green-key marker gate).
 #endregion
 
 namespace WorkflowPathClasses_;
@@ -26,6 +26,10 @@ public class IsSkillPath_Given_
       ".github/workflows/workflow.yml",
       ".github/actions/setup-ci/action.yml",
       "tools/dev-cli/services/skill-spec-lint.cs",
+      "tools/dev-cli/endpoints/lint-skills-command.cs",
+      "tools/dev-cli/vally-cli.version",
+      "tools/dev-cli/services/client-name-scan.cs",
+      "tools/dev-cli/dev.cs",
     ];
 
     foreach (string path in paths)
@@ -45,6 +49,11 @@ public class IsSkillPath_Given_
       "Directory.Packages.props",
       "tools/agent-identity-cli/program.cs",
       "documentation/developer/guides/release.md",
+      // Dev CLI edits that lint-skills does not run (task 534).
+      "tools/dev-cli/services/release-packages.cs",
+      "tools/dev-cli/endpoints/workflow-template-release.cs",
+      "tools/dev-cli/endpoints/publish-all-command.cs",
+      "tests/tools/dev-cli-tests/release-packages-tests.cs",
     ];
 
     foreach (string path in paths)
@@ -76,6 +85,7 @@ public class IsTemplatePath_Given_
       ".timewarp/dev.jsonc",
       ".envrc",
       "./tools/dev-cli/endpoints/template-smoke-command.cs",
+      "tools/dev-cli/services/release-packages.cs",
       ".github/workflows/workflow.yml",
       ".github/actions/setup-ci/action.yml",
       ".github/app-workflows/workflow.yml",
@@ -217,7 +227,7 @@ public class Classify_Given_
   private static string[] Entries(JsonElement pullRequestBuild, string name) =>
     [.. pullRequestBuild.GetProperty(name).EnumerateArray().Select(entry => entry.GetString() ?? "")];
 
-  private static string RepoRoot()
+  internal static string RepoRoot()
   {
     DirectoryInfo? directory = new(AppContext.BaseDirectory);
     while (directory is not null && !Path.Exists(Path.Combine(directory.FullName, ".git")))
@@ -227,4 +237,158 @@ public class Classify_Given_
 
     return directory.ShouldNotBeNull().FullName;
   }
+}
+
+public class ClassifyCiLegs_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<ClassifyCiLegs_Given_>();
+
+  private static readonly string[] Fast = ["fast"];
+  private static readonly string[] Every = ["fast", "integration", "publish"];
+
+  // A build rule like PullRequestBuildClassifier's: documentation/ and kanban/ do not build.
+  private static bool Builds(IReadOnlyList<string> paths) =>
+    paths.Any(path => !path.StartsWith("documentation/", StringComparison.Ordinal) && !path.StartsWith("kanban/", StringComparison.Ordinal) && !path.StartsWith("skills/", StringComparison.Ordinal));
+
+  private static CiLegs PullRequest(params string[] changed) => WorkflowPathClasses.ClassifyCiLegs(changed, pullRequest: true, Builds);
+
+  public static Task DevCliReleaseAndWorkflowServiceDiff_Should_RunFastOnly()
+  {
+    CiLegs legs = PullRequest(
+      "tools/dev-cli/services/release-packages.cs",
+      "tools/dev-cli/endpoints/workflow-template-release.cs",
+      "tools/dev-cli/endpoints/workflow-template-packages.cs",
+      "tests/tools/dev-cli-tests/release-packages-tests.cs",
+      "documentation/developer/guides/release.md",
+      "kanban/in-progress/534-task/task.md");
+
+    legs.Names.ShouldBe(Fast);
+    legs.Full.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task LintSkillsDiff_Should_RunFastOnly()
+  {
+    PullRequest("tools/dev-cli/endpoints/lint-skills-command.cs", "tools/dev-cli/vally-cli.version").Names.ShouldBe(Fast);
+    return Task.CompletedTask;
+  }
+
+  public static Task PublishCommandDiff_Should_RunPublish()
+  {
+    PullRequest("tools/dev-cli/endpoints/publish-aca-command.cs").ShouldBe(new CiLegs(Integration: false, Publish: true));
+    PullRequest("tools/dev-cli/services/aspire-publish-targets.cs").ShouldBe(new CiLegs(Integration: false, Publish: true));
+    return Task.CompletedTask;
+  }
+
+  public static Task TestRunnerDiff_Should_RunIntegration()
+  {
+    PullRequest("tools/dev-cli/endpoints/test-command.cs").ShouldBe(new CiLegs(Integration: true, Publish: false));
+    PullRequest("tools/dev-cli/services/test-groups.cs").ShouldBe(new CiLegs(Integration: true, Publish: false));
+    PullRequest("./tools/dev-cli/services/dotnet-test-arguments.cs").ShouldBe(new CiLegs(Integration: true, Publish: false));
+    return Task.CompletedTask;
+  }
+
+  public static Task DevCliHostDiff_Should_RunEveryLeg()
+  {
+    foreach (string path in (string[])["tools/dev-cli/dev.cs", "tools/dev-cli/Directory.Build.props", "tools/dev-cli/endpoints/workflow-command.cs"])
+    {
+      PullRequest(path).Names.ShouldBe(Every, path);
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task BuildPathOutsideDevCli_Should_RunEveryLeg()
+  {
+    string[] paths =
+    [
+      "source/container-apps/web/projects/web-spa/program.cs",
+      "tests/container-apps/web/web-integration-tests/foo-tests.cs",
+      "Directory.Packages.props",
+      ".github/workflows/workflow.yml",
+      ".github/actions/setup-ci/action.yml",
+    ];
+
+    foreach (string path in paths)
+    {
+      PullRequest("tools/dev-cli/services/release-packages.cs", path).ShouldBe(CiLegs.All, path);
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task BuildRule_Should_SeeOnlyPathsOutsideTheFastOnlyRoots()
+  {
+    IReadOnlyList<string>? ruleInput = null;
+    WorkflowPathClasses.ClassifyCiLegs(
+      ["tools/dev-cli/services/green-key.cs", "tests/tools/dev-cli-tests/green-key-tests.cs", "documentation/x.md"],
+      pullRequest: true,
+      paths =>
+      {
+        ruleInput = paths;
+        return false;
+      });
+
+    ruleInput.ShouldBe(["documentation/x.md"]);
+
+    WorkflowPathClasses.ClassifyCiLegs(
+      ["tools/dev-cli/services/green-key.cs"],
+      pullRequest: true,
+      _ => throw new InvalidOperationException("A dev-cli-only diff has nothing left for the build rule."))
+      .Names.ShouldBe(Fast);
+    return Task.CompletedTask;
+  }
+
+  public static Task SkillsOnlyDiff_Should_RunFastOnly()
+  {
+    // ci is off for this diff (the build rule); the legs say what ci-group would run.
+    PullRequest("skills/tw-deploy/SKILL.md").Names.ShouldBe(Fast);
+    return Task.CompletedTask;
+  }
+
+  public static Task UnknownDiffOrPush_Should_RunEveryLeg()
+  {
+    WorkflowPathClasses.ClassifyCiLegs(null, pullRequest: true, _ => throw new InvalidOperationException("unknown diff"))
+      .ShouldBe(CiLegs.All);
+    WorkflowPathClasses.ClassifyCiLegs(["tools/dev-cli/services/release-packages.cs"], pullRequest: false, _ => throw new InvalidOperationException("push"))
+      .ShouldBe(CiLegs.All);
+    return Task.CompletedTask;
+  }
+
+  public static Task OutputLines_Should_WriteTheMatrixAndGateTheCiMarker()
+  {
+    CiLegs.All.OutputLines(ci: true).ShouldBe(["ci_legs=[\"fast\",\"integration\",\"publish\"]", "ci_marker=true"]);
+    CiLegs.All.OutputLines(ci: false).ShouldBe(["ci_legs=[\"fast\",\"integration\",\"publish\"]", "ci_marker=false"]);
+    new CiLegs(Integration: false, Publish: false).OutputLines(ci: true).ShouldBe(["ci_legs=[\"fast\"]", "ci_marker=false"]);
+    new CiLegs(Integration: true, Publish: false).OutputLines(ci: true).ShouldBe(["ci_legs=[\"fast\",\"integration\"]", "ci_marker=false"]);
+    return Task.CompletedTask;
+  }
+}
+
+public class Workflow_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Workflow_Given_>();
+
+  public static Task CiGroup_Should_TakeItsMatrixFromCiLegs()
+  {
+    string workflow = Workflow();
+
+    workflow.ShouldContain("ci_legs: ${{ steps.classify.outputs.ci_legs || '[\"fast\",\"integration\",\"publish\"]' }}");
+    workflow.ShouldContain("name: ${{ fromJSON(needs.classify.outputs.ci_legs) }}");
+    workflow.ShouldContain("matrix.name != 'integration'");
+    return Task.CompletedTask;
+  }
+
+  public static Task CiMarker_Should_NeedEveryLeg()
+  {
+    string workflow = Workflow();
+
+    workflow.ShouldContain("ci_marker: ${{ steps.classify.outputs.ci_marker || 'false' }}");
+    workflow.ShouldContain("if: needs.ci-group.result == 'success' && needs.classify.outputs.ci_marker == 'true'");
+    return Task.CompletedTask;
+  }
+
+  private static string Workflow() => File.ReadAllText(Path.Combine(Classify_Given_.RepoRoot(), ".github/workflows/workflow.yml"));
 }

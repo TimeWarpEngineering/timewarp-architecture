@@ -3,8 +3,10 @@ name: CI/CD
 # Thin trigger: this file says when to run and on which runner. Every decision and check is
 # `dev workflow` (tools/dev-cli/endpoints/workflow-command.cs, Design region); shared runner setup
 # is .github/actions/setup-ci. Jobs:
-#   classify        ci / skill / template outputs from `dev workflow --phase classify`
-#   ci-group        ci (fast), ci (integration), ci (publish): one `dev workflow` phase each
+#   classify        ci / skill / template / ci_legs outputs from `dev workflow --phase classify`
+#   ci-group        ci (fast), ci (integration), ci (publish): one `dev workflow` phase each. The
+#                   matrix is classify's ci_legs: a pull request that changed only fast-only dev CLI
+#                   paths runs ci (fast) alone (task 534, services/workflow-path-classes.cs)
 #   pack-only       a master push whose ci-group is off: carry forward or build and pack (task 533)
 #   ci              the required check over ci-group and pack-only; on master it publishes
 #                   Packages-<run_number> and keeps the two newest
@@ -36,6 +38,8 @@ name: CI/CD
 # template-smoke when that gate already passed on the same key in an earlier same-repo run. So a
 # master merge push, or a kanban-only push to a green pull request, does not run CI again. The
 # green-key job uploads a marker per gate after it passes. Rules: tools/dev-cli/services/green-key.cs.
+# The ci marker needs every ci-group leg (classify's ci_marker): a pull request that ran ci (fast)
+# alone writes none, so the master push of that tree runs every leg.
 # Fork pull requests, release, schedule, and workflow_dispatch never skip. To force a full run, add
 # the trailer `Green-Key: full-run` to the head commit, or dispatch this workflow with mode full.
 #
@@ -133,6 +137,9 @@ jobs:
       ci: ${{ steps.classify.outputs.ci || 'true' }}
       skill: ${{ steps.classify.outputs.skill || 'true' }}
       template: ${{ steps.classify.outputs.template || 'true' }}
+      # ci-group matrix legs (task 534). A classify step that wrote nothing runs every leg.
+      ci_legs: ${{ steps.classify.outputs.ci_legs || '["fast","integration","publish"]' }}
+      ci_marker: ${{ steps.classify.outputs.ci_marker || 'false' }}
       green_key: ${{ steps.classify.outputs.green_key }}
       green_key_writer: ${{ steps.classify.outputs.green_key_writer || 'false' }}
       # Master packages (task 533). A classify step that wrote nothing stages nothing.
@@ -161,9 +168,9 @@ jobs:
       (github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')) &&
       needs.classify.outputs.ci == 'true'
     name: ci (${{ matrix.name }})
-    # matrix.hosted keeps a leg on ubuntu-latest on every event (see the header).
+    # ci (integration) stays on ubuntu-latest on every event (see the header).
     runs-on: >-
-      ${{ vars.CI_HOSTED_ONLY != 'true' && !matrix.hosted &&
+      ${{ vars.CI_HOSTED_ONLY != 'true' && matrix.name != 'integration' &&
       (github.event_name == 'push' ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
       fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
@@ -172,14 +179,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: fast
-            args: --phase test --group fast
-          - name: integration
-            args: --phase test --group integration
-            hosted: true  # Testcontainers and aspire-tests need Docker; wslc has no socket
-          - name: publish
-            args: --phase publish
+        # fast, integration, publish; integration and publish only when classify keeps them.
+        # Integration runs hosted: Testcontainers and aspire-tests need Docker; wslc has no socket.
+        name: ${{ fromJSON(needs.classify.outputs.ci_legs) }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -192,7 +194,7 @@ jobs:
 
       # On a master run the publish leg also packs and verifies the 12 packages (task 533).
       - name: Run CI pipeline
-        run: dotnet run --file tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}${{ matrix.name == 'publish' && needs.classify.outputs.packages == 'true' && ' --pack' || '' }}
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow ${{ matrix.name == 'publish' && '--phase publish' || format('--phase test --group {0}', matrix.name) }}${{ matrix.name == 'publish' && needs.classify.outputs.packages == 'true' && ' --pack' || '' }}
 
       - name: Stage packages for the ci job
         if: success() && matrix.name == 'publish' && needs.classify.outputs.packages == 'true'
@@ -501,8 +503,9 @@ jobs:
           [ordered]@{ format = 'green-key-v1'; key = $env:GREEN_KEY; run = $env:GITHUB_RUN_ID; commit = $env:GITHUB_SHA } |
             ConvertTo-Json -Compress | Set-Content -Path artifacts/green-key/marker.json
 
+      # Only a run of every ci-group leg (ci_marker, task 534) is a ci pass on this key.
       - name: Upload ci marker
-        if: needs.ci-group.result == 'success'
+        if: needs.ci-group.result == 'success' && needs.classify.outputs.ci_marker == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: green-key-v1-ci-${{ needs.classify.outputs.green_key }}
