@@ -48,6 +48,8 @@ Acceptance:
   Its nuspec dependencies (Build.Tasks 2.0.1-beta.1, Mediator 15.0.0-beta.10, Amuru 3.0.0-beta.10,
   Contracts 2.0.0-beta.34, OpenTelemetry 1.21.0) match the existing pins.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d1237655-0403-44df-809b-dbb0618f0b09, max-turns 500, Done — 2026-11-27T05:47:17Z
+- Review oracle: Grok 4.7, tw-implementation-review effort 1, roster general, 1 round, disposition clean, session not reported, turn cap uncapped (cursor). The pin goal matches the task. — 2026-11-27
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 80), artifacts general.md, merged.md, disposition.md — 2026-11-27T05:53:08Z
 
 ## Results
 
@@ -70,12 +72,28 @@ Gates:
 - `./bin/dev test --no-build --project dev-cli-tests`: passed (Nuru consumer).
 - `ganda repo audit`: first run failed `package-pin-currency` (Nuru beta.18); after the bump, 43 passed, 0 failed, 1 warning (`vscode-window-icon`, warning only).
 
+### Review
+
+- Rounds: 1. Effort 1, roster: general. Reviewer: Grok 4.7. Session not reported. Turn cap uncapped (cursor); budget ladder for this diff is 80.
+- Final counts: 0 bug, 0 suggestion, 0 nit. 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. No wontfix and no escalations.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 - Smoke: `./bin/dev build && ganda nuget outdated && ./bin/dev test tests/container-apps/api/api-server-integration-tests/features/open-api/open-api-document-tests.cs`
 - Expect: build has 0 warnings and 0 errors, `ganda nuget outdated` prints "All packages are up to date!", and the OpenAPI document tests pass 2/2 including the `/scalar/v1` request.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Do **not** bump `<Version>` in `source/Directory.Build.props` — source is already at `2.0.0-beta.32` ahead of NuGet `2.0.0-beta.31`.
 - Pre-release task ahead of task 533 (DevCli artifact-promotion release pipeline) and the `v2.0.0-beta.32` release cut.
+
+## Learnings
+
+- The goal restatement matches the task on the three pins, call-site fixes, and leaving `<Version>` alone.
+- Misread: the restatement's acceptance line says "the tests that cover the touched packages" and leaves out `./bin/dev template-smoke` and `web-server-integration-tests --filter-class OpenApi`. Template-smoke was still run. The OpenApi filter was recorded as `open-api-browser-navigation-tests.cs` (3/3) plus the api-server `/scalar/v1` test. The recorded `./bin/dev build` compiles `UseScalarApiReference`, and `Scalar_Ui_Should_Point_At_The_Document` requests `/scalar/v1`.
