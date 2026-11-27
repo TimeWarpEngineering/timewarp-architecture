@@ -40,6 +40,10 @@ Acceptance:
 - [x] `dev-cli-tests` updated and passing
 - [x] `BuildCommand` Design region updated
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Origin: `/tw-walk-retro` on task 533 (PR #714), Finding 2. Task 526 closed the same blind spot for unlisted `tests/` Jaribu aggregators; `tools/dev-cli/dev.cs` is the remaining uncompiled entry point.
@@ -55,6 +59,8 @@ Acceptance:
   Measured: the new step takes ~5s incremental and ~24s cold. Output goes to
   `~/.local/share/dotnet/runfile/dev-<hash>/bin/release/`, never `./bin/dev`.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 9099f34a-e60e-4a43-bef3-4a3cea3b4fc8, max-turns 500, Done — 2026-11-27T10:55:25Z
+- 2026-11-27 review: general reviewer (Grok 4.7, Cursor), effort 1, roster general, turn cap 80 (cursor session uncapped). No vendor session id on this launch. Round 1 disposition clean, 0 open findings.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 80), artifacts general.md, merged.md, disposition.md — 2026-11-27T10:59:52Z
 
 ## Results
 
@@ -89,3 +95,9 @@ Acceptance:
 - Expect: the first run prints `Building tools/dev-cli/dev.cs (dev CLI runfile, Release, no NativeAOT link)...` and
   `Build completed successfully!`; the second exits 1 with the compiler error and `Build failed: tools/dev-cli/dev.cs`.
   `./bin/dev` is not rewritten by either run.
+
+### Review
+
+- Round 1, effort 1, roster: general. Counts: bug 0, suggestion 0, nit 0 (open 0, fixed 0, wontfix 0).
+- Disposition: clean (`review/disposition.md`). No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
