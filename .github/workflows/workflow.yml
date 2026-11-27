@@ -5,8 +5,12 @@ name: CI/CD
 # is .github/actions/setup-ci. Jobs:
 #   classify        ci / skill / template outputs from `dev workflow --phase classify`
 #   ci-group        ci (fast), ci (integration), ci (publish): one `dev workflow` phase each
-#   ci              the required check over ci-group
-#   release         release event and dispatch: pack, OIDC push (one job, never a matrix)
+#   pack-only       a master push whose ci-group is off: carry forward or build and pack (task 533)
+#   ci              the required check over ci-group and pack-only; on master it publishes
+#                   Packages-<run_number> and keeps the two newest
+#   release         release event and break-glass dispatch: promote the master run's Packages-*
+#                   (tag-gate, check-version, locate-run, download, verify, OIDC push), then
+#                   template-publish-smoke. One job, never a matrix.
 #   skill-lint      `dev lint-skills` at the vally pin
 #   template-smoke  pack, install, generate, build; the nightly runs the flag-off matrix
 #   green-key       uploads a green-key marker for each gate that passed (task 504)
@@ -34,6 +38,18 @@ name: CI/CD
 # green-key job uploads a marker per gate after it passes. Rules: tools/dev-cli/services/green-key.cs.
 # Fork pull requests, release, schedule, and workflow_dispatch never skip. To force a full run, add
 # the trailer `Green-Key: full-run` to the head commit, or dispatch this workflow with mode full.
+#
+# Packages (task 533, as timewarp-nuru and timewarp-ganda 470 and 711). Every master push CI accepts
+# ends with Packages-<run_number>: the 12 packages of `dev workflow` (ArchitecturePackableProjectService),
+# built and verified once on that commit. The release job promotes those bytes; it never rebuilds.
+# classify writes packages=true for a push or dispatch on master only, so a pull request uploads no
+# Packages-*. With ci-group on, ci (publish) packs after publish all (`--pack`). With ci-group off (a
+# green-key hit, usually the merge of a green pull request, or a skills-only push, which still changes
+# the template package), pack-only runs: it carries forward a live Packages-* of an earlier non-PR run
+# with the same green key (classify's carry_run), else builds and packs this commit. Either job
+# uploads staged-packages; ci republishes it as Packages-<run_number> (3 days: the org's 500 MB
+# Actions storage cap), deletes Packages-* older than the two newest, and deletes staged-packages.
+# pack-only writes no green-key marker. Rules: tools/dev-cli/services/release-packages.cs.
 
 on:
   push:
@@ -74,14 +90,18 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'merge = pack without publishing (default). probe = trusted-publishing check only (OIDC login, no build, no publish). nightly = template-smoke flag-off matrix + generated-app tests only. full = every CI job on hosted runners, no green-key skip.'
+        description: 'full = every CI job on hosted runners, no green-key skip; on master it also publishes Packages-* (default). release = break-glass publish of this ref''s Packages-*; also requires confirm. probe = trusted-publishing check only (OIDC login, no build, no publish). nightly = template-smoke flag-off matrix + generated-app tests only.'
         type: choice
         options:
-          - merge
+          - full
+          - release
           - probe
           - nightly
-          - full
-        default: merge
+        default: full
+      confirm:
+        description: 'Break-glass guard: type the word release to confirm publishing when mode is release. Ignored otherwise.'
+        type: string
+        default: ''
 
 # A newer pull request run, or a newer push to the same branch, cancels the older one. Release,
 # dispatch, and schedule runs get a group of their own (run_id) and are never cancelled.
@@ -107,7 +127,7 @@ jobs:
       fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
-      actions: read  # green-key marker lookup (gh api actions/artifacts)
+      actions: read  # green-key marker and carry-forward lookup (gh api actions/artifacts)
     outputs:
       # A classify step that wrote nothing turns the job on.
       ci: ${{ steps.classify.outputs.ci || 'true' }}
@@ -115,6 +135,10 @@ jobs:
       template: ${{ steps.classify.outputs.template || 'true' }}
       green_key: ${{ steps.classify.outputs.green_key }}
       green_key_writer: ${{ steps.classify.outputs.green_key_writer || 'false' }}
+      # Master packages (task 533). A classify step that wrote nothing stages nothing.
+      packages: ${{ steps.classify.outputs.packages || 'false' }}
+      pack: ${{ steps.classify.outputs.pack || 'false' }}
+      carry_run: ${{ steps.classify.outputs.carry_run }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -166,8 +190,20 @@ jobs:
           dev-certs: 'true'
           aspire-cli: 'true'
 
+      # On a master run the publish leg also packs and verifies the 12 packages (task 533).
       - name: Run CI pipeline
-        run: dotnet run --file tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}${{ matrix.name == 'publish' && needs.classify.outputs.packages == 'true' && ' --pack' || '' }}
+
+      - name: Stage packages for the ci job
+        if: success() && matrix.name == 'publish' && needs.classify.outputs.packages == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: staged-packages
+          path: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg
+          if-no-files-found: error
+          retention-days: 3
 
       - name: Upload coverage
         if: success() && matrix.name != 'publish'
@@ -177,42 +213,167 @@ jobs:
           path: artifacts/coverage
           if-no-files-found: warn
 
-  ci:
-    # The required check. A skipped ci-group (non-build change) passes; a failed or cancelled
-    # group fails. A failed classify fails too: its skip of ci-group must not read as a pass.
-    needs: [classify, ci-group]
-    if: always() && (github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full'))
-    runs-on: ubuntu-latest
-    steps:
-      - name: All CI groups passed
-        env:
-          CLASSIFY_RESULT: ${{ needs.classify.result }}
-          GROUP_RESULT: ${{ needs.ci-group.result }}
-        run: |
-          Write-Host "classify: $env:CLASSIFY_RESULT ci-group: $env:GROUP_RESULT"
-          if ($env:CLASSIFY_RESULT -ne 'success') { exit 1 }
-          if ($env:GROUP_RESULT -ne 'success' -and $env:GROUP_RESULT -ne 'skipped') { exit 1 }
-
-  release:
-    # NuGet Trusted Publishing binds to this repo + workflow.yml, not the job name.
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'nightly' && inputs.mode != 'full')
-    runs-on: ubuntu-latest
+  pack-only:
+    # A master run whose ci-group is off still publishes Packages-* (see the header). No test step:
+    # the tree already passed ci on this green key, or the push changed only skills.
+    needs: [classify]
+    if: |
+      always() && !cancelled() &&
+      needs.classify.result == 'success' &&
+      needs.classify.outputs.pack == 'true'
+    runs-on: >-
+      ${{ vars.CI_HOSTED_ONLY != 'true' && github.event_name == 'push' &&
+      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
-      id-token: write  # NuGet Trusted Publishing (OIDC)
+      actions: read  # carry forward: gh lists and downloads the earlier run's Packages-*
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-ci
+        with:
+          nuget-cache: restore
+
+      - name: Pack this commit or carry forward
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CARRY_RUN: ${{ needs.classify.outputs.carry_run }}
+        run: |
+          if ($env:CARRY_RUN) {
+            dotnet run --file tools/dev-cli/dev.cs -- workflow --phase pack --carry-run $env:CARRY_RUN
+          } else {
+            dotnet run --file tools/dev-cli/dev.cs -- workflow --phase pack
+          }
+          exit $LASTEXITCODE
+
+      - name: Stage packages for the ci job
+        uses: actions/upload-artifact@v7
+        with:
+          name: staged-packages
+          path: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg
+          if-no-files-found: error
+          retention-days: 3
+
+  ci:
+    # The required check. A skipped ci-group (non-build change) passes; a failed or cancelled
+    # group fails. A failed classify fails too: its skip of ci-group must not read as a pass.
+    # pack-only must pass or skip the same way.
+    needs: [classify, ci-group, pack-only]
+    if: always() && (github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # delete Packages-* older than the two newest, and this run's staged-packages
+    steps:
+      - name: All CI groups passed
+        env:
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          GROUP_RESULT: ${{ needs.ci-group.result }}
+          PACK_RESULT: ${{ needs.pack-only.result }}
+        run: |
+          Write-Host "classify: $env:CLASSIFY_RESULT ci-group: $env:GROUP_RESULT pack-only: $env:PACK_RESULT"
+          if ($env:CLASSIFY_RESULT -ne 'success') { exit 1 }
+          if ($env:GROUP_RESULT -ne 'success' -and $env:GROUP_RESULT -ne 'skipped') { exit 1 }
+          if ($env:PACK_RESULT -ne 'success' -and $env:PACK_RESULT -ne 'skipped') { exit 1 }
+
+      # Master only (classify packages=true): publish the staged packages under the name the release
+      # job's locate-run and `dev release` look for. Do not rename Packages-*.
+      - name: Download staged packages
+        if: success() && needs.classify.outputs.packages == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: staged-packages
+          path: artifacts/packages
+
+      - name: Upload Packages
+        id: upload-packages
+        if: success() && needs.classify.outputs.packages == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Packages-${{ github.run_number }}
+          path: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Keep the two newest Packages artifacts
+        # A listing that lags the upload prunes on the next green master run instead. Other artifact
+        # names (coverage, green-key markers) are left alone.
+        if: success() && steps.upload-packages.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_ARTIFACT: Packages-${{ github.run_number }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $query = '.artifacts[] | select((.name | startswith("Packages-")) and (.expired == false)) | {created_at, id, name} | tojson'
+          $listed = gh api --paginate "/repos/$($env:GITHUB_REPOSITORY)/actions/artifacts?per_page=100" --jq $query
+          if ($LASTEXITCODE -ne 0) { throw 'gh api failed to list the Actions artifacts.' }
+          $artifacts = @($listed | Where-Object { $_ } | ForEach-Object { $_ | ConvertFrom-Json })
+          if (-not ($artifacts | Where-Object { $_.name -eq $env:EXPECTED_ARTIFACT })) {
+            Write-Output "$($env:EXPECTED_ARTIFACT) is not listed yet; the next green master run prunes."
+            exit 0
+          }
+          $keep = 2
+          $sorted = @($artifacts | Sort-Object -Property @{ Expression = { [datetime]$_.created_at }; Descending = $true }, @{ Expression = { [long]$_.id }; Descending = $true })
+          for ($index = 0; $index -lt $sorted.Count; $index++) {
+            $artifact = $sorted[$index]
+            if ($index -lt $keep) {
+              Write-Output "Keeping $($artifact.name) (id=$($artifact.id), created=$($artifact.created_at))"
+              continue
+            }
+            Write-Output "Deleting $($artifact.name) (id=$($artifact.id), created=$($artifact.created_at))"
+            gh api --method DELETE "/repos/$($env:GITHUB_REPOSITORY)/actions/artifacts/$($artifact.id)" | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "Delete of $($artifact.name) (id=$($artifact.id)) failed." }
+          }
+
+      - name: Delete staged packages
+        if: success() && steps.upload-packages.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ids = @(gh api "/repos/$($env:GITHUB_REPOSITORY)/actions/runs/$($env:RUN_ID)/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "staged-packages") | .id' | Where-Object { $_ })
+          if ($LASTEXITCODE -ne 0) { throw 'gh api failed to list the run artifacts.' }
+          foreach ($id in $ids) {
+            Write-Output "Deleting staged-packages (id=$id)"
+            gh api --method DELETE "/repos/$($env:GITHUB_REPOSITORY)/actions/artifacts/$id" | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "Delete of staged-packages (id=$id) failed." }
+          }
+
+  release:
+    # NuGet Trusted Publishing binds to this repo + workflow.yml, not the job name. Promotes the
+    # Packages-* the master run built and tested at this commit; no clean, build, test, or upload.
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'release' || inputs.mode == 'probe'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # NuGet Trusted Publishing (OIDC)
+      actions: read    # locate-run lists runs and downloads the Packages-* artifact
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # tag pin, ancestor of origin/master, and the attestation notes need full history
+
+      - name: Validate break-glass confirmation
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm != 'release'
+        run: |
+          echo "::error::mode=release requires confirm=release. Refusing to run a break-glass release."
+          exit 1
+
+      - uses: ./.github/actions/setup-ci
         if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
         with:
-          nuget-cache: restore  # nothing a release restores or packs seeds a later run
-          aspire-cli: 'true'
+          nuget-cache: restore  # nothing a release restores seeds a later run
+          aspire-cli: 'true'    # template-publish-smoke builds the generated app
 
       - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release' || inputs.mode == 'probe'
         id: nuget-login
         uses: nuget/login@v1
         with:
@@ -223,21 +384,17 @@ jobs:
         run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
 
       - name: Run release pipeline
-        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
         env:
-          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
-        run: dotnet run --file tools/dev-cli/dev.cs -- workflow
-
-      - name: Upload Artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          # Do not rename Packages-*: tw-release's locate-run depends on it. 3 days covers a weekend
-          # between merge and `dev release` under the org's 500 MB Actions storage cap.
-          name: Packages-${{ github.run_number }}
-          path: artifacts/packages/*.nupkg
-          if-no-files-found: ignore
-          retention-days: 3
+          GH_TOKEN: ${{ github.token }}
+          NUGET_LOGIN_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq 'release') {
+            dotnet run --file tools/dev-cli/dev.cs -- workflow --api-key $env:NUGET_LOGIN_API_KEY
+          } else {
+            dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release --api-key $env:NUGET_LOGIN_API_KEY
+          }
+          exit $LASTEXITCODE
 
   skill-lint:
     needs: [classify]
@@ -287,7 +444,7 @@ jobs:
     if: |
       always() && !cancelled() && (
         github.event_name == 'schedule' ||
-        (github.event_name == 'workflow_dispatch' && inputs.mode != 'probe') ||
+        (github.event_name == 'workflow_dispatch' && inputs.mode != 'probe' && inputs.mode != 'release') ||
         ((github.event_name == 'push' || github.event_name == 'pull_request') && needs.classify.outputs.template == 'true')
       )
     # Hosted on every event: the generated app's tests use Testcontainers (see the header).

@@ -1,13 +1,8 @@
 {
   // Per-repo configuration for TimeWarp.Nuru.DevCli shared endpoints.
   // The template pack ships this file to generated apps (task 530). Generation strips the
-  // templateRepository regions: they hold the template repository's release and CI entries.
-  //#if (templateRepository)
-  "checkVersionConfig": {
-    // git-tag: compare repo Version to latest GitHub release (release workflow)
-    "checkVersionStrategy": "git-tag"
-  },
-  //#endif
+  // templateRepository regions: they hold the template repository's CI entries. check-version and
+  // dev release read the packable set from the dev CLI (ArchitecturePackableProjectService, task 533).
 
   // Pull request build decision (task 493, timewarp-nuru 595): additions to the
   // PullRequestBuildClassifier rule in TimeWarp.Nuru.DevCli. An entry is a path,
