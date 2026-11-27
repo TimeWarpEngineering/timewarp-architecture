@@ -19,12 +19,12 @@
   <ItemGroup Label="TimeWarp Packages">
     <!-- Nuru stays on the 4.0.0 betas: `ganda nuget outdated` treats stable 3.0.0 as current, but the
          `ganda repo audit` nuru check requires the 4.0.0 line and blocks signing on 3.0.0 (task 389). -->
-    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.17" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.18" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.18" />
     <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.10" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.10" />
     <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.2" />
-    <!-- 2.0.1-beta.1, not stable 2.0.0: TimeWarp.Nuru 4.0.0-beta.17 depends on
+    <!-- 2.0.1-beta.1, not stable 2.0.0: TimeWarp.Nuru 4.0.0-beta.18 depends on
          TimeWarp.Build.Tasks >= 2.0.1-beta.1, so a 2.0.0 pin is NU1605 (downgrade) in the dev-cli
          runfile. Take the next stable when it is at least this version (task 492). -->
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.1-beta.1" />
@@ -82,7 +82,7 @@
     <PackageVersion Include="Ardalis.GuardClauses" Version="[5.0.0]" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
-    <PackageVersion Include="libphonenumber-csharp" Version="9.0.43" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.44" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.85.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.85.0" />
@@ -152,7 +152,7 @@
     <PackageVersion Include="System.Formats.Cbor" Version="11.0.0" />
     <!-- 15.0 reuses the id TimeWarp.Mediator for the contracts assembly and ships TWM001–TWM004
          inside that package. TimeWarp.Mediator.Contracts and TimeWarp.Mediator.Analyzers stop at
-         14.0.0. TimeWarp.Nuru 4.0.0-beta.17 depends on Mediator 15, so dev-cli and
+         14.0.0. TimeWarp.Nuru 4.0.0-beta.18 depends on Mediator 15, so dev-cli and
          agent-identity-cli handlers are IRequestHandler and return ValueTask (task 486).
          15.0.0-beta.10 adds GeneratedRequestPatternAttribute and TWM013. Additive; no
          call site here declares a generated request (task 498). -->
@@ -166,11 +166,11 @@
     <PackageVersion Include="FastEndpoints.OpenApi" Version="9.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
     <PackageVersion Include="Microsoft.OpenApi" Version="3.11.1" />
-    <!-- Scalar.AspNetCore 3.1.1 (task 498). 3.0.0 drops net8.0 and net9.0 and targets net10.0
-         and later. This repo is net11.0. WithTitle, AddDocument, SortTagsAlphabetically,
-         ExpandAllTags, and AddPreferredSecuritySchemes are unchanged, so MapScalarApiReference
-         stays. -->
-    <PackageVersion Include="Scalar.AspNetCore" Version="3.1.1" />
+    <!-- Scalar.AspNetCore 3.3.0 (task 532; 3.1.1 was task 498). 3.0.0 drops net8.0 and net9.0
+         and targets net10.0 and later. This repo is net11.0. WithTitle, AddDocument,
+         SortTagsAlphabetically, ExpandAllTags, and AddPreferredSecuritySchemes are unchanged
+         through 3.3.0, so MapScalarApiReference stays. -->
+    <PackageVersion Include="Scalar.AspNetCore" Version="3.3.0" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="11.0.0" />
@@ -212,7 +212,7 @@
          AppHost calls AddTimeWarpStateDevTools, which the release note leaves unchanged. -->
     <PackageVersion Include="TimeWarp.State.DevTools.Wasm" Version="12.0.0-beta.19" />
     <PackageVersion Include="timewarp-heroicons" Version="2.2.0" />
-    <PackageVersion Include="timewarp-simple-icons" Version="16.37.0" />
+    <PackageVersion Include="timewarp-simple-icons" Version="16.38.1" />
   </ItemGroup>
 
   <ItemGroup Label="Aspire Packages">
