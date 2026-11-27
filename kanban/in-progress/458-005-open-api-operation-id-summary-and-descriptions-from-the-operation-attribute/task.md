@@ -150,6 +150,17 @@ Follow-up: response-model and shared-library members outside the feature folders
 summaries, so some schema properties stay undescribed. Nothing checks schema property
 descriptions yet.
 
+### Review
+
+- Rounds: 1. Roster: general. Effort: 3. Turn cap 200 (cursor uncapped).
+- Counts: bug 0, suggestion 0, nit 0. Open 0.
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Source: task 458 multi-model review of the published OpenAPI document
@@ -170,3 +181,5 @@ descriptions yet.
 - Created: 2227132 (2026-11-24)
 - 2026-11-27 implement: backfilled `[Operation]` and member docs (three parallel helpers for the contract files), raised TWA0035, flipped the summary order, added `OpenApiOperationNames` and its document check and tests, and wired the reviewer guide to the `OperationName` constants.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3bbfb902-945d-4636-9476-e47faea8e15e, max-turns 500, Done — 2026-11-27T04:27:37Z
+- 2026-11-27 review: round 1 general (grok, model grok-4.7), effort 3, turn cap 200 (cursor uncapped), disposition clean. No reviewer session id was supplied to this launch.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md, disposition.md — 2026-11-27T04:36:39Z
