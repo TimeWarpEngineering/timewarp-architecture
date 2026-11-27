@@ -65,6 +65,7 @@ Acceptance:
 - Implement (2026-11-27): `ci_legs` / `ci_marker` classify outputs, dynamic ci-group matrix,
   narrowed skill-lint rule, ci marker gate. `WorkflowTemplateRepository` lives at
   `tools/dev-cli/endpoints/workflow-template-repository.cs` (the brief named `services/`).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 5787cfc4-7044-4671-9466-ec6668122dd1, max-turns 500, Done — 2026-11-27T10:43:58Z
 
 ## Results
 
