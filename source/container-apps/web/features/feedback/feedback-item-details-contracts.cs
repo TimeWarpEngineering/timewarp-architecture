@@ -22,8 +22,11 @@ public interface IFeedbackItemDetails
   public const int MaxTitleLength = 200;
   public const int MaxBodyLength = 8000;
 
+  /// <summary>What kind of feedback this is.</summary>
   public FeedbackKind Kind { get; set; }
+  /// <summary>A short title for the item.</summary>
   public string Title { get; set; }
+  /// <summary>The item's body text.</summary>
   public string Body { get; set; }
 }
 

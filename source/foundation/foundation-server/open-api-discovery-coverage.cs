@@ -11,6 +11,9 @@
 // and request body are shallow copies of the /api/tip operation of the same verb, taken after the
 // operation transformers ran (a host's payment 402/503 included), so the alias cannot document
 // less than the route it rewrites to (task 458-009).
+// Operation ids follow the contracts' <resource>.<action> style (task 458-005): health.get, and
+// each alias is its /api/tip operation's id plus -alias (tip.get-alias, tip.submit-alias), so a
+// renamed tip operation renames its alias.
 // /.well-known discovery documents are excluded. info.description is what Scalar renders, and
 // x-timewarp-excluded-routes is the same list for a reader that does not parse markdown.
 // Both point at /llms.txt.
@@ -40,6 +43,8 @@ internal static class OpenApiDiscoveryCoverage
   internal const string ExtensionName = "x-timewarp-excluded-routes";
 
   internal const string HealthPath = TimeWarp.Foundation.Configuration.IngressPaths.WebServerHealthPath;
+
+  internal const string HealthOperationId = "health.get";
 
   internal const string AlivePath = TimeWarp.Foundation.Configuration.IngressPaths.WebServerAlivePath;
 
@@ -137,7 +142,7 @@ internal static class OpenApiDiscoveryCoverage
       AnonymousOperation
       (
         document,
-        "getApiHealth",
+        HealthOperationId,
         "Web server health",
         "Anonymous ASP.NET health check. The body is text/plain and is one status name: "
         + "Healthy, Degraded, or Unhealthy. 200 is Healthy or Degraded. 503 is Unhealthy. "
@@ -168,12 +173,12 @@ internal static class OpenApiDiscoveryCoverage
     pathItem.AddOperation
     (
       HttpMethod.Get,
-      AliasOperation(document, tipPathItem, HttpMethod.Get, "getApiTipAlias", description)
+      AliasOperation(document, tipPathItem, HttpMethod.Get, description)
     );
     pathItem.AddOperation
     (
       HttpMethod.Post,
-      AliasOperation(document, tipPathItem, HttpMethod.Post, "postApiTipAlias", description)
+      AliasOperation(document, tipPathItem, HttpMethod.Post, description)
     );
     document.Paths.Add(TipAliasPath, pathItem);
   }
@@ -188,22 +193,21 @@ internal static class OpenApiDiscoveryCoverage
     OpenApiDocument document,
     IOpenApiPathItem? tipPathItem,
     HttpMethod method,
-    string operationId,
     string description
   )
   {
     string verb = method.Method.ToUpperInvariant();
+    OpenApiOperation? tip = null;
+    _ = tipPathItem?.Operations?.TryGetValue(method, out tip);
     OpenApiOperation operation = AnonymousOperation
     (
       document,
-      operationId,
+      AliasOperationId(tip, method),
       "Discovery alias of " + verb + " " + TipPath,
       description,
       "Tip"
     );
 
-    OpenApiOperation? tip = null;
-    _ = tipPathItem?.Operations?.TryGetValue(method, out tip);
     if (tip?.Responses is null || tip.Responses.Count == 0)
     {
       operation.Responses!.Add("200", new OpenApiResponse { Description = "Same responses as " + verb + " " + TipPath + "." });
@@ -223,6 +227,15 @@ internal static class OpenApiDiscoveryCoverage
     operation.RequestBody = tip.RequestBody?.CreateShallowCopy();
     return operation;
   }
+
+  /// <summary>
+  /// The alias of the /api/tip operation <c>tip.submit</c> is <c>tip.submit-alias</c>. Without
+  /// a named tip operation it is <c>tip.&lt;verb&gt;-alias</c>.
+  /// </summary>
+  private static string AliasOperationId(OpenApiOperation? tip, HttpMethod method) =>
+    OpenApiOperationNames.IsOperationId(tip?.OperationId)
+      ? tip!.OperationId + "-alias"
+      : "tip." + method.Method.ToLowerInvariant() + "-alias";
 
   private static void NoteCanonicalTip(OpenApiDocument document)
   {

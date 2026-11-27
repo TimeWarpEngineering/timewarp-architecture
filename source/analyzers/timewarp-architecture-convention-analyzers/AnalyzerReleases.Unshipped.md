@@ -40,7 +40,7 @@ TWA0028 | Design | Warning | EnumerationMemberShapeAnalyzer: Enumeration subclas
 TWA0032 | Design | Warning | DirectFluentTextAreaAnalyzer: raw FluentTextArea outside the shared components/forms/TextArea.razor
 TWA0033 | Design | Warning | ReferenceableResourceAnalyzer: [ReferenceableResource] contract lacks a Search query, a typed-id or Guid item id, or a string label
 TWA0034 | Design | Warning | ReferenceableResourceAnalyzer: two [ReferenceableResource] contracts share an @ prefix
-TWA0035 | Design | Info | OperationAttributeAnalyzer: hosted contract request has no [Operation] (TimeWarp.Contracts)
+TWA0035 | Design | Warning | OperationAttributeAnalyzer: hosted contract request has no [Operation] or its Description is missing (TimeWarp.Contracts)
 TWA0036 | Design | Warning | IsoDateRenderingAnalyzer: date or time rendered as text in a non-ISO 8601 shape
 TWA0037 | Design | Warning | DirectFluentMessageBarAnalyzer: raw FluentMessageBar outside the shared components/MessageBar.razor and the shell MessageBars host
 TWA0039 | Design | Error | ContractAgreementAnalyzer: aggregate root lacks a member of its operation group's I*Details interface, or the type disagrees

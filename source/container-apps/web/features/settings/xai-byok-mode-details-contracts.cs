@@ -15,6 +15,7 @@ using TimeWarp.Identity;
 
 public interface IXaiByokModeDetails
 {
+  /// <summary>Whose xAI API key Ask uses when the host has not set one.</summary>
   public XaiByokMode XaiByokMode { get; set; }
 }
 

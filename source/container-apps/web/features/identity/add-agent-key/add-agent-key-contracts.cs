@@ -37,11 +37,16 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class AddAgentKey
 {
   [ApiRoute("api/identity/credentials/agent-key", HttpVerb.Post)]
+  [Operation("agent-keys.add", Description = "Attach an additional agent public key to the caller's principal.", Group = "identity")]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The base64url SPKI DER public key (ECDSA P-256).</summary>
     public string PublicKey { get; set; } = null!;
+    /// <summary>The challenge exactly as the start request returned it.</summary>
     public string Challenge { get; set; } = null!;
+    /// <summary>The base64url DER (RFC 3279) ECDSA signature over the signed challenge payload.</summary>
     public string Signature { get; set; } = null!;
+    /// <summary>Optional display name for the credential, or null.</summary>
     public string? Nickname { get; set; }
   }
 
@@ -58,7 +63,9 @@ public static partial class AddAgentKey
 
   public sealed class Response
   {
+    /// <summary>The id of the newly registered credential.</summary>
     public CredentialId CredentialId { get; }
+    /// <summary>The server-computed base64url SHA-256 of the registered public key bytes.</summary>
     public string KeyId { get; }
 
     public Response(CredentialId credentialId, string keyId)

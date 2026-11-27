@@ -25,8 +25,10 @@ namespace TimeWarp.Architecture.Features.Admin.Principals;
 public static partial class SetPrincipalRoles
 {
   [ApiRoute("api/admin/principals/{PrincipalId:guid}/roles", HttpVerb.Put)]
+  [Operation("principals.set-roles", Description = "Replace the stored roles of a principal.", Group = "admin.principals")]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Ids of the product roles the principal holds after the change.</summary>
     public List<Guid> RoleIds { get; set; } = [];
   }
 
@@ -45,6 +47,7 @@ public static partial class SetPrincipalRoles
 
   public sealed class Response
   {
+    /// <summary>Ids of the roles assigned to the principal.</summary>
     public List<Guid> RoleIds { get; }
 
     public Response(List<Guid> roleIds)

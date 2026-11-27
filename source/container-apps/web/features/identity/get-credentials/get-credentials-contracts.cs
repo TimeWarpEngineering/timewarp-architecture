@@ -75,9 +75,12 @@ public static partial class GetCredentials
   public const int MaxSearchLength = 200;
 
   [ApiRoute("api/identity/credentials", HttpVerb.Get)]
+  [Operation("credentials.list", Description = "List the caller's passkeys and agent keys.", Group = "identity")]
   public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Whether revoked credentials are included.</summary>
     public bool IncludeRevoked { get; set; }
+    /// <summary>Optional text matched against display name, label, nickname, account hint, and fingerprint.</summary>
     public string? Search { get; set; }
 
     public string GetRouteWithQueryString()
@@ -101,6 +104,7 @@ public static partial class GetCredentials
 
   public sealed class Response
   {
+    /// <summary>The caller's credentials.</summary>
     public IReadOnlyList<CredentialSummary> Credentials { get; }
     /// <summary>True when Microsoft 365 sign-in is offered and the caller has not linked an account yet.</summary>
     public bool CanLinkMicrosoft365 { get; }
@@ -117,14 +121,19 @@ public static partial class GetCredentials
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>The credential id.</summary>
     public CredentialId Id { get; }
+    /// <summary>The credential type.</summary>
     public CredentialType Type { get; }
     /// <summary>Provider label (AAGUID / "Microsoft 365"); null when unknown.</summary>
     public string? Label { get; }
     /// <summary>User-chosen nickname; null until renamed.</summary>
     public string? Nickname { get; }
+    /// <summary>The UTC instant the credential was registered.</summary>
     public DateTimeOffset CreatedAt { get; }
+    /// <summary>The UTC instant the credential was revoked, or null when not revoked.</summary>
     public DateTimeOffset? RevokedAt { get; }
+    /// <summary>True when the credential has not been revoked.</summary>
     public bool IsActive { get; }
     /// <summary>Registration context (attachment, browser family, OS family).</summary>
     public RegisteredWith RegisteredWith { get; }

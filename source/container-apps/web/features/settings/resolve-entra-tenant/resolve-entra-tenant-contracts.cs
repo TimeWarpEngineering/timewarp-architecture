@@ -28,8 +28,10 @@ public static partial class ResolveEntraTenant
   public const string Route = "api/settings/entra-tenant";
 
   [ApiRoute(Route, HttpVerb.Get)]
+  [Operation("entra-tenant.resolve", Description = "Look up an Entra tenant id from a primary domain.", Group = "settings")]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Primary domain of the tenant.</summary>
     public string Domain { get; set; } = null!;
 
     /// <inheritdoc />
@@ -55,7 +57,9 @@ public static partial class ResolveEntraTenant
 
   public sealed class Response
   {
+    /// <summary>Resolved Entra tenant id.</summary>
     public Guid TenantId { get; }
+    /// <summary>Primary domain of the tenant.</summary>
     public string Domain { get; }
 
     public Response(Guid tenantId, string domain)

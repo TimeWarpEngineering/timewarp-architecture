@@ -18,6 +18,7 @@ namespace TimeWarp.Architecture.Features.AgentLinks;
 public static partial class ListAgentHumanLinks
 {
   [ApiRoute("api/agent-links", HttpVerb.Get)]
+  [Operation("agent-human-links.list", Description = "List the caller's agent-to-human links.")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
@@ -27,9 +28,13 @@ public static partial class ListAgentHumanLinks
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>Id of the agent-human link.</summary>
     public Guid LinkId { get; }
+    /// <summary>Principal id of the agent.</summary>
     public Guid AgentPrincipalId { get; }
+    /// <summary>Principal id of the human.</summary>
     public Guid HumanPrincipalId { get; }
+    /// <summary>Link status.</summary>
     public string Status { get; }
 
     public LinkSummary(Guid linkId, Guid agentPrincipalId, Guid humanPrincipalId, string status)
@@ -43,6 +48,7 @@ public static partial class ListAgentHumanLinks
 
   public sealed class Response
   {
+    /// <summary>The links on this page.</summary>
     public IReadOnlyList<LinkSummary> Items { get; }
 
     public Response(IReadOnlyList<LinkSummary> items)

@@ -24,9 +24,12 @@ namespace TimeWarp.Architecture.Features.Analytics;
 public static partial class TrackEvent
 {
   [ApiRoute("api/analytics/events", HttpVerb.Post)]
+  [Operation("analytics.track-event", Description = "Record a named analytics event.", Group = "analytics")]
   public sealed partial class Command : ICommand<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
+    /// <summary>Name of the event.</summary>
     public string EventName { get; set; } = null!;
+    /// <summary>Id that ties the event to related activity.</summary>
     public Guid? CorrelationId { get; set; }
   }
 

@@ -33,6 +33,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class RevokeCredential
 {
   [ApiRoute("api/identity/credentials/{CredentialId:guid}/revoke", HttpVerb.Post)]
+  [Operation("credentials.revoke", Description = "Revoke one of the caller's credentials.", Group = "identity")]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>

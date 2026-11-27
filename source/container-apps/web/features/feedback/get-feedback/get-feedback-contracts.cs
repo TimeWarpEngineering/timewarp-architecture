@@ -42,18 +42,25 @@ public static partial class GetFeedback
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>The feedback item's unique identifier.</summary>
     public Guid FeedbackItemId { get; }
     /// <summary>App-rooted page path the handler builds from the item id.</summary>
     [Computed]
     public string Permalink { get; }
+    /// <summary>What kind of feedback the item is.</summary>
     public FeedbackKind Kind { get; }
+    /// <summary>The item's title.</summary>
     public string Title { get; }
+    /// <summary>The item's body text.</summary>
     public string Body { get; }
+    /// <summary>When the item was filed.</summary>
     public DateTimeOffset FiledAt { get; }
     /// <summary>Files linked at submit. They live in the attachment store, not on FeedbackItem.</summary>
     [Computed]
     public IReadOnlyList<Attachment> Attachments { get; }
+    /// <summary>The item's current triage status.</summary>
     public FeedbackStatus Status { get; }
+    /// <summary>The thread entries the filer may see, oldest first.</summary>
     public IReadOnlyList<FeedbackActivityEntry> Activity { get; }
 
     public Response(
@@ -94,11 +101,17 @@ public static partial class GetFeedback
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>The attachment's unique identifier.</summary>
     public Guid AttachmentId { get; }
+    /// <summary>The attachment's file name.</summary>
     public string FileName { get; }
+    /// <summary>The attachment's media type.</summary>
     public string ContentType { get; }
+    /// <summary>The attachment's size in bytes.</summary>
     public long Size { get; }
+    /// <summary>App-rooted path the attachment is downloaded from.</summary>
     public string DownloadPath { get; }
+    /// <summary>True when the attachment is an image that can render inline.</summary>
     public bool IsImage { get; }
     /// <summary>False when the row exists but its file is no longer stored. The handler asks the byte store.</summary>
     public bool IsFilePresent { get; }

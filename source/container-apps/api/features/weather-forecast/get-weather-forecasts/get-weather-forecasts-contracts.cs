@@ -21,6 +21,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 public static partial class GetWeatherForecasts
 {
   [ApiRoute("api/weather-forecasts", HttpVerb.Get)]
+  [Operation("weather-forecasts.list", Description = "List sample weather forecasts for the next several days.", Group = "weather-forecast")]
   public sealed partial class Query : IQuery<OneOf<Response, SharedProblemDetails>>, IQueryStringRouteProvider,
     IApiRequest
   {
@@ -40,6 +41,7 @@ public static partial class GetWeatherForecasts
 
   public sealed class Response(IEnumerable<TWeatherForecast> WeatherForecasts) : BaseResponse
   {
+    /// <summary>The forecasts, one per day.</summary>
     public IEnumerable<TWeatherForecast> WeatherForecasts { get; init; } = WeatherForecasts;
   }
 

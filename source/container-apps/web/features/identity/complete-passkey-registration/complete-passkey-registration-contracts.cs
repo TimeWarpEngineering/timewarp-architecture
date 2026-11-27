@@ -31,10 +31,14 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompletePasskeyRegistration
 {
   [ApiRoute("api/identity/passkey/register", HttpVerb.Post)]
+  [Operation("passkey-registration.complete", Description = "Verify a new passkey and create a signed-in account for it.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The credential id (base64url in the request; the new credential's id in the response).</summary>
     public string CredentialId { get; set; } = null!;
+    /// <summary>The base64url clientDataJSON from the browser's WebAuthn response.</summary>
     public string ClientDataJson { get; set; } = null!;
+    /// <summary>The base64url attestationObject from the browser's WebAuthn registration response.</summary>
     public string AttestationObject { get; set; } = null!;
     /// <summary>"platform" / "cross-platform" from the browser, or null when not reported.</summary>
     public string? AuthenticatorAttachment { get; set; }
@@ -58,6 +62,7 @@ public static partial class CompletePasskeyRegistration
 
   public sealed class Response
   {
+    /// <summary>The id of the newly created principal.</summary>
     public PrincipalId PrincipalId { get; }
     /// <summary>The minted credential; null-free so the client can open the nickname prompt for it.</summary>
     public CredentialId CredentialId { get; }

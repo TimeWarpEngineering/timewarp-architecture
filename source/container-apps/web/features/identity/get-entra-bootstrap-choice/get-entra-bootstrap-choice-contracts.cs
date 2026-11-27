@@ -14,13 +14,16 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class GetEntraBootstrapChoice
 {
   [ApiRoute("api/identity/entra/choice", HttpVerb.Get)]
+  [Operation("entra-bootstrap.get-choice", Description = "Check whether the parked Microsoft 365 sign-in is still valid.", Group = "identity")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 
   public sealed class Response
   {
+    /// <summary>True when the parked Microsoft 365 claims are still valid.</summary>
     public bool Valid { get; }
+    /// <summary>The path the browser should navigate to next.</summary>
     public string Destination { get; }
 
     public Response(bool valid, string destination)

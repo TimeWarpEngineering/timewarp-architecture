@@ -25,10 +25,15 @@ using TimeWarp.Identity;
 
 public interface ISiteSettingsDetails
 {
+  /// <summary>Whether Microsoft 365 sign-in is offered.</summary>
   bool EntraSignInEnabled { get; set; }
+  /// <summary>Whether a Microsoft 365 sign-in may create the first account.</summary>
   bool EntraAllowBootstrap { get; set; }
+  /// <summary>When users are prompted to add a passkey.</summary>
   PasskeyPromptMode PasskeyPromptMode { get; set; }
+  /// <summary>Which Entra tenants may sign in.</summary>
   EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
+  /// <summary>Tenants accepted when the acceptance mode is Restricted.</summary>
   List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; }
 }
 

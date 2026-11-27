@@ -27,15 +27,20 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class GetAgentIdentity
 {
   [ApiRoute("api/identity/agent/me", HttpVerb.Get)]
+  [Operation("agent-identity.get", Description = "Return the calling agent's principal, trust tier, and token scopes.", Group = "identity")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 
   public sealed class Response
   {
+    /// <summary>The id of the principal.</summary>
     public PrincipalId PrincipalId { get; }
+    /// <summary>The kind of principal.</summary>
     public PrincipalKind Kind { get; }
+    /// <summary>The principal's trust tier.</summary>
     public TrustTier TrustTier { get; }
+    /// <summary>The scopes carried by the presented bearer token.</summary>
     public IReadOnlyList<string> Scopes { get; }
 
     public Response(PrincipalId principalId, PrincipalKind kind, TrustTier trustTier, IReadOnlyList<string> scopes)

@@ -36,10 +36,14 @@ using TimeWarp.Identity;
 public static partial class ListPrincipals
 {
   [ApiRoute("api/admin/principals", HttpVerb.Get)]
+  [Operation("principals.list", Description = "List principals, optionally filtered by a search term and sorted.", Group = "admin.principals")]
   public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Text matched against principal names and emails.</summary>
     public string? Search { get; set; }
+    /// <summary>Column to sort by.</summary>
     public PrincipalListSortColumn SortBy { get; set; } = PrincipalListSortColumn.CreatedAt;
+    /// <summary>Whether to sort in descending order.</summary>
     public bool SortDescending { get; set; }
 
     public string GetRouteWithQueryString()
@@ -74,13 +78,21 @@ public static partial class ListPrincipals
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>Id of the principal.</summary>
     public PrincipalId PrincipalId { get; }
+    /// <summary>Whether the principal is a human or an agent.</summary>
     public PrincipalKind Kind { get; }
+    /// <summary>How the principal proved its identity.</summary>
     public TrustTier TrustTier { get; }
+    /// <summary>Whether the principal can sign in.</summary>
     public bool IsActive { get; }
+    /// <summary>Whether the principal is held back from acting.</summary>
     public bool IsQuarantined { get; }
+    /// <summary>Ids of the roles assigned to the principal.</summary>
     public List<Guid> RoleIds { get; }
+    /// <summary>Name shown for the principal.</summary>
     public string? DisplayName { get; }
+    /// <summary>Email address, when known.</summary>
     public string? Email { get; }
 
     public PrincipalSummaryDto(

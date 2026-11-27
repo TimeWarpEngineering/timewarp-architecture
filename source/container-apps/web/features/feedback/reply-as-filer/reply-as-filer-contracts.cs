@@ -27,6 +27,7 @@ public static partial class ReplyAsFiler
   [NotAggregate("Appends a thread entry through FeedbackItem.AddFilerReply; Body is the entry's body, not FeedbackItem.Body.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The reply text. Required.</summary>
     public string Body { get; set; } = null!;
   }
 
@@ -41,8 +42,11 @@ public static partial class ReplyAsFiler
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The feedback item's unique identifier.</summary>
     public Guid FeedbackItemId { get; }
+    /// <summary>The item's status after the reply.</summary>
     public FeedbackStatus Status { get; }
+    /// <summary>The thread entries the filer may see, oldest first.</summary>
     public IReadOnlyList<FeedbackActivityEntry> Activity { get; }
 
     public Response(Guid feedbackItemId, FeedbackStatus status, IReadOnlyList<FeedbackActivityEntry>? activity = null)

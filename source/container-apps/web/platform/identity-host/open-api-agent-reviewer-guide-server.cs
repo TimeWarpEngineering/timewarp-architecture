@@ -6,9 +6,11 @@
 // An outside reviewer is given only this document. The scheme description names the four
 // ceremony operations in order, the lifetime from AgentTokenOptions at document build, that
 // there is no refresh token, when to reissue, and that a token may name only admin-approved
-// scopes (identity:read is always allowed). Each step also names its HTTP method and
-// path, taken from that contract's generated route, because the document does not set
-// operationId to the kebab id. Foundation does not know those product operation names or
+// scopes (identity:read is always allowed). Each step quotes its operationId in backticks, read
+// from that contract's generated OperationName constant (task 458-005), so the guide cannot name
+// an operation the document does not have, and OpenApiOperationNames' document check fails if a
+// quoted id stops resolving. Each step also names its HTTP method and path, taken from that
+// contract's generated route. Foundation does not know those product operation names or
 // AgentTokenOptions, so this host appends the paragraph. The scheme object is reused across
 // document builds, so a second build replaces the paragraph instead of appending it again.
 // What the client signs lives on the ceremony contracts, and the processed marker lives on
@@ -76,10 +78,10 @@ internal static class OpenApiAgentReviewerGuide
 
     string guide =
       GuideMarker
-      + " " + Step<Contracts.StartAgentKeyRegistration.Command>("start-agent-key-registration")
-      + ", then " + Step<Contracts.CompleteAgentKeyRegistration.Command>("complete-agent-key-registration")
-      + ", then " + Step<Contracts.StartAgentTokenIssuance.Command>("start-agent-token-issuance")
-      + ", then " + Step<Contracts.CompleteAgentTokenIssuance.Command>("complete-agent-token-issuance")
+      + " " + Step<Contracts.StartAgentKeyRegistration.Command>(Contracts.StartAgentKeyRegistration.Command.OperationName)
+      + ", then " + Step<Contracts.CompleteAgentKeyRegistration.Command>(Contracts.CompleteAgentKeyRegistration.Command.OperationName)
+      + ", then " + Step<Contracts.StartAgentTokenIssuance.Command>(Contracts.StartAgentTokenIssuance.Command.OperationName)
+      + ", then " + Step<Contracts.CompleteAgentTokenIssuance.Command>(Contracts.CompleteAgentTokenIssuance.Command.OperationName)
       + ". The token lasts "
       + lifetimeMinutes.ToString(CultureInfo.InvariantCulture)
       + " minutes. There is no refresh token."
@@ -95,6 +97,6 @@ internal static class OpenApiAgentReviewerGuide
     string method = request.GetHttpVerb().ToString().ToUpperInvariant();
     string route = request.GetRoute();
     string path = route.StartsWith('/', StringComparison.Ordinal) ? route : "/" + route;
-    return operationId + " (" + method + " " + path + ")";
+    return "`" + operationId + "` (" + method + " " + path + ")";
   }
 }

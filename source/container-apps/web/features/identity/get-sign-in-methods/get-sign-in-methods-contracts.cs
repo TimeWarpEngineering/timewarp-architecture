@@ -17,12 +17,14 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class GetSignInMethods
 {
   [ApiRoute("api/identity/sign-in-methods", HttpVerb.Get)]
+  [Operation("sign-in-methods.list", Description = "List the sign-in methods the login page should offer.", Group = "identity")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 
   public sealed class Response
   {
+    /// <summary>The sign-in methods currently offered.</summary>
     public IReadOnlyList<SignInMethod> Methods { get; }
 
     public Response(IReadOnlyList<SignInMethod> methods)

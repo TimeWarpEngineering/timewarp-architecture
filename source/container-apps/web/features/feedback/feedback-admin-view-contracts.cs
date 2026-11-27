@@ -28,13 +28,21 @@ public sealed class FeedbackAdminView : ICloneable
   /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
   public object Clone() => this;
 
+  /// <summary>The feedback item's unique identifier.</summary>
   public Guid FeedbackItemId { get; }
+  /// <summary>The principal that filed the item.</summary>
   public Guid OwnerPrincipalId { get; }
+  /// <summary>What kind of feedback the item is.</summary>
   public FeedbackKind Kind { get; }
+  /// <summary>The item's current triage status.</summary>
   public FeedbackStatus Status { get; }
+  /// <summary>The item's review severity.</summary>
   public FeedbackSeverity Severity { get; }
+  /// <summary>The item's title.</summary>
   public string Title { get; }
+  /// <summary>The item's body text.</summary>
   public string Body { get; }
+  /// <summary>When the item was filed.</summary>
   public DateTimeOffset FiledAt { get; }
   /// <summary>FiledAt, then the time of the newest thread entry (task 520).</summary>
   public DateTimeOffset LastActivityAt { get; }
@@ -48,6 +56,7 @@ public sealed class FeedbackAdminView : ICloneable
   /// <summary>Files linked at submit. They live in the attachment store, not on FeedbackItem.</summary>
   [Computed]
   public IReadOnlyList<GetFeedback.Attachment> Attachments { get; }
+  /// <summary>The full thread, including internal notes and severity changes, oldest first.</summary>
   public IReadOnlyList<FeedbackActivityEntry> Activity { get; }
   /// <summary>The filer's profile display name (task 336). The handler reads it from the profile slice.</summary>
   [Computed]

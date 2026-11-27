@@ -45,6 +45,7 @@ public static partial class GetRoles
   [Operation("roles.list", Description = "List roles, optionally filtered by a name search.", Group = "admin.roles")]
   public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Optional text; keeps roles whose name contains it, ignoring case. Omit to list every role.</summary>
     public string? Search { get; set; }
 
     public string GetRouteWithQueryString()
@@ -75,8 +76,11 @@ public static partial class GetRoles
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>The role's unique identifier.</summary>
     public Guid RoleId { get; }
+    /// <summary>The role's display name.</summary>
     public string Name { get; }
+    /// <summary>What the role is for.</summary>
     public string Description { get; }
 
     /// <summary>Stored permission ids for this role (empty when none granted).</summary>

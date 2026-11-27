@@ -26,9 +26,13 @@ namespace TimeWarp.Architecture.Features.AgentLinks;
 
 public sealed class HumanUxLink
 {
+  /// <summary>Id of the link.</summary>
   public Guid Id { get; }
+  /// <summary>Link status.</summary>
   public string Status { get; }
+  /// <summary>Principal id of the agent.</summary>
   public Guid AgentPrincipalId { get; }
+  /// <summary>Principal id of the human.</summary>
   public Guid HumanPrincipalId { get; }
 
   public HumanUxLink(Guid id, string status, Guid agentPrincipalId, Guid humanPrincipalId)
@@ -42,7 +46,9 @@ public sealed class HumanUxLink
 
 public sealed class HumanUxHuman
 {
+  /// <summary>Name shown for the principal.</summary>
   public string DisplayName { get; }
+  /// <summary>Email address, when known.</summary>
   public string? Email { get; }
 
   public HumanUxHuman(string displayName, string? email)
@@ -54,8 +60,11 @@ public sealed class HumanUxHuman
 
 public sealed class HumanUxAction
 {
+  /// <summary>Id of the action.</summary>
   public string Id { get; }
+  /// <summary>Text shown for the action.</summary>
   public string Label { get; }
+  /// <summary>Relative URL of the action.</summary>
   public string Href { get; }
 
   public HumanUxAction(string id, string label, string href)

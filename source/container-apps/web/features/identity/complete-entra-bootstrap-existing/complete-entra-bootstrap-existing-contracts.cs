@@ -14,12 +14,18 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompleteEntraBootstrapExisting
 {
   [ApiRoute("api/identity/entra/choice/existing", HttpVerb.Post)]
+  [Operation("entra-bootstrap.complete-existing", Description = "Prove an existing passkey and link the parked Microsoft 365 sign-in to it.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The credential id, base64url, as returned by the browser.</summary>
     public string CredentialId { get; set; } = null!;
+    /// <summary>The base64url clientDataJSON from the browser's WebAuthn response.</summary>
     public string ClientDataJson { get; set; } = null!;
+    /// <summary>The base64url authenticatorData from the browser's WebAuthn assertion.</summary>
     public string AuthenticatorData { get; set; } = null!;
+    /// <summary>The base64url assertion signature from the browser.</summary>
     public string Signature { get; set; } = null!;
+    /// <summary>The base64url user handle from the assertion, or null; not used for lookup.</summary>
     public string? UserHandle { get; set; }
   }
 
@@ -37,7 +43,9 @@ public static partial class CompleteEntraBootstrapExisting
 
   public sealed class Response
   {
+    /// <summary>The id of the principal the Microsoft 365 sign-in was linked to.</summary>
     public PrincipalId PrincipalId { get; }
+    /// <summary>The path the browser should navigate to next.</summary>
     public string Destination { get; }
 
     public Response(PrincipalId principalId, string destination)

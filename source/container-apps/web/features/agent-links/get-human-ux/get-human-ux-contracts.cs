@@ -19,6 +19,7 @@ namespace TimeWarp.Architecture.Features.AgentLinks;
 public static partial class GetHumanUx
 {
   [ApiRoute("api/agent-links/{LinkId:guid}/human-ux", HttpVerb.Get)]
+  [Operation("agent-human-links.get-human-ux", Description = "Fetch the portable human handoff document for an approved link.")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
@@ -28,12 +29,19 @@ public static partial class GetHumanUx
     public const string SpecId = "timewarp.humanUx/v1";
     public const string KindId = "handoff";
 
+    /// <summary>Identifier of the humanUx specification.</summary>
     public string Spec { get; }
+    /// <summary>Whether the principal is a human or an agent.</summary>
     public string Kind { get; }
+    /// <summary>Short title of the handoff.</summary>
     public string Title { get; }
+    /// <summary>One-line description of the handoff.</summary>
     public string Summary { get; }
+    /// <summary>The link the handoff is about.</summary>
     public HumanUxLink Link { get; }
+    /// <summary>The human, when known.</summary>
     public HumanUxHuman? Human { get; }
+    /// <summary>Relative UI links the human can open.</summary>
     public IReadOnlyList<HumanUxAction> Actions { get; }
 
     public Response(

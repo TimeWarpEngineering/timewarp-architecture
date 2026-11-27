@@ -62,18 +62,29 @@ public static partial class ListFeedback
   [Operation("feedback.list", Description = "List feedback items for triage, filtered and sorted.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Only items in this status. Omit for any status, with closed items hidden unless IncludeClosed is true.</summary>
     public FeedbackStatus? Status { get; set; }
+    /// <summary>Only items with this severity. Unset selects items not yet reviewed. Omit for any severity.</summary>
     public FeedbackSeverity? Severity { get; set; }
+    /// <summary>Only items of this kind. Omit for any kind.</summary>
     public FeedbackKind? Kind { get; set; }
+    /// <summary>Inclusive lower bound on when the item was filed.</summary>
     public DateTimeOffset? FiledFrom { get; set; }
+    /// <summary>Exclusive upper bound on when the item was filed.</summary>
     public DateTimeOffset? FiledTo { get; set; }
     /// <summary>Inclusive lower bound on LastActivityAt: items with any thread activity (or a filing) at or after this time.</summary>
     public DateTimeOffset? ActivityFrom { get; set; }
+    /// <summary>True to include closed items (Completed and Declined), which are otherwise hidden.</summary>
     public bool IncludeClosed { get; set; }
+    /// <summary>The 1-based page number.</summary>
     public int Page { get; set; } = 1;
+    /// <summary>The number of items per page.</summary>
     public int PageSize { get; set; } = DefaultPageSize;
+    /// <summary>The column the whole match set is ordered by before paging.</summary>
     public FeedbackListSortColumn SortBy { get; set; } = FeedbackListSortColumn.FiledAt;
+    /// <summary>True for descending order, false for ascending.</summary>
     public bool SortDescending { get; set; } = true;
+    /// <summary>Optional text; keeps items whose title contains it, ignoring case.</summary>
     public string? Search { get; set; }
 
     public string GetRouteWithQueryString()
@@ -119,12 +130,19 @@ public static partial class ListFeedback
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>The feedback item's unique identifier.</summary>
     public Guid FeedbackItemId { get; }
+    /// <summary>The principal that filed the item.</summary>
     public Guid OwnerPrincipalId { get; }
+    /// <summary>What kind of feedback the item is.</summary>
     public FeedbackKind Kind { get; }
+    /// <summary>The item's current triage status.</summary>
     public FeedbackStatus Status { get; }
+    /// <summary>The item's review severity.</summary>
     public FeedbackSeverity Severity { get; }
+    /// <summary>The item's title.</summary>
     public string Title { get; }
+    /// <summary>When the item was filed.</summary>
     public DateTimeOffset FiledAt { get; }
     /// <summary>FiledAt, then the time of the newest thread entry (task 520).</summary>
     public DateTimeOffset LastActivityAt { get; }
@@ -180,7 +198,9 @@ public static partial class ListFeedback
 
   public sealed class Response : ListResponse<Item>
   {
+    /// <summary>The 1-based page number of this result.</summary>
     public int Page { get; }
+    /// <summary>The number of items per page used for this result.</summary>
     public int PageSize { get; }
 
     public Response(int totalCount, Item[] items, int page, int pageSize) : base(totalCount, items)

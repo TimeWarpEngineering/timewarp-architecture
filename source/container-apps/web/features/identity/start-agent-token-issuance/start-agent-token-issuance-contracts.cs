@@ -23,14 +23,16 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class StartAgentTokenIssuance
 {
   /// <summary>Starts agent token issuance and returns a challenge to sign.</summary>
-  /// <remarks>Returns a base64url challenge. The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Token.v1: followed by the raw challenge bytes with ECDSA P-256 and SHA-256, and sends back the base64url KeyId, Challenge, and RFC 3279 DER Signature on complete-agent-token-issuance.</remarks>
+  /// <remarks>Returns a base64url challenge. The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Token.v1: followed by the raw challenge bytes with ECDSA P-256 and SHA-256, and sends back the base64url KeyId, Challenge, and RFC 3279 DER Signature on `agent-token-issuance.complete`.</remarks>
   [ApiRoute("api/identity/agent/token/options", HttpVerb.Post)]
+  [Operation("agent-token-issuance.start", Description = "Start agent token issuance and return a challenge to sign.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 
   public sealed class Response
   {
+    /// <summary>The one-time base64url challenge to sign.</summary>
     public string Challenge { get; }
 
     public Response(string challenge)

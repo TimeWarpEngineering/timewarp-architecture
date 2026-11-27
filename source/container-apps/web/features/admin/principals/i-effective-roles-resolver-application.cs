@@ -12,7 +12,7 @@
 //   when stored is non-empty: effective = HashSet(stored)
 //   if bootstrap contains principalId: effective += Administrator, Member (any kind)
 //   return ordered by RoleIds.All
-// A self-registered agent (complete-agent-key-registration, Kind Agent, no human credential)
+// A self-registered agent (agent-key-registration.complete, Kind Agent, no human credential)
 // therefore has no role until an admin assigns one. Member stays the human default, so a
 // roleless human who holds an agent key still receives Member's agent scopes. Service is not
 // a human and gets no default. A missing principal row is not an agent registration, so it

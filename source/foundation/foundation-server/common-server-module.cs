@@ -49,6 +49,11 @@
 // and records /.well-known discovery documents and liveness in info.description plus
 // x-timewarp-excluded-routes; excludedWebRoutes appends the host's own non-operation routes.
 // ExcludeNonFastEndpoints stays on. Api-server does not opt in.
+// OpenApiOperationNames writes each operationId and summary from the contract's [Operation]
+// (the generated OperationName and OperationDescription constants), fills parameter and
+// interface-declared property descriptions from XML <summary>, and its check, registered last,
+// fails a repeated operationId and a backtick-quoted operation id in a description that no
+// operation has.
 // configureOpenApi runs after those transformers so a host can add product responses
 // (payment 402/503) without putting product routes in this assembly.
 #endregion
@@ -179,10 +184,13 @@ public class CommonServerModule : IAspNetModule
           // never reaches the SharedProblemDetails arm or any type inside a response.
           OpenApiProblemDetails.Register(openApiOptions);
           OpenApiTypedId.Register(openApiOptions);
+          OpenApiOperationNames.RegisterSchemaDescriptions(openApiOptions);
           OpenApiOneOf.Register(openApiOptions);
           OpenApiDeleteRequestBody.Register(openApiOptions);
           // After OpenApiDeleteRequestBody: the DELETE query parameters it adds can be required.
           OpenApiValidatorRequired.Register(openApiOptions);
+          // After OpenApiDeleteRequestBody: the DELETE query parameters it adds get descriptions.
+          OpenApiOperationNames.Register(openApiOptions);
           // After OpenApiOneOf: the binary 2xx content replaces the success arm OneOf split out.
           OpenApiBinaryContent.Register(openApiOptions);
           OpenApiOperationSecurity.Register(openApiOptions, agentBearer, sessionCookie);
@@ -202,6 +210,7 @@ public class CommonServerModule : IAspNetModule
           OpenApiProblemDetails.RegisterDocumentCheck(openApiOptions);
           OpenApiValidatorRequired.RegisterDocumentCheck(openApiOptions);
           OpenApiRootTags.RegisterDocumentCheck(openApiOptions, documentInfo?.TagDescriptions);
+          OpenApiOperationNames.RegisterDocumentCheck(openApiOptions);
         };
       }
     );

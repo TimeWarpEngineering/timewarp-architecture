@@ -17,8 +17,10 @@ namespace TimeWarp.Architecture.Features.Hellos;
 public static partial class Hello
 {
   [ApiRoute(RouteTemplate: "api/hello", HttpVerb.Get)]
+  [Operation("hello.get", Description = "Return a greeting for the given name.", Group = "hello")]
   public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Name to greet.</summary>
     public string Name { get; set; } = null!;
 
     public string GetRouteWithQueryString()
@@ -40,6 +42,7 @@ public static partial class Hello
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The greeting.</summary>
     public string? Message { get; init; }
   }
 }

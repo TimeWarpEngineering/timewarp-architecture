@@ -26,6 +26,7 @@ public static partial class ReplyToFeedback
   [NotAggregate("Appends a thread entry through FeedbackItem.AddAdminReply; Body is the entry's body, not FeedbackItem.Body.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The reply text. Required. The filer sees it.</summary>
     public string Body { get; set; } = null!;
   }
 
@@ -40,7 +41,9 @@ public static partial class ReplyToFeedback
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The feedback item with its updated thread.</summary>
     public FeedbackAdminView Item { get; }
+    /// <summary>True when the filer was emailed the reply.</summary>
     public bool FilerEmailed { get; }
 
     public Response(FeedbackAdminView item, bool filerEmailed)

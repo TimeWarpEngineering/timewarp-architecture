@@ -17,6 +17,7 @@ using TimeWarp.Identity;
 
 public interface IAssistantNameDetails
 {
+  /// <summary>Name of the in-app assistant, plain text within the length limit.</summary>
   public string AssistantName { get; set; }
 }
 

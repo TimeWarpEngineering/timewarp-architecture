@@ -23,13 +23,16 @@ using TimeWarp.Identity;
 public static partial class GetAssistantIdentity
 {
   [ApiRoute("api/settings/assistant", HttpVerb.Get)]
+  [Operation("assistant-identity.get", Description = "Read the assistant's name and avatar.", Group = "settings")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 
   public sealed class Response
   {
+    /// <summary>Display name of the assistant.</summary>
     public string Name { get; }
+    /// <summary>Avatar as a data URI.</summary>
     public string Avatar { get; }
 
     public Response(string name, string avatar)

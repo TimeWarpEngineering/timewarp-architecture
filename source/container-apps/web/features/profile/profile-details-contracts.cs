@@ -29,16 +29,25 @@ using System.Globalization;
 
 public interface IProfileDetails
 {
+  /// <summary>The name shown for the user. Required, at most 100 characters.</summary>
   public string DisplayName { get; set; }
+  /// <summary>The user's email address. Optional, at most 254 characters.</summary>
   public string? Email { get; set; }
+  /// <summary>The preferred language as a specific culture name, for example en-US.</summary>
   public string Language { get; set; }
+  /// <summary>The region as a two-letter ISO 3166-1 alpha-2 code, for example US.</summary>
   public string Region { get; set; }
+  /// <summary>The color theme: system, light, or dark.</summary>
   public string Theme { get; set; }
+  /// <summary>True when the user wants notifications.</summary>
   public bool Notifications { get; set; }
 }
 
 public static class ProfileCatalog
 {
+  /// <summary>A catalog choice.</summary>
+  /// <param name="Code">The value stored on the profile.</param>
+  /// <param name="Label">The text shown to the user.</param>
   public sealed record Entry(string Code, string Label);
 
   public static readonly IReadOnlyList<Entry> Languages = BuildLanguages();

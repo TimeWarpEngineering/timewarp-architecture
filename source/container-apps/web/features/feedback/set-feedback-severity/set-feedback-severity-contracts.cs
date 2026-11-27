@@ -25,6 +25,7 @@ public static partial class SetFeedbackSeverity
   [NotAggregate("Writes FeedbackItem through SetSeverity, a checked transition that appends an entry; no agreement check covers a named mutation.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The review severity to set.</summary>
     public FeedbackSeverity Severity { get; set; }
   }
 
@@ -42,6 +43,7 @@ public static partial class SetFeedbackSeverity
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The feedback item after the severity change.</summary>
     public FeedbackAdminView Item { get; }
 
     public Response(FeedbackAdminView item)

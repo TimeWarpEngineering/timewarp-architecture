@@ -24,7 +24,7 @@ using TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Foundation;
 using TimeWarp.Foundation.Features;
 
-/// <summary>GET api/feedback/attachments/{id}</summary>
+/// <summary>Hosts <c>feedback.download-attachment</c>: streams one attachment's bytes.</summary>
 public sealed class DownloadFeedbackAttachmentEndpoint
   : BaseFastEndpoint<DownloadFeedbackAttachment.Query, DownloadFeedbackAttachment.Response>
 {

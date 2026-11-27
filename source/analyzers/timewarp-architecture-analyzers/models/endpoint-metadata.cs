@@ -7,8 +7,9 @@
 // One flat DTO decouples template emission from Roslyn symbol traversal, so the generated-code
 // template can change without touching symbol-walking logic.
 // OpenAPI summary/description come from the contract — the single authoring point for API
-// documentation. EndpointDocumentationResolver owns the order: request XML summary, then
-// [Operation] Description, then outer-class XML summary (its Design region). An
+// documentation. EndpointDocumentationResolver owns the order: [Operation] Description, then
+// request XML summary, then outer-class XML summary; the description is the XML summary and
+// remarks that are not the summary (its Design region). An
 // [EndpointAllowAnonymous] reason is appended to the description ("Intentionally anonymous. …")
 // so a public GET is not mistaken for a dropped 401.
 // Tags default to the leaf namespace under Features (…Features.Admin.Roles → "Roles"), keeping

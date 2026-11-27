@@ -31,11 +31,16 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompletePasskeyAuthentication
 {
   [ApiRoute("api/identity/passkey/authenticate", HttpVerb.Post)]
+  [Operation("passkey-authentication.complete", Description = "Verify a passkey assertion and sign the user in.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The credential id, base64url, as returned by the browser.</summary>
     public string CredentialId { get; set; } = null!;
+    /// <summary>The base64url clientDataJSON from the browser's WebAuthn response.</summary>
     public string ClientDataJson { get; set; } = null!;
+    /// <summary>The base64url authenticatorData from the browser's WebAuthn assertion.</summary>
     public string AuthenticatorData { get; set; } = null!;
+    /// <summary>The base64url assertion signature from the browser.</summary>
     public string Signature { get; set; } = null!;
 
     /// <summary>Unused by the handler — see Design region.</summary>
@@ -56,6 +61,7 @@ public static partial class CompletePasskeyAuthentication
 
   public sealed class Response
   {
+    /// <summary>The id of the signed-in principal.</summary>
     public PrincipalId PrincipalId { get; }
 
     public Response(PrincipalId principalId)

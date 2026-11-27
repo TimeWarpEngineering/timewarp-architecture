@@ -26,8 +26,11 @@ public static partial class UploadFeedbackAttachment
   public sealed partial class Command
     : IFileUploadRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The file's bytes.</summary>
     public Stream Content { get; set; } = Stream.Null;
+    /// <summary>The file's name.</summary>
     public string FileName { get; set; } = null!;
+    /// <summary>The file's media type. Must be an allowed attachment type.</summary>
     public string ContentType { get; set; } = null!;
   }
 
@@ -44,10 +47,15 @@ public static partial class UploadFeedbackAttachment
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The identifier of the uploaded, not yet linked, attachment.</summary>
     public Guid AttachmentId { get; }
+    /// <summary>The attachment's normalized file name.</summary>
     public string FileName { get; }
+    /// <summary>The attachment's media type.</summary>
     public string ContentType { get; }
+    /// <summary>The attachment's size in bytes.</summary>
     public long Size { get; }
+    /// <summary>App-rooted path the attachment is downloaded from.</summary>
     public string DownloadPath { get; }
 
     public Response(

@@ -21,15 +21,20 @@ namespace TimeWarp.Architecture.Features.Tip;
 public static partial class SubmitTip
 {
   [ApiRoute("api/tip", HttpVerb.Get)]
+  [Operation("tip.get", Description = "Read the voluntary tip jar thank-you after payment.", Group = "tip")]
   public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 
   public sealed class Response
   {
+    /// <summary>The greeting.</summary>
     public string Message { get; }
+    /// <summary>Amount of the tip.</summary>
     public string Amount { get; }
+    /// <summary>Payment network.</summary>
     public string Network { get; }
+    /// <summary>Always true; marks a tip response.</summary>
     public bool Tip { get; }
 
     public Response(string message, string amount, string network)
@@ -52,6 +57,7 @@ public static partial class SubmitTip
 public static partial class SubmitTipPost
 {
   [ApiRoute("api/tip", HttpVerb.Post)]
+  [Operation("tip.submit", Description = "Submit a voluntary tip and receive the thank-you.", Group = "tip")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
@@ -59,9 +65,13 @@ public static partial class SubmitTipPost
   /// <summary>Thank-you body — same fields as <see cref="SubmitTip.Response"/>.</summary>
   public sealed class Response
   {
+    /// <summary>The greeting.</summary>
     public string Message { get; }
+    /// <summary>Amount of the tip.</summary>
     public string Amount { get; }
+    /// <summary>Payment network.</summary>
     public string Network { get; }
+    /// <summary>Always true; marks a tip response.</summary>
     public bool Tip { get; }
 
     public Response(string message, string amount, string network)

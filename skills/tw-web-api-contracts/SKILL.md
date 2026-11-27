@@ -180,8 +180,8 @@ HTTP endpoint, a CLI command, and an MCP tool:
 - **Bindings:** HTTP comes from `[ApiRoute]` + `[ApiEndpoint]` (this template). CLI and MCP come
   from TimeWarp.Nuru, which reads the same contract and dispatches through the mediator.
 
-**TWA0035** (info) suggests `[Operation]` on a hosted contract that lacks one. Members, kind
-choice, bindings, and the catalog: [neutral-operations.md](references/neutral-operations.md).
+**TWA0035** (warning, so a build error) requires `[Operation]` with a non-blank `Description` on every hosted contract: the name is the OpenAPI `operationId` and the `Description` its `summary`.
+Members, kind choice, bindings, the OpenAPI projection, and the catalog: [neutral-operations.md](references/neutral-operations.md).
 
 ## Contract shell
 
@@ -280,7 +280,7 @@ Read → `get-*/get-*-contracts.cs` · Write → `create-*|update-*|delete-*/…
 - The kind interface over `OneOf<Response, SharedProblemDetails>`: `IQuery`, `ICommand`, or
   `IIdempotentCommand` (see [neutral-operations.md](references/neutral-operations.md))
 - `[Operation("<resource>.<action>", Description = "…")]` on the nested `Query`/`Command`, so HTTP,
-  CLI, and MCP share one name (**TWA0035** suggests it on hosted contracts without one)
+  CLI, and MCP share one name (**TWA0035** requires it, with a `Description`, on hosted contracts)
 
 ### 3. Bindable data — interface-driven validation
 

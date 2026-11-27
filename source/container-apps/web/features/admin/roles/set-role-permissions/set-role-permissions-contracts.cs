@@ -30,6 +30,7 @@ public static partial class SetRolePermissions
   [Operation("roles.set-permissions", Description = "Replace a role's permission ids.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The complete list of permission ids the role is granted. Each must be a product permission id.</summary>
     public List<string> PermissionIds { get; set; } = [];
   }
 
@@ -48,6 +49,7 @@ public static partial class SetRolePermissions
 
   public sealed class Response
   {
+    /// <summary>The permission ids stored for the role after the write.</summary>
     public List<string> PermissionIds { get; }
 
     public Response(List<string> permissionIds)

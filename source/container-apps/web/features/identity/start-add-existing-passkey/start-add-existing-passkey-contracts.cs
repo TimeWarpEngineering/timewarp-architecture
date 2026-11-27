@@ -18,12 +18,14 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class StartAddExistingPasskey
 {
   [ApiRoute("api/identity/credentials/passkey/existing/options", HttpVerb.Post)]
+  [Operation("passkeys.start-add-existing", Description = "Start merging an existing passkey by returning WebAuthn assertion options.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 
   public sealed class Response
   {
+    /// <summary>The WebAuthn options as JSON, ready for the browser.</summary>
     public string OptionsJson { get; }
 
     public Response(string optionsJson)

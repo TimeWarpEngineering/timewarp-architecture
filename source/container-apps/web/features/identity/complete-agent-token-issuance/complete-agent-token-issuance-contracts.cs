@@ -56,13 +56,18 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompleteAgentTokenIssuance
 {
   /// <summary>Completes agent token issuance by returning the signed challenge.</summary>
-  /// <remarks>The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Token.v1: followed by the raw challenge bytes from start-agent-token-issuance, using ECDSA P-256 and SHA-256. It sends back base64url KeyId, Challenge, and Signature (RFC 3279 DER) and the requested Scopes. The response returns AccessToken, TokenType Bearer, ExpiresInSeconds, Scopes, and PrincipalId. There is no refresh token. The agent may request only scopes an admin approved through the principal's roles or grants on the principal. identity:read is always allowed. An unapproved scope returns 403 naming those scopes and issues no token. Removing an approval does not revoke a token already issued (tokens last 15 minutes by default); the change applies at the next issuance.</remarks>
+  /// <remarks>The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Token.v1: followed by the raw challenge bytes from `agent-token-issuance.start`, using ECDSA P-256 and SHA-256. It sends back base64url KeyId, Challenge, and Signature (RFC 3279 DER) and the requested Scopes. The response returns AccessToken, TokenType Bearer, ExpiresInSeconds, Scopes, and PrincipalId. There is no refresh token. The agent may request only scopes an admin approved through the principal's roles or grants on the principal. identity:read is always allowed. An unapproved scope returns 403 naming those scopes and issues no token. Removing an approval does not revoke a token already issued (tokens last 15 minutes by default); the change applies at the next issuance.</remarks>
   [ApiRoute("api/identity/agent/token", HttpVerb.Post)]
+  [Operation("agent-token-issuance.complete", Description = "Prove possession of an agent key and receive a short-lived bearer token.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The key id returned at registration.</summary>
     public string KeyId { get; set; } = null!;
+    /// <summary>The challenge exactly as the start request returned it.</summary>
     public string Challenge { get; set; } = null!;
+    /// <summary>The base64url DER (RFC 3279) ECDSA signature over the signed challenge payload.</summary>
     public string Signature { get; set; } = null!;
+    /// <summary>The scopes requested for the token (1 to 16 entries).</summary>
     public List<string> Scopes { get; set; } = [];
   }
 
@@ -84,10 +89,15 @@ public static partial class CompleteAgentTokenIssuance
 
   public sealed class Response
   {
+    /// <summary>The bearer access token.</summary>
     public string AccessToken { get; }
+    /// <summary>The token type, always Bearer.</summary>
     public string TokenType { get; }
+    /// <summary>The token lifetime in seconds.</summary>
     public int ExpiresInSeconds { get; }
+    /// <summary>The scopes requested for the token (1 to 16 entries).</summary>
     public IReadOnlyList<string> Scopes { get; }
+    /// <summary>The id of the agent principal the token was issued to.</summary>
     public PrincipalId PrincipalId { get; }
 
     public Response(string accessToken, int expiresInSeconds, IReadOnlyList<string> scopes, PrincipalId principalId)
