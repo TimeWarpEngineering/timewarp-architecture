@@ -44,20 +44,138 @@ Read the canonical sibling workflows and DevCli services before editing:
    - Add/update tests in `tests/tools/dev-cli-tests/` covering `ArchitecturePackableProjectService` (all 12 packages), `master` `pack-only`/green-key behavior, and keep `app-ci-workflow-shape-tests.cs` green.
    - Self-install `./bin/dev` and verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests`, `./bin/dev template-smoke`, `./bin/dev check-version`, and `ganda repo audit`.
 
+## Goal (implementer restatement)
+
+Make this repo release the way the other TimeWarp repos do: build and test once on the master
+merge, then promote those exact packages on `release:published`.
+
+Acceptance:
+
+- One packable set of 12 packages (the 11 under `source/` plus `TimeWarp.Architecture`) feeds
+  `dev check-version`, `dev release`, the master pack, and the release verify and push. No
+  hand-kept project list. `.timewarp/dev.jsonc` has no `checkVersionStrategy`.
+- Every master push that CI accepts ends with a `Packages-<run_number>` artifact (3-day
+  retention, the two newest kept): from the `ci (publish)` leg when ci-group runs, or from a
+  `pack-only` job (carry-forward of a live same-key non-PR run first, else build and pack) when
+  ci-group is skipped by green key or a skills-only push. A pull request uploads no `Packages-*`.
+  A pack-only run writes no ci green-key marker.
+- The `release` job runs the 6 steps: tag-gate (tag assertion, tag pin, ancestor of
+  origin/master, attestation; default require) -> check-version -> locate-run ->
+  download-artifact -> verify -> push, then template-publish-smoke. It no longer builds or uploads.
+  It has `fetch-depth: 0`, `actions: read`, `GH_TOKEN`, and a break-glass dispatch
+  (`mode: release` + `confirm: release`).
+- `dev workflow --attestation off|warn|require`; the PR/merge classify verifies attestation
+  (default warn).
+- Generated apps get none of the template-only release code.
+- `releasing.md` describes the new flow; dev-cli-tests cover the 12-package set, the master
+  pack-only decision, and the workflow shape.
+
 ## Checklist
 
-- [ ] Register template-only `ArchitecturePackableProjectService` (`IPackableProjectService`) covering all 12 packages (`source/` + `TimeWarp.Architecture`) and clean `.timewarp/dev.jsonc`
-- [ ] Pack all 12 packages on `master` push (including green-key / `skills/**` carry-forward or `pack-only`), publish `Packages-${{ github.run_number }}` in `ci`, prune keeping newest 2, and keep PR runs free of `Packages-*`
-- [ ] Implement the canonical 6-step DevCli promotion pipeline (`tag-gate` + attestation -> `check-version` -> `locate-run` -> `download-artifact` -> `verify` -> `push`) followed by `template-publish-smoke`, plus `workflow.yml` permissions/checkout/break-glass updates
-- [ ] Update `documentation/developer/guides/releasing.md` and `.template.config/template.json` excludes as needed
-- [ ] Add/update `tests/tools/dev-cli-tests/` and verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests`, `./bin/dev template-smoke`, `./bin/dev check-version`, and `ganda repo audit`
+- [x] Register template-only `ArchitecturePackableProjectService` (`IPackableProjectService`) covering all 12 packages (`source/` + `TimeWarp.Architecture`) and clean `.timewarp/dev.jsonc`
+- [x] Pack all 12 packages on `master` push (including green-key / `skills/**` carry-forward or `pack-only`), publish `Packages-${{ github.run_number }}` in `ci`, prune keeping newest 2, and keep PR runs free of `Packages-*`
+- [x] Implement the canonical 6-step DevCli promotion pipeline (`tag-gate` + attestation -> `check-version` -> `locate-run` -> `download-artifact` -> `verify` -> `push`) followed by `template-publish-smoke`, plus `workflow.yml` permissions/checkout/break-glass updates
+- [x] Update `documentation/developer/guides/releasing.md` and `.template.config/template.json` excludes as needed
+- [x] Add/update `tests/tools/dev-cli-tests/` and verify `./bin/dev build`, `./bin/dev test --project dev-cli-tests`, `./bin/dev template-smoke`, `./bin/dev check-version`, and `ganda repo audit`
 
 ## Session
 
 - Created: 2026-11-27
+- 2026-11-27 implement (claude): packable set, master Packages-*, 6-step release, docs, tests. Dispatch
+  mode `merge` (pack without publish through the release job) is gone: the release job no longer packs.
+  `full` is now the default dispatch; `release` + `confirm` is break-glass.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f3e697be-5f6f-46a5-a94f-559a49b830d3, max-turns 500, Done — 2026-11-27T06:39:22Z
+- Review oracle: Grok 4.7, tw-implementation-review effort 3, roster general, 1 round, disposition clean, session not reported, turn cap 200 (cursor uncapped). The goal restatement matches the task. — 2026-11-27
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md, disposition.md — 2026-11-27T06:52:38Z
+
+## Learnings
+
+- The goal restatement matches the task: one 12-package set, `Packages-*` on every master push CI accepts (ci publish or pack-only, no pull-request upload, no ci marker from pack-only), the 6-step promotion plus template-publish-smoke, attestation warn on PR/merge and require on release, template isolation, and docs plus dev-cli-tests. No misread.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
 - Depends on: none (ordered after task 532 so task 533's merge to `master` produces the live `Packages-*` artifact ready for `dev release` of `v2.0.0-beta.32`).
 - Do **not** bump `<Version>` in `source/Directory.Build.props` (already `2.0.0-beta.32`).
 - Keep `dev-cli` self-installed (`./bin/dev` rebuilt) after editing `tools/dev-cli/`.
+
+## Results
+
+### What changed
+
+- `tools/dev-cli/services/release-packages.cs` (pure, template-only): candidate projects
+  (`source/**/*.csproj` minus bin/obj, plus the template pack), the master `packages`/`pack`/`carry_run`
+  decision, and the carry-forward pick.
+- `tools/dev-cli/services/architecture-packable-project-service.cs` (template-only):
+  `IPackableProjectService` over those candidates through DevCli `PackableProjectService.EvaluateProjectsAsync`.
+  `dev.cs` registers it in a `templateRepository` region; generated apps keep `PackableProjectService`.
+  The hand-kept `PackableProjects` list in `workflow-template-repository.cs` is gone.
+- `.timewarp/dev.jsonc`: `checkVersionConfig.checkVersionStrategy` removed.
+- `tools/dev-cli/endpoints/workflow-template-packages.cs` (template-only): pack + `CiRunPromotion.VerifyPackageSet`,
+  `--phase pack` (carry forward via `--carry-run`, else clean -> build -> pack), the classify carry lookup
+  over `green-key-v1-ci-<key>` marker runs.
+- `tools/dev-cli/endpoints/workflow-template-release.cs` (template-only): tag-gate (TagAssertion, tag pin,
+  ancestor of origin/master, attestation require) -> check-version -> locate-run -> download-artifact ->
+  verify -> push (`--skip-duplicate` per package) -> template-publish-smoke.
+- `workflow-command.cs`: `--attestation`, `--pack` (with `--phase publish`), `--carry-run` (with
+  `--phase pack`), phase `pack`; all in `templateRepository` regions. Classify verifies attestation
+  (default warn) and writes `packages`, `pack`, `carry_run`.
+- `.github/workflows/workflow.yml`: `ci (publish)` packs with `--pack` and stages `staged-packages` on
+  master; new `pack-only` job; `ci` (actions: write) downloads staged-packages, uploads
+  `Packages-<run_number>` (3 days, nupkg + snupkg), keeps the two newest `Packages-*`, deletes
+  staged-packages; `release` job: fetch-depth 0, `actions: read`, `GH_TOKEN`, break-glass confirm,
+  no build and no upload. Dispatch modes: full (default), release, probe, nightly; input `confirm`.
+- `.template.config/template.json` excludes the four new template-only files.
+- `documentation/developer/guides/releasing.md` rewritten for the promotion flow.
+- `tests/tools/dev-cli-tests/release-packages-tests.cs` (13 tests): candidates, the real 12-package
+  MSBuild evaluation, master pack-only/carry decisions, workflow shape (release promotes without upload,
+  only `ci` uploads `Packages-*`, pack-only writes no green-key marker).
+
+### Gates
+
+- `./bin/dev build` — passed (0 warnings, 0 errors).
+- `dotnet run --file tools/dev-cli/dev.cs -- self-install` — passed (dev CLI compiles AOT, no warnings).
+- `tests/tools/dev-cli-tests/release-packages-tests.cs` — not a standalone runfile (no `#if !JARIBU_MULTI`
+  guard; project-compiled). Ran `./bin/dev test --project dev-cli-tests`: passed 467/467 (13 new in
+  `ReleasePackages_`). CI runs it too.
+- `./bin/dev template-smoke` — SUCCEEDED (generated dev CLI compiles without the template-only files;
+  web 504/504, api 9/9, testing 18/18).
+- `./bin/dev check-version` — 12 packages checked (TimeWarp.402 … TimeWarp.Architecture … TimeWarp.Modules),
+  2.0.0-beta.32 new vs 2.0.0-beta.31.
+- `./bin/dev workflow --phase pack` (local) — 12 packages packed and verified at 2.0.0-beta.32 (3m10s).
+- `ganda repo audit` — pass: 43 passed, 0 failed, 1 warning (`vscode-window-icon`, existing).
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev check-version
+./bin/dev workflow --phase classify      # local: attestation line, packages=false pack=false carry_run=
+./bin/dev workflow --mode release        # on a task branch: aborts at step 1 (not an ancestor of origin/master)
+./bin/dev workflow --phase pack          # clean -> build -> pack -> verify 12 packages
+./bin/dev test --project dev-cli-tests --filter-class ReleasePackages_
+```
+
+Expect: check-version lists 12 packages including TimeWarp.Architecture; classify prints
+`packages=false`; release aborts with "HEAD is not an ancestor of origin/master"; pack ends
+"Package set verified: 12 packages at 2.0.0-beta.32"; 13/13 tests pass. After merge, the master push
+run of this task's merge commit (or its pack-only job on a green-key hit) shows a
+`Packages-<run_number>` artifact, and `./bin/dev release --dry-run` from synced master finds it.
+
+### Risks / follow-ups
+
+- The locate-run, download, and push steps and the `ci` job's upload, prune, and staged-packages delete
+  only run on GitHub; the first master run after merge and the `v2.0.0-beta.32` release exercise them.
+- A master commit with no workflow run (paths filter, e.g. documentation-only) gets no `Packages-*`;
+  remedy documented (dispatch `mode: full` on master).
+
+### Review
+
+- Rounds: 1. Effort 3, roster: general. Reviewer: Grok 4.7. Session not reported. Turn cap 200 (cursor uncapped); budget ladder for this diff is 200.
+- Final counts: 0 bug, 0 suggestion, 0 nit. 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. No wontfix and no escalations.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
