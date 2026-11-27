@@ -54,6 +54,7 @@ Acceptance:
   text live in `BuildOutput` (pure, test-included); `TemplateSmokeDevCli.DevCliRunfile` now reads it.
   Measured: the new step takes ~5s incremental and ~24s cold. Output goes to
   `~/.local/share/dotnet/runfile/dev-<hash>/bin/release/`, never `./bin/dev`.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 9099f34a-e60e-4a43-bef3-4a3cea3b4fc8, max-turns 500, Done — 2026-11-27T10:55:25Z
 
 ## Results
 
