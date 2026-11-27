@@ -85,6 +85,16 @@ Acceptance:
   mode `merge` (pack without publish through the release job) is gone: the release job no longer packs.
   `full` is now the default dispatch; `release` + `confirm` is break-glass.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f3e697be-5f6f-46a5-a94f-559a49b830d3, max-turns 500, Done — 2026-11-27T06:39:22Z
+- Review oracle: Grok 4.7, tw-implementation-review effort 3, roster general, 1 round, disposition clean, session not reported, turn cap 200 (cursor uncapped). The goal restatement matches the task. — 2026-11-27
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md, disposition.md — 2026-11-27T06:52:38Z
+
+## Learnings
+
+- The goal restatement matches the task: one 12-package set, `Packages-*` on every master push CI accepts (ci publish or pack-only, no pull-request upload, no ci marker from pack-only), the 6-step promotion plus template-publish-smoke, attestation warn on PR/merge and require on release, template isolation, and docs plus dev-cli-tests. No misread.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -162,3 +172,10 @@ run of this task's merge commit (or its pack-only job on a green-key hit) shows 
   only run on GitHub; the first master run after merge and the `v2.0.0-beta.32` release exercise them.
 - A master commit with no workflow run (paths filter, e.g. documentation-only) gets no `Packages-*`;
   remedy documented (dispatch `mode: full` on master).
+
+### Review
+
+- Rounds: 1. Effort 3, roster: general. Reviewer: Grok 4.7. Session not reported. Turn cap 200 (cursor uncapped); budget ladder for this diff is 200.
+- Final counts: 0 bug, 0 suggestion, 0 nit. 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. No wontfix and no escalations.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
