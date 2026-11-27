@@ -169,3 +169,4 @@ descriptions yet.
 
 - Created: 2227132 (2026-11-24)
 - 2026-11-27 implement: backfilled `[Operation]` and member docs (three parallel helpers for the contract files), raised TWA0035, flipped the summary order, added `OpenApiOperationNames` and its document check and tests, and wired the reviewer guide to the `OperationName` constants.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3bbfb902-945d-4636-9476-e47faea8e15e, max-turns 500, Done — 2026-11-27T04:27:37Z
