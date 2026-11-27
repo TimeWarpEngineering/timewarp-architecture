@@ -27,7 +27,7 @@ using System.Text.Json;
 /// </summary>
 internal sealed class TemplateSmokeDevCli
 {
-  internal const string DevCliRunfile = "tools/dev-cli/dev.cs";
+  internal const string DevCliRunfile = BuildOutput.DevCliRunfile;
 
   private static readonly string[] ShippedFiles =
   [

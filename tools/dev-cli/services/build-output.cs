@@ -9,6 +9,9 @@
 // build that fails prints the whole MSBuild output, so no diagnostic is lost. --verbose streams
 // MSBuild live. --quiet is kept so older callers still parse; it names the default. When both are
 // passed, --verbose wins: it is the flag that asks for something the default does not do.
+// DevCliRunfile is the dev CLI entry point `dev build` compiles last (task 535). It is a .NET
+// file-based app, not in the .slnx, so without that step a tools/dev-cli/ compile error passed
+// `dev build` and showed up only at `dev self-install`. Template smoke reads the same constant.
 // Pure rules (no Amuru, no terminal), so dev-cli-tests Compile-include this file.
 #endregion
 
@@ -30,6 +33,12 @@ internal enum BuildOutputMode
 internal static class BuildOutput
 {
   internal const string SuccessText = "Build completed successfully!";
+
+  /// <summary>The dev CLI runfile, relative to the repository root. It is not in the solution.</summary>
+  internal const string DevCliRunfile = "tools/dev-cli/dev.cs";
+
+  /// <summary>The step line <c>dev build</c> prints before it compiles the dev CLI runfile.</summary>
+  internal const string DevCliStepText = $"Building {DevCliRunfile} (dev CLI runfile, Release, no NativeAOT link)...";
 
   /// <summary>Picks the output mode from the <c>--verbose</c> and <c>--quiet</c> flags.</summary>
   internal static BuildOutputMode Select(bool verbose, bool quiet)

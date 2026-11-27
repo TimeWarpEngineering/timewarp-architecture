@@ -18,6 +18,14 @@
 // co-located runfile, so a runfile compile error used to pass dev build and fail first in CI.
 // Discovery is DotNetTestArguments.TestProjects / UnlistedProjects (a disk glob, not a list), so a
 // generated app with a family flagged off builds only what it has. --clean cleans them too.
+// Task 535: last, `dotnet build tools/dev-cli/dev.cs -c Release` compiles the dev CLI runfile (not in
+// the .slnx). A plain build never runs the NativeAOT link (only `dev self-install` publishes), so it
+// takes seconds, and it still runs the AOT and trim analyzers PublishAot=true turns on, with
+// warnings as errors. Its output goes to the SDK's runfile artifacts folder, never ./bin/dev, so
+// building from the running ./bin/dev is safe. When dev runs as that runfile (CI, template smoke),
+// the inputs it just compiled are up to date and MSBuild writes nothing; on Linux a rewrite gets
+// a new inode and the running process keeps the old one. --clean cleans the runfile too.
+// It is the same step in a generated app: dev.cs ships there with templateRepository stripped.
 #endregion
 
 namespace DevCli.Commands;
@@ -94,6 +102,8 @@ internal sealed class BuildCommand : ICommand<Unit>
 
     private string SolutionFile => Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
+    private string DevCliRunfile => Path.Combine(RepoRoot, BuildOutput.DevCliRunfile);
+
     private async Task<bool> CleanAsync()
     {
       if (!Command.Clean) return true;
@@ -116,7 +126,13 @@ internal sealed class BuildCommand : ICommand<Unit>
         if (!await ExecuteAsync(clean, $"Clean failed: {Path.GetFileNameWithoutExtension(project)}")) return false;
       }
 
-      return true;
+      WriteStepLine($"Cleaning {BuildOutput.DevCliRunfile} (dev CLI runfile)...");
+      CommandResult cleanDevCli = DotNet.Clean()
+        .WithProject(DevCliRunfile)
+        .WithConfiguration("Release")
+        .WithNoValidation()
+        .Build();
+      return await ExecuteAsync(cleanDevCli, $"Clean failed: {BuildOutput.DevCliRunfile}");
     }
 
     private async Task<bool> BuildAsync()
@@ -142,7 +158,14 @@ internal sealed class BuildCommand : ICommand<Unit>
         if (!await ExecuteAsync(build, $"Build failed: {Path.GetFileNameWithoutExtension(project)}")) return false;
       }
 
-      return true;
+      // dotnet build, never publish: no NativeAOT link, and the output stays out of ./bin/dev.
+      WriteStepLine(BuildOutput.DevCliStepText);
+      CommandResult devCli = DotNet.Build()
+        .WithProject(DevCliRunfile)
+        .WithConfiguration("Release")
+        .WithNoValidation()
+        .Build();
+      return await ExecuteAsync(devCli, $"Build failed: {BuildOutput.DevCliRunfile}");
     }
 
     private async Task<string[]> UnlistedProjectsAsync()
