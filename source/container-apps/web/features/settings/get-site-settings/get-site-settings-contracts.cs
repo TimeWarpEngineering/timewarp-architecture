@@ -30,6 +30,7 @@ using TimeWarp.Identity;
 public static partial class GetSiteSettings
 {
   [ApiRoute("api/settings", HttpVerb.Get)]
+  [Operation("site-settings.get", Description = "Read the site settings and the bound Entra configuration.", Group = "settings")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
@@ -43,11 +44,17 @@ public static partial class GetSiteSettings
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
     public XaiByokMode XaiByokMode { get; set; }
+    /// <summary>Concurrency token; send back the value last read.</summary>
     public long Version { get; }
+    /// <summary>Configured Entra tenant id, when set.</summary>
     public string? ConfigurationTenantId { get; }
+    /// <summary>Display name of the configured Entra tenant, when known.</summary>
     public string? ConfigurationTenantDisplayName { get; }
+    /// <summary>Primary domain of the configured Entra tenant, when known.</summary>
     public string? ConfigurationTenantDomain { get; }
+    /// <summary>Whether configuration enables Entra sign-in.</summary>
     public bool ConfigurationEnabled { get; }
+    /// <summary>Whether configuration allows Entra bootstrap sign-in.</summary>
     public bool ConfigurationAllowBootstrap { get; }
 
     public Response(

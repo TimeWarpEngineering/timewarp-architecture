@@ -4,10 +4,12 @@
 #endregion
 
 #region Design
-// Endpoint summary order (task 472). The first non-empty source wins: XML <summary> on the
-// nested Query/Command, then [Operation(Description = ...)] on that request, then XML <summary>
-// on the outer [ApiEndpoint] static class. With none of them the summary is empty and no
-// s.Summary line is emitted. EndpointDocumentationResolver implements the order (remarks too).
+// Endpoint summary order (task 458-005). The first non-empty source wins: [Operation(Description
+// = ...)] on the nested Query/Command, then XML <summary> on that request, then XML <summary> on
+// the outer [ApiEndpoint] static class. With none of them the summary is empty and no s.Summary
+// line is emitted. The description is the XML summary and remarks that are not the summary.
+// EndpointDocumentationResolver implements both. The OpenAPI operationId is not emitted here:
+// OpenApiOperationNames (foundation-server) reads the generated OperationName constant.
 // The same text goes into the generated class's /// comment (XML-escaped) and into the
 // Summary(...) string literal (C#-escaped). The resolver joins wrapped lines into one line.
 #endregion

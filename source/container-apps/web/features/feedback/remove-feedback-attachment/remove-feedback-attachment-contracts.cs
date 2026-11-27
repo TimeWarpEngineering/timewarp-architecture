@@ -33,6 +33,7 @@ public static partial class RemoveFeedbackAttachment
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The identifier of the removed attachment.</summary>
     public Guid AttachmentId { get; }
 
     public Response(Guid attachmentId)

@@ -51,7 +51,9 @@ public static partial class SubmitFeedback
     public FeedbackKind Kind { get; set; }
     public string Title { get; set; } = null!;
     public string Body { get; set; } = null!;
+    /// <summary>True to email the filer a copy of the filing.</summary>
     public bool EmailCopy { get; set; }
+    /// <summary>Identifiers of previously uploaded attachments to link to the item.</summary>
     public List<Guid> AttachmentIds { get; set; } = [];
     /// <summary>The app path the filer was on (path only, no query string or fragment). Optional.</summary>
     public string? PagePath { get; set; }
@@ -102,12 +104,19 @@ public static partial class SubmitFeedback
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>The identifier of the newly filed item.</summary>
     public Guid FeedbackItemId { get; }
+    /// <summary>App-rooted page path of the filed item.</summary>
     public string Permalink { get; }
+    /// <summary>What kind of feedback was filed.</summary>
     public FeedbackKind Kind { get; }
+    /// <summary>The filed item's title.</summary>
     public string Title { get; }
+    /// <summary>The filed item's body text.</summary>
     public string Body { get; }
+    /// <summary>True when a copy of the filing was emailed to the filer.</summary>
     public bool EmailCopySent { get; }
+    /// <summary>Identifiers of the attachments linked to the item.</summary>
     public IReadOnlyList<Guid> AttachmentIds { get; }
 
     public Response(

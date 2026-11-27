@@ -26,14 +26,18 @@ namespace TimeWarp.Architecture.Features.MeteredCapability;
 public static partial class InvokeMeteredCapability
 {
   [ApiRoute("api/demo/metered-capability", HttpVerb.Get)]
+  [Operation("metered-capability.invoke", Description = "Invoke the metered demo capability, paid by credit or x402.", Group = "metered-capability")]
   public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 
   public sealed class Response
   {
+    /// <summary>The greeting.</summary>
     public string Message { get; }
+    /// <summary>Credit balance after the charge.</summary>
     public decimal BalanceAfter { get; }
+    /// <summary>What paid for the call.</summary>
     public string FundingSource { get; }
 
     public Response(string message, decimal balanceAfter, string fundingSource)

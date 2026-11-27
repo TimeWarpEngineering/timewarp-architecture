@@ -26,6 +26,7 @@ public static partial class ChangeFeedbackStatus
   [NotAggregate("Writes FeedbackItem through ChangeStatus, a checked transition that appends an entry; no agreement check covers a named mutation.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The status to move the feedback item to.</summary>
     public FeedbackStatus Status { get; set; }
   }
 
@@ -43,7 +44,9 @@ public static partial class ChangeFeedbackStatus
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The feedback item after the status change.</summary>
     public FeedbackAdminView Item { get; }
+    /// <summary>True when the filer was emailed about the change.</summary>
     public bool FilerEmailed { get; }
 
     public Response(FeedbackAdminView item, bool filerEmailed)

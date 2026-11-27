@@ -17,13 +17,16 @@ namespace TimeWarp.Architecture.Features.AgentLinks;
 public static partial class DenyAgentHumanLink
 {
   [ApiRoute("api/agent-links/{LinkId:guid}/deny", HttpVerb.Post)]
+  [Operation("agent-human-links.deny", Description = "Deny a pending agent-to-human link.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 
   public sealed class Response
   {
+    /// <summary>Id of the agent-human link.</summary>
     public Guid LinkId { get; }
+    /// <summary>Link status.</summary>
     public string Status { get; }
 
     public Response(Guid linkId, string status)

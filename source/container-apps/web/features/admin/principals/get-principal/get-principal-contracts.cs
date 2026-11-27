@@ -29,6 +29,7 @@ using TimeWarp.Identity;
 public static partial class GetPrincipal
 {
   [ApiRoute("api/admin/principals/{PrincipalId:guid}", HttpVerb.Get)]
+  [Operation("principals.get", Description = "Open one principal with its roles, agent scopes, and profile.", Group = "admin.principals")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>
@@ -41,6 +42,7 @@ public static partial class GetPrincipal
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The principal with its roles and profile.</summary>
     public PrincipalDetailDto Principal { get; }
 
     public Response(PrincipalDetailDto principal)
@@ -54,12 +56,19 @@ public static partial class GetPrincipal
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>Id of the principal.</summary>
     public PrincipalId PrincipalId { get; }
+    /// <summary>Whether the principal is a human or an agent.</summary>
     public PrincipalKind Kind { get; }
+    /// <summary>How the principal proved its identity.</summary>
     public TrustTier TrustTier { get; }
+    /// <summary>Whether the principal can sign in.</summary>
     public bool IsActive { get; }
+    /// <summary>Whether the principal is held back from acting.</summary>
     public bool IsQuarantined { get; }
+    /// <summary>Ids of the roles assigned to the principal.</summary>
     public List<Guid> RoleIds { get; }
+    /// <summary>Profile fields, present when the caller may read them.</summary>
     public PrincipalProfileDto? Profile { get; }
 
     /// <summary>Agent scopes granted on this principal, apart from its roles.</summary>
@@ -101,7 +110,9 @@ public static partial class GetPrincipal
 
   public sealed class ApprovedAgentScopeSourceDto
   {
+    /// <summary>Where the scope comes from: default, role, or principal.</summary>
     public string Kind { get; }
+    /// <summary>Id of the granting role, when the source is a role.</summary>
     public Guid? RoleId { get; }
 
     public ApprovedAgentScopeSourceDto(string kind, Guid? roleId = null)
@@ -113,7 +124,9 @@ public static partial class GetPrincipal
 
   public sealed class ApprovedAgentScopeDto
   {
+    /// <summary>The agent scope.</summary>
     public string Scope { get; }
+    /// <summary>Where this scope is granted from.</summary>
     public List<ApprovedAgentScopeSourceDto> Sources { get; }
 
     public ApprovedAgentScopeDto(string scope, List<ApprovedAgentScopeSourceDto> sources)
@@ -128,11 +141,17 @@ public static partial class GetPrincipal
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>Name shown for the principal.</summary>
     public string DisplayName { get; }
+    /// <summary>Email address, when known.</summary>
     public string? Email { get; }
+    /// <summary>Preferred language.</summary>
     public string Language { get; }
+    /// <summary>Preferred region.</summary>
     public string Region { get; }
+    /// <summary>Preferred theme.</summary>
     public string Theme { get; }
+    /// <summary>Whether notifications are on.</summary>
     public bool Notifications { get; }
 
     public PrincipalProfileDto(

@@ -59,59 +59,79 @@ public static partial class CompleteAgentChat
   }
 
   [ApiRoute("api/agent-chat/completions", HttpVerb.Post)]
+  [Operation("agent-chat.complete", Description = "Run one chat-completion turn for the browser agent.", Group = "agent-chat")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Conversation turns, oldest first.</summary>
     public List<Turn> Messages { get; set; } = [];
 
+    /// <summary>System instructions for the model.</summary>
     public string? Instructions { get; set; }
 
+    /// <summary>Tools the model may call.</summary>
     public List<ToolDefinition> Tools { get; set; } = [];
   }
 
   public sealed class Turn
   {
+    /// <summary>Who spoke: user, assistant, or tool.</summary>
     public string Role { get; set; } = null!;
 
+    /// <summary>Message text.</summary>
     public string? Text { get; set; }
 
+    /// <summary>Id of the tool call this turn answers.</summary>
     public string? ToolCallId { get; set; }
 
+    /// <summary>Result returned by the tool.</summary>
     public string? ToolResult { get; set; }
 
+    /// <summary>Tool calls the model requested.</summary>
     public List<ToolCall> ToolCalls { get; set; } = [];
 
+    /// <summary>Images attached to the turn.</summary>
     public List<TurnImage> Images { get; set; } = [];
   }
 
   public sealed class TurnImage
   {
+    /// <summary>Image media type, such as image/png.</summary>
     public string MediaType { get; set; } = null!;
 
+    /// <summary>Base64 image data.</summary>
     public string Data { get; set; } = null!;
   }
 
   public sealed class ToolCall
   {
+    /// <summary>Name of the tool to call.</summary>
     public string Name { get; set; } = null!;
 
+    /// <summary>Id that pairs the call with its result.</summary>
     public string CallId { get; set; } = null!;
 
+    /// <summary>Tool arguments as a JSON object.</summary>
     public string ArgumentsJson { get; set; } = "{}";
   }
 
   public sealed class ToolDefinition
   {
+    /// <summary>Name of the tool.</summary>
     public string Name { get; set; } = null!;
 
+    /// <summary>What the tool does, for the model.</summary>
     public string? Description { get; set; }
 
+    /// <summary>JSON schema of the tool parameters.</summary>
     public string ParametersJson { get; set; } = """{"type":"object","properties":{}}""";
   }
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The model reply text.</summary>
     public string? Text { get; set; }
 
+    /// <summary>Tool calls the model requested.</summary>
     public List<ToolCall> ToolCalls { get; set; } = [];
   }
 

@@ -66,6 +66,12 @@ internal static class ContractsEmitter
       .Replace("\r", "\\r", StringComparison.Ordinal)
       .Replace("\n", "\\n", StringComparison.Ordinal);
 
+  private static string EscapeXml(string value) =>
+    value
+      .Replace("&", "&amp;", StringComparison.Ordinal)
+      .Replace("<", "&lt;", StringComparison.Ordinal)
+      .Replace(">", "&gt;", StringComparison.Ordinal);
+
   internal static string RouteBody(
     string routeConst,
     string verb,
@@ -87,8 +93,13 @@ internal static class ContractsEmitter
       sb.Append("    public string GetRoute() => RouteTemplate;\n");
     }
 
+    // The summary is the route-value description OpenAPI copies onto the path parameter.
     foreach ((string type, string name) in parameters)
+    {
+      sb.Append("    /// <summary>The ").Append(name).Append(" value in the route ")
+        .Append(EscapeXml(routeConst)).Append(".</summary>\n");
       sb.Append("    public ").Append(type).Append(' ').Append(name).Append(" { get; set; }\n");
+    }
 
     return sb.ToString();
   }

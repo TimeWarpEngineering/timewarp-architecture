@@ -32,9 +32,12 @@ public static partial class ForwardBrowserLogs
   public static readonly IReadOnlyList<string> AllowedSources = ["console", "window.error", "unhandledrejection"];
 
   [ApiRoute(RouteTemplate: "api/browser-logs", HttpVerb.Post)]
+  [Operation("browser-logs.forward", Description = "Forward browser console entries to the server log pipeline.", Group = "browser-logs")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Console entries to forward.</summary>
     public List<Entry> Entries { get; set; } = [];
+    /// <summary>Path of the page that produced the entries.</summary>
     public string? PagePath { get; set; }
   }
 
@@ -46,6 +49,7 @@ public static partial class ForwardBrowserLogs
     /// <summary>One of <see cref="AllowedSources"/>.</summary>
     public string Source { get; set; } = null!;
 
+    /// <summary>The log message.</summary>
     public string Message { get; set; } = null!;
   }
 
@@ -75,6 +79,7 @@ public static partial class ForwardBrowserLogs
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>Number of entries accepted.</summary>
     public int Accepted { get; init; }
   }
 }

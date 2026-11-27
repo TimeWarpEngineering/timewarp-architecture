@@ -23,6 +23,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class EndBrowserSession
 {
   [ApiRoute("api/identity/session/end", HttpVerb.Post)]
+  [Operation("browser-session.end", Description = "End the caller's browser session; succeeds when none exists.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;

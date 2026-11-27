@@ -30,6 +30,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class StartPasskeyRegistration
 {
   [ApiRoute("api/identity/passkey/register/options", HttpVerb.Post)]
+  [Operation("passkey-registration.start", Description = "Start passkey registration and return WebAuthn creation options.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     /// <summary>True when the passkey will be added to the signed-in account (AddPasskey), false for a new account.</summary>
@@ -40,6 +41,7 @@ public static partial class StartPasskeyRegistration
 
   public sealed class Response
   {
+    /// <summary>The WebAuthn options as JSON, ready for the browser.</summary>
     public string OptionsJson { get; }
 
     public Response(string optionsJson)

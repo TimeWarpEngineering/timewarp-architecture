@@ -36,13 +36,16 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class GetCurrentSession
 {
   [ApiRoute("api/identity/session", HttpVerb.Get)]
+  [Operation("session.get-current", Description = "Return the current browser session, or an unauthenticated result.", Group = "identity")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 
   public sealed class Response
   {
+    /// <summary>True when a signed-in session exists.</summary>
     public bool IsAuthenticated { get; }
+    /// <summary>The session principal's id, or null when unauthenticated.</summary>
     public PrincipalId? PrincipalId { get; }
 
     /// <summary>Display-safe account fingerprint (PrincipalFingerprint) of the session principal; null when unauthenticated.</summary>

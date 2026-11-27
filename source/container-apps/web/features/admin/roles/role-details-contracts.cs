@@ -13,7 +13,9 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 public interface IRoleDetails
 {
+  /// <summary>The role's display name.</summary>
   public string Name { get; set; }
+  /// <summary>What the role is for.</summary>
   public string Description { get; set; }
 }
 

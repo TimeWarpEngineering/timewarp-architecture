@@ -26,6 +26,7 @@ public static partial class AddFeedbackNote
   [NotAggregate("Appends a thread entry through FeedbackItem.AddInternalNote; Body is the entry's body, not FeedbackItem.Body.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The note text. Required. Only administrators and agents see it, never the filer.</summary>
     public string Body { get; set; } = null!;
   }
 
@@ -40,6 +41,7 @@ public static partial class AddFeedbackNote
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The feedback item with its updated thread.</summary>
     public FeedbackAdminView Item { get; }
 
     public Response(FeedbackAdminView item)

@@ -28,6 +28,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 
 using System.Security.Claims;
 using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Foundation;
 using TimeWarp.Foundation.Features;
 
 public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
@@ -55,6 +56,7 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
       {
         builder
           .WithTags("Identity")
+          .WithMetadata(new OpenApiOperationName(ChallengeEntra.OperationName, ChallengeEntra.OperationDescription))
           .ClearDefaultProduces(StatusCodes.Status204NoContent)
           .Produces(StatusCodes.Status302Found)
           .Produces<SharedProblemDetails>(400, SharedProblemDetailsHttp.MediaType)

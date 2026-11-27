@@ -29,7 +29,7 @@ using TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Foundation;
 using TimeWarp.Foundation.Features;
 
-/// <summary>POST api/feedback/attachments</summary>
+/// <summary>Hosts <c>feedback.upload-attachment</c>: a multipart upload of one pending attachment.</summary>
 public sealed class UploadFeedbackAttachmentEndpoint
   : BaseFastEndpoint<UploadFeedbackAttachment.Command, UploadFeedbackAttachment.Response>
 {

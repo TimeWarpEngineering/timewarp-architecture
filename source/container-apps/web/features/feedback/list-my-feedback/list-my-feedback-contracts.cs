@@ -33,6 +33,7 @@ public static partial class ListMyFeedback
   [Operation("feedback.list-mine", Description = "List the current user's feedback items, optionally filtered by a search.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>Optional text; keeps items whose title contains it, ignoring case.</summary>
     public string? Search { get; set; }
 
     public string GetRouteWithQueryString()
@@ -63,13 +64,18 @@ public static partial class ListMyFeedback
     /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
     public object Clone() => this;
 
+    /// <summary>The feedback item's unique identifier.</summary>
     public Guid FeedbackItemId { get; }
     /// <summary>App-rooted page path the handler builds from the item id.</summary>
     [Computed]
     public string Permalink { get; }
+    /// <summary>What kind of feedback the item is.</summary>
     public FeedbackKind Kind { get; }
+    /// <summary>The item's title.</summary>
     public string Title { get; }
+    /// <summary>When the item was filed.</summary>
     public DateTimeOffset FiledAt { get; }
+    /// <summary>The item's current triage status.</summary>
     public FeedbackStatus Status { get; }
 
     public Item(
@@ -101,6 +107,7 @@ public static partial class ListMyFeedback
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The caller's feedback items.</summary>
     public IReadOnlyList<Item> Items { get; }
     /// <summary>Whether the caller's profile has an email. The handler reads it from the profile slice.</summary>
     [Computed]

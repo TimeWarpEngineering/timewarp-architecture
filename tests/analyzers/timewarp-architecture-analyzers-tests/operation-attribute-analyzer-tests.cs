@@ -1,5 +1,6 @@
 #region Purpose
-// Tests for TWA0035: a hosted contract's request without [Operation] gets an info suggestion.
+// Tests for TWA0035: a hosted contract's request without [Operation], or whose [Operation] has no
+// Description, gets a warning.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -9,10 +10,10 @@ using Microsoft.CodeAnalysis.CSharp.Testing;
 using TimeWarp.Architecture.Analyzers;
 using TimeWarp.Architecture.Analyzers.Tests;
 
-public class Should_Suggest_Operation
+public class Should_Require_Operation
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<Should_Suggest_Operation>();
+  internal static void Register() => RegisterTests<Should_Require_Operation>();
 
   // ApiRouteAttribute and OperationAttribute are matched by FQN; ApiEndpointAttribute and
   // ClientOnlyContractAttribute by simple name (HostedRouteDiscovery).
@@ -67,7 +68,7 @@ public class Should_Suggest_Operation
       }
     };
 
-  public static async Task Given_Hosted_Query_Without_Operation_Suggests_TWA0035()
+  public static async Task Given_Hosted_Query_Without_Operation_Reports_TWA0035()
   {
     const string source =
       """
@@ -119,7 +120,61 @@ public class Should_Suggest_Operation
     await Test(source).RunAsync();
   }
 
-  public static async Task Given_Whitespace_Operation_Name_Suggests_TWA0035()
+  public static async Task Given_Operation_Without_Description_Reports_TWA0035()
+  {
+    const string source =
+      """
+      #region Purpose
+      // Test feature.
+      #endregion
+      namespace App.Contracts
+      {
+        using TimeWarp.Architecture.Attributes;
+        using TimeWarp.Contracts;
+        using TimeWarp.Foundation.Features;
+
+        [ApiEndpoint]
+        public static class GetWidget
+        {
+          [ApiRoute("api/Widgets", HttpVerb.Get)]
+          [Operation("widgets.get")]
+          public sealed class {|TWA0035:Query|} { }
+          public sealed class Response { }
+        }
+      }
+      """;
+
+    await Test(source).RunAsync();
+  }
+
+  public static async Task Given_Whitespace_Description_Reports_TWA0035()
+  {
+    const string source =
+      """
+      #region Purpose
+      // Test feature.
+      #endregion
+      namespace App.Contracts
+      {
+        using TimeWarp.Architecture.Attributes;
+        using TimeWarp.Contracts;
+        using TimeWarp.Foundation.Features;
+
+        [ApiEndpoint]
+        public static class GetWidget
+        {
+          [ApiRoute("api/Widgets", HttpVerb.Get)]
+          [Operation("widgets.get", Description = "   ")]
+          public sealed class {|TWA0035:Query|} { }
+          public sealed class Response { }
+        }
+      }
+      """;
+
+    await Test(source).RunAsync();
+  }
+
+  public static async Task Given_Whitespace_Operation_Name_Reports_TWA0035()
   {
     const string source =
       """
@@ -146,7 +201,7 @@ public class Should_Suggest_Operation
     await Test(source).RunAsync();
   }
 
-  public static async Task Given_Foreign_OperationAttribute_Suggests_TWA0035()
+  public static async Task Given_Foreign_OperationAttribute_Reports_TWA0035()
   {
     const string source =
       """

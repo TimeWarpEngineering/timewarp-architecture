@@ -22,21 +22,29 @@ public sealed class FeedbackActivityEntry : ICloneable
   /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
   public object Clone() => this;
 
+  /// <summary>The entry's position in the thread.</summary>
   public int Sequence { get; }
+  /// <summary>What kind of thread entry this is.</summary>
   public FeedbackActivityKind Kind { get; }
   /// <summary>
   /// The entry's author, projected from the root's Guid. The handler sets it to null on the filer's
   /// copy (see Design), so the wire type widens it to Guid?, which TWA0041 accepts on a read.
   /// </summary>
   public Guid? AuthorPrincipalId { get; }
+  /// <summary>The entry text. Present on replies and notes.</summary>
   public string? Body { get; }
+  /// <summary>The status before the change. Present on status changes.</summary>
   public FeedbackStatus? FromStatus { get; }
+  /// <summary>The status after the change. Present on status changes.</summary>
   public FeedbackStatus? ToStatus { get; }
+  /// <summary>When the entry was added.</summary>
   public DateTimeOffset At { get; }
 
+  /// <summary>The severity before the change. Present on severity changes.</summary>
   [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
   public FeedbackSeverity? FromSeverity { get; }
 
+  /// <summary>The severity after the change. Present on severity changes.</summary>
   [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
   public FeedbackSeverity? ToSeverity { get; }
 

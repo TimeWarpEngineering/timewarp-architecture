@@ -49,11 +49,16 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class AddPasskey
 {
   [ApiRoute("api/identity/credentials/passkey", HttpVerb.Post)]
+  [Operation("passkeys.add", Description = "Attach an additional passkey to the caller's principal.", Group = "identity")]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The credential id (base64url in the request; the new credential's id in the response).</summary>
     public string CredentialId { get; set; } = null!;
+    /// <summary>The base64url clientDataJSON from the browser's WebAuthn response.</summary>
     public string ClientDataJson { get; set; } = null!;
+    /// <summary>The base64url attestationObject from the browser's WebAuthn registration response.</summary>
     public string AttestationObject { get; set; } = null!;
+    /// <summary>Optional display name for the credential, or null.</summary>
     public string? Nickname { get; set; }
     /// <summary>"platform" / "cross-platform" from the browser, or null when not reported.</summary>
     public string? AuthenticatorAttachment { get; set; }
@@ -78,6 +83,7 @@ public static partial class AddPasskey
 
   public sealed class Response
   {
+    /// <summary>The credential id (base64url in the request; the new credential's id in the response).</summary>
     public CredentialId CredentialId { get; }
     /// <summary>Resolved provider name (AAGUID map), or null when unknown — the nickname prompt's prefill.</summary>
     public string? ProviderLabel { get; }

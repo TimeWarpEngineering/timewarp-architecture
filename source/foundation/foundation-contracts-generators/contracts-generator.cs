@@ -45,6 +45,8 @@
 // the attribute constructor rejects that name, and EndpointEmitModel uses the same rule.
 // Group, title, and the two hints are metadata. They are not inserted into RouteTemplate or
 // GetRoute. Kind is not copied. The same type seen more than once keeps the first Operation part.
+// Each generated route member carries a one-line XML <summary> naming its route value (task
+// 458-005), so the OpenAPI path parameter FastEndpoints builds from it has a description.
 // Layout: this class only wires the pipeline. ContractsCollector builds the models in
 // contracts-model.cs, and ContractsEmitter renders all source text.
 #endregion

@@ -32,15 +32,20 @@ using TimeWarp.Identity;
 public static partial class GetAgentBearerIdentity
 {
   [ApiRoute("api/agent/bearer/me", HttpVerb.Get)]
+  [Operation("agent-bearer-identity.get", Description = "Read the calling agent's principal id, kind, trust tier, and token scopes.", Group = "agent-bearer-sample")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 
   public sealed class Response
   {
+    /// <summary>Id of the principal.</summary>
     public PrincipalId PrincipalId { get; }
+    /// <summary>Whether the principal is a human or an agent.</summary>
     public PrincipalKind Kind { get; }
+    /// <summary>How the principal proved its identity.</summary>
     public TrustTier TrustTier { get; }
+    /// <summary>Scopes granted on the bearer token.</summary>
     public IReadOnlyList<string> Scopes { get; }
 
     public Response(PrincipalId principalId, PrincipalKind kind, TrustTier trustTier, IReadOnlyList<string> scopes)

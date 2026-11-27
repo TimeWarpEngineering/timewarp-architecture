@@ -19,12 +19,14 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class StartPasskeyAuthentication
 {
   [ApiRoute("api/identity/passkey/authenticate/options", HttpVerb.Post)]
+  [Operation("passkey-authentication.start", Description = "Start passkey sign-in and return WebAuthn assertion options.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 
   public sealed class Response
   {
+    /// <summary>The WebAuthn options as JSON, ready for the browser.</summary>
     public string OptionsJson { get; }
 
     public Response(string optionsJson)

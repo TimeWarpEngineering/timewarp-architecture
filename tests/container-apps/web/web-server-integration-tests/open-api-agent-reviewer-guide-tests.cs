@@ -9,7 +9,9 @@
 // default, and the assertion reads that configured value. Ceremony descriptions come from
 // the contract remarks. The signing prefixes are read from AgentKeyProof so a copied
 // string that drifts fails here. Each scheme step's method and path are read from the
-// contract route, and that path must exist under paths in the same document.
+// contract route, and that path must exist under paths in the same document. Each step's
+// operationId is the contract's generated OperationName (task 458-005), quoted in backticks,
+// and the operation at that path carries the same operationId.
 // Task 520: the list-feedback operation documents ActivityFrom and the LastActivityAt sort and
 // field. The document is searched as text for the names, so the test does not pin how the
 // generator lays out parameter and component schemas.
@@ -66,18 +68,19 @@ public class Document_Given_
     int at = -1;
     foreach ((string operationId, string method, string path) in new (string, string, string)[]
     {
-      CeremonyStep<StartAgentKeyRegistration.Command>("start-agent-key-registration"),
-      CeremonyStep<CompleteAgentKeyRegistration.Command>("complete-agent-key-registration"),
-      CeremonyStep<StartAgentTokenIssuance.Command>("start-agent-token-issuance"),
-      CeremonyStep<CompleteAgentTokenIssuance.Command>("complete-agent-token-issuance"),
+      CeremonyStep<StartAgentKeyRegistration.Command>(StartAgentKeyRegistration.Command.OperationName),
+      CeremonyStep<CompleteAgentKeyRegistration.Command>(CompleteAgentKeyRegistration.Command.OperationName),
+      CeremonyStep<StartAgentTokenIssuance.Command>(StartAgentTokenIssuance.Command.OperationName),
+      CeremonyStep<CompleteAgentTokenIssuance.Command>(CompleteAgentTokenIssuance.Command.OperationName),
     })
     {
-      string token = operationId + " (" + method + " " + path + ")";
+      string token = "`" + operationId + "` (" + method + " " + path + ")";
       int next = description.IndexOf(token, StringComparison.Ordinal);
       next.ShouldBeGreaterThan(at);
       at = next;
-      paths.TryGetProperty(path, out JsonElement operation).ShouldBeTrue(path);
-      operation.TryGetProperty(method.ToLowerInvariant(), out _).ShouldBeTrue(method + " " + path);
+      paths.TryGetProperty(path, out JsonElement pathItem).ShouldBeTrue(path);
+      pathItem.TryGetProperty(method.ToLowerInvariant(), out JsonElement operation).ShouldBeTrue(method + " " + path);
+      operation.GetProperty("operationId").GetString().ShouldBe(operationId);
     }
 
     int lifetimeMinutes = Web.WebApplicationHost.ServiceProvider

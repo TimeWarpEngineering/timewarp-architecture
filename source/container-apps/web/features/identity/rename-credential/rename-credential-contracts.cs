@@ -30,8 +30,10 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class RenameCredential
 {
   [ApiRoute("api/identity/credentials/{CredentialId:guid}/rename", HttpVerb.Post)]
+  [Operation("credentials.rename", Description = "Give one of the caller's credentials a new nickname.", Group = "identity")]
   public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The new nickname, 1 to the maximum length after trimming.</summary>
     public string Nickname { get; set; } = null!;
   }
 

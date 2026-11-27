@@ -1,6 +1,7 @@
 #region Purpose
-// FastEndpoint generator OpenAPI summary order: request XML summary, then [Operation]
-// Description, then outer-class XML summary, then empty (task 472).
+// FastEndpoint generator OpenAPI summary order: [Operation] Description, then request XML
+// summary, then outer-class XML summary, then empty (task 458-005). The description carries the
+// XML summary and remarks that are not the summary.
 #endregion
 
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
@@ -46,12 +47,12 @@ public class FastEndpointSourceGenerator_Summary_Tests
     return Task.CompletedTask;
   }
 
-  public static Task Should_Prefer_Request_Summary_Over_Operation_And_Outer_Class()
+  public static Task Should_Prefer_Operation_Description_Over_Request_And_Outer_Class()
   {
     string generated = Generate(Contract(OuterSummary, OperationWithDescription, RequestSummary));
 
-    generated.ShouldContain("s.Summary = \"Request summary.\";");
-    generated.ShouldNotContain("Operation description.");
+    generated.ShouldContain("s.Summary = \"Operation description.\";");
+    generated.ShouldContain("s.Description = \"Request summary.\";");
     generated.ShouldNotContain("Outer summary.");
     return Task.CompletedTask;
   }
@@ -62,7 +63,40 @@ public class FastEndpointSourceGenerator_Summary_Tests
     string generated = Generate(Contract(OuterSummary, OperationWithDescription, requestDoc: ""));
 
     generated.ShouldContain("s.Summary = \"Operation description.\";");
-    generated.ShouldNotContain("Outer summary.");
+    generated.ShouldContain("s.Description = \"Outer summary.\";");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Put_Request_Summary_And_Remarks_In_The_Description()
+  {
+    string generated = Generate(Contract(
+      outerDoc: "",
+      OperationWithDescription,
+      "/// <summary>Request summary.</summary>\n/// <remarks>Request remarks.</remarks>"));
+
+    generated.ShouldContain("s.Summary = \"Operation description.\";");
+    generated.ShouldContain("s.Description = \"Request summary. Request remarks.\";");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Not_Repeat_The_Summary_In_The_Description()
+  {
+    string generated = Generate(Contract(
+      outerDoc: "",
+      OperationWithDescription,
+      "/// <summary>Operation description</summary>"));
+
+    generated.ShouldContain("s.Summary = \"Operation description.\";");
+    generated.ShouldNotContain("s.Description =");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Leave_The_Description_Empty_When_Only_A_Request_Summary_Exists()
+  {
+    string generated = Generate(Contract(outerDoc: "", operation: "", requestDoc: RequestSummary));
+
+    generated.ShouldContain("s.Summary = \"Request summary.\";");
+    generated.ShouldNotContain("s.Description =");
     return Task.CompletedTask;
   }
 

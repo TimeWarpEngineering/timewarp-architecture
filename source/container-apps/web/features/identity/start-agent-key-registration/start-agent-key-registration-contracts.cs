@@ -23,14 +23,16 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class StartAgentKeyRegistration
 {
   /// <summary>Starts agent key registration and returns a challenge to sign.</summary>
-  /// <remarks>Returns a base64url challenge. The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Register.v1: followed by the raw challenge bytes with ECDSA P-256 and SHA-256, and sends back the base64url SPKI public key, the base64url challenge, and the base64url RFC 3279 DER signature on complete-agent-key-registration.</remarks>
+  /// <remarks>Returns a base64url challenge. The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Register.v1: followed by the raw challenge bytes with ECDSA P-256 and SHA-256, and sends back the base64url SPKI public key, the base64url challenge, and the base64url RFC 3279 DER signature on `agent-key-registration.complete`.</remarks>
   [ApiRoute("api/identity/agent/register/options", HttpVerb.Post)]
+  [Operation("agent-key-registration.start", Description = "Start agent key registration and return a challenge to sign.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 
   public sealed class Response
   {
+    /// <summary>The one-time base64url challenge to sign.</summary>
     public string Challenge { get; }
 
     public Response(string challenge)

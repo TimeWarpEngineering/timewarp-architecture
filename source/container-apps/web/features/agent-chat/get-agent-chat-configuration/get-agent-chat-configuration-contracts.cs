@@ -32,12 +32,15 @@ namespace TimeWarp.Architecture.Features.AgentChats;
 public static partial class GetAgentChatConfiguration
 {
   [ApiRoute("api/agent-chat/configuration", HttpVerb.Get)]
+  [Operation("agent-chat.get-configuration", Description = "Read whether Ask can call xAI and how to set it up.", Group = "agent-chat")]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>Whether the server can call xAI.</summary>
     public bool Configured { get; set; }
 
+    /// <summary>Command that sets the xAI key.</summary>
     public string SetupCommand { get; set; } = null!;
 
     /// <summary>Separate from <see cref="SetupCommand"/>. Null when this host cannot store an admin key, or when the mode is Required.</summary>
@@ -46,26 +49,33 @@ public static partial class GetAgentChatConfiguration
     /// <summary>Whose key to set when Ask is not configured. Null when a key resolved.</summary>
     public string? KeyHint { get; set; }
 
+    /// <summary>Model name in use, when known.</summary>
     public string? Model { get; set; }
 
+    /// <summary>Whether chats are recorded.</summary>
     public bool RecordChats { get; set; }
 
+    /// <summary>Privacy notice shown to the user, when set.</summary>
     public string? PrivacyNotice { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
       "Design",
       "CA1056:URI-like properties should not be strings",
       Justification = "PrivacyUrl is a relative app path or an absolute href, copied as text into the anchor.")]
+    /// <summary>Link to the privacy policy, when set.</summary>
     public string? PrivacyUrl { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
       "Design",
       "CA1056:URI-like properties should not be strings",
       Justification = "SupportUrl is a relative app path or an absolute href, copied as text into the anchor.")]
+    /// <summary>Link to support.</summary>
     public string SupportUrl { get; set; } = XaiChatDefaults.SupportUrl;
 
+    /// <summary>Minutes a browser credential stays valid.</summary>
     public int CredentialLifetimeMinutes { get; set; } = XaiChatDefaults.CredentialLifetimeMinutes;
 
+    /// <summary>Prompts shown in the empty Ask state.</summary>
     public IReadOnlyList<AgentChatStarterPrompt> StarterPrompts { get; set; } = AgentChatStarterPrompts.Defaults;
   }
 

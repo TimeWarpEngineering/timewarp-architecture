@@ -45,6 +45,7 @@ public static partial class GetRole
 
   public sealed partial class Response : IRoleDetails
   {
+    /// <summary>The role's unique identifier.</summary>
     public Guid RoleId { get; }
     public string Name { get; set; }
     public string Description { get; set; }

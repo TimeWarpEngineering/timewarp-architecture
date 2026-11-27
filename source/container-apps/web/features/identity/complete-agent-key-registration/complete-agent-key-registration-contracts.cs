@@ -35,13 +35,18 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompleteAgentKeyRegistration
 {
   /// <summary>Completes agent key registration by returning the signed challenge.</summary>
-  /// <remarks>The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Register.v1: followed by the raw challenge bytes from start-agent-key-registration, using ECDSA P-256 and SHA-256. It sends back base64url PublicKey (SPKI), Challenge, and Signature (RFC 3279 DER). The response returns PrincipalId and KeyId.</remarks>
+  /// <remarks>The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Register.v1: followed by the raw challenge bytes from `agent-key-registration.start`, using ECDSA P-256 and SHA-256. It sends back base64url PublicKey (SPKI), Challenge, and Signature (RFC 3279 DER). The response returns PrincipalId and KeyId.</remarks>
   [ApiRoute("api/identity/agent/register", HttpVerb.Post)]
+  [Operation("agent-key-registration.complete", Description = "Complete agent key registration and create the agent's principal.", Group = "identity")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The base64url SPKI DER public key (ECDSA P-256).</summary>
     public string PublicKey { get; set; } = null!;
+    /// <summary>The challenge exactly as the start request returned it.</summary>
     public string Challenge { get; set; } = null!;
+    /// <summary>The base64url DER (RFC 3279) ECDSA signature over the signed challenge payload.</summary>
     public string Signature { get; set; } = null!;
+    /// <summary>Optional display name for the credential, or null.</summary>
     public string? Nickname { get; set; }
   }
 
@@ -58,7 +63,9 @@ public static partial class CompleteAgentKeyRegistration
 
   public sealed class Response
   {
+    /// <summary>The id of the newly created agent principal.</summary>
     public PrincipalId PrincipalId { get; }
+    /// <summary>The server-computed base64url SHA-256 of the registered public key bytes; send it when requesting a token.</summary>
     public string KeyId { get; }
 
     public Response(PrincipalId principalId, string keyId)

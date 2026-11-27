@@ -38,6 +38,7 @@ public static partial class UpdateXaiByokMode
   public sealed partial class Command : IApiRequest, IXaiByokModeDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public XaiByokMode XaiByokMode { get; set; }
+    /// <summary>Concurrency token; send back the value last read.</summary>
     public long Version { get; set; }
 
     static partial void CopyBeyondDetails(Command command, IXaiByokModeDetails source)
@@ -60,7 +61,9 @@ public static partial class UpdateXaiByokMode
 
   public sealed class Response
   {
+    /// <summary>Whose xAI key Ask uses.</summary>
     public XaiByokMode XaiByokMode { get; }
+    /// <summary>Concurrency token; send back the value last read.</summary>
     public long Version { get; }
 
     public Response(XaiByokMode xaiByokMode, long version)

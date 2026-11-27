@@ -29,6 +29,7 @@ public static partial class SetPrincipalAgentScopes
     Group = "admin.principals")]
   public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The complete list of agent scopes granted directly to the principal. Each must be a known agent scope. An empty list clears them.</summary>
     public List<string> Scopes { get; set; } = [];
   }
 
@@ -46,6 +47,7 @@ public static partial class SetPrincipalAgentScopes
 
   public sealed class Response
   {
+    /// <summary>The agent scopes granted directly to the principal after the write.</summary>
     public List<string> Scopes { get; }
 
     public Response(List<string> scopes)

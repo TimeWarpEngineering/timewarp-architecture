@@ -32,6 +32,7 @@ public static partial class GetFeedbackForAdmin
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The feedback item with its full thread, including internal notes.</summary>
     public FeedbackAdminView Item { get; }
 
     public Response(FeedbackAdminView item)

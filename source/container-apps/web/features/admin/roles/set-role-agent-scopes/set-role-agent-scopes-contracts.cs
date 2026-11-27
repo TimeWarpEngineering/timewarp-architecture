@@ -26,6 +26,7 @@ public static partial class SetRoleAgentScopes
   [Operation("roles.set-agent-scopes", Description = "Replace a role's agent scopes.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The complete list of agent scopes the role approves. Each must be a known agent scope. An empty list clears them.</summary>
     public List<string> Scopes { get; set; } = [];
   }
 
@@ -43,6 +44,7 @@ public static partial class SetRoleAgentScopes
 
   public sealed class Response
   {
+    /// <summary>The agent scopes stored for the role after the write.</summary>
     public List<string> Scopes { get; }
 
     public Response(List<string> scopes)

@@ -30,7 +30,9 @@ public static partial class CreateRole
   [Operation("roles.create", Description = "Create a role.", Group = "admin.roles")]
   public sealed partial class Command : IAuthApiRequest, IRoleDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
+    /// <summary>The role's display name.</summary>
     public string Name { get; set; } = null!;
+    /// <summary>What the role is for.</summary>
     public string Description { get; set; } = null!;
   }
 
@@ -44,6 +46,7 @@ public static partial class CreateRole
 
   public sealed class Response
   {
+    /// <summary>The identifier of the newly created role.</summary>
     public Guid RoleId { get; }
 
     public Response(Guid roleId)

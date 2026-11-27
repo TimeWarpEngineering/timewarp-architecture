@@ -100,10 +100,35 @@ public sealed partial class Command
 
 ## Enforcement
 
-**TWA0035** (info) reports a hosted contract whose request has no `[Operation]`. Hosted means
-`[ApiEndpoint]`, a nested `Query`/`Command` with `[ApiRoute]`, and no `[ClientOnlyContract]`.
-`[Operation]` is matched by its full name, `TimeWarp.Contracts.OperationAttribute`. The
-diagnostic is a suggestion, so the build stays clean while contracts adopt the attribute.
+**TWA0035** (warning, so a build error) reports a hosted contract whose request has no
+`[Operation]`, or whose `[Operation]` has no `Description` (missing, empty, or whitespace).
+Hosted means `[ApiEndpoint]`, a nested `Query`/`Command` with `[ApiRoute]`, and no
+`[ClientOnlyContract]`. `[Operation]` is matched by its full name,
+`TimeWarp.Contracts.OperationAttribute`.
+
+## The OpenAPI projection
+
+The HTTP host builds the OpenAPI document from the same contract:
+
+| Document field | Source |
+|----------------|--------|
+| `operationId` | The `[Operation]` name (`roles.list`), read from the generated `OperationName` constant |
+| `summary` | `[Operation]` `Description`, read from the generated `OperationDescription` constant |
+| `description` | The request's XML `<summary>` (else the outer class's), then `<remarks>`. A part equal to the summary is left out |
+| Parameter and property `description` | The member's XML `<summary>`. A member of an `I*Details` interface keeps its summary on the interface property. A generated route member says which route value it is |
+
+Write the `Description` as one sentence that says what the operation does for the caller. Write
+the longer detail in `<remarks>`. Give every public request and response member a one-line
+`<summary>`.
+
+Prose that names another operation quotes its id in backticks: `` `agent-key-registration.complete` ``.
+The document check fails `/openapi/{doc}.json` (500) when a quoted id is not an operation in the
+document, or when two operations share an id. A test on the web-server document requires a
+`summary` and a `<resource>.<action>` id on every operation.
+
+A hand-written endpoint whose request is not a contract (`EndpointWithoutRequest`) declares
+`OperationName` and `OperationDescription` constants on its static contract class and adds
+`Description(b => b.WithMetadata(new OpenApiOperationName(Name, Description)))`.
 
 ## Example
 

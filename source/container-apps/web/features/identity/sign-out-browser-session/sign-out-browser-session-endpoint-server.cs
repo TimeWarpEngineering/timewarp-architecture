@@ -24,6 +24,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
+using TimeWarp.Foundation;
 
 public sealed class SignOutBrowserSessionEndpoint : EndpointWithoutRequest
 {
@@ -46,6 +47,7 @@ public sealed class SignOutBrowserSessionEndpoint : EndpointWithoutRequest
     (
       builder => builder
         .WithTags("Identity")
+        .WithMetadata(new OpenApiOperationName(SignOutBrowserSession.OperationName, SignOutBrowserSession.OperationDescription))
         .ClearDefaultProduces(StatusCodes.Status204NoContent)
         .Produces(StatusCodes.Status303SeeOther)
         .Produces(StatusCodes.Status400BadRequest)

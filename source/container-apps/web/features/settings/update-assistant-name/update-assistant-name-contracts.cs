@@ -36,6 +36,7 @@ public static partial class UpdateAssistantName
   public sealed partial class Command : IApiRequest, IAssistantNameDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string AssistantName { get; set; } = null!;
+    /// <summary>Concurrency token; send back the value last read.</summary>
     public long Version { get; set; }
 
     static partial void CopyBeyondDetails(Command command, IAssistantNameDetails source)
@@ -58,7 +59,9 @@ public static partial class UpdateAssistantName
 
   public sealed class Response
   {
+    /// <summary>Name of the assistant.</summary>
     public string AssistantName { get; }
+    /// <summary>Concurrency token; send back the value last read.</summary>
     public long Version { get; }
 
     public Response(string assistantName, long version)

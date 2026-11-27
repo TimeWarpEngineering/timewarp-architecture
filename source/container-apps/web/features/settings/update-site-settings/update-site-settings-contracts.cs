@@ -27,6 +27,7 @@ using TimeWarp.Identity;
 public static partial class UpdateSiteSettings
 {
   [ApiRoute("api/settings", HttpVerb.Put)]
+  [Operation("site-settings.update", Description = "Update the site settings with optimistic concurrency.", Group = "settings")]
   public sealed partial class Command : IApiRequest, ISiteSettingsDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public bool EntraSignInEnabled { get; set; }
@@ -34,6 +35,7 @@ public static partial class UpdateSiteSettings
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
+    /// <summary>Concurrency token; send back the value last read.</summary>
     public long Version { get; set; }
 
     static partial void CopyBeyondDetails(Command command, ISiteSettingsDetails source)
@@ -68,6 +70,7 @@ public static partial class UpdateSiteSettings
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
     public XaiByokMode XaiByokMode { get; set; }
+    /// <summary>Concurrency token; send back the value last read.</summary>
     public long Version { get; }
 
     public Response(

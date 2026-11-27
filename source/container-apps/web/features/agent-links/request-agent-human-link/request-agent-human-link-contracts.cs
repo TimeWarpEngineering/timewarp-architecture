@@ -24,6 +24,7 @@ namespace TimeWarp.Architecture.Features.AgentLinks;
 public static partial class RequestAgentHumanLink
 {
   [ApiRoute("api/agent-links", HttpVerb.Post)]
+  [Operation("agent-human-links.request", Description = "Request a link from the calling agent to a human principal.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     /// <summary>
@@ -45,7 +46,9 @@ public static partial class RequestAgentHumanLink
 
   public sealed class Response
   {
+    /// <summary>Id of the agent-human link.</summary>
     public Guid LinkId { get; }
+    /// <summary>Link status.</summary>
     public string Status { get; }
 
     public Response(Guid linkId, string status)

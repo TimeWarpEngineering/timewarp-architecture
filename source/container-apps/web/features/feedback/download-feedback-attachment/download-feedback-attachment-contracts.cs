@@ -41,8 +41,11 @@ public static partial class DownloadFeedbackAttachment
 
   public sealed class Response : BaseResponse
   {
+    /// <summary>The attachment's bytes.</summary>
     public Stream Content { get; }
+    /// <summary>The attachment's media type.</summary>
     public string ContentType { get; }
+    /// <summary>The attachment's file name.</summary>
     public string FileName { get; }
 
     public Response(Stream content, string contentType, string fileName)
