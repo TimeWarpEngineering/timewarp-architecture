@@ -119,7 +119,7 @@ internal static partial class SkillSpecLint
   /// Null when CI reads <see cref="VersionFileRelativePath"/>, installs that package version,
   /// runs <see cref="LintSkillsCommand"/>, and does not invoke <c>vally lint</c> itself.
   /// The job is gated on <c>dev workflow --phase classify</c>, whose skill rule
-  /// (<c>WorkflowPathClasses.IsSkillPath</c>) includes <c>tools/dev-cli/</c>.
+  /// (<c>WorkflowPathClasses.IsSkillPath</c>) includes the dev CLI files <c>dev lint-skills</c> runs.
   /// </summary>
   internal static string? WorkflowDriftError(string workflowYaml)
   {
