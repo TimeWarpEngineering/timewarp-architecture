@@ -54,6 +54,10 @@ Acceptance:
 - [x] `dev-cli-tests` added and passing
 - [ ] `./bin/dev build` and `./bin/dev template-smoke` passing with 0 warnings
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Origin: `/tw-walk-retro` on task 533 (PR #714), Finding 1. On PR #714 (`tools/dev-cli/`, `.timewarp/dev.jsonc`, `.github/workflows/workflow.yml`, `documentation/`), `ci (integration)` took 8m26s, `ci (publish)` took 4m26s, and `skill-lint` took 2m15s with no `source/` or `skills/` edits.
@@ -66,6 +70,9 @@ Acceptance:
   narrowed skill-lint rule, ci marker gate. `WorkflowTemplateRepository` lives at
   `tools/dev-cli/endpoints/workflow-template-repository.cs` (the brief named `services/`).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 5787cfc4-7044-4671-9466-ec6668122dd1, max-turns 500, Done — 2026-11-27T10:43:58Z
+- Review oracle: Grok 4.7, tw-implementation-review effort 2, roster general, 1 round, disposition clean, session not reported, turn cap 120 (--max-turns; cursor uncapped). The behavior restatement matches the task. The acceptance list omits the task's local `template-smoke` run; see Learnings. — 2026-11-27
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-27
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-27T10:53:33Z
 
 ## Results
 
@@ -110,3 +117,15 @@ Expect: `ci=true`, `skill=false`, `template=true`, `ci_legs=["fast"]`, `ci_marke
 line `ci-group legs: fast (no ci green-key marker).` Run against this branch's own head (it edits
 `.github/workflows/`), expect `ci_legs=["fast","integration","publish"]` and `ci_marker=true`.
 Both were run on 2026-11-27 with those outputs.
+
+### Review
+
+- Rounds: 1. Effort 2, roster: general. Reviewer: Grok 4.7. Session not reported. Turn cap 120 (--max-turns; cursor uncapped).
+- Final counts: 0 bug, 0 suggestion, 0 nit. 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. No wontfix and no escalations.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- The behavior in `## Goal (implementer restatement)` matches the task: fast-only legs for a dev-cli pull request, skill-lint only for the lint-skills surface, no `ci` green-key marker unless every leg runs, and a full matrix on push, dispatch `mode=full`, and an unknown diff.
+- Misread (validation list only): the task requires a local `./bin/dev template-smoke` because `tools/dev-cli/` ships. The restatement's acceptance names `dev-cli-tests` and a 0-warning build, and does not name template-smoke. Results record that the local run was not done and that the changed classify files are excluded from generated apps. The PR path rule still turns the template-smoke job on. Not a product defect.
