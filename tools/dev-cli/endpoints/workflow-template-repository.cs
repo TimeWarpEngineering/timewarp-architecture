@@ -1,26 +1,18 @@
 #region Purpose
-// The template repository's own `dev workflow` paths: the NuGet release, the path-gated classify
-// outputs, and the generated-files check.
+// The template repository's own `dev workflow` paths: the path-gated classify outputs (with the
+// master Packages-* decision and the attestation check) and the generated-files check.
 #endregion
 #region Design
 // Template-only (task 530). .template.config/template.json excludes this file from generated apps,
 // and WorkflowCommand reaches it only inside templateRepository regions. The generated app's
 // workflow keeps clean -> build -> test -> publish all and a classify that writes ci alone.
 //
-// Release: clean -> build -> pack -> push -> template-publish-smoke. It deliberately does not run
-// tests: they already ran on the PR/merge that produced master. A release publishes as long as it
-// builds. Publishing is gated only by an API key being supplied (--api-key, from OIDC Trusted
-// Publishing); without one, pack-only, and the post-publish template-publish-smoke gate is skipped
-// (nothing was pushed). A dispatch therefore never publishes, and needs no break-glass confirm
-// input. After a real push, template-publish-smoke waits for nuget.org flatcontainer, generates
-// against the published template, asserts pins==version, restore+builds nuget.org-only; failure
-// blocks the release. PackableProjects includes source/libraries (TimeWarp.Modules,
-// TimeWarp.Identity, TimeWarp.402), foundation, TimeWarp.Architecture.{Attributes,Analyzers,
-// Generators}, and the template package; single Version from source/Directory.Build.props.
-// TimeWarp.Contracts is a PackageReference at the Directory.Packages.props pin. This list does not
-// pack it.
+// Release mode is WorkflowTemplateRelease (workflow-template-release.cs), and the master pack,
+// pack-only, and carry-forward are WorkflowTemplatePackages (workflow-template-packages.cs), both
+// task 533. The packable set is IPackableProjectService (ArchitecturePackableProjectService): no
+// project list here.
 //
-// Classify writes three outputs:
+// Classify writes these outputs:
 //   ci        PullRequestBuildClassifier.RequiresBuild (TimeWarp.Nuru.DevCli) with this repo's
 //             additions in .timewarp/dev.jsonc pullRequestBuild, over the same changed paths. A
 //             push applies the pull request rule to its own diff (DecideAsync builds for every
@@ -28,6 +20,13 @@
 //             request does. An unreadable dev.jsonc on a push builds.
 //   skill     WorkflowPathClasses.IsSkillPath over the changed paths (gates skill-lint).
 //   template  WorkflowPathClasses.IsTemplatePath over the changed paths (gates template-smoke).
+//   packages, pack, carry_run  ReleasePackages.OutputLines (services/release-packages.cs): whether
+//             this run publishes Packages-*, whether pack-only runs (ci-group off), and the earlier
+//             run pack-only carries forward (WorkflowTemplatePackages.FindCarryRunAsync).
+// Attestation: classify verifies the ganda-audit note on HEAD's tree once per run (RunAttestationAsync,
+// the DevCli AttestationVerifyRunner). Mode: --attestation, then dev.jsonc attestation.mode, else warn.
+// Warn prints an advisory; require fails classify, so ci fails. Release mode calls the same method
+// with require as the default.
 // Green key (services/green-key.cs, services/green-key-ledger.cs): classify then turns off each of
 // ci, skill, and template whose gate already passed on this tree, and writes green_key and
 // green_key_writer (a candidate with a key and a gate left on) for workflow.yml's green-key job,
@@ -47,47 +46,25 @@ namespace DevCli.Commands;
 
 using System.Text.Json;
 
-/// <summary>The template repository's release, classify, and generated-files steps of <c>dev workflow</c>.</summary>
+/// <summary>The template repository's classify and generated-files steps of <c>dev workflow</c>.</summary>
 internal sealed class WorkflowTemplateRepository
 {
-  // The publishable set — single repo version (source/Directory.Build.props). libraries (modules,
-  // identity, 402) ship as leaf product packages; foundation-application depends on modules; analyzers/
-  // generators/attributes ship as platform compile-time packages (task 092); the template is the
-  // dotnet-new package.
-  internal static readonly string[] PackableProjects =
-  [
-    "source/libraries/timewarp-modules/timewarp-modules.csproj",
-    "source/libraries/timewarp-identity/timewarp-identity.csproj",
-    "source/libraries/timewarp-402/timewarp-402.csproj",
-    "source/foundation/foundation-domain/foundation-domain.csproj",
-    "source/foundation/foundation-contracts/foundation-contracts.csproj",
-    "source/foundation/foundation-application/foundation-application.csproj",
-    "source/foundation/foundation-infrastructure/foundation-infrastructure.csproj",
-    "source/foundation/foundation-server/foundation-server.csproj",
-    "source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj",
-    "source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj",
-    "source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj",
-    "timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj",
-  ];
-
   private const string BuildConfigFile = ".timewarp/dev.jsonc";
   private const string IngressGoldenDirectory = "goldens/ingress";
 
   private readonly ITerminal Terminal;
-  private readonly IRepoCleanService RepoCleanService;
   private readonly string RepoRoot;
   private readonly CancellationToken Ct;
 
-  public WorkflowTemplateRepository(ITerminal terminal, IRepoCleanService repoCleanService, string repoRoot, CancellationToken ct)
+  public WorkflowTemplateRepository(ITerminal terminal, string repoRoot, CancellationToken ct)
   {
     Terminal = terminal;
-    RepoCleanService = repoCleanService;
     RepoRoot = repoRoot;
     Ct = ct;
   }
 
   /// <summary>Writes ci, skill, and template to GITHUB_OUTPUT. A diff that cannot be read turns every job on.</summary>
-  public async Task ClassifyAsync(PullRequestBuildDecision decision)
+  public async Task ClassifyAsync(PullRequestBuildDecision decision, string? attestationMode)
   {
     IReadOnlyList<string>? changed = await ReadChangedPathsAsync(decision);
     if (changed is null)
@@ -106,6 +83,18 @@ internal sealed class WorkflowTemplateRepository
       paths => !configRead || PullRequestBuildClassifier.RequiresBuild(paths, config));
     GreenKeyObservation green = await GreenKeyLedger.ObserveAsync(Terminal, RepoRoot, pathJobs, Ct);
     WorkflowJobs jobs = GreenKey.ApplyHits(pathJobs, green.HitGates);
+
+    bool stages = ReleasePackages.StagesPackages(Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME"), Environment.GetEnvironmentVariable("GITHUB_REF"));
+    long? carryRun = stages && !jobs.Ci ? await WorkflowTemplatePackages.FindCarryRunAsync(Terminal, RepoRoot, green.Key, Ct) : null;
+
+    string? mode = attestationMode ?? await ReadAttestationModeAsync();
+    if (!await RunAttestationAsync(Terminal, RepoRoot, mode, AttestationConfigResolver.DefaultPrMode, Ct))
+    {
+      Terminal.WriteErrorLine("\nPipeline FAILED — attestation required (mode=require) and not valid".Red());
+      Environment.ExitCode = 1;
+      return;
+    }
+
     await WorkflowCommand.WriteOutputsAsync(
       Terminal,
       [
@@ -113,8 +102,57 @@ internal sealed class WorkflowTemplateRepository
         $"skill={WorkflowCommand.Bool(jobs.Skill)}",
         $"template={WorkflowCommand.Bool(jobs.Template)}",
         .. GreenKey.OutputLines(green, jobs),
+        .. ReleasePackages.OutputLines(stages, jobs.Ci, carryRun),
       ],
       Ct);
+  }
+
+  /// <summary>
+  /// Verifies the ganda-audit note on HEAD's tree under <paramref name="rawMode"/> (null or blank:
+  /// <paramref name="whenUnset"/>). False only when the mode is require and the note is not valid.
+  /// </summary>
+  internal static async Task<bool> RunAttestationAsync(ITerminal terminal, string repoRoot, string? rawMode, AttestationMode whenUnset, CancellationToken ct)
+  {
+    AttestationModeResolution resolution = AttestationConfigResolver.ResolveMode(rawMode);
+    AttestationMode mode = AttestationConfigResolver.EffectiveMode(resolution, whenUnset);
+    if (resolution.UnrecognizedValue is not null)
+    {
+      terminal.WriteLine($"Warning: unrecognized attestation mode '{resolution.UnrecognizedValue}', treated as {whenUnset.ToString().ToLowerInvariant()}. Valid: off, warn, require.".Yellow());
+    }
+
+    if (mode == AttestationMode.Off)
+    {
+      terminal.WriteLine("Attestation skipped (mode=off).");
+      return true;
+    }
+
+    AttestationVerifyOutcome outcome;
+    try
+    {
+      outcome = await AttestationVerifyRunner.VerifyAsync(repoRoot, "HEAD", keyOverride: null, ct);
+    }
+    catch (InvalidOperationException exception)
+    {
+      terminal.WriteErrorLine(exception.Message.Red());
+      return mode != AttestationMode.Require;
+    }
+
+    string message = AttestationVerifyRunner.Describe(outcome);
+    if (outcome.Status == AttestationVerificationStatus.Valid)
+    {
+      terminal.WriteLine(message.Green());
+      return true;
+    }
+
+    if (mode == AttestationMode.Require)
+    {
+      terminal.WriteErrorLine($"Attestation required (mode=require): {message}".Red());
+      return false;
+    }
+
+    terminal.WriteLine($"Attestation advisory (mode=warn, not enforced): {message}".Yellow());
+    terminal.WriteLine("Set attestation.mode to require in .timewarp/dev.jsonc, or pass --attestation require, to enforce it.".Yellow());
+    return true;
   }
 
   /// <summary>
@@ -136,33 +174,21 @@ internal sealed class WorkflowTemplateRepository
     return false;
   }
 
-  /// <summary>Release: NO test step — publish as long as it builds; post-push template-publish-smoke blocks on real publish.</summary>
-  public async Task RunReleaseAsync(string? apiKey)
+  // attestation.mode from .timewarp/dev.jsonc; null (the context default) when absent or unreadable.
+  private async Task<string?> ReadAttestationModeAsync()
   {
-    Terminal.WriteLine("Pipeline: clean -> build -> pack -> push -> template-publish-smoke\n");
-    Environment.ExitCode = 0;
+    string path = Path.Combine(RepoRoot, BuildConfigFile);
+    if (!File.Exists(path)) return null;
 
-    if (!await WorkflowCommand.RunStepAsync(Terminal, "Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
-    if (!await WorkflowCommand.RunStepAsync(Terminal, "Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
-    if (!await PackAsync()) return;
-
-    string? resolvedKey = apiKey ?? Environment.GetEnvironmentVariable("NUGET_API_KEY");
-    bool willPublish = !string.IsNullOrWhiteSpace(resolvedKey);
-    if (!await PushAsync(apiKey)) return;
-
-    if (willPublish)
+    try
     {
-      if (!await WorkflowCommand.RunStepAsync(
-            Terminal,
-            "Template publish smoke",
-            new TemplatePublishSmokeCommand.Handler(Terminal)
-              .Handle(new TemplatePublishSmokeCommand(), Ct)))
-      {
-        return;
-      }
+      return RepoConfigService.Parse(await File.ReadAllTextAsync(path, Ct)).Attestation?.Mode;
     }
-
-    Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
+    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+    {
+      Terminal.WriteErrorLine($"{BuildConfigFile} could not be read ({exception.Message}). Attestation uses its default.");
+      return null;
+    }
   }
 
   // pullRequestBuild from .timewarp/dev.jsonc, the same additions DecideAsync reads. False when
@@ -227,58 +253,4 @@ internal sealed class WorkflowTemplateRepository
 
   private ShellBuilder GitCommand(params string[] arguments) =>
     Shell.Builder("git").WithArguments(arguments).WithWorkingDirectory(RepoRoot).WithNoValidation();
-
-  private async Task<bool> PackAsync()
-  {
-    string outputDir = Path.Combine(RepoRoot, "artifacts", "packages");
-    Directory.CreateDirectory(outputDir);
-
-    foreach (string relativeProject in PackableProjects)
-    {
-      Terminal.WriteLine($"\nPacking {relativeProject}...");
-      int exitCode = await DotNet.Pack(Path.Combine(RepoRoot, relativeProject))
-        .WithConfiguration("Release")
-        .WithOutput(outputDir)
-        .WithNoValidation()
-        .RunAsync(Ct);
-
-      if (exitCode != 0)
-      {
-        Terminal.WriteErrorLine($"Pack failed for {relativeProject}!".Red());
-        Environment.ExitCode = exitCode;
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private async Task<bool> PushAsync(string? apiKey)
-  {
-    apiKey ??= Environment.GetEnvironmentVariable("NUGET_API_KEY");
-    if (string.IsNullOrWhiteSpace(apiKey))
-    {
-      Terminal.WriteLine("\nNo API key supplied — pack-only (skipping push).".Yellow());
-      return true;
-    }
-
-    string glob = Path.Combine(RepoRoot, "artifacts", "packages", "*.nupkg");
-    Terminal.WriteLine($"\nPushing {glob} to nuget.org...");
-
-    int exitCode = await DotNet.NuGet()
-      .Push(glob)
-      .WithApiKey(apiKey)
-      .WithSource("https://api.nuget.org/v3/index.json")
-      .WithSkipDuplicate()
-      .RunAsync(Ct);
-
-    if (exitCode != 0)
-    {
-      Terminal.WriteErrorLine("Push failed!".Red());
-      Environment.ExitCode = exitCode;
-      return false;
-    }
-
-    return true;
-  }
 }

@@ -21,6 +21,8 @@
 #region Design
 // Thin wrapper around TimeWarp.Nuru to execute development commands.
 // Shared endpoints (clean, self-install, check-version) come from TimeWarp.Nuru.DevCli.
+// The template repository's packable set adds the template pack to the DevCli source/ scan
+// (services/architecture-packable-project-service.cs, task 533); a generated app keeps the scan.
 // UseTelemetry is on so a CI job or a ganda walk that shells out to dev exports one
 // command span. ServiceName is the literal timewarp-architecture-dev. An unset
 // OTEL_EXPORTER_OTLP_ENDPOINT exports nothing.
@@ -35,7 +37,11 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddSingleton<IRepoCleanService, RepoCleanService>();
     services.AddSingleton<NuGetVersionService>();
     services.AddSingleton<IRepoConfigService, RepoConfigService>();
+#if templateRepository
+    services.AddSingleton<IPackableProjectService, ArchitecturePackableProjectService>();
+#else
     services.AddSingleton<IPackableProjectService, PackableProjectService>();
+#endif
   })
   .DiscoverEndpoints()
   .Build();
