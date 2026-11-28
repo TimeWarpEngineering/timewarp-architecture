@@ -45,6 +45,48 @@ likely
      - `NewConversation` and host disposal still cleanly dispose the previous `AgentContext` and `CatalogAgentFunctions`.
    - Verify `./bin/dev build` and targeted `./bin/dev test` pass with 0 warnings and 0 errors.
 
+## Goal (implementer restatement)
+
+Ask stays in `TimeWarpPage`'s aside. A route change still disposes that page and its `AgentAsk`, then mounts a new pair. The live turn must keep running across that swap.
+
+The circuit-scoped `AskAgentSession` owns the `UIAgent`, `AgentContext`, invoking client, tag client, catalog functions, and the path, edit mode, and generation they were built for. Unmounting `AgentAsk` while the panel stays open only drops the panel's status subscription and its voice timer. The new panel attaches to the same context, so the model can finish the turn and the thread can commit the navigation call and its result. When the turn is idle or in error, the session rebuilds tools for the route now showing.
+
+A tool set built before the navigation stays in place until that rebuild. An off-page tool that lands on its page and now requires approval does not run and does not pretend the edit mode changed: it tells the model this turn is done and the next turn can ask. In Automatically edit, approval is not required, so the same prefill runs on the page it just opened.
+
+New conversation, a readiness drop, closing the panel, and disposing the circuit still drop the live agent. The next open or the next generation builds a new one.
+
+## Results
+
+`AskAgentSession` is the circuit-scoped owner of the live agent. `AgentAsk` still renders inside `TimeWarpPage`. Unmounting the panel while it stays open detaches the UI subscription and the voice timer and leaves the `AgentContext` running. Closing the panel, a new conversation, a readiness drop, and disposing the scope still release it.
+
+The tool set from the start of the turn stays until the turn is idle or in error. An off-page tool that lands on its page and now requires approval returns `ArrivalNeedsApprovalError` and does not run. The idle rebuild then wraps that tool. In Automatically edit the same unwrapped function runs the prefill. The session records `agent-built`, `agent-deferred`, and `status` breadcrumbs, including `status=Idle` and `agent-built` for the destination path.
+
+The build no longer suppresses `BL0013` on the session: it reads `AuthenticationStateProvider` from the scope on each rebuild instead of holding it. `ganda repo audit --fix` lowered the `AgentAsk.razor` `BL0013` baseline from 2 to 1 because that second suppression left with the rebuild.
+
+### How to validate
+
+Smoke: sign in, open Ask on `/`, and ask it to open the new role page. Approve the navigation. The panel stays open on `/Admin/Roles/New` and Akili finishes the reply. Ask again to fill the role. Expect one `navigate` call in the thread, the reply committed beside it, and no second navigation. After the turn is idle, diagnostics include `tool-start`, `tool-outcome`, `status=Idle`, and `agent-built` for `/Admin/Roles/New`, and `Prefill.Role.CreateRole` is wrapped for approval.
+
+- `./bin/dev build` — passed, 0 warnings, 0 errors.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/ask-agent-session-tests.cs` — passed, 3 tests. Not a standalone runfile (no `#if !JARIBU_MULTI`); CI runs it with the project. The doubles file is the other half of the same class.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/ask-diagnostics-wiring-tests.cs` — passed, 9 tests. Not a standalone runfile; CI runs it.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/agent-ask-readiness-tests.cs` — passed, 14 tests. Not a standalone runfile; CI runs it.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/assistant-identity-tests.cs` — passed, 9 tests. Not a standalone runfile; CI runs it.
+- `ganda repo audit` — passed, 44 passed, 0 failed.
+
+Evidence: [evidence/agent-ask.png](evidence/agent-ask.png) is `AgentAsk` open on `/` for a signed-out visitor (Sign in to use Akili). [evidence/home.png](evidence/home.png) is the same home shell. Both shots are from this worktree's isolated AppHost (`aspire run --isolated`, http://127.0.0.1:63920) because a Development AppHost already held the shared dashboard and ingress ports. This evidence pass did not change product code; the gates above still stand.
+
+### Review disposition
+
+- Rounds: 1. Roster: general (effort 3, by-diff budget).
+- Final counts: bug 0. Suggestion 1 wontfix. Nit 3 wontfix. 0 open.
+- Disposition: `accepted-exceptions`. M1: a build that finishes after the panel closes leaves an idle agent on the session, which is harmless and reused or replaced later. M2: comment whitespace. M3: a test local name. M4: duplicate evidence shot. Rationale is in the disposition.
+- Paths: [review/review-framework.md](review/review-framework.md), [review/round-1/general.md](review/round-1/general.md), [review/round-1/merged.md](review/round-1/merged.md), [review/disposition.md](review/disposition.md).
+
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Key files:
@@ -55,3 +97,10 @@ likely
   - `source/container-apps/web/projects/web-spa/features/application/agent/catalog-agent-session.cs`
   - `source/container-apps/web/projects/web-spa/program.cs` (DI registration)
 - Keep `536-003`'s `AskDiagnostics` breadcrumbs working cleanly across remounts so SigNoz shows the full lifecycle (`tool-start`, `tool-outcome`, `status=Idle`, `agent-built` for the new path).
+
+## Session
+
+- Implement oracle: implemented by implementer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-28T16:26:06Z
+- Implement oracle: implemented by implementer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-28T16:31:15Z
+- Review oracle: tw-implementation-review round 1, general reviewer (Claude Code, claude-opus-5-5), effort 3, turn cap 200, session not reported. Disposition accepted-exceptions, 0 open — 2026-11-28
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1271e55c-e271-499c-8d13-a1fd12520144, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-28T16:34:45Z
