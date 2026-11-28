@@ -50,6 +50,10 @@ likely
      - When `ClientResultException` is thrown with a raw HTTP response body (e.g., `400` `{"code":"invalid-argument","error":"Incorrect API key provided."}`), `XaiChatUpstream` logs the status code and bounded response body snippet while still returning `AgentChatProblems.UpstreamFailed()`.
    - Run `./bin/dev build` and targeted `./bin/dev test` with 0 warnings and 0 errors.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Key files:
@@ -78,6 +82,16 @@ These web-server-integration-tests files are project classes, not `#if !JARIBU_M
 - `./bin/dev test tests/container-apps/web/web-server-integration-tests/features/agent-chat/xai-api-key-admin-tests.cs` — `XaiApiKeyAdmin_.Returns_` 1/1 passed in 16.1s.
 - `ganda repo audit` — exit 0, pass: 43 passed, 0 failed, 1 warning (`vscode-window-icon`, pre-existing).
 
+### Review disposition
+
+- Outcome: **clean**. 1 round, effort 2, roster: general.
+- Final counts: bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix).
+- The implementer restatement matches the task. There was no misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ## Session
 
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21fe7-15d3-7552-a3c6-9663f83761fe, max-turns 500, Done — 2026-11-28T02:35:01Z
+- Review oracle: claude (vendor anthropic, model claude-opus-5-5), body tw-implementation-review effort 2, roster general, turn cap 120, round 1, disposition clean — 2026-11-28
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d0d87f2e-2032-4070-a4c2-4a78575bcb48, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-28T02:37:03Z
