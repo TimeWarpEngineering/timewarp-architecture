@@ -187,12 +187,12 @@ internal sealed class TemplateSmokeDevCli
   }
 
   // The first word of each endpoint pattern in the `--capabilities` JSON; null when it does not parse.
-  // A first `dotnet run` prints its build warnings to stdout ahead of the JSON, which starts on a line
-  // of its own.
+  // A first `dotnet run` prints its build warnings to stdout ahead of the JSON. The JSON object
+  // starts a line of its own. A colored warning can leave an ANSI sequence on that same line.
   internal static HashSet<string>? ListedCommands(string stdout)
   {
-    int start = stdout.StartsWith('{') ? 0 : stdout.IndexOf("\n{", StringComparison.Ordinal) + 1;
-    if (start < 0 || start >= stdout.Length || stdout[start] != '{') return null;
+    int start = IndexOfCapabilitiesJson(stdout);
+    if (start < 0) return null;
 
     try
     {
@@ -209,6 +209,36 @@ internal sealed class TemplateSmokeDevCli
     {
       return null;
     }
+  }
+
+  private static int IndexOfCapabilitiesJson(string stdout)
+  {
+    int index = 0;
+    while (index < stdout.Length)
+    {
+      int cursor = index;
+      while (cursor < stdout.Length && stdout[cursor] is ' ' or '\t' or '\r') cursor++;
+      while (cursor < stdout.Length && stdout[cursor] == '\u001b') cursor = SkipAnsi(stdout, cursor);
+      if (cursor < stdout.Length && stdout[cursor] == '{') return cursor;
+
+      int newline = stdout.IndexOf('\n', index);
+      if (newline < 0) return -1;
+      index = newline + 1;
+    }
+
+    return -1;
+  }
+
+  private static int SkipAnsi(string text, int index)
+  {
+    if (index + 1 < text.Length && text[index + 1] == '[')
+    {
+      index += 2;
+      while (index < text.Length && text[index] is not (>= '@' and <= '~')) index++;
+      return Math.Min(index + 1, text.Length);
+    }
+
+    return index + 1;
   }
 
   private static DotNetRunBuilder DevCli(string outputDir, params string[] arguments) =>

@@ -16,11 +16,14 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Testing" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\aspire\projects\aspire-app-host\aspire-app-host.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\aspire\projects\aspire-service-defaults\aspire-service-defaults.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Aspire.Hosting.Testing" />

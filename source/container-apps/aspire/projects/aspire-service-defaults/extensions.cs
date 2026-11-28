@@ -23,6 +23,12 @@
 // descriptions, exception text, or dependency state. Do not add a custom ResponseWriter or a
 // dependency check tagged "live". /health (every check, including dependency checks) stays
 // Development-only. Paths are HealthEndpointPaths constants.
+// TryAddSecondaryOtlpExporters is the fourth deliberate deviation (task 536-001): it lives in
+// secondary-otlp-exporter.cs so this file stays diffable. When that call returns true the secondary
+// collector is active and this method must not call UseOtlpExporter. OpenTelemetry 1.21 throws
+// NotSupportedException if UseOtlpExporter and AddOtlpExporter are both registered. The sibling
+// registers per-signal primary and named "secondary" exporters instead. An unset secondary endpoint
+// leaves the UseOtlpExporter call below unchanged.
 #endregion
 
 namespace Microsoft.Extensions.Hosting;
@@ -82,11 +88,16 @@ public static class Extensions
 
   private static IHostApplicationBuilder AddOpenTelemetryExporters(this IHostApplicationBuilder builder)
   {
-    bool useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
-
-    if (useOtlpExporter)
+    // An active secondary collector registers per-signal exporters itself (secondary-otlp-exporter.cs).
+    // UseOtlpExporter and AddOtlpExporter cannot both be registered.
+    if (!builder.TryAddSecondaryOtlpExporters())
     {
-      builder.Services.AddOpenTelemetry().UseOtlpExporter();
+      bool useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
+
+      if (useOtlpExporter)
+      {
+        builder.Services.AddOpenTelemetry().UseOtlpExporter();
+      }
     }
 
     // Uncomment the following lines to enable the Prometheus exporter (requires the OpenTelemetry.Exporter.Prometheus.AspNetCore package)
