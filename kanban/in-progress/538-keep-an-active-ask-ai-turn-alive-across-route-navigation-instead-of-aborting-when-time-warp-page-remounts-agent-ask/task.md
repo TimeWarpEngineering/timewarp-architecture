@@ -90,3 +90,4 @@ Evidence: [evidence/agent-ask.png](evidence/agent-ask.png) is `AgentAsk` open on
 ## Session
 
 - Implement oracle: implemented by implementer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-28T16:26:06Z
+- Implement oracle: implemented by implementer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-28T16:31:15Z
