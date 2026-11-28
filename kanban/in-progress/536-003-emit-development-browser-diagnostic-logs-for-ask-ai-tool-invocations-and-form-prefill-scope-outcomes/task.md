@@ -53,7 +53,7 @@ Round 1 left six gaps. A waiting draft is reported even when this form already a
 ## Review
 
 - Round 1: fix pass implemented on this id. Finding statuses stay open in `review/round-1/merged.md` for review round 2.
-
+- Round 2: Done
 ## Notes
 
 - Key files:
@@ -73,6 +73,7 @@ AskDiagnostics posts one `ask-diag` line through `window.__twBrowserDiag` only w
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, turn cap 200, 2026-11-28. Six findings open (1 bug, 3 suggestion, 2 nit); fix pass requested. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 050dc31f-e77d-4ffb-b16e-b49a1feab354, max-turns 200, artifacts general.md, merged.md — 2026-11-28T03:57:09Z
 - Implement-fix-2 oracle: implemented the six open round-1 findings on this id (alreadyHandled seen lines, shared error-code constants, disabled diagnostics return before snapshot or key work, recorded wiring lines, tool-outcome on a thrown tool body, one Window type). Statuses in the round-1 ledger stay open for round 2. Session 01a2204c-be43-7582-90c7-db4cf2064a03 — 2026-11-28.
+- Review oracle round 2: general reviewer (claude, model claude-opus-5-5), effort 3, turn cap 200, 2026-11-28. Checked the fix delta f04ccf592. All six round-1 findings are fixed and there are no new findings. Disposition is `clean`. Files: `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -103,4 +104,12 @@ Gates:
 
 ### Review
 
-Round 1 (general, effort 3): the ledger still has 6 open, 0 fixed, 0 wontfix. The implement-fix-2 pass addressed M1 through M6 in the product and tests and left those statuses open for review round 2. Ledger: `review/round-1/merged.md`.
+Round 1 (general, effort 3) raised 6 findings: 1 bug, 3 suggestion, and 2 nit. The implement-fix-2 pass (f04ccf592) addressed M1 through M6.
+
+Round 2 (general, effort 3) checked the fix delta. Final counts: bug 0 open, 1 fixed. Suggestion 0 open, 3 fixed. Nit 0 open, 2 fixed. Nothing wontfix, and no new findings. The reviewer did not re-run the gates and used the record above.
+
+**Review disposition: clean** (2 rounds, roster general, effort 3, final open count 0, no exceptions or escalations).
+
+- Framework: `review/review-framework.md`
+- Last merged ledger: `review/round-2/merged.md`
+- Disposition: `review/disposition.md`

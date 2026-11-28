@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1080
+- Lines changed: 1122
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -31,3 +31,9 @@
   command and the reason. A full build, full test run, or audit is never that command
 - A missing or thin recorded result is a finding, not a reason to run the gates
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+**Diff scope:** fix delta `3f0fd472f..f04ccf592` (commit f04ccf592, implement-fix-2). The round-1 IDs M1 through M6
+carry forward in `round-2/merged.md`.
+**Reviewer roster:** general (claude, model claude-opus-5-5), effort 3, 2026-11-28.
