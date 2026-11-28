@@ -23,6 +23,7 @@
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="TimeWarp.Amuru" />
     <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
   </ItemGroup>

@@ -129,6 +129,10 @@
   conversation going Streaming) and the expand toggle each ask for the soft form once the turn is
   idle: the composer takes focus only if focus is in the panel or on nothing. Disposing a closed
   panel returns focus to the opener, or to the page main region when the opener is gone.
+  Development diagnostics: a built or deferred agent, and a Streaming, AwaitingInput, Idle, or
+  Error status, each write one breadcrumb through AskDiagnostics. Outside Development that
+  service does not call JavaScript. The lines name the path, mode, generation, and Prefill
+  tool names. They do not name typed field values.
 *@
 
 @code {
@@ -156,6 +160,8 @@
   private string? BuiltPath;
   private AgentEditMode BuiltMode;
   private int BuiltGeneration = -1;
+  private string? DeferralKey;
+  private Ai.ConversationStatus? ReportedStatus;
   private bool AvatarApplied;
   private string? AppliedAvatar;
 
@@ -177,6 +183,9 @@
 
   private bool TurnInProgress =>
     Conversation?.Status is Ai.ConversationStatus.Streaming or Ai.ConversationStatus.AwaitingInput;
+
+  private AskDiagnostics Diagnostics =>
+    ServiceProvider.GetService<AskDiagnostics>() ?? AskDiagnostics.Disabled;
 
   protected override void OnInitialized()
   {
@@ -341,8 +350,12 @@
 
   private async Task EnsureAgentAsync()
   {
+    string path = CurrentPath();
+    AgentEditMode mode = AgentSurfaceState.EditMode;
+    int generation = AgentSurfaceState.ConversationGeneration;
     if (Readiness != CatalogAgentReadiness.Configured)
     {
+      ReportDeferred("Readiness", path, mode, generation);
       if (Agent is not null)
       {
         ReleaseAgent();
@@ -351,9 +364,6 @@
       return;
     }
 
-    string path = CurrentPath();
-    AgentEditMode mode = AgentSurfaceState.EditMode;
-    int generation = AgentSurfaceState.ConversationGeneration;
     if (Agent is not null && BuiltPath == path && BuiltMode == mode && BuiltGeneration == generation)
     {
       return;
@@ -362,14 +372,23 @@
     // A rebuild disposes the AgentContext, which cancels the stream and orphans an approval card.
     // Wait for the turn to finish; the status callback re-renders and this runs again. New
     // conversation (a generation change) abandons the turn on purpose, so it does not wait.
-    if (Building || (TurnInProgress && BuiltGeneration == generation))
+    // Building wins when a build is already in this call, so the reason stays accurate.
+    if (Building)
     {
+      ReportDeferred("Building", path, mode, generation);
+      return;
+    }
+
+    if (TurnInProgress && BuiltGeneration == generation)
+    {
+      ReportDeferred("TurnInProgress", path, mode, generation);
       return;
     }
 
     IChatClient? chatClient = ServiceProvider.GetService<IChatClient>();
     if (chatClient is null)
     {
+      ReportDeferred("Readiness", path, mode, generation);
       return;
     }
 
@@ -402,9 +421,14 @@
       ReleaseAgent();
       Functions = CatalogAgentFunctions.Create(selected);
       List<string> toolNames = [];
+      List<string> prefillTools = [];
       foreach (CatalogAgentTool tool in selected)
       {
         toolNames.Add(tool.Name);
+        if (tool.Name.StartsWith(FormPrefill.Prefix, StringComparison.Ordinal))
+        {
+          prefillTools.Add(tool.Name);
+        }
       }
 
       toolNames.Add(PageAgentContext.ToolName);
@@ -474,6 +498,7 @@
       BuiltPath = path;
       BuiltMode = mode;
       BuiltGeneration = generation;
+      ReportBuilt(path, mode, generation, toolNames.Count, prefillTools);
     }
     finally
     {
@@ -513,8 +538,41 @@
       or Ai.ConversationStatus.Idle
       or Ai.ConversationStatus.Error)
     {
+      ReportStatus(status);
       _ = InvokeAsync(StateHasChanged);
     }
+  }
+
+  [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a built agent. It writes no store state and does nothing outside Development.")]
+  private void ReportBuilt(string path, AgentEditMode mode, int generation, int toolCount, IReadOnlyList<string> prefillTools)
+  {
+    DeferralKey = null;
+    Diagnostics.AgentBuilt(path, mode.ToString(), generation, toolCount, prefillTools);
+  }
+
+  [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a rebuild that waited. It writes no store state and does nothing outside Development.")]
+  private void ReportDeferred(string reason, string path, AgentEditMode mode, int generation)
+  {
+    string key = $"{reason}|{path}|{mode}|{generation.ToString(CultureInfo.InvariantCulture)}";
+    if (string.Equals(DeferralKey, key, StringComparison.Ordinal))
+    {
+      return;
+    }
+
+    DeferralKey = key;
+    Diagnostics.AgentDeferred(reason, path, mode.ToString(), generation);
+  }
+
+  [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a conversation status change. It writes no store state and does nothing outside Development.")]
+  private void ReportStatus(Ai.ConversationStatus status)
+  {
+    if (ReportedStatus == status)
+    {
+      return;
+    }
+
+    ReportedStatus = status;
+    Diagnostics.Status(status.ToString(), CurrentPath());
   }
 
   private void ReleaseAgent()
@@ -533,6 +591,7 @@
     InvokingClient = null;
     Functions?.Dispose();
     Functions = null;
+    ReportedStatus = null;
   }
 
   private string? RecordedApproval(Ai.FunctionApprovalBlock approval)

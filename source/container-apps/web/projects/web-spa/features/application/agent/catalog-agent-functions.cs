@@ -31,6 +31,9 @@
 // The model never calls an HTTP endpoint itself. Store handlers keep [EndpointAuthorize].
 // An outcome that holds a picture (IAgentImageOutcome, task 303-001) is returned without it; the
 // picture rides on the call result's Image, which RelayChatClient sends as image content.
+// AskDiagnostics records a Development-only start and outcome for each InvokeCoreAsync return.
+// The line names the tool, route, and flags. It never includes draft JSON, destination lists, or
+// the raw error text.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -116,6 +119,9 @@ public sealed class CatalogAgentFunctions : IDisposable
       NavigationManager navigation = services.GetRequiredService<NavigationManager>();
       IActionCatalog catalog = services.GetRequiredService<IActionCatalog>();
       AgentCallOutcome outcome = services.GetRequiredService<AgentCallOutcome>();
+      string route = PageAgentRoute.Current(services, navigation);
+      AskDiagnostics diagnostics = services.GetService<AskDiagnostics>() ?? AskDiagnostics.Disabled;
+      diagnostics.ToolStart(Tool.Name, route, Wrapped);
 
       // Re-read on every invocation. The function does not cache an AuthenticationState.
 #pragma warning disable BL0013
@@ -133,44 +139,52 @@ public sealed class CatalogAgentFunctions : IDisposable
       );
       if (current is null)
       {
-        return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+        return Trace(diagnostics, route, current: null, new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page."));
       }
 
       if (string.Equals(current.Name, AgentSiteMap.ToolName, StringComparison.Ordinal))
       {
-        return await AgentSiteMap.InvokeAsync
-        (
-          authentication.User,
-          authorizationService,
-          store,
-          PageAgentRoute.Current(services, navigation),
-          cancellationToken
-        );
+        return Trace(
+          diagnostics,
+          route,
+          current,
+          await AgentSiteMap.InvokeAsync
+          (
+            authentication.User,
+            authorizationService,
+            store,
+            PageAgentRoute.Current(services, navigation),
+            cancellationToken
+          ));
       }
 
       if (string.Equals(current.Name, AgentNavigate.ToolName, StringComparison.Ordinal))
       {
         if (current.RequiresApproval && !Wrapped)
         {
-          return new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError);
+          return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError));
         }
 
-        return await AgentNavigate.InvokeAsync
-        (
-          authentication.User,
-          authorizationService,
-          store,
-          PageAgentRoute.Current(services, navigation),
-          arguments,
-          cancellationToken
-        );
+        return Trace(
+          diagnostics,
+          route,
+          current,
+          await AgentNavigate.InvokeAsync
+          (
+            authentication.User,
+            authorizationService,
+            store,
+            PageAgentRoute.Current(services, navigation),
+            arguments,
+            cancellationToken
+          ));
       }
 
       if (current.OffPageRoute is not null)
       {
         if (current.Entry is null)
         {
-          return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+          return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page."));
         }
 
         string? offerDenial = AgentConversationAuthority.Denial(
@@ -179,22 +193,22 @@ public sealed class CatalogAgentFunctions : IDisposable
           current.Entry.Permissions);
         if (offerDenial is not null)
         {
-          return new CatalogAgentCallResult(Tool.Name, Completed: false, offerDenial);
+          return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, offerDenial));
         }
 
-        return AgentNavigate.OfferFor(current.Entry, current.OffPageRoute);
+        return Trace(diagnostics, route, current, AgentNavigate.OfferFor(current.Entry, current.OffPageRoute));
       }
 
       if (current.Entry is null)
       {
-        return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+        return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page."));
       }
 
       if (current.Prefill)
       {
         if (current.RequiresApproval && !Wrapped)
         {
-          return new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError);
+          return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError));
         }
 
         string? prefillDenial = AgentConversationAuthority.Denial(
@@ -203,32 +217,36 @@ public sealed class CatalogAgentFunctions : IDisposable
           current.Entry.Permissions);
         if (prefillDenial is not null)
         {
-          return new CatalogAgentCallResult(Tool.Name, Completed: false, prefillDenial);
+          return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, prefillDenial));
         }
 
         Type? details = FormPrefill.DetailsType(current.Entry.ActionType);
         if (details is null)
         {
-          return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+          return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page."));
         }
 
         if (!FormPrefill.TryNormalize(details, arguments, out string suggestionJson, out string? error, out IReadOnlyList<string> fields))
         {
-          return new FormPrefill.Result(Drafted: false, error, fields);
+          return Trace(diagnostics, route, current, new FormPrefill.Result(Drafted: false, error, fields));
         }
 
-        return await FormPrefill.DispatchAsync(
-          catalog,
-          store,
-          current.Entry,
-          suggestionJson,
-          fields,
-          cancellationToken);
+        return Trace(
+          diagnostics,
+          route,
+          current,
+          await FormPrefill.DispatchAsync(
+            catalog,
+            store,
+            current.Entry,
+            suggestionJson,
+            fields,
+            cancellationToken));
       }
 
       if (current.RequiresApproval && !Wrapped)
       {
-        return new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError);
+        return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError));
       }
 
       object?[] bound = CatalogAgentArguments.Bind(current.Entry, arguments);
@@ -238,14 +256,66 @@ public sealed class CatalogAgentFunctions : IDisposable
         current.Entry.Permissions);
       if (denial is not null)
       {
-        return new CatalogAgentCallResult(Tool.Name, Completed: false, denial);
+        return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, denial));
       }
 
       outcome.Clear();
       await current.Entry.Execute(store, bound, cancellationToken);
       return outcome.Result is IAgentImageOutcome image
-        ? new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, image.WithoutImage(), image.ToImage())
-        : new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, outcome.Result);
+        ? Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, image.WithoutImage(), image.ToImage()))
+        : Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, outcome.Result));
+    }
+
+    private object? Trace(AskDiagnostics diagnostics, string route, CatalogAgentTool? current, object? result)
+    {
+      bool completed;
+      string? error;
+      IReadOnlyList<string>? fields = null;
+      string? offPageRoute = current?.OffPageRoute;
+      bool prefill = current?.Prefill ?? false;
+      switch (result)
+      {
+        case CatalogAgentCallResult call:
+          completed = call.Completed;
+          error = call.Error;
+          break;
+        case FormPrefill.Result draft:
+          completed = draft.Drafted;
+          error = draft.Error;
+          fields = draft.Fields;
+          prefill = true;
+          break;
+        case AgentNavigate.Offer offer:
+          completed = offer.Executed;
+          error = null;
+          offPageRoute = offer.NavigateTo;
+          break;
+        case AgentNavigate.Result navigated:
+          completed = navigated.Navigated;
+          error = navigated.Error;
+          break;
+        case AgentSiteMap.Result map:
+          completed = map.Error is null;
+          error = map.Error;
+          break;
+        default:
+          completed = false;
+          error = "Failed";
+          break;
+      }
+
+      diagnostics.ToolOutcome(
+        Tool.Name,
+        route,
+        Wrapped,
+        currentFound: current is not null,
+        requiresApproval: current?.RequiresApproval ?? false,
+        offPageRoute,
+        prefill,
+        completed,
+        error,
+        fields);
+      return result;
     }
   }
 
