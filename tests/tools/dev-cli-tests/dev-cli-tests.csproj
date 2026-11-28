@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Compile-include of aspire-run.cs / aspire-version-sources.cs / services/deploy/*.cs (AspireDeploy, DeployOperate, and their records) / neon-connection.cs / db-nuke.cs / services/entra/*.cs (EntraSetup, EntraTenants, and their records) / jaribu-aggregator-summary-gate.cs / template-smoke-content-assets.cs / xai-preflight.cs / dotnet-test-arguments.cs / test-project-selection.cs / test-file-selection.cs / generated-ingress-prefixes.cs / feature-filename-grammar-generator.cs / test-groups.cs / aspire-publish-targets.cs / test-parallelism.cs / skill-spec-lint.cs / workflow-path-classes.cs / release-packages.cs / green-key.cs / build-output.cs / app-features.cs / template-smoke/app-ci-workflow-shape.cs
+    <!-- Compile-include of aspire-run.cs / aspire-version-sources.cs / services/deploy/*.cs (AspireDeploy, DeployOperate, and their records) / neon-connection.cs / db-nuke.cs / services/entra/*.cs (EntraSetup, EntraTenants, and their records) / jaribu-aggregator-summary-gate.cs / template-smoke-content-assets.cs / xai-preflight.cs / dotnet-test-arguments.cs / test-project-selection.cs / test-file-selection.cs / generated-ingress-prefixes.cs / feature-filename-grammar-generator.cs / test-groups.cs / aspire-publish-targets.cs / test-parallelism.cs / skill-spec-lint.cs / workflow-path-classes.cs / release-packages.cs / green-key.cs / build-output.cs / app-features.cs / template-smoke/app-ci-workflow-shape.cs / template-smoke/template-smoke-dev-cli.cs
          (with in-proc-test-ports.cs, which test-parallelism.cs uses)
          (pure helpers). Monorepo-only:
          template.json excludes this tree. The slnx tests/tools folder is gated by a template
@@ -13,9 +13,9 @@
   <ItemGroup>
     <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
-    <!-- client-name-scan.cs runs git grep through Amuru, and app-features.cs finds the repo root and
-         writes its refusal through it (TimeWarp.Terminal comes with Amuru). The other compile-includes
-         stay free of it. -->
+    <!-- client-name-scan.cs runs git grep through Amuru, app-features.cs finds the repo root and
+         writes its refusal through it, and template-smoke-dev-cli.cs runs the generated CLI through it
+         (TimeWarp.Terminal comes with Amuru). The other compile-includes stay free of it. -->
     <PackageReference Include="TimeWarp.Amuru" />
   </ItemGroup>
   <ItemGroup>
@@ -47,6 +47,7 @@
     <Compile Include="..\..\..\tools\dev-cli\services\build-output.cs" Link="services\build-output.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\app-features.cs" Link="services\app-features.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\template-smoke\app-ci-workflow-shape.cs" Link="services\app-ci-workflow-shape.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\template-smoke\template-smoke-dev-cli.cs" Link="services\template-smoke-dev-cli.cs" />
     <Compile Include="..\..\common\timewarp-testing\in-proc-test-ports.cs" Link="services\in-proc-test-ports.cs" />
   </ItemGroup>
 </Project>

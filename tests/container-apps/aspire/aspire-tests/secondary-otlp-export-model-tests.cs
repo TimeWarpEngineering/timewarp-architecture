@@ -8,7 +8,8 @@
 // AppHost entry point up to Build, so nothing starts. Command-line configuration overrides user
 // secrets, so each fact passes the SigNoz OTLP keys explicitly (an empty value is the unset case).
 // The inherited endpoint is the AppHost process environment. These facts set and restore that
-// environment around CreateAsync; Forward reads it while the model is built and stores literal
+// environment through SecondaryOtlpEnvironment, the gate shared with the ServiceDefaults suite.
+// Forward reads it while the model is built and stores literal
 // strings on the resource callbacks. A missing project resource is skipped (a template flag can omit
 // it). The fact fails when none of the declared project resources exist. Publish facts pass an
 // endpoint and still expect no Observability__SecondaryOtlp key. The generated-manifest half lives
@@ -31,17 +32,6 @@ public class SecondaryOtlpExportModel_Given_
 
   private static readonly string[] ProjectNames = ["api-server", "grpc-server", "web-server", "ingress"];
   private static readonly string[] OtherNames = ["postgres", "web-migrations", "timewarp-devtools"];
-  private static readonly string[] EnvironmentNames =
-  [
-    "OTEL_EXPORTER_OTLP_ENDPOINT",
-    "OTEL_EXPORTER_OTLP_HEADERS",
-    "OTEL_EXPORTER_OTLP_PROTOCOL",
-    "OTEL_EXPORTER_OTLP_TIMEOUT",
-    "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL",
-    "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL",
-  ];
-
-  private static readonly SemaphoreSlim EnvironmentGate = new(1, 1);
   private static readonly Dictionary<string, string?> NoEnvironment = [];
 
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -396,61 +386,21 @@ public class SecondaryOtlpExportModel_Given_
       environment,
       publish: true);
 
-  private static async Task<IDistributedApplicationTestingBuilder> CreateCoreAsync(
+  private static Task<IDistributedApplicationTestingBuilder> CreateCoreAsync(
     string[] args,
     IReadOnlyDictionary<string, string?> environment,
-    bool publish)
+    bool publish) =>
+    SecondaryOtlpEnvironment.IsolateAsync(environment, () => CreateBuilderAsync(args, publish));
+
+  private static Task<IDistributedApplicationTestingBuilder> CreateBuilderAsync(string[] args, bool publish)
   {
-    await EnvironmentGate.WaitAsync();
-    Dictionary<string, string?> previous = Capture();
-    try
+    if (publish)
     {
-      Replace(environment);
-      if (publish)
-      {
-        return await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
-          args,
-          (_, settings) => settings.EnvironmentName = "Production");
-      }
-
-      return await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(args);
-    }
-    finally
-    {
-      Restore(previous);
-      EnvironmentGate.Release();
-    }
-  }
-
-  private static Dictionary<string, string?> Capture()
-  {
-    Dictionary<string, string?> captured = [];
-    foreach (string name in EnvironmentNames)
-    {
-      captured[name] = Environment.GetEnvironmentVariable(name);
+      return DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
+        args,
+        (_, settings) => settings.EnvironmentName = "Production");
     }
 
-    return captured;
-  }
-
-  private static void Replace(IReadOnlyDictionary<string, string?> values)
-  {
-    foreach (string name in EnvironmentNames)
-    {
-      Environment.SetEnvironmentVariable(name, null);
-    }
-
-    foreach ((string name, string? value) in values)
-    {
-      Environment.SetEnvironmentVariable(name, value);
-    }
-  }
-
-  private static void Restore(Dictionary<string, string?> captured)
-  {
-    foreach ((string name, string? value) in captured)
-    {
-      Environment.SetEnvironmentVariable(name, value);
-    }
+    return DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(args);
   }
 }

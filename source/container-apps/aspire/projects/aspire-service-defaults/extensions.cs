@@ -27,8 +27,8 @@
 // secondary-otlp-exporter.cs so this file stays diffable. When that call returns true the secondary
 // collector is active and this method must not call UseOtlpExporter. OpenTelemetry 1.21 throws
 // NotSupportedException if UseOtlpExporter and AddOtlpExporter are both registered. The sibling
-// registers per-signal primary and named "secondary" exporters instead. An unset secondary endpoint
-// leaves the UseOtlpExporter call below unchanged.
+// registers per-signal primary exporters and secondary-traces, secondary-metrics, and
+// secondary-logs. An unset secondary endpoint leaves the UseOtlpExporter call below unchanged.
 #endregion
 
 namespace Microsoft.Extensions.Hosting;

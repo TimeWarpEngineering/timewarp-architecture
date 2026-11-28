@@ -5,8 +5,9 @@
 
 #region Design
 // Host.CreateApplicationBuilder with DisableDefaults so the developer shell's OTEL endpoint is not
-// configuration. The facts also set and restore the process environment, because the OTLP options
-// constructor reads OTEL_EXPORTER_OTLP_* from the environment. The built exporter does not keep the
+// configuration. The facts set and restore the process environment through SecondaryOtlpEnvironment,
+// the gate shared with the AppHost model suite, because the OTLP options constructor reads
+// OTEL_EXPORTER_OTLP_* from the environment. The built exporter does not keep the
 // options object. Identity is the OtlpHttpExportClient or OtlpGrpcExportClient under each
 // Otlp*Exporter: its Endpoint (port and signal path) and Headers. Logs defer that client behind
 // LazyExportClient until the first export, so the reader creates it. The client always adds a
@@ -32,18 +33,6 @@ public class SecondaryOtlpExporter_Given_
   private const string SecondaryEndpoint = "http://127.0.0.1:4328";
   private const string PrimaryHeaders = "x-otlp-api-key=primary-secret";
   private const string SecondaryHeaders = "signoz-access-token=secondary-secret";
-
-  private static readonly string[] EnvironmentNames =
-  [
-    "OTEL_EXPORTER_OTLP_ENDPOINT",
-    "OTEL_EXPORTER_OTLP_HEADERS",
-    "OTEL_EXPORTER_OTLP_PROTOCOL",
-    "OTEL_EXPORTER_OTLP_TIMEOUT",
-    "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL",
-    "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL",
-  ];
-
-  private static readonly SemaphoreSlim EnvironmentGate = new(1, 1);
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<SecondaryOtlpExporter_Given_>();
@@ -193,24 +182,21 @@ public class SecondaryOtlpExporter_Given_
     Dictionary<string, string?> environment,
     Action<SecondaryOtlpExporterGraph.SignalSnapshots> assert)
   {
-    await EnvironmentGate.WaitAsync();
-    Dictionary<string, string?> previous = Capture();
-    try
+    if (!environment.ContainsKey("OTEL_EXPORTER_OTLP_TIMEOUT"))
     {
-      if (!environment.ContainsKey("OTEL_EXPORTER_OTLP_TIMEOUT"))
-      {
-        environment["OTEL_EXPORTER_OTLP_TIMEOUT"] = "1000";
-      }
+      environment["OTEL_EXPORTER_OTLP_TIMEOUT"] = "1000";
+    }
 
-      foreach ((string key, string? value) in environment)
+    foreach ((string key, string? value) in environment)
+    {
+      if (key.StartsWith("OTEL_", StringComparison.Ordinal) && !configuration.ContainsKey(key))
       {
-        if (key.StartsWith("OTEL_", StringComparison.Ordinal) && !configuration.ContainsKey(key))
-        {
-          configuration[key] = value;
-        }
+        configuration[key] = value;
       }
+    }
 
-      Replace(environment);
+    await SecondaryOtlpEnvironment.IsolateAsync(environment, async () =>
+    {
       CapturingLoggerProvider capturing = new();
       HostApplicationBuilder builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
       {
@@ -236,44 +222,8 @@ public class SecondaryOtlpExporter_Given_
       }
 
       await host.StopAsync();
-    }
-    finally
-    {
-      Restore(previous);
-      EnvironmentGate.Release();
-    }
-  }
-
-  private static Dictionary<string, string?> Capture()
-  {
-    Dictionary<string, string?> captured = [];
-    foreach (string name in EnvironmentNames)
-    {
-      captured[name] = Environment.GetEnvironmentVariable(name);
-    }
-
-    return captured;
-  }
-
-  private static void Replace(IReadOnlyDictionary<string, string?> values)
-  {
-    foreach (string name in EnvironmentNames)
-    {
-      Environment.SetEnvironmentVariable(name, null);
-    }
-
-    foreach ((string name, string? value) in values)
-    {
-      Environment.SetEnvironmentVariable(name, value);
-    }
-  }
-
-  private static void Restore(Dictionary<string, string?> captured)
-  {
-    foreach ((string name, string? value) in captured)
-    {
-      Environment.SetEnvironmentVariable(name, value);
-    }
+      return true;
+    });
   }
 
   private sealed class CapturingLoggerProvider : ILoggerProvider

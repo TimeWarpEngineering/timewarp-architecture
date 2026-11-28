@@ -12,7 +12,8 @@
 // clone uses (`dotnet run tools/dev-cli/dev.cs`), so it needs no AOT publish. It git-inits the app
 // first: the CLI finds its root with Git.FindRoot, and without a .git the walk would reach this
 // repository's root above artifacts/template-smoke. `--capabilities` (Nuru's JSON endpoint list; the
-// --help table truncates names; a building run prints its warnings first) must list every app command and none of the template-only ones
+// --help table truncates names; a building run prints its warnings first, and a colored warning can
+// leave an ANSI sequence on the JSON line) must list every app command and none of the template-only ones
 // (TemplateOnlyCommands, which includes check-version and release, the TimeWarp.Nuru.DevCli
 // endpoints the CLI's Directory.Build.props removes). A command is the first word of an endpoint
 // pattern, so `db update` counts as db. Then `dev build` must exit 0.
@@ -21,6 +22,8 @@
 namespace DevCli.Services;
 
 using System.Text.Json;
+using TimeWarp.Amuru;
+using TimeWarp.Terminal;
 
 /// <summary>
 /// Shipped-file and run checks for the dev CLI in a generated app.
@@ -221,7 +224,7 @@ internal sealed class TemplateSmokeDevCli
       while (cursor < stdout.Length && stdout[cursor] == '\u001b') cursor = SkipAnsi(stdout, cursor);
       if (cursor < stdout.Length && stdout[cursor] == '{') return cursor;
 
-      int newline = stdout.IndexOf('\n', index);
+      int newline = stdout.IndexOf('\n', index, StringComparison.Ordinal);
       if (newline < 0) return -1;
       index = newline + 1;
     }
