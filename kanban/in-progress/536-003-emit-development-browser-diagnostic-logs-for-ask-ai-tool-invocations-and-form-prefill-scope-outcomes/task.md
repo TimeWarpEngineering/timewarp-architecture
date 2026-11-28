@@ -61,15 +61,19 @@ The three call sites are the agent build and status changes in `AgentAsk`, each 
 ## Session
 
 AskDiagnostics posts one `ask-diag` line through `window.__twBrowserDiag` only when the host environment name is `Development`. The browser forwarder still wraps only `console.error` and `console.warn`. Report helpers on AgentAsk and FormPrefillScope carry `DirectComponentSideEffect` so the lifecycle methods stay free of the side-effect analyzer.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2200f-3451-7e92-bbac-f55bb0e99130, max-turns 500, Done — 2026-11-28T03:40:12Z
+- Evidence send-back: captured AgentAsk on `/` and the new-role FormPrefillScope on `/Admin/Roles/New` from this worktree's isolated Development app, signed in as the first passkey account (Member).
 
 ## Results
 
 Development breadcrumbs go out as `level: info` and `source: console` on the existing `POST /api/browser-logs` queue. A non-Development host, including Testing, does not call JavaScript. Lines name routes, tools, field names, and flags. They do not carry tokens or the values a person typed.
 
-Screenshots from this worktree's isolated Development app. Mock authentication is off, so the browser stayed signed out. The new-role form redirects to the passkey sign-in page.
+Screenshots from this worktree's isolated Development app. The first passkey account (shown as Member) is signed in. Mock authentication stays off.
 
-- [evidence/home.png](evidence/home.png) route `/` — Ask Akili panel open on the home shell
-- [evidence/admin-roles-new.png](evidence/admin-roles-new.png) route `/Admin/Roles/New` — passkey sign-in gate in front of the new-role form
+- [evidence/home.png](evidence/home.png) route `/` principal signed-out look at the Ask Akili panel open on the home shell
+- [evidence/admin-roles-new.png](evidence/admin-roles-new.png) route `/Admin/Roles/New` principal signed-out look at the passkey sign-in gate in front of the new-role form
+- [evidence/agent-ask.png](evidence/agent-ask.png) route `/` principal Member look at the Ask Akili panel open on the home shell
+- [evidence/form-prefill-scope.png](evidence/form-prefill-scope.png) route `/Admin/Roles/New` principal Member look at the new-role form Name and Description fields inside FormPrefillScope
 
 ### How to validate
 
