@@ -60,6 +60,7 @@ public partial class AcaPublish_Given_
   private const string IngressApp = "ingress";
   private const string WebServerApp = "web-server";
   private const string SigNozUrlArgument = "--Observability:SigNoz:Url=https://observability.example";
+  private const string SecondaryOtlpEndpointArgument = "--Observability:SigNoz:OtlpEndpoint=https://otlp.example:4318";
   private const string PostgresModule = "postgres";
 
   private static string OutputDirectory = null!;
@@ -158,9 +159,12 @@ public partial class AcaPublish_Given_
   public static async Task Publish_Should_HaveNoSigNoz()
   {
     // Task 417: PublishInProcAsync sets Observability:SigNoz:Url. The Bicep still does not name signoz.
+    // Task 536-001: the same publish is given Observability:SigNoz:OtlpEndpoint.
     foreach ((string module, string text) in Modules)
     {
       text.ShouldNotContain("signoz", Case.Insensitive, $"{module} declares SigNoz");
+      text.ShouldNotContain("SecondaryOtlp", Case.Insensitive, $"{module} forwards a secondary OTLP setting");
+      text.ShouldNotContain("otlp.example", Case.Insensitive, $"{module} carries the secondary OTLP endpoint");
     }
 
     await Task.CompletedTask;

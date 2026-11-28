@@ -24,6 +24,7 @@ declare global {
     Blazor: Blazor;
     Spa: typeof Spa;
     __timewarpWebMcpPageLoad?: TimeWarpWebMcpPageLoad;
+    __twBrowserDiag?: (level: string, message: string) => void;
   }
 }
 

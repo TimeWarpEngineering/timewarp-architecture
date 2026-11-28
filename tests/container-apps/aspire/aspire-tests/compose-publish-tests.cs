@@ -46,6 +46,7 @@ public partial class ComposePublish_Given_
   private const string StateDevToolsResource = "timewarp-devtools";
   private const string StateDevToolsEndpointVariable = "TIMEWARP_STATE_DEVTOOLS_ENDPOINT";
   private const string SigNozUrlArgument = "--Observability:SigNoz:Url=https://observability.example";
+  private const string SecondaryOtlpEndpointArgument = "--Observability:SigNoz:OtlpEndpoint=https://otlp.example:4318";
 
   private static string OutputDirectory = null!;
   private static bool OwnsOutputDirectory;
@@ -147,10 +148,20 @@ public partial class ComposePublish_Given_
   public static async Task Publish_Should_HaveNoSigNoz()
   {
     // Task 417: PublishInProcAsync sets Observability:SigNoz:Url. The link stays out of the file.
+    // Task 536-001: the same publish is given Observability:SigNoz:OtlpEndpoint. Run-mode forwarding
+    // must not emit it.
     foreach (string service in ServiceNames())
     {
       service.ShouldNotContain("signoz");
+      ServiceEnvironment(service).Keys.ShouldNotContain(
+        key => key.Contains("SecondaryOtlp", StringComparison.Ordinal),
+        $"service '{service}' forwards a secondary OTLP setting");
     }
+
+    string composeText = File.ReadAllText(Path.Combine(OutputDirectory, "docker-compose.yaml"));
+    composeText.ShouldNotContain("SecondaryOtlp");
+    composeText.ShouldNotContain("otlp.example");
+    EnvFile.Keys.ShouldNotContain(key => key.Contains("SecondaryOtlp", StringComparison.Ordinal));
 
     await Task.CompletedTask;
   }
@@ -321,7 +332,7 @@ public partial class ComposePublish_Given_
   {
     await using IDistributedApplicationTestingBuilder appHost =
       await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
-        ["--operation", "publish", "--step", "publish-compose", "--output-path", outputDirectory, SigNozUrlArgument],
+        ["--operation", "publish", "--step", "publish-compose", "--output-path", outputDirectory, SigNozUrlArgument, SecondaryOtlpEndpointArgument],
         // The testing builder defaults to Development; `aspire publish` defaults to Production.
         (_, settings) => settings.EnvironmentName = "Production");
 

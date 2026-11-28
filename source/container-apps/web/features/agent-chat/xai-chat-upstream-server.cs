@@ -20,10 +20,15 @@
 // ResolveApiKeyAsync asks IXaiApiKeyResolver when it is registered and otherwise the site key.
 // Relay-to-chat mapping is XaiChatMapping. Failures are logged and replaced with
 // AgentChatProblems.UpstreamFailed so the client never sees exception text.
+// ClientResultException also logs the HTTP status and a whitespace-normalized content snippet
+// of at most 512 characters. Request headers are not read, so Authorization is not logged.
+// Rent passes EnableSensitiveTelemetry so the cached pipeline matches that call.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
 
+using System.ClientModel;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,12 +41,23 @@ using static TimeWarp.Architecture.Features.AgentChats.CompleteAgentChat;
 /// <summary>xAI chat completions, or the deterministic fake.</summary>
 internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
 {
+  /// <summary>Cap on the upstream error body written to the log.</summary>
+  internal const int UpstreamErrorBodyLimit = 512;
+
   private static readonly Action<ILogger, Exception?> LogUpstreamFailed =
     LoggerMessage.Define
     (
       LogLevel.Error,
       new EventId(1, nameof(LogUpstreamFailed)),
       "xAI chat completion failed"
+    );
+
+  private static readonly Action<ILogger, int, string, Exception?> LogClientResult =
+    LoggerMessage.Define<int, string>
+    (
+      LogLevel.Error,
+      new EventId(2, nameof(LogClientResult)),
+      "xAI chat completion failed with status {Status} body {ResponseBody}"
     );
 
   private readonly IOptionsMonitor<XaiChatOptions> Options;
@@ -132,7 +148,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     }
     catch (Exception exception) when (exception is not OperationCanceledException)
     {
-      LogUpstreamFailed(Logger, exception);
+      LogFailure(exception);
       return AgentChatProblems.UpstreamFailed();
     }
 
@@ -170,7 +186,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
       }
       catch (Exception exception) when (exception is not OperationCanceledException)
       {
-        LogUpstreamFailed(Logger, exception);
+        LogFailure(exception);
         return AgentChatProblems.UpstreamFailed();
       }
 
@@ -253,7 +269,59 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
       ? XaiChatDefaults.DefaultModel
       : options.Model;
 
-    return (Cache.Rent(apiKey, endpoint, model), mode);
+    return (Cache.Rent(apiKey, endpoint, model, options.EnableSensitiveTelemetry), mode);
+  }
+
+  private void LogFailure(Exception exception)
+  {
+    if (exception is ClientResultException clientResult)
+    {
+      LogClientResult(Logger, clientResult.Status, ResponseBodySnippet(clientResult), clientResult);
+      return;
+    }
+
+    LogUpstreamFailed(Logger, exception);
+  }
+
+  // Response content only. Headers stay unread so an Authorization value cannot reach the log.
+  private static string ResponseBodySnippet(ClientResultException exception)
+  {
+    string? text = exception.GetRawResponse()?.Content.ToString();
+    if (string.IsNullOrWhiteSpace(text))
+    {
+      return "";
+    }
+
+    StringBuilder builder = new(Math.Min(text.Length, UpstreamErrorBodyLimit));
+    bool pendingSpace = false;
+    foreach (char character in text)
+    {
+      if (char.IsWhiteSpace(character))
+      {
+        pendingSpace = builder.Length > 0;
+        continue;
+      }
+
+      if (pendingSpace)
+      {
+        if (builder.Length == UpstreamErrorBodyLimit)
+        {
+          break;
+        }
+
+        builder.Append(' ');
+        pendingSpace = false;
+      }
+
+      if (builder.Length == UpstreamErrorBodyLimit)
+      {
+        break;
+      }
+
+      builder.Append(character);
+    }
+
+    return builder.ToString();
   }
 
   private void Release(IChatClient client)

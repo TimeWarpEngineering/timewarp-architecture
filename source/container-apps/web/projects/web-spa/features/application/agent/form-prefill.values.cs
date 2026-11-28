@@ -8,6 +8,8 @@
 // the caller stores nothing and the error lists the accepted keys. Explicit null is kept
 // only for a nullable property. Canonical JSON for a field
 // is the contract serializer, so a later edit hides the agent mark.
+// ArgumentsMustBeObjectError and NoFieldMatchedPrefix are the sentences AskDiagnostics
+// codes as NotObject and NoMatch, so the two cannot drift apart.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -55,7 +57,7 @@ partial class FormPrefill
     if (node is not JsonObject arguments)
     {
       suggestionJson = "";
-      error = "Prefill arguments must be a JSON object.";
+      error = ArgumentsMustBeObjectError;
       fields = [];
       return false;
     }
@@ -195,7 +197,7 @@ partial class FormPrefill
     suggestionJson = "";
     List<string> keys = [.. Properties(commandType).Keys];
     keys.Sort(StringComparer.Ordinal);
-    error = "No field matched. Accepted keys: " + string.Join(", ", keys) + ".";
+    error = NoFieldMatchedPrefix + " Accepted keys: " + string.Join(", ", keys) + ".";
     fields = [];
     return false;
   }

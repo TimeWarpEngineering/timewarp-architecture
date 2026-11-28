@@ -30,6 +30,7 @@ public partial class AcaNeonPublish_Given_
 {
   internal const string OutputEnvironmentVariable = "TIMEWARP_ACA_NEON_OUTPUT";
   private const string SigNozUrlArgument = "--Observability:SigNoz:Url=https://observability.example";
+  private const string SecondaryOtlpEndpointArgument = "--Observability:SigNoz:OtlpEndpoint=https://otlp.example:4318";
 
   private static string OutputDirectory = null!;
   private static bool OwnsOutputDirectory;
@@ -132,7 +133,10 @@ public partial class AcaNeonPublish_Given_
     all.ShouldNotContain("Authentication__UseMock");
     all.ShouldNotContain("TIMEWARP_STATE_DEVTOOLS");
     // Task 417: PublishInProcAsync sets Observability:SigNoz:Url. The Bicep still does not name signoz.
+    // Task 536-001: the same publish is given Observability:SigNoz:OtlpEndpoint.
     all.ShouldNotContain("signoz");
+    all.ShouldNotContain("SecondaryOtlp");
+    all.ShouldNotContain("otlp.example");
 
     // Task 527: without the YARP ingress, web-server is the one external app.
     string? publicApp = HasModule("ingress") ? "ingress"
@@ -221,7 +225,7 @@ public partial class AcaNeonPublish_Given_
   {
     await using IDistributedApplicationTestingBuilder appHost =
       await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
-        ["--operation", "publish", "--step", "publish-azure-environment", "--output-path", outputDirectory, "--Publish:Target=aca-neon", SigNozUrlArgument],
+        ["--operation", "publish", "--step", "publish-azure-environment", "--output-path", outputDirectory, "--Publish:Target=aca-neon", SigNozUrlArgument, SecondaryOtlpEndpointArgument],
         (_, settings) => settings.EnvironmentName = "Production");
 
     await using DistributedApplication app = await appHost.BuildAsync();

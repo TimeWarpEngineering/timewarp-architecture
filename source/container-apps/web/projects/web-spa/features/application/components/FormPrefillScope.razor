@@ -27,6 +27,12 @@
   Badge: the component cascades itself as IAgentFilledFields. FormField with Field set to a
   working-copy property shows the Info badge labeled Agent while that property still equals
   the value the draft wrote.
+  Development diagnostics: a waiting draft and each outcome (applied, confirming, declined,
+  cleared) write one breadcrumb through AskDiagnostics. A draft this component already applied
+  is still reported, so alreadyHandled can be true, and the seen key drops a repeat. The line
+  names the form, the draft id, the flags, and the field names. It does not include the draft
+  JSON or typed values. When diagnostics are off the report helpers return before the dirty
+  snapshot. Outside Development the service does not call JavaScript.
 *@
 
 @code {
@@ -38,6 +44,8 @@
   private bool BaselineReady;
   private bool Applying;
   private string? HandledId;
+  private string? SeenKey;
+  private string? OutcomeKey;
 
   /// <summary>The working copy the form binds (the submit action's Command).</summary>
   [Parameter, EditorRequired] public object? Model { get; set; }
@@ -49,6 +57,11 @@
   [Parameter] public bool Ready { get; set; } = true;
 
   [Parameter] public RenderFragment? ChildContent { get; set; }
+
+  [Inject] private IServiceProvider DiagnosticServices { get; set; } = null!;
+
+  private AskDiagnostics Diagnostics =>
+    DiagnosticServices.GetService<AskDiagnostics>() ?? AskDiagnostics.Disabled;
 
   public bool IsAgentFilled(string propertyName) =>
     Model is not null
@@ -63,9 +76,16 @@
       AgentFilled.Clear();
       BaselineModel = Model;
       BaselineJson = Model is null ? null : Snapshot(Model);
+      SeenKey = null;
+      OutcomeKey = null;
     }
 
     BaselineReady = Ready;
+    FormSuggestion? waiting = FormSuggestionState.For(Form);
+    if (waiting is not null)
+    {
+      ReportSeen(waiting, Applying);
+    }
   }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -73,24 +93,38 @@
     await base.OnAfterRenderAsync(firstRender);
     if (Applying || !RendererInfo.IsInteractive || !Ready || Model is null)
     {
+      FormSuggestion? waiting = FormSuggestionState.For(Form);
+      if (waiting is not null)
+      {
+        ReportSeen(waiting, Applying);
+      }
+
       return;
     }
 
     FormSuggestion? draft = FormSuggestionState.For(Form);
-    if (draft is null || string.Equals(draft.Id, HandledId, StringComparison.Ordinal))
+    if (draft is null)
     {
       return;
     }
 
+    ReportSeen(draft, applying: false);
+    if (string.Equals(draft.Id, HandledId, StringComparison.Ordinal))
+    {
+      return;
+    }
     Applying = true;
     try
     {
       if (!draft.Accepted && IsDirty())
       {
+        string askedId = draft.Id;
+        ReportOutcome(askedId, "confirming");
         await FormSuggestionState.ConfirmFormSuggestion(Form, Noun);
         draft = FormSuggestionState.For(Form);
         if (draft is null || !draft.Accepted)
         {
+          ReportOutcome(askedId, "declined");
           if (draft is not null)
           {
             StateHasChanged();
@@ -101,14 +135,56 @@
       }
 
       HandledId = draft.Id;
-      FormPrefill.Apply(Model, draft.Json, AgentFilled);
+      IReadOnlyList<string> fields = FormPrefill.Apply(Model, draft.Json, AgentFilled);
+      ReportOutcome(draft.Id, "applied", fields);
       StateHasChanged();
       await FormSuggestionState.ClearFormSuggestion(Form, draft.Id);
+      ReportOutcome(draft.Id, "cleared");
     }
     finally
     {
       Applying = false;
     }
+  }
+
+  [DirectComponentSideEffect("Development-only form-prefill diagnostic breadcrumb. It writes no store state and does nothing outside Development.")]
+  private void ReportSeen(FormSuggestion draft, bool applying)
+  {
+    if (!Diagnostics.IsEnabled)
+    {
+      return;
+    }
+
+    bool ready = Ready;
+    bool interactive = RendererInfo.IsInteractive;
+    bool alreadyHandled = string.Equals(draft.Id, HandledId, StringComparison.Ordinal);
+    bool dirty = IsDirty();
+    string key = $"{Form}|{draft.Id}|{ready}|{interactive}|{applying}|{alreadyHandled}|{dirty}|{draft.Accepted}";
+    if (string.Equals(SeenKey, key, StringComparison.Ordinal))
+    {
+      return;
+    }
+
+    SeenKey = key;
+    Diagnostics.PrefillSeen(Form, draft.Id, ready, interactive, applying, alreadyHandled, dirty, draft.Accepted);
+  }
+
+  [DirectComponentSideEffect("Development-only form-prefill outcome breadcrumb. Field names only; the draft JSON stays in state.")]
+  private void ReportOutcome(string draftId, string outcome, IReadOnlyList<string>? fieldNames = null)
+  {
+    if (!Diagnostics.IsEnabled)
+    {
+      return;
+    }
+
+    string key = draftId + "|" + outcome;
+    if (string.Equals(OutcomeKey, key, StringComparison.Ordinal))
+    {
+      return;
+    }
+
+    OutcomeKey = key;
+    Diagnostics.PrefillOutcome(Form, draftId, outcome, fieldNames);
   }
 
   private bool IsDirty() =>

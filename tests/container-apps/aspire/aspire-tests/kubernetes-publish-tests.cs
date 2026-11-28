@@ -43,6 +43,7 @@ public partial class KubernetesPublish_Given_
   private const string PostgresComponent = "postgres";
   private const string WebServerComponent = "web-server";
   private const string SigNozUrlArgument = "--Observability:SigNoz:Url=https://observability.example";
+  private const string SecondaryOtlpEndpointArgument = "--Observability:SigNoz:OtlpEndpoint=https://otlp.example:4318";
   private const long HelmMaxFileBytes = 5 * 1024 * 1024;
 
   private static string OutputDirectory = null!;
@@ -173,9 +174,16 @@ public partial class KubernetesPublish_Given_
   public static async Task Publish_Should_HaveNoSigNoz()
   {
     // Task 417: PublishInProcAsync sets Observability:SigNoz:Url. The chart still has no signoz workload.
+    // Task 536-001: the same publish is given Observability:SigNoz:OtlpEndpoint.
     foreach (YamlMappingNode manifest in Manifests)
     {
       Name(manifest).ShouldNotContain("signoz");
+    }
+
+    foreach ((string owner, string key, string value) in EnvironmentEntries())
+    {
+      key.ShouldNotContain("SecondaryOtlp", Case.Insensitive, $"{owner} forwards a secondary OTLP setting");
+      value.ShouldNotContain("otlp.example", Case.Insensitive, $"{owner} carries the secondary OTLP endpoint");
     }
 
     await Task.CompletedTask;
