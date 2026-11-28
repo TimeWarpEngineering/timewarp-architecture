@@ -74,7 +74,7 @@ Smoke: sign in, open Ask on `/`, and ask it to open the new role page. Approve t
 - `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/assistant-identity-tests.cs` — passed, 9 tests. Not a standalone runfile; CI runs it.
 - `ganda repo audit` — passed, 44 passed, 0 failed.
 
-Evidence: [evidence/home.png](evidence/home.png) is the signed-out home shell with the Ask panel open. A Development AppHost was already bound to the shared dashboard ports, so this shot is an isolated AppHost of this worktree (`aspire run --isolated`).
+Evidence: [evidence/agent-ask.png](evidence/agent-ask.png) is `AgentAsk` open on `/` for a signed-out visitor (Sign in to use Akili). [evidence/home.png](evidence/home.png) is the same home shell. Both shots are from this worktree's isolated AppHost (`aspire run --isolated`, http://127.0.0.1:63920) because a Development AppHost already held the shared dashboard and ingress ports. This evidence pass did not change product code; the gates above still stand.
 
 ## Notes
 
@@ -86,3 +86,7 @@ Evidence: [evidence/home.png](evidence/home.png) is the signed-out home shell wi
   - `source/container-apps/web/projects/web-spa/features/application/agent/catalog-agent-session.cs`
   - `source/container-apps/web/projects/web-spa/program.cs` (DI registration)
 - Keep `536-003`'s `AskDiagnostics` breadcrumbs working cleanly across remounts so SigNoz shows the full lifecycle (`tool-start`, `tool-outcome`, `status=Idle`, `agent-built` for the new path).
+
+## Session
+
+- Implement oracle: implemented by implementer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-28T16:26:06Z
