@@ -24,18 +24,22 @@
   this panel refreshes from the browser location on WebAssembly before it rebuilds. Tool arguments
   render as JSON. An empty argument dictionary is omitted: Razor would print its CLR type name,
   and page_context's schema is empty so that dictionary is {}. The tool result stays in the model
-  transcript and is not copied into the reasoning block. The panel rebuilds the agent when
-  the route, the edit mode, or the conversation generation changes. A route or edit-mode rebuild
-  never runs while a turn is streaming or waiting on an approval card: it waits for the turn to
-  go idle. New conversation (a generation change) rebuilds at once and abandons that turn. A build
-  that finishes after the panel was disposed (navigation mid-build) frees what it created.
-  The root carries data-built-mode, the edit mode of the agent actually built.
+  transcript and is not copied into the reasoning block.   The panel asks AskAgentSession to rebuild the agent when the route, the edit mode, or the
+  conversation generation changes. A route or edit-mode rebuild never runs while a turn is
+  streaming or waiting on an approval card: it waits for the turn to go idle. New conversation
+  (a generation change) rebuilds at once and abandons that turn. The session, not this component,
+  owns that agent: a route change disposes TimeWarpPage and this panel, and Dispose drops only
+  the status subscription and the voice timer while the panel stays open. The next page's panel
+  attaches to the same AgentContext, so the turn can finish and the thread can commit. Closing
+  the panel still releases the agent. The circuit disposes the session.
+  The root carries data-built-mode, the edit mode of the agent actually built, and data-built-path,
+  the route it was built for.
   The transcript is not a component field. Every agent gets the AskConversationThread for the
-  current generation (AskConversationThreads, app-scoped), and the panel owns the AgentContext
-  instead of ChatPage's AgentBoundary, so it can await AgentContext.RestoreAsync before the
-  MessageList attaches. That restores both the rendered turns and the model history across Close,
-  navigation (TimeWarpPage remounts), and rebuilds. New conversation bumps the generation and
-  gets an empty thread. The markup mirrors ChatPage (sc-ai-chat-page body and footer).
+  current generation (AskConversationThreads, app-scoped). The session awaits
+  AgentContext.RestoreAsync before the MessageList attaches. That restores both the rendered
+  turns and the model history across Close, navigation (TimeWarpPage remounts), and rebuilds.
+  New conversation bumps the generation and gets an empty thread. The markup mirrors ChatPage
+  (sc-ai-chat-page body and footer).
   MessageInput stays the library component. Scoped CSS turns its flex row into a two-row
   grid: the textarea spans the full width and grows with field-sizing up to 10rem, and send
   sits on the footer row. Typing @ at the start of a word in the composer (not mid-word, as in
@@ -129,40 +133,35 @@
   conversation going Streaming) and the expand toggle each ask for the soft form once the turn is
   idle: the composer takes focus only if focus is in the panel or on nothing. Disposing a closed
   panel returns focus to the opener, or to the page main region when the opener is gone.
-  Development diagnostics: a built or deferred agent, and a Streaming, AwaitingInput, Idle, or
-  Error status, each write one breadcrumb through AskDiagnostics. The report helpers return
-  before building a key when diagnostics are off. Outside Development that service does not
-  call JavaScript. The lines name the path, mode, generation, and Prefill tool names. They do
-  not name typed field values.
+  Development diagnostics: AskAgentSession writes one breadcrumb through AskDiagnostics for a
+  built or deferred agent, and for a Streaming, AwaitingInput, Idle, or Error status. The report
+  helpers return before building a key when diagnostics are off. Outside Development that service
+  does not call JavaScript. The lines name the path, mode, generation, and Prefill tool names.
+  They do not name typed field values. A remount keeps the session's dedupe, so the same build
+  is not written twice, and a later status on the new path still is.
 *@
 
 @code {
   private const string AskPlaceholder =
     "Tell the app what you want. Type @ to reference a resource.";
 
-  [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
-  [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
   [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
   [Inject] private PageAgentRoute PageAgentRoute { get; set; } = null!;
-  [Inject] private IStore ScopedStore { get; set; } = null!;
-  [Inject] private AskConversationThreads Threads { get; set; } = null!;
+  [Inject] private AskAgentSession AskAgentSession { get; set; } = null!;
 
-  private Ai.UIAgent? Agent;
-  private Ai.AgentContext? Conversation;
-  private AskConversationThread? Thread;
+  private Ai.UIAgent? Agent => AskAgentSession.Agent;
+  private Ai.AgentContext? Conversation => AskAgentSession.Conversation;
+  private AskConversationThread? Thread => AskAgentSession.Thread;
+  private AgentEditMode BuiltMode => AskAgentSession.BuiltMode;
+  private string? BuiltPath => AskAgentSession.BuiltPath;
+
   private IDisposable? StatusSubscription;
-  private FunctionInvokingChatClient? InvokingClient;
-  private AskTagChatClient? TagClient;
-  private CatalogAgentFunctions? Functions;
-  private bool Building;
+  private Ai.AgentContext? StatusSource;
+  private IDisposable? SessionListener;
+  private int UiBindToken;
   private bool Disposed;
   private int DeclinedGeneration = -1;
-  private string? BuiltPath;
-  private AgentEditMode BuiltMode;
-  private int BuiltGeneration = -1;
-  private string? DeferralKey;
-  private Ai.ConversationStatus? ReportedStatus;
   private bool AvatarApplied;
   private string? AppliedAvatar;
 
@@ -182,16 +181,22 @@
   private bool ConversationExpired =>
     AgentConversationAuthority.IsExpired(AgentSurfaceState.Conversation, DateTimeOffset.UtcNow);
 
-  private bool TurnInProgress =>
-    Conversation?.Status is Ai.ConversationStatus.Streaming or Ai.ConversationStatus.AwaitingInput;
-
-  private AskDiagnostics Diagnostics =>
-    ServiceProvider.GetService<AskDiagnostics>() ?? AskDiagnostics.Disabled;
+  private bool TurnInProgress => AskAgentSession.TurnInProgress;
 
   protected override void OnInitialized()
   {
     base.OnInitialized();
     NavigationManager.LocationChanged += OnLocationChanged;
+    UiBindToken = AskAgentSession.BindUi(InvokeAsync);
+    SessionListener = AskAgentSession.Listen(OnSessionChanged);
+  }
+
+  private void OnSessionChanged()
+  {
+    if (!Disposed)
+    {
+      _ = InvokeAsync(StateHasChanged);
+    }
   }
 
   // Pick mode belongs to the page it started on; CancelPick is a no-op when nothing is picking.
@@ -220,15 +225,24 @@
 
     PageAgentRoute.Observe(NavigationManager, JsRuntime);
     await IssueConversationAsync();
-    Ai.UIAgent? previous = Agent;
-    await EnsureAgentAsync();
-    if (!ReferenceEquals(previous, Agent))
+    Ai.UIAgent? rendered = Agent;
+    await AskAgentSession.EnsureAsync();
+    AttachStatus();
+    await SettleComposerFocusAsync(rendered);
+    SyncVoiceClock();
+  }
+
+  // The session outlives this panel. Only this instance's status callback is dropped on dispose.
+  private void AttachStatus()
+  {
+    if (ReferenceEquals(StatusSource, Conversation))
     {
-      StateHasChanged();
+      return;
     }
 
-    await SettleComposerFocusAsync(previous);
-    SyncVoiceClock();
+    StatusSubscription?.Dispose();
+    StatusSource = Conversation;
+    StatusSubscription = StatusSource?.RegisterOnStatusChanged(OnStatusChanged);
   }
 
   // The composer is on screen only when the render that just ran drew the agent that is still built.
@@ -349,163 +363,6 @@
     );
   }
 
-  private async Task EnsureAgentAsync()
-  {
-    string path = CurrentPath();
-    AgentEditMode mode = AgentSurfaceState.EditMode;
-    int generation = AgentSurfaceState.ConversationGeneration;
-    if (Readiness != CatalogAgentReadiness.Configured)
-    {
-      ReportDeferred("Readiness", path, mode, generation);
-      if (Agent is not null)
-      {
-        ReleaseAgent();
-      }
-
-      return;
-    }
-
-    if (Agent is not null && BuiltPath == path && BuiltMode == mode && BuiltGeneration == generation)
-    {
-      return;
-    }
-
-    // A rebuild disposes the AgentContext, which cancels the stream and orphans an approval card.
-    // Wait for the turn to finish; the status callback re-renders and this runs again. New
-    // conversation (a generation change) abandons the turn on purpose, so it does not wait.
-    // Building wins when a build is already in this call, so the reason stays accurate.
-    if (Building)
-    {
-      ReportDeferred("Building", path, mode, generation);
-      return;
-    }
-
-    if (TurnInProgress && BuiltGeneration == generation)
-    {
-      ReportDeferred("TurnInProgress", path, mode, generation);
-      return;
-    }
-
-    IChatClient? chatClient = ServiceProvider.GetService<IChatClient>();
-    if (chatClient is null)
-    {
-      ReportDeferred("Readiness", path, mode, generation);
-      return;
-    }
-
-    Building = true;
-    try
-    {
-      // Re-read on every rebuild. The panel does not cache an AuthenticationState.
-#pragma warning disable BL0013
-      AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-#pragma warning restore BL0013
-      IReadOnlyList<CatalogAgentTool> selected = await CatalogAgentToolSet.SelectAsync
-      (
-        authentication.User,
-        AuthorizationService,
-        ActionCatalog.Entries,
-        path,
-        mode,
-        CancellationToken.None
-      );
-      string siteMap = AgentSiteMap.Summary
-      (
-        await AgentSiteMap.DestinationsAsync(authentication.User, AuthorizationService, path),
-        AgentAskInstructions.SiteMapCap
-      );
-      if (Disposed)
-      {
-        return;
-      }
-
-      ReleaseAgent();
-      Functions = CatalogAgentFunctions.Create(selected);
-      List<string> toolNames = [];
-      List<string> prefillTools = [];
-      foreach (CatalogAgentTool tool in selected)
-      {
-        toolNames.Add(tool.Name);
-        if (tool.Name.StartsWith(FormPrefill.Prefix, StringComparison.Ordinal))
-        {
-          prefillTools.Add(tool.Name);
-        }
-      }
-
-      toolNames.Add(PageAgentContext.ToolName);
-      // Rebuilt on every request (AskTagChatClient), so page_context.tags names the tags sent so far
-      // and the first line names the assistant's current name, even after a rename mid-conversation.
-      string RenderInstructions()
-      {
-        string assistantName = ScopedStore.GetState<AgentSurfaceState>().AssistantName;
-        return AgentAskInstructions.For
-        (
-          assistantName,
-          siteMap,
-          PageAgentContext.Describe
-          (
-            ScopedStore,
-            path,
-            toolNames,
-            liveSurfaceJson: null,
-            AgentAskInstructions.ContextCapFor(assistantName, siteMap)
-          )
-        );
-      }
-      InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
-      AskScreenshotChatClient screenshotClient = new
-      (
-        InvokingClient,
-        () => ScreenshotState.AskAttachedFor(AgentSurfaceState.ConversationGeneration),
-        id => InvokeAsync(() => ScreenshotState.MarkAskSent(id))
-      );
-      TagClient = new AskTagChatClient
-      (
-        screenshotClient,
-        () => AskTagState.AttachedFor(AgentSurfaceState.ConversationGeneration),
-        ids => InvokeAsync(() => AskTagState.MarkSent(ids)),
-        RenderInstructions
-      );
-      AskConversationThread thread = Threads.For(generation);
-      Ai.UIAgent agent = new
-      (
-        TagClient,
-        options =>
-        {
-          options.ChatOptions = new ChatOptions
-          {
-            Tools = [.. Functions.Tools],
-            Instructions = RenderInstructions(),
-          };
-          options.Thread = thread;
-        }
-      );
-      Ai.AgentContext conversation = new(agent);
-      // Restore before MessageList attaches: it reads Turns once, when its AgentContext changes.
-      await conversation.RestoreAsync();
-      if (Disposed)
-      {
-        // Dispose already released the fields; free what this build created.
-        conversation.Dispose();
-        agent.Dispose();
-        ReleaseAgent();
-        return;
-      }
-
-      Agent = agent;
-      Conversation = conversation;
-      Thread = thread;
-      StatusSubscription = conversation.RegisterOnStatusChanged(OnStatusChanged);
-      BuiltPath = path;
-      BuiltMode = mode;
-      BuiltGeneration = generation;
-      ReportBuilt(path, mode, generation, toolNames.Count, prefillTools);
-    }
-    finally
-    {
-      Building = false;
-    }
-  }
 
   private static bool IsUserTurn(Ai.RichContentBlock block) => block.Role == Microsoft.Extensions.AI.ChatRole.User;
 
@@ -533,82 +390,17 @@
     }
 
     // Streaming and AwaitingInput disable the microphone. Idle and Error resume a rebuild
-    // that waited out the turn. EnsureAgentAsync still refuses to replace the agent mid-turn.
+    // that waited out the turn. AskAgentSession still refuses to replace the agent mid-turn.
+    // The session records the status breadcrumb, including the path after a remount.
     if (status is Ai.ConversationStatus.Streaming
       or Ai.ConversationStatus.AwaitingInput
       or Ai.ConversationStatus.Idle
       or Ai.ConversationStatus.Error)
     {
-      ReportStatus(status);
       _ = InvokeAsync(StateHasChanged);
     }
   }
 
-  [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a built agent. It writes no store state and does nothing outside Development.")]
-  private void ReportBuilt(string path, AgentEditMode mode, int generation, int toolCount, IReadOnlyList<string> prefillTools)
-  {
-    if (!Diagnostics.IsEnabled)
-    {
-      return;
-    }
-
-    DeferralKey = null;
-    Diagnostics.AgentBuilt(path, mode.ToString(), generation, toolCount, prefillTools);
-  }
-
-  [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a rebuild that waited. It writes no store state and does nothing outside Development.")]
-  private void ReportDeferred(string reason, string path, AgentEditMode mode, int generation)
-  {
-    if (!Diagnostics.IsEnabled)
-    {
-      return;
-    }
-
-    string key = $"{reason}|{path}|{mode}|{generation.ToString(CultureInfo.InvariantCulture)}";
-    if (string.Equals(DeferralKey, key, StringComparison.Ordinal))
-    {
-      return;
-    }
-
-    DeferralKey = key;
-    Diagnostics.AgentDeferred(reason, path, mode.ToString(), generation);
-  }
-
-  [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a conversation status change. It writes no store state and does nothing outside Development.")]
-  private void ReportStatus(Ai.ConversationStatus status)
-  {
-    if (!Diagnostics.IsEnabled)
-    {
-      return;
-    }
-
-    if (ReportedStatus == status)
-    {
-      return;
-    }
-
-    ReportedStatus = status;
-    Diagnostics.Status(status.ToString(), CurrentPath());
-  }
-
-  private void ReleaseAgent()
-  {
-    StatusSubscription?.Dispose();
-    StatusSubscription = null;
-    Conversation?.Dispose();
-    Conversation = null;
-    Thread = null;
-    Agent?.Dispose();
-    Agent = null;
-    // TagClient owns the screenshot client, which owns InvokingClient (DelegatingChatClient
-    // disposes its inner client).
-    TagClient?.Dispose();
-    TagClient = null;
-    InvokingClient = null;
-    Functions?.Dispose();
-    Functions = null;
-    ReportedStatus = null;
-  }
 
   private string? RecordedApproval(Ai.FunctionApprovalBlock approval)
   {
@@ -837,14 +629,22 @@
     Disposed = true;
     StopVoiceClock();
     NavigationManager.LocationChanged -= OnLocationChanged;
+    SessionListener?.Dispose();
+    SessionListener = null;
+    AskAgentSession.UnbindUi(UiBindToken);
+    StatusSubscription?.Dispose();
+    StatusSubscription = null;
+    StatusSource = null;
     if (AskTagState.IsPickPending)
     {
       _ = AskTagState.CancelPick();
     }
 
-    ReleaseAgent();
+    // A route change disposes this panel while the Ask panel stays open. Leave the live agent
+    // running. Closing the panel clears IsPanelOpen before this unmount, and that does release it.
     if (!AgentSurfaceState.IsPanelOpen)
     {
+      AskAgentSession.Release();
       RestoreOpener();
     }
 
@@ -852,7 +652,7 @@
   }
 }
 
-<div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())">
+<div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())" data-built-path="@BuiltPath">
   <header class="twe-agent-ask__header">
     <div class="twe-agent-ask__heading">
       @if (AgentSurfaceState.AssistantAvatar is { } avatar)

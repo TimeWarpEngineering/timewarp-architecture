@@ -397,6 +397,7 @@ public partial class AskDiagnostics_Should_
       services.AddScoped<PageAgentRoute>();
       services.AddScoped<AgentCallOutcome>();
       services.AddScoped<AskConversationThreads>();
+      services.AddScoped<AskAgentSession>();
       Provider = services.BuildServiceProvider();
     }
 

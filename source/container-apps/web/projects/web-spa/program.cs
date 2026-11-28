@@ -231,6 +231,8 @@ public static class Program
     serviceCollection.AddScoped<WebMcpPublisher>();
     // The Ask transcript outlives the panel and page remounts; one thread per conversation generation.
     serviceCollection.AddScoped<AskConversationThreads>();
+    // The live agent does too. TimeWarpPage remounts AgentAsk; the circuit disposes this session.
+    serviceCollection.AddScoped<AskAgentSession>();
     // Task 361: the derived Ctrl-K Ask row reads "Ask {AssistantName}".
     serviceCollection.AddScoped<IActionDisplayOverride, AskAssistantDisplayOverride>();
     serviceCollection.AddJavaScriptDispatch(AllowJavaScriptDispatch);

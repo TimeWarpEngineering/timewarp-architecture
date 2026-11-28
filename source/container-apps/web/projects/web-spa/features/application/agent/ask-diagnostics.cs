@@ -176,6 +176,11 @@ public sealed class AskDiagnostics
       return "ApprovalRequired";
     }
 
+    if (string.Equals(error, CatalogAgentFunctions.ArrivalNeedsApprovalError, StringComparison.Ordinal))
+    {
+      return "ArrivalNeedsApproval";
+    }
+
     if (string.Equals(error, WebMcpDispatcher.UnavailableError, StringComparison.Ordinal))
     {
       return "NotAvailable";

@@ -385,6 +385,7 @@ public class AgentAskReadiness_Should_
       services.AddScoped<PageAgentRoute>();
       services.AddScoped(_ => webServer);
       services.AddScoped<AskConversationThreads>();
+      services.AddScoped<AskAgentSession>();
 
       ServiceProvider = services.BuildServiceProvider();
     }
