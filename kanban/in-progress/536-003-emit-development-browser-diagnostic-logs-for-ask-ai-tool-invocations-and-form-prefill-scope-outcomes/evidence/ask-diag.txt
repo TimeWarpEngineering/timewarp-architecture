@@ -1,0 +1,11 @@
+Lines printed by the ask-diagnostics wiring tests (prefix ASK-DIAG). No typed field values. The runtime log is cumulative, so a later print repeats the first prefill cycle; the second render did not apply again.
+
+ASK-DIAG ask-diag event=tool-start toolName=Prefill.Role.CreateRole route=/Admin/Roles/New wrapped=false
+ASK-DIAG ask-diag event=tool-outcome toolName=Prefill.Role.CreateRole route=/Admin/Roles/New wrapped=false currentFound=true requiresApproval=false offPageRoute=- prefill=true completed=true error=- fields=2 fieldNames=name|description
+ASK-DIAG ask-diag event=tool-start toolName=Counter.IncrementCounter route=/Counter wrapped=false
+ASK-DIAG ask-diag event=tool-outcome toolName=Counter.IncrementCounter route=/Counter wrapped=false currentFound=true requiresApproval=false offPageRoute=- prefill=false completed=false error=ArgumentException fields=0 fieldNames=-
+ASK-DIAG ask-diag event=prefill-seen form=TimeWarp.Architecture.Features.Admin.Roles.RoleState+CreateRoleActionSet+Action draftId=fc3173d7be8d47af95beb348b7c8dfe6 ready=true isInteractive=true applying=false alreadyHandled=false isDirty=false accepted=false
+ASK-DIAG ask-diag event=prefill-outcome form=TimeWarp.Architecture.Features.Admin.Roles.RoleState+CreateRoleActionSet+Action draftId=fc3173d7be8d47af95beb348b7c8dfe6 outcome=applied fieldNames=name|description
+ASK-DIAG ask-diag event=prefill-outcome form=TimeWarp.Architecture.Features.Admin.Roles.RoleState+CreateRoleActionSet+Action draftId=fc3173d7be8d47af95beb348b7c8dfe6 outcome=cleared fieldNames=-
+ASK-DIAG ask-diag event=prefill-seen form=TimeWarp.Architecture.Features.Admin.Roles.RoleState+CreateRoleActionSet+Action draftId=fc3173d7be8d47af95beb348b7c8dfe6 ready=true isInteractive=true applying=false alreadyHandled=true isDirty=true accepted=false
+ASK-DIAG ask-diag event=agent-deferred reason=Readiness path=/ mode=AskBeforeEditing generation=0

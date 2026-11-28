@@ -130,9 +130,10 @@
   idle: the composer takes focus only if focus is in the panel or on nothing. Disposing a closed
   panel returns focus to the opener, or to the page main region when the opener is gone.
   Development diagnostics: a built or deferred agent, and a Streaming, AwaitingInput, Idle, or
-  Error status, each write one breadcrumb through AskDiagnostics. Outside Development that
-  service does not call JavaScript. The lines name the path, mode, generation, and Prefill
-  tool names. They do not name typed field values.
+  Error status, each write one breadcrumb through AskDiagnostics. The report helpers return
+  before building a key when diagnostics are off. Outside Development that service does not
+  call JavaScript. The lines name the path, mode, generation, and Prefill tool names. They do
+  not name typed field values.
 *@
 
 @code {
@@ -546,6 +547,11 @@
   [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a built agent. It writes no store state and does nothing outside Development.")]
   private void ReportBuilt(string path, AgentEditMode mode, int generation, int toolCount, IReadOnlyList<string> prefillTools)
   {
+    if (!Diagnostics.IsEnabled)
+    {
+      return;
+    }
+
     DeferralKey = null;
     Diagnostics.AgentBuilt(path, mode.ToString(), generation, toolCount, prefillTools);
   }
@@ -553,6 +559,11 @@
   [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a rebuild that waited. It writes no store state and does nothing outside Development.")]
   private void ReportDeferred(string reason, string path, AgentEditMode mode, int generation)
   {
+    if (!Diagnostics.IsEnabled)
+    {
+      return;
+    }
+
     string key = $"{reason}|{path}|{mode}|{generation.ToString(CultureInfo.InvariantCulture)}";
     if (string.Equals(DeferralKey, key, StringComparison.Ordinal))
     {
@@ -566,6 +577,11 @@
   [DirectComponentSideEffect("Development-only Ask diagnostic breadcrumb for a conversation status change. It writes no store state and does nothing outside Development.")]
   private void ReportStatus(Ai.ConversationStatus status)
   {
+    if (!Diagnostics.IsEnabled)
+    {
+      return;
+    }
+
     if (ReportedStatus == status)
     {
       return;

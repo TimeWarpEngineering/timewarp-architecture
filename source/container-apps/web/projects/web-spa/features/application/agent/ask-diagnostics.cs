@@ -8,7 +8,9 @@
 // a JavaScript runtime is present. Outside Development, and when JavaScript is missing or the
 // page is still prerendering, every method returns without calling JavaScript and without throwing.
 // Lines carry route, tool name, field names and counts, and state flags. Error text collapses to a
-// stable code. Tokens, secrets, and typed field values are not written.
+// stable code taken from the same constants the producers write. A thrown tool reports its
+// exception type name. IsEnabled is false outside Development and when JavaScript is absent, so
+// callers can skip a snapshot. Tokens, secrets, and typed field values are not written.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -25,8 +27,6 @@ public sealed class AskDiagnostics
 
   public static readonly AskDiagnostics Disabled = new(isDevelopment: false, jsRuntime: null);
 
-  private readonly bool Enabled;
-
   private readonly IJSRuntime? JsRuntime;
 
   private readonly object Gate = new();
@@ -36,8 +36,11 @@ public sealed class AskDiagnostics
   public AskDiagnostics(bool isDevelopment, IJSRuntime? jsRuntime)
   {
     JsRuntime = jsRuntime;
-    Enabled = isDevelopment && jsRuntime is not null;
+    IsEnabled = isDevelopment && jsRuntime is not null;
   }
+
+  /// <summary>True when a Development host has a JavaScript runtime and a breadcrumb can be posted.</summary>
+  public bool IsEnabled { get; }
 
   public void AgentBuilt(string? path, string? mode, int generation, int toolCount, IReadOnlyList<string>? prefillTools) =>
     Send(AgentBuiltLine(path, mode, generation, toolCount, prefillTools));
@@ -173,7 +176,7 @@ public sealed class AskDiagnostics
       return "ApprovalRequired";
     }
 
-    if (string.Equals(error, "The action is not available on this page.", StringComparison.Ordinal))
+    if (string.Equals(error, WebMcpDispatcher.UnavailableError, StringComparison.Ordinal))
     {
       return "NotAvailable";
     }
@@ -203,12 +206,12 @@ public sealed class AskDiagnostics
       return "UrlRequired";
     }
 
-    if (string.Equals(error, "Prefill arguments must be a JSON object.", StringComparison.Ordinal))
+    if (string.Equals(error, FormPrefill.ArgumentsMustBeObjectError, StringComparison.Ordinal))
     {
       return "NotObject";
     }
 
-    if (error.StartsWith("No field matched.", StringComparison.Ordinal))
+    if (error.StartsWith(FormPrefill.NoFieldMatchedPrefix, StringComparison.Ordinal))
     {
       return "NoMatch";
     }
@@ -223,12 +226,35 @@ public sealed class AskDiagnostics
       return "Null";
     }
 
+    if (IsExceptionTypeName(error))
+    {
+      return error;
+    }
+
     return "Failed";
+  }
+
+  private static bool IsExceptionTypeName(string value)
+  {
+    if (value.Length is < 9 or > 80 || !value.EndsWith("Exception", StringComparison.Ordinal))
+    {
+      return false;
+    }
+
+    for (int index = 0; index < value.Length; index++)
+    {
+      if (!char.IsAsciiLetterOrDigit(value[index]))
+      {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private void Send(string message)
   {
-    if (!Enabled || JsRuntime is null)
+    if (!IsEnabled || JsRuntime is null)
     {
       return;
     }

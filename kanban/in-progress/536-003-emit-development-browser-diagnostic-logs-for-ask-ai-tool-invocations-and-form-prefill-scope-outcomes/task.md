@@ -48,6 +48,12 @@ The browser script grows one explicit hook, `window.__twBrowserDiag`, that uses 
 
 The three call sites are the agent build and status changes in `AgentAsk`, each tool return in `CatalogAgentFunction.InvokeCoreAsync`, and the draft decision in `FormPrefillScope`. Tests check the line shape, the production no-op, and that the forwarder posts an explicit info diagnostic while still ignoring plain `console.log` and `console.info`.
 
+Round 1 left six gaps. A waiting draft is reported even when this form already applied that id, so `alreadyHandled` can be true, and the seen-key still drops a repeat of the same flags. Error codes read the same constants the tool and the prefill normalizer write, including the not-available sentence. The report helpers return before a snapshot or a key when diagnostics are off. A tool body that throws still writes `tool-outcome` with the exception type name, then rethrows. The browser script does not declare `Window` again. A wiring run records the `ask-diag` lines, and those lines do not contain typed values.
+
+## Review
+
+- Round 1: fix pass implemented on this id. Finding statuses stay open in `review/round-1/merged.md` for review round 2.
+
 ## Notes
 
 - Key files:
@@ -64,26 +70,37 @@ AskDiagnostics posts one `ask-diag` line through `window.__twBrowserDiag` only w
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2200f-3451-7e92-bbac-f55bb0e99130, max-turns 500, Done — 2026-11-28T03:40:12Z
 - Evidence send-back: captured AgentAsk on `/` and the new-role FormPrefillScope on `/Admin/Roles/New` from this worktree's isolated Development app, signed in as the first passkey account (Member).
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2203d-3add-7633-8db3-775eaf855ff6, max-turns 500, Done — 2026-11-28T03:53:29Z
+- Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, turn cap 200, 2026-11-28. Six findings open (1 bug, 3 suggestion, 2 nit); fix pass requested. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 050dc31f-e77d-4ffb-b16e-b49a1feab354, max-turns 200, artifacts general.md, merged.md — 2026-11-28T03:57:09Z
+- Implement-fix-2 oracle: implemented the six open round-1 findings on this id (alreadyHandled seen lines, shared error-code constants, disabled diagnostics return before snapshot or key work, recorded wiring lines, tool-outcome on a thrown tool body, one Window type). Statuses in the round-1 ledger stay open for round 2. Session 01a2204c-be43-7582-90c7-db4cf2064a03 — 2026-11-28.
 
 ## Results
 
 Development breadcrumbs go out as `level: info` and `source: console` on the existing `POST /api/browser-logs` queue. A non-Development host, including Testing, does not call JavaScript. Lines name routes, tools, field names, and flags. They do not carry tokens or the values a person typed.
 
-Screenshots from this worktree's isolated Development app. The first passkey account (shown as Member) is signed in. Mock authentication stays off.
+The fix pass reports a waiting draft even after that draft was already applied, so one `prefill-seen` line has `alreadyHandled=true` and the apply does not run again. Error codes compare the shared `FormPrefill` and `WebMcpDispatcher` strings. Report helpers return before snapshot or key work when diagnostics are disabled. A tool body that throws writes `tool-outcome` with `completed=false` and `error` set to the exception type name, then rethrows. The browser script uses the `Window` type in `source/types/global.d.ts`.
+
+Screenshots are from this worktree's isolated Development app (`https://127.0.0.1:14900` and `https://localhost:14900`). Mock authentication stays off. The signed-in shots use a passkey account shown as Member.
 
 - [evidence/home.png](evidence/home.png) route `/` principal signed-out look at the Ask Akili panel open on the home shell
 - [evidence/admin-roles-new.png](evidence/admin-roles-new.png) route `/Admin/Roles/New` principal signed-out look at the passkey sign-in gate in front of the new-role form
 - [evidence/agent-ask.png](evidence/agent-ask.png) route `/` principal Member look at the Ask Akili panel open on the home shell
 - [evidence/form-prefill-scope.png](evidence/form-prefill-scope.png) route `/Admin/Roles/New` principal Member look at the new-role form Name and Description fields inside FormPrefillScope
+- [evidence/ask-diag.txt](evidence/ask-diag.txt) route `/Admin/Roles/New` principal in-proc test user look at tool-start, tool-outcome, prefill-seen alreadyHandled, and agent-deferred lines with no typed values
 
 ### How to validate
 
-Smoke: Run the app in Development, sign in, open Ask on `/Admin/Roles/New`, and invoke `Prefill.Role.CreateRole` with a name and a description. In the Aspire dashboard or SigNoz, filter category `Web.Spa.Browser` for `ask-diag`.
+Smoke: Run the app in Development, sign in, open Ask on `/Admin/Roles/New`, and invoke `Prefill.Role.CreateRole` with a name and a description. In the Aspire dashboard or SigNoz, filter category `Web.Spa.Browser` for `ask-diag`. The wiring lines already captured from the in-proc tests are in `evidence/ask-diag.txt`.
 
-Expect: An `event=tool-start` line and an `event=tool-outcome` line name the tool and the field names, and neither line contains the typed name or description. An `event=prefill-seen` line appears while the draft is waiting, then `event=prefill-outcome` with `outcome=applied` or `outcome=confirming`. A Production or Testing host posts none of these lines. A plain `console.log` call does not show up under `Web.Spa.Browser`.
+Expect: An `event=tool-start` line and an `event=tool-outcome` line name the tool and the field names, and neither line contains the typed name or description. An `event=prefill-seen` line appears while the draft is waiting, then `event=prefill-outcome` with `outcome=applied`. Putting that same draft back writes `alreadyHandled=true` and does not apply a second time. A thrown tool body writes `tool-outcome` with `completed=false` and `error=ArgumentException`. A Production or Testing host posts none of these lines. A plain `console.log` call does not show up under `Web.Spa.Browser`.
 
 Gates:
 
 - `./bin/dev build` — passed, 0 warnings, 0 errors
-- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/ask-diagnostics-tests.cs` — passed, 4/4. Not a standalone runfile (no `#if !JARIBU_MULTI`); CI runs the integration project.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/ask-diagnostics-wiring-tests.cs` — passed, 9/9. The file is one half of `AskDiagnostics_Should_`. Not a standalone runfile (no `#if !JARIBU_MULTI`); CI runs the integration project, and this command runs the whole class.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/ask-diagnostics-tests.cs` — passed, 9/9. Same class, same note: not a standalone runfile.
 - `ganda repo audit` — passed, 43 passed, 0 failed, 1 warning (`vscode-window-icon`, pre-existing, non-blocking)
+
+### Review
+
+Round 1 (general, effort 3): the ledger still has 6 open, 0 fixed, 0 wontfix. The implement-fix-2 pass addressed M1 through M6 in the product and tests and left those statuses open for review round 2. Ledger: `review/round-1/merged.md`.

@@ -6,8 +6,9 @@
 // Formatting is pure, so the secret and field-value checks do not need a host. The Development
 // gate is the service constructor: a non-Development instance never calls JavaScript, and a
 // Development instance posts level info through __twBrowserDiag and swallows a missing runtime.
-// The forwarder check runs the emitted classic script under node. This file is a project test,
-// not a standalone runfile: the integration project compiles it, and CI runs that project.
+// The forwarder check runs the emitted classic script under node. The wiring proofs live in
+// ask-diagnostics-wiring-tests.cs. This file is a project test, not a standalone runfile:
+// the integration project compiles it, and CI runs that project.
 #endregion
 
 namespace AskDiagnostics_;
@@ -18,7 +19,7 @@ using TimeWarp.Amuru;
 using TimeWarp.Architecture.Features.Applications;
 
 [TestTag("Unit")]
-public class AskDiagnostics_Should_
+public partial class AskDiagnostics_Should_
 {
   private const string Secret = "super-secret-token-value";
 
@@ -107,7 +108,7 @@ public class AskDiagnostics_Should_
       offPageRoute: null,
       prefill: true,
       completed: false,
-      error: "No field matched. Accepted keys: name. " + Person,
+      error: FormPrefill.NoFieldMatchedPrefix + " Accepted keys: name. " + Person,
       fieldNames: []);
     noMatch.ShouldContain("error=NoMatch");
     noMatch.ShouldContain("fieldNames=-");
@@ -116,7 +117,11 @@ public class AskDiagnostics_Should_
 
     AskDiagnostics.ErrorCode("name cannot be null.").ShouldBe("Null");
     AskDiagnostics.ErrorCode("name must be a string.").ShouldBe("Type");
-    AskDiagnostics.ErrorCode("Prefill arguments must be a JSON object.").ShouldBe("NotObject");
+    AskDiagnostics.ErrorCode(FormPrefill.ArgumentsMustBeObjectError).ShouldBe("NotObject");
+    AskDiagnostics.ErrorCode(WebMcpDispatcher.UnavailableError).ShouldBe("NotAvailable");
+    AskDiagnostics.ErrorCode(FormPrefill.NoFieldMatchedPrefix + " Accepted keys: name.").ShouldBe("NoMatch");
+    AskDiagnostics.ErrorCode("ArgumentException").ShouldBe("ArgumentException");
+    AskDiagnostics.ErrorCode("not an exception").ShouldBe("Failed");
 
     string seen = AskDiagnostics.PrefillSeenLine(
       "TimeWarp.Architecture.Features.Admin.Roles.RoleState+CreateRoleActionSet+Action",
@@ -155,6 +160,7 @@ public class AskDiagnostics_Should_
       Failure = new InvalidOperationException("JavaScript interop is not available."),
     };
     AskDiagnostics diagnostics = new(isDevelopment: false, runtime);
+    diagnostics.IsEnabled.ShouldBeFalse();
     diagnostics.AgentBuilt("/admin/roles", "AskBeforeEditing", 1, 2, ["Prefill.Role.CreateRole"]);
     diagnostics.AgentDeferred("Readiness", "/admin/roles", "AskBeforeEditing", 1);
     diagnostics.Status("Error", "/admin/roles");
@@ -176,6 +182,7 @@ public class AskDiagnostics_Should_
     runtime.Calls.Count.ShouldBe(0);
 
     AskDiagnostics missing = new(isDevelopment: true, jsRuntime: null);
+    missing.IsEnabled.ShouldBeFalse();
     missing.Status("Idle", "/admin/roles");
     await missing.FlushAsync().ConfigureAwait(false);
   }
@@ -184,6 +191,7 @@ public class AskDiagnostics_Should_
   {
     RecordingRuntime runtime = new();
     AskDiagnostics diagnostics = new(isDevelopment: true, runtime);
+    diagnostics.IsEnabled.ShouldBeTrue();
     diagnostics.Status("Streaming", "/admin/roles");
     await diagnostics.FlushAsync().ConfigureAwait(false);
     runtime.Calls.Count.ShouldBe(1);
@@ -350,35 +358,4 @@ public class AskDiagnostics_Should_
 
   private sealed record ForwarderProbe(string Posted, string Hook);
 
-  private sealed class RecordingRuntime : IJSRuntime
-  {
-    public List<JsCall> Calls { get; } = [];
-
-    public Exception? Failure { get; set; }
-
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
-    {
-      Calls.Add(new JsCall(identifier, args ?? []));
-      if (Failure is not null)
-      {
-        return ValueTask.FromException<TValue>(Failure);
-      }
-
-      return ValueTask.FromResult<TValue>(default!);
-    }
-
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
-    {
-      _ = cancellationToken;
-      Calls.Add(new JsCall(identifier, args ?? []));
-      if (Failure is not null)
-      {
-        return ValueTask.FromException<TValue>(Failure);
-      }
-
-      return ValueTask.FromResult<TValue>(default!);
-    }
-  }
-
-  private sealed record JsCall(string Identifier, object?[] Arguments);
 }

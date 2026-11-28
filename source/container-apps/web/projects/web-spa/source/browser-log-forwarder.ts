@@ -20,11 +20,8 @@
 // Messages that are blank after trim become '(empty)' (server NotEmpty rejects whitespace), and
 // truncation never splits a UTF-16 surrogate pair (a lone surrogate fails server JSON binding).
 // Wire shape mirrors ForwardBrowserLogs.Command (web-contracts).
+// Window.__twBrowserDiag is declared in source/types/global.d.ts, which this compilation includes.
 // #endregion
-
-interface Window {
-  __twBrowserDiag?: (level: string, message: string) => void;
-}
 
 (function (): void {
   'use strict';

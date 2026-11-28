@@ -28,9 +28,11 @@
   working-copy property shows the Info badge labeled Agent while that property still equals
   the value the draft wrote.
   Development diagnostics: a waiting draft and each outcome (applied, confirming, declined,
-  cleared) write one breadcrumb through AskDiagnostics. The line names the form, the draft id,
-  the flags, and the field names. It does not include the draft JSON or typed values. Outside
-  Development the service does not call JavaScript.
+  cleared) write one breadcrumb through AskDiagnostics. A draft this component already applied
+  is still reported, so alreadyHandled can be true, and the seen key drops a repeat. The line
+  names the form, the draft id, the flags, and the field names. It does not include the draft
+  JSON or typed values. When diagnostics are off the report helpers return before the dirty
+  snapshot. Outside Development the service does not call JavaScript.
 *@
 
 @code {
@@ -80,7 +82,7 @@
 
     BaselineReady = Ready;
     FormSuggestion? waiting = FormSuggestionState.For(Form);
-    if (waiting is not null && !string.Equals(waiting.Id, HandledId, StringComparison.Ordinal))
+    if (waiting is not null)
     {
       ReportSeen(waiting, Applying);
     }
@@ -92,7 +94,7 @@
     if (Applying || !RendererInfo.IsInteractive || !Ready || Model is null)
     {
       FormSuggestion? waiting = FormSuggestionState.For(Form);
-      if (waiting is not null && !string.Equals(waiting.Id, HandledId, StringComparison.Ordinal))
+      if (waiting is not null)
       {
         ReportSeen(waiting, Applying);
       }
@@ -101,12 +103,16 @@
     }
 
     FormSuggestion? draft = FormSuggestionState.For(Form);
-    if (draft is null || string.Equals(draft.Id, HandledId, StringComparison.Ordinal))
+    if (draft is null)
     {
       return;
     }
 
     ReportSeen(draft, applying: false);
+    if (string.Equals(draft.Id, HandledId, StringComparison.Ordinal))
+    {
+      return;
+    }
     Applying = true;
     try
     {
@@ -144,6 +150,11 @@
   [DirectComponentSideEffect("Development-only form-prefill diagnostic breadcrumb. It writes no store state and does nothing outside Development.")]
   private void ReportSeen(FormSuggestion draft, bool applying)
   {
+    if (!Diagnostics.IsEnabled)
+    {
+      return;
+    }
+
     bool ready = Ready;
     bool interactive = RendererInfo.IsInteractive;
     bool alreadyHandled = string.Equals(draft.Id, HandledId, StringComparison.Ordinal);
@@ -161,6 +172,11 @@
   [DirectComponentSideEffect("Development-only form-prefill outcome breadcrumb. Field names only; the draft JSON stays in state.")]
   private void ReportOutcome(string draftId, string outcome, IReadOnlyList<string>? fieldNames = null)
   {
+    if (!Diagnostics.IsEnabled)
+    {
+      return;
+    }
+
     string key = draftId + "|" + outcome;
     if (string.Equals(OutcomeKey, key, StringComparison.Ordinal))
     {
