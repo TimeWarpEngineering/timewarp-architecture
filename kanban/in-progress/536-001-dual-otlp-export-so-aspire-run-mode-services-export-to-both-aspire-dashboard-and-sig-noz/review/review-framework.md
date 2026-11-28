@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1621
-- Effort: 3
+- Lines changed: 581
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -31,3 +31,11 @@
   command and the reason. A full build, full test run, or audit is never that command
 - A missing or thin recorded result is a finding, not a reason to run the gates
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+**Date:** 2026-11-28
+**Diff scope:** fix-pass delta `9674f707a..5ea5b31a7` (HEAD 5ea5b31a7)
+**Effort:** 2 (by-diff budget, 581 lines); roster axis general only
+**Reviewer roster:** general (review oracle, single pass)
+**Session IDs:** review oracle claude-opus-5-5 (ganda task work, print mode)

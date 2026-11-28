@@ -59,7 +59,7 @@ likely
 
 - Round 1: Blocked — open M1, M2, M3
 - Fix pass: M1, M2, and M3 implemented on this id. Review round 2 follows.
-
+- Round 2: Done
 ## Notes
 
 - Host shell on dev machines typically exports `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_PROTOCOL` (e.g. `http/protobuf` or `grpc`) for SigNoz. Inheriting those in run mode means `dev run` / `aspire start` automatically sends `web-server` traces & logs to SigNoz with zero extra per-repo secret boilerplate, while still allowing explicit override via `Observability:SigNoz:OtlpEndpoint`.
@@ -111,9 +111,17 @@ These files are project classes, not `#if !JARIBU_MULTI` runfiles. `./bin/dev te
 - `./bin/dev test tests/tools/dev-cli-tests/template-smoke-dev-cli-tests.cs` — `ListedCommands_Given_` 3/3 passed in 5.6s.
 - `ganda repo audit` — exit 0, pass: 43 passed, 0 failed, 1 warning (`vscode-window-icon`, pre-existing).
 
+### Review disposition
+
+- Outcome: **clean**. 2 rounds, reviewer roster general (round 1 effort 3, round 2 effort 2).
+- Final counts: bug 0, suggestion 2 fixed (M1, M2), nit 1 fixed (M3). 0 open, 0 wontfix.
+- The first Results paragraph above says the code "restores HTTP signal-path appending". The fix pass replaced that: there is now one named exporter per signal, and http/protobuf gets the full signal URL (`### Fix pass (review round 1)`).
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21f68-6bb7-7cf3-a1bc-18168e984a08, max-turns 500, Done — 2026-11-28T01:30:47Z
 - Review oracle round 1: claude-opus-5-5 (anthropic), body tw-implementation-review, effort 3, roster general, turn cap 200. 0 bug, 2 suggestion, 1 nit, all open (M1 reflection into OTel internal setter, M2 untested and unrecorded template-smoke parser change, M3 per-class env gate). Fix pass requested. Artifacts: review/review-framework.md, review/round-1/general.md, review/round-1/merged.md — 2026-11-28
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 22cbe74b-eb5a-4cc3-ae6d-033745d295ae, max-turns 200, artifacts general.md, merged.md — 2026-11-28T01:34:33Z
 - Fix pass (implement-fix-2): implementer-grok (grok, vendor xai, model grok-4.7), session 01a21fca-3127-7bf1-a867-1cfcd3cd80f8 — 2026-11-28. M1 per-signal exporters and full http/protobuf URLs, M2 ListedCommands tests plus the Results note, M3 one shared environment gate.
+- Review oracle round 2: claude-opus-5-5 (anthropic), body tw-implementation-review, effort 2, roster general, turn cap 120. Delta 9674f707a..5ea5b31a7. M1, M2, M3 verified fixed, 0 new findings, disposition clean. No gates re-run. Artifacts: review/round-2/general.md, review/round-2/merged.md, review/disposition.md — 2026-11-28
