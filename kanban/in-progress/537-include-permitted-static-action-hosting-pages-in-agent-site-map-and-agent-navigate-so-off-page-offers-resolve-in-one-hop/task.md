@@ -46,6 +46,10 @@ Acceptance:
 - For an administrator, every non-null `OffPageRoute` from `CatalogAgentToolSet.SelectAsync`, including `Prefill.Role.CreateRole` → `/Admin/Roles/New`, is in the site map and `AgentNavigate.InvokeAsync` accepts it. Ask's instructions stay under 7,000 characters.
 - `./bin/dev build` and the targeted tests pass with 0 warnings and 0 errors.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Key files:
@@ -77,6 +81,19 @@ Gates:
 - `ganda repo audit` — passed, 43 passed, 0 failed, 1 warning (`vscode-window-icon`, pre-existing, non-blocking). The commit hook then refused to sign: `package-pin-currency` saw `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` at `3.0.0-beta.10` while nuget.org had `3.0.0-beta.11` (published the same day, cache younger than a minute). Pins moved to `3.0.0-beta.11` in `Directory.Packages.props`. `./bin/dev build` passed again, and `ganda repo audit` passed again with the same 43/0/1 counts.
 - `./bin/dev lint-skills` — passed, 11/11 (skills/tw-blazor changed)
 
+### Review
+
+- Rounds: 1, effort 2, roster `general`.
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). Open: 0.
+- Disposition: `accepted-exceptions`. M1 (nit): `dev template-smoke` is not in the recorded
+  gates. It is accepted because the PR CI gate runs the default-variant template-smoke and no
+  `#if` region or template symbol changed.
+- Paths: [review/review-framework.md](review/review-framework.md),
+  [review/round-1/merged.md](review/round-1/merged.md),
+  [review/disposition.md](review/disposition.md).
+
 ## Session
 
 - Implement oracle: implemented by implementer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-28T15:18:33Z
+- Review oracle: reviewer (claude, model claude-opus-5-5), session not reported, max-turns 120, round 1, effort 2, roster general, disposition accepted-exceptions (0 open) — 2026-11-28
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d4f0a320-9956-4505-be92-0096db013676, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-28T15:20:26Z
