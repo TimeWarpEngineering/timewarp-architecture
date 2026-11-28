@@ -27,6 +27,12 @@ public static partial class FormPrefill
 {
   public const string Prefix = "Prefill.";
 
+  /// <summary>The error when prefill arguments are not a JSON object.</summary>
+  public const string ArgumentsMustBeObjectError = "Prefill arguments must be a JSON object.";
+
+  /// <summary>The start of the error when no supplied key matches a form field.</summary>
+  public const string NoFieldMatchedPrefix = "No field matched.";
+
   /// <summary>Draft result. <see cref="Drafted"/> is false when the arguments are not a draft.</summary>
   public sealed record Result(
     [property: JsonPropertyName("drafted")] bool Drafted,

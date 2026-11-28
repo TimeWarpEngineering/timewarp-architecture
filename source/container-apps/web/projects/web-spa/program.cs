@@ -52,6 +52,8 @@
 // Snapshots resolve type info from StateJsonContext (task 484, TWS0013) and fall back to reflection
 // for a state it does not list (TimeWarp.State.Plus): Debug WebAssembly is not trimmed, and a failed
 // snapshot never fails the action. A Development Debug start without an inspector costs one discovery GET (204).
+// Task 536-003: AskDiagnostics is registered for every host and posts browser breadcrumbs
+// only when environmentName is Development (ordinal). Testing stays a no-op.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
@@ -217,6 +219,11 @@ public static class Program
     // Ask is always registered. RelayChatClient holds no key; web-server owns XAI:ApiKey.
     // WebMCP uses the same catalog tools and does not need this client.
     serviceCollection.AddScoped<PageAgentRoute>();
+    // Task 536-003: breadcrumbs go through window.__twBrowserDiag only in Development.
+    // A host without JavaScript, including prerender before the runtime attaches, gets a no-op.
+    bool developmentDiagnostics = string.Equals(environmentName, "Development", StringComparison.Ordinal);
+    serviceCollection.AddScoped(provider =>
+      new AskDiagnostics(developmentDiagnostics, provider.GetService<IJSRuntime>()));
     serviceCollection.AddScoped<AgentCallOutcome>();
     serviceCollection.AddScoped<WebMcpApprovalGate>();
     serviceCollection.AddScoped<WebMcpDispatcher>();

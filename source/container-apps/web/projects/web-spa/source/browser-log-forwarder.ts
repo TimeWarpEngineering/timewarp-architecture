@@ -1,6 +1,7 @@
 // #region Purpose
 // Development/Testing hook that forwards browser console errors/warnings, window errors and unhandled
 // rejections to web-server (POST api/browser-logs) so they appear in the Aspire dashboard logs.
+// window.__twBrowserDiag posts one explicit diagnostic through that same queue.
 // #endregion
 //
 // #region Design
@@ -12,12 +13,16 @@
 // log loops; credentials are omitted (anonymous endpoint); only location.pathname is sent (never the
 // query string or hash). Buffer caps at 200 entries; batches are at most 50 and flush every 1s or as
 // soon as 50 are buffered. 429 backs the forwarder off; 404 disables it permanently.
+// Ordinary log and info calls stay on the page. Ask diagnostics call __twBrowserDiag, which enqueues
+// with source "console" and a level the server already allows (anything else is sent as info).
 // keepalive only on the pagehide flush: browsers reject keepalive bodies over 64 KiB, so that flush
 // also trims its batch to KEEPALIVE_BYTES; it ignores an in-flight send or 429 backoff (last chance).
 // Messages that are blank after trim become '(empty)' (server NotEmpty rejects whitespace), and
 // truncation never splits a UTF-16 surrogate pair (a lone surrogate fails server JSON binding).
 // Wire shape mirrors ForwardBrowserLogs.Command (web-contracts).
+// Window.__twBrowserDiag is declared in source/types/global.d.ts, which this compilation includes.
 // #endregion
+
 (function (): void {
   'use strict';
 
@@ -146,4 +151,26 @@
   });
 
   window.addEventListener('pagehide', flushOnUnload);
+
+  function diagnosticLevel(level: string): string {
+    switch (level) {
+      case 'error':
+      case 'warn':
+      case 'info':
+      case 'log':
+      case 'debug':
+        return level;
+      default:
+        return 'info';
+    }
+  }
+
+  window.__twBrowserDiag = (level: string, message: string): void => {
+    try {
+      const text = typeof message === 'string' ? message : String(message);
+      enqueue(diagnosticLevel(level), 'console', text);
+    } catch {
+      // The diagnostic hook must never throw into the page.
+    }
+  };
 })();
