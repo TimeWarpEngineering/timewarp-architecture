@@ -3,14 +3,16 @@
 #endregion
 
 #region Design
-// Clients are cached per key, up to MaxCachedClients. Rent counts a use and stamps a logical
-// clock; past the bound the least recently rented key is evicted. An evicted client with no use
-// is disposed at once. One still inside GetResponseAsync moves to IdleEvicted and is disposed by
-// the Release that brings its use count to zero. Disposing it earlier would drop that call.
-// Release of a client the cache does not hold is a no-op, so the caller may release any client
-// it rented. Dispose disposes every live and evicted client outside the lock; a completion still
-// in flight may already have finished. Clients come from IXaiChatClientFactory so tests can see
-// which key each client was built with. Keys are dictionary keys only and are never logged.
+// Clients are cached per API key and EnableSensitiveTelemetry flag, up to MaxCachedClients.
+// A flag change rents a different client, so a span built with bodies off is not reused once
+// bodies are on. Rent counts a use and stamps a logical clock; past the bound the least recently
+// rented entry is evicted. An evicted client with no use is disposed at once. One still inside
+// GetResponseAsync moves to IdleEvicted and is disposed by the Release that brings its use count
+// to zero. Disposing it earlier would drop that call. Release of a client the cache does not hold
+// is a no-op, so the caller may release any client it rented. Dispose disposes every live and
+// evicted client outside the lock; a completion still in flight may already have finished.
+// Clients come from IXaiChatClientFactory so tests can see which key each client was built with.
+// Keys are dictionary keys only and are never logged.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -25,7 +27,7 @@ internal sealed class XaiChatClientCache : IDisposable
 
   private readonly IXaiChatClientFactory Clients;
   private readonly Lock Gate = new();
-  private readonly Dictionary<string, CachedChatClient> LiveClients = new(StringComparer.Ordinal);
+  private readonly Dictionary<ClientCacheKey, CachedChatClient> LiveClients = [];
   private readonly List<CachedChatClient> IdleEvicted = [];
   private long ClientClock;
 
@@ -35,12 +37,13 @@ internal sealed class XaiChatClientCache : IDisposable
   }
 
   /// <summary>The client for <paramref name="apiKey"/>, counted as in use until <see cref="Release"/>.</summary>
-  public IChatClient Rent(string apiKey, string endpoint, string model)
+  public IChatClient Rent(string apiKey, string endpoint, string model, bool enableSensitiveTelemetry)
   {
     lock (Gate)
     {
       ClientClock++;
-      if (LiveClients.TryGetValue(apiKey, out CachedChatClient? existing))
+      ClientCacheKey key = new(apiKey, enableSensitiveTelemetry);
+      if (LiveClients.TryGetValue(key, out CachedChatClient? existing))
       {
         existing.Uses++;
         existing.LastUsed = ClientClock;
@@ -62,12 +65,12 @@ internal sealed class XaiChatClientCache : IDisposable
         }
       }
 
-      IChatClient created = Clients.Create(apiKey, endpoint, model);
+      IChatClient created = Clients.Create(apiKey, endpoint, model, enableSensitiveTelemetry);
       LiveClients.Add(
-        apiKey,
+        key,
         new CachedChatClient
         {
-          Key = apiKey,
+          Key = key,
           Client = created,
           Uses = 1,
           LastUsed = ClientClock
@@ -168,7 +171,7 @@ internal sealed class XaiChatClientCache : IDisposable
   /// <summary>One cached client and how many completions are still using it.</summary>
   private sealed class CachedChatClient
   {
-    public required string Key { get; init; }
+    public required ClientCacheKey Key { get; init; }
 
     public required IChatClient Client { get; init; }
 
@@ -178,4 +181,7 @@ internal sealed class XaiChatClientCache : IDisposable
 
     public long LastUsed { get; set; }
   }
+
+  /// <summary>Cache identity. The flag keeps a body-recording pipeline off a client built with bodies omitted.</summary>
+  private readonly record struct ClientCacheKey(string ApiKey, bool EnableSensitiveTelemetry);
 }

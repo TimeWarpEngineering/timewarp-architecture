@@ -209,10 +209,11 @@ public class Returns_
   {
     public List<string> Keys { get; } = [];
 
-    public IChatClient Create(string apiKey, string endpoint, string model)
+    public IChatClient Create(string apiKey, string endpoint, string model, bool enableSensitiveTelemetry)
     {
       _ = endpoint;
       _ = model;
+      _ = enableSensitiveTelemetry;
       Keys.Add(apiKey);
       return new StubChatClient();
     }

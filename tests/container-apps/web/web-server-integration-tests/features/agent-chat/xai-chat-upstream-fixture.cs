@@ -136,10 +136,11 @@ internal static class XaiChatUpstreamFixture
   {
     public List<string> Keys { get; } = [];
 
-    public IChatClient Create(string apiKey, string endpoint, string model)
+    public IChatClient Create(string apiKey, string endpoint, string model, bool enableSensitiveTelemetry)
     {
       _ = endpoint;
       _ = model;
+      _ = enableSensitiveTelemetry;
       return new StubChatClient(apiKey, Keys);
     }
   }
@@ -188,11 +189,12 @@ internal static class XaiChatUpstreamFixture
 
     public int Live => Clients.Count(client => !client.Disposed);
 
-    public IChatClient Create(string apiKey, string endpoint, string model)
+    public IChatClient Create(string apiKey, string endpoint, string model, bool enableSensitiveTelemetry)
     {
       _ = apiKey;
       _ = endpoint;
       _ = model;
+      _ = enableSensitiveTelemetry;
       TrackingChatClient client = new();
       Clients.Add(client);
       return client;
