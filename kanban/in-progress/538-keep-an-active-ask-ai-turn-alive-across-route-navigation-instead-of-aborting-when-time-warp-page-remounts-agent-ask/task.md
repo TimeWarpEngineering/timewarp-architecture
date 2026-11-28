@@ -76,6 +76,17 @@ Smoke: sign in, open Ask on `/`, and ask it to open the new role page. Approve t
 
 Evidence: [evidence/agent-ask.png](evidence/agent-ask.png) is `AgentAsk` open on `/` for a signed-out visitor (Sign in to use Akili). [evidence/home.png](evidence/home.png) is the same home shell. Both shots are from this worktree's isolated AppHost (`aspire run --isolated`, http://127.0.0.1:63920) because a Development AppHost already held the shared dashboard and ingress ports. This evidence pass did not change product code; the gates above still stand.
 
+### Review disposition
+
+- Rounds: 1. Roster: general (effort 3, by-diff budget).
+- Final counts: bug 0. Suggestion 1 wontfix. Nit 3 wontfix. 0 open.
+- Disposition: `accepted-exceptions`. M1: a build that finishes after the panel closes leaves an idle agent on the session, which is harmless and reused or replaced later. M2: comment whitespace. M3: a test local name. M4: duplicate evidence shot. Rationale is in the disposition.
+- Paths: [review/review-framework.md](review/review-framework.md), [review/round-1/general.md](review/round-1/general.md), [review/round-1/merged.md](review/round-1/merged.md), [review/disposition.md](review/disposition.md).
+
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Key files:
@@ -91,3 +102,5 @@ Evidence: [evidence/agent-ask.png](evidence/agent-ask.png) is `AgentAsk` open on
 
 - Implement oracle: implemented by implementer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-28T16:26:06Z
 - Implement oracle: implemented by implementer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-28T16:31:15Z
+- Review oracle: tw-implementation-review round 1, general reviewer (Claude Code, claude-opus-5-5), effort 3, turn cap 200, session not reported. Disposition accepted-exceptions, 0 open — 2026-11-28
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1271e55c-e271-499c-8d13-a1fd12520144, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-28T16:34:45Z
