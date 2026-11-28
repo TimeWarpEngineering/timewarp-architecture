@@ -11,6 +11,11 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
-[Page("/Admin/Roles/New", Policy = PermissionIds.AdminRolesManage, AgentActions = [typeof(RoleState.CreateRoleActionSet.Action)])]
+[Page(
+  "/Admin/Roles/New",
+  Policy = PermissionIds.AdminRolesManage,
+  Description = "Create a custom role.",
+  AgentActions = [typeof(RoleState.CreateRoleActionSet.Action)]
+)]
 [Authorize(Policy = PermissionIds.AdminRolesManage)]
 partial class RolePage;

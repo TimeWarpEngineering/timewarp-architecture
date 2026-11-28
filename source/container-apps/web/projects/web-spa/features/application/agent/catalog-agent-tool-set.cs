@@ -17,8 +17,9 @@
 // A suggestion catalog action is not a tool. FormPrefill lists Prefill.<Action> for each
 // edit-form submit the principal may run. On the page it asks only in Ask before editing.
 // Off the page it is a navigate offer and does not ask. The submit action itself is unchanged.
-// navigate and site_map share AgentSiteMap.DestinationsAsync, the menu's destinations for this
-// principal (Sign in included while signed out, Ctrl-K's deep links last), so both answer and move across the whole app
+// navigate and site_map share AgentSiteMap.DestinationsAsync: the menu's destinations for this
+// principal (Sign in included while signed out), permitted static action pages that are not menu
+// rows (task 537), and Ctrl-K's deep links last. Both answer and move across the whole app
 // from every page, including Home (task 300). site_map is read-only and never needs approval.
 // navigate needs approval in Ask before editing and runs at once in Automatically edit.
 // FindOfferedAsync re-checks permission for the principal at call time. A global tool survives
