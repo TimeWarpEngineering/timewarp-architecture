@@ -73,6 +73,8 @@
 //   generated file needs none of the page file's usings. Every page that declares any (navigable
 //   or not, parameterized or not) is a PageRegistry.ActionScopes row with all its route templates,
 //   so the agent matches the current path to its page without a hand-written route list.
+//   Each row also carries that page's Policy, Title, and Description (task 537) so site_map can
+//   list a static action page that is not a menu row, and authorize it the same way as the menu.
 // Incremental caching: PageModel is a value-equatable record (arrays by sequence) holding
 // location-free PageDiagnostic values; the Diagnostic is built in RegisterSourceOutput. A held
 // Diagnostic/Location pins old SyntaxTrees and never compares equal, which made every edit re-run

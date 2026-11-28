@@ -1,13 +1,15 @@
 #region Purpose
 // One navigate tool whose destinations are the navigation menu's pages the principal may open,
-// plus the deep links Ctrl-K lists under them.
+// the static action-hosting pages that principal may open, and the deep links Ctrl-K lists
+// under the menu pages.
 #endregion
 
 #region Design
 // Destinations are AgentSiteMap.DestinationsAsync: NavigationDestinations (the policy-filtered
 // PageRegistry that NavMenu and Ctrl-K read) plus the palette's Sign in row while signed out
-// (task 300) and the palette's deep links (task 446, the design-system parts). site_map lists the
-// same rows, so every site_map URL is a navigate target and nothing else is. A single tool with a
+// (task 300), permitted static action pages that are not menu rows (task 537), and the palette's
+// deep links (task 446, the design-system parts). site_map lists the same rows, so every
+// site_map URL is a navigate target and nothing else is. A single tool with a
 // JSON-schema enum of permitted URLs stays short. One tool per destination was rejected: it would
 // duplicate every menu row. The description names each page, then one AgentSiteMap.DeepLinkLines
 // line per parent, so 30+ parts stay under the contract's tool-description cap; the enum still

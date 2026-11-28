@@ -65,17 +65,38 @@ public partial class Destinations_Should_
       : [];
     palette.ShouldBe([.. expected, .. partUrls], because);
 
+    HashSet<string> alreadyListed = new([.. expected, .. partUrls], StringComparer.Ordinal);
+    List<string> actionRoutes = [];
+    foreach (PageActionScope actionScope in PageRegistry.ActionScopes)
+    {
+      if (!await NavigationDestinations.IsAuthorizedAsync(user, authorization, actionScope.Policy))
+      {
+        continue;
+      }
+
+      foreach (string template in actionScope.RouteTemplates)
+      {
+        if (template.Contains('{', StringComparison.Ordinal) || !alreadyListed.Add(template))
+        {
+          continue;
+        }
+
+        actionRoutes.Add(template);
+      }
+    }
+
+    string[] siteMap = [.. expected, .. actionRoutes, .. partUrls];
     IReadOnlyList<CatalogAgentTool> tools = await CatalogAgentToolSet.SelectAsync(user, authorization, catalog.Entries, "/", CancellationToken.None);
     CatalogAgentTool navigate = tools.Single(tool => tool.Name == AgentNavigate.ToolName);
     JsonNode schema = JsonNode.Parse(navigate.InputSchema).ShouldNotBeNull();
     string[] enumerated = [.. schema["properties"]!["url"]!["enum"]!.AsArray().Select(static node => node!.GetValue<string>())];
-    enumerated.ShouldBe([.. expected, .. partUrls], because);
+    enumerated.ShouldBe(siteMap, because);
     navigate.Description.Length.ShouldBeLessThanOrEqualTo(CompleteAgentChat.MaxToolDescriptionLength, because);
     tools.ShouldContain(tool => tool.Name == AgentSiteMap.ToolName && !tool.RequiresApproval, because);
 
     AgentSiteMap.Result map = await AgentSiteMap.InvokeAsync(user, authorization, scope.Store, "/", CancellationToken.None);
     map.Error.ShouldBeNull(because);
-    map.Destinations.Select(static destination => destination.Route).ShouldBe([.. expected, .. partUrls], because);
+    map.Destinations.Select(static destination => destination.Route).ShouldBe(siteMap, because);
     map.Destinations.Where(static destination => destination.Parent is not null).Select(static destination => destination.Route)
       .ShouldBe(partUrls, because);
     map.Destinations.Where(static destination => destination.Parent is not null)
@@ -96,6 +117,24 @@ public partial class Destinations_Should_
     if (partUrls.Length == 0)
     {
       refused.Add("/DesignSystem/drawers");
+    }
+
+    foreach (PageActionScope actionScope in PageRegistry.ActionScopes)
+    {
+      if (await NavigationDestinations.IsAuthorizedAsync(user, authorization, actionScope.Policy))
+      {
+        continue;
+      }
+
+      foreach (string template in actionScope.RouteTemplates)
+      {
+        if (template.Contains('{', StringComparison.Ordinal) || refused.Contains(template))
+        {
+          continue;
+        }
+
+        refused.Add(template);
+      }
     }
 
     if (signedIn)
@@ -120,6 +159,28 @@ public partial class Destinations_Should_
 
     Console.WriteLine($"DESTINATIONS-PROOF {because} menu={string.Join(",", menu)}");
     return destinations;
+  }
+
+  private static async Task AssertNewRoleHiddenAsync(string[]? permissions, string because)
+  {
+    const string route = "/Admin/Roles/New";
+    using DestinationSpa spa = new(permissions);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    IAuthorizationService authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    IReadOnlyList<AgentSiteMap.Destination> map =
+      await AgentSiteMap.DestinationsAsync(spa.User, authorization, "/");
+    map.ShouldNotContain(destination => destination.Route == route, because);
+    AgentNavigate.Result result = await AgentNavigate.InvokeAsync
+    (
+      spa.User,
+      authorization,
+      scope.Store,
+      "/",
+      new Dictionary<string, object?> { ["url"] = route },
+      CancellationToken.None
+    );
+    result.Navigated.ShouldBeFalse(because);
+    result.Error.ShouldBe(AgentNavigate.Refusal, because);
   }
 
   private static async Task<string[]> MenuHrefsAsync(IServiceProvider services, ClaimsPrincipal user)

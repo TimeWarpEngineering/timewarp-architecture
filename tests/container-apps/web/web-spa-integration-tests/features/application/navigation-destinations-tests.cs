@@ -1,6 +1,7 @@
 #region Purpose
 // Task 300: the navigation menu, the Ctrl-K palette, and the agent's navigate and site_map tools
-// list the same destinations for every principal, and no second hand-written page list reappears.
+// agree for every principal, and no second hand-written page list reappears. Task 537: site_map
+// and navigate also list permitted static action pages that the menu does not show.
 #endregion
 
 #region Design
@@ -8,15 +9,18 @@
 // Aspire. Four principals: administrator (every permission), plain user (the self-service
 // permissions a signed-in person gets), developer, and anonymous. For each, NavMenu is rendered
 // with HtmlRenderer under the principal's cascaded authentication state and its internal hrefs
-// are read; they must equal NavigationDestinations, the palette's Page rows (less Sign in), the
-// navigate enum and site_map rows on Home (less Sign in), in the same order. A principal who can
-// open the design system also gets one Page row per catalog part after the pages, on the palette,
-// the navigate enum and site_map (task 446); those rows are not menu items. Each site_map part
-// row names /DesignSystem as its parent. The navigate description stays under the chat
-// contract's tool-description cap and the Ask summary keeps the parts line under SiteMapCap.
+// are read; they must equal NavigationDestinations and the palette's Page rows (less Sign in),
+// in the same order. The navigate enum and site_map rows on Home are that list, then every
+// static PageRegistry.ActionScopes route that is not already listed and whose policy authorizes
+// this principal (task 537; those pages stay off the nav rail and the palette), then one row per
+// design-system part when the principal may open the design system (task 446). Part rows and
+// action pages are not menu items. Each site_map part row names /DesignSystem as its parent.
+// The navigate description stays under the chat contract's tool-description cap and the Ask
+// summary keeps the parts line under SiteMapCap.
 // Signed out, Sign in is the one extra row on the palette, navigate and site_map, as on Ctrl-K.
-// Every registry page the principal may not open, a part url when the design system is not
-// permitted, Login while signed in, and an unknown url are refused by navigate.
+// Every registry page the principal may not open, a static action page whose policy does not
+// authorize, a part url when the design system is not permitted, Login while signed in, and an
+// unknown url are refused by navigate.
 // Each principal's set is also pinned: anonymous sees only Home, the plain user exactly Home,
 // Settings, Profile, AgentLinks and Feedback, the developer no Admin page and no Settings, and the
 // administrator every registry page, so a filter that lets everything through fails.
@@ -33,6 +37,7 @@
 
 namespace NavigationDestinations_;
 
+using System.Security.Claims;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
@@ -105,6 +110,84 @@ public partial class Destinations_Should_
   {
     string[] destinations = await AssertSameDestinationsAsync(null, "Anonymous");
     destinations.ShouldBe(["/"]);
+  }
+
+  public static async Task Include_Every_Off_Page_Offer_In_The_Site_Map_For_An_Administrator()
+  {
+    using DestinationSpa spa = new([.. PermissionIds.All]);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    IAuthorizationService authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    ClaimsPrincipal user = spa.User;
+
+    PageRegistry.All.ShouldNotBeEmpty();
+    PageRegistry.ActionScopes.ShouldNotBeEmpty();
+    catalog.Entries.ShouldNotBeEmpty();
+
+    IReadOnlyList<CatalogAgentTool> tools = await CatalogAgentToolSet.SelectAsync
+    (
+      user,
+      authorization,
+      catalog.Entries,
+      "/",
+      CancellationToken.None
+    );
+    IReadOnlyList<AgentSiteMap.Destination> destinations =
+      await AgentSiteMap.DestinationsAsync(user, authorization, "/");
+    HashSet<string> urls = new(destinations.Select(static destination => destination.Route), StringComparer.Ordinal);
+    CatalogAgentTool navigate = tools.Single(tool => tool.Name == AgentNavigate.ToolName);
+    JsonNode schema = JsonNode.Parse(navigate.InputSchema).ShouldNotBeNull();
+    HashSet<string> enumerated = new
+    (
+      schema["properties"]!["url"]!["enum"]!.AsArray().Select(static node => node!.GetValue<string>()),
+      StringComparer.Ordinal
+    );
+
+    bool sawCreateRole = false;
+    int offers = 0;
+    foreach (CatalogAgentTool tool in tools)
+    {
+      if (tool.OffPageRoute is not { } route)
+      {
+        continue;
+      }
+
+      offers++;
+      urls.ShouldContain(route, tool.Name);
+      enumerated.ShouldContain(route, tool.Name);
+      (await AgentNavigate.FindAsync(user, authorization, "/", route)).ShouldNotBeNull(tool.Name);
+      AgentNavigate.Result result = await AgentNavigate.InvokeAsync
+      (
+        user,
+        authorization,
+        scope.Store,
+        "/",
+        new Dictionary<string, object?> { ["url"] = route },
+        CancellationToken.None
+      );
+      result.Navigated.ShouldBeTrue(tool.Name);
+      result.Error.ShouldBeNull(tool.Name);
+      result.Destination.ShouldBe(route, tool.Name);
+      if (tool.Name == "Prefill.Role.CreateRole")
+      {
+        route.ShouldBe("/Admin/Roles/New");
+        sawCreateRole = true;
+      }
+    }
+
+    offers.ShouldBeGreaterThan(0);
+    sawCreateRole.ShouldBeTrue();
+    string summary = AgentSiteMap.Summary(destinations, AgentAskInstructions.SiteMapCap);
+    summary.ShouldContain("/Admin/Roles/New");
+    string instructions = AgentAskInstructions.For("Ask", summary, "Home");
+    instructions.Length.ShouldBeLessThan(AgentAskInstructions.MaxLength);
+    (AgentAskInstructions.MaxLength - instructions.Length).ShouldBeGreaterThan(1_000);
+  }
+
+  public static async Task Omit_New_Role_When_The_Principal_Cannot_Manage_Roles()
+  {
+    await AssertNewRoleHiddenAsync(null, "Anonymous");
+    await AssertNewRoleHiddenAsync(PlainUser, "PlainUser");
   }
 
   public static Task Keep_Page_Knowledge_Out_Of_The_Agent_Sources()

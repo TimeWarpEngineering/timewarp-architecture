@@ -180,15 +180,19 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   approval-wrapped) returns every destination the person's navigation menu shows: title, URL,
   menu group, icon and the `[Page]` Description, plus Sign in while signed out. The deep links
   Ctrl-K lists under a permitted page (`CommandPaletteRoster.DeepLinks`, the design-system parts)
-  follow, each with its `parent` page URL.
-  `navigate` takes one of those URLs (a URL enum) and refuses anything else; it goes through
-  `RouteState.ChangeRoute` like the palette and asks for approval in Ask before editing. Both read
-  `NavigationDestinations`, the list NavMenu and Ctrl-K render, so the four surfaces cannot drift;
-  a guard test fails if a route literal or `typeof(…Page)` appears in the agent code. Ask's
-  instructions carry the same site map, so it answers "where is X" from Home with a page link.
+  follow, each with its `parent` page URL. It also includes every static route from
+  `PageRegistry.ActionScopes` that is not already a menu or deep-link row, when
+  `IAuthorizationService` allows that page's policy. Those action pages stay off the nav rail
+  and off the palette. `navigate` takes one of the site-map URLs (a URL enum) and refuses
+  anything else; it goes through `RouteState.ChangeRoute` like the palette and asks for approval
+  in Ask before editing. Menu rows and palette page rows still read `NavigationDestinations`,
+  the list NavMenu and Ctrl-K render. A guard test fails if a route literal or `typeof(…Page)`
+  appears in the agent code. Ask's instructions carry the same site map, so it answers "where
+  is X" from Home with a page link, and an off-page offer can navigate in one hop.
 - A page's own executable actions come from its declaration:
   `[Page(…, AgentActions = [typeof(CredentialsState.AddPasskeyActionSet.Action), …])]`. The
-  generator emits `PageRegistry.ActionScopes` (every route template of each such page), and
+  generator emits `PageRegistry.ActionScopes` (every route template of each such page, plus that
+  page's Policy, Title, and Description), and
   `PageAgentScope` matches the current path against them and decides which palette commands only
   execute on their page. There is no hand-written route list. An anonymous principal gets
   `navigate` and `site_map` only.

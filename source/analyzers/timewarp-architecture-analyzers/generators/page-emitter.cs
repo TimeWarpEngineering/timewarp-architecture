@@ -62,11 +62,19 @@ internal static class PageEmitter
     sb.Append("    /// <summary>Every route template on [Page], including parameterized aliases. The positional RouteTemplate stays the static primary.</summary>\n");
     sb.Append("    public global::System.Collections.Generic.IReadOnlyList<string> RouteTemplates { get; init; } = [];\n");
     sb.Append("  }\n\n");
-    sb.Append("  /// <summary>A page that declares [Page(AgentActions = ...)]: its route templates and the actions the agent may run on it.</summary>\n");
+    sb.Append("  /// <summary>A page that declares [Page(AgentActions = ...)]: its route templates, the actions the agent may run on it, and the page Policy, Title, and Description.</summary>\n");
     sb.Append("  public sealed record PageActionScope(\n");
     sb.Append("    global::System.Type PageType,\n");
     sb.Append("    global::System.Collections.Generic.IReadOnlyList<string> RouteTemplates,\n");
-    sb.Append("    global::System.Collections.Generic.IReadOnlyList<global::System.Type> ActionTypes);\n\n");
+    sb.Append("    global::System.Collections.Generic.IReadOnlyList<global::System.Type> ActionTypes)\n");
+    sb.Append("  {\n");
+    sb.Append("    /// <summary>The page Policy member. Empty authorizes everyone, matching navigation destinations.</summary>\n");
+    sb.Append("    public string Policy { get; init; } = \"\";\n");
+    sb.Append("    /// <summary>The page Title member.</summary>\n");
+    sb.Append("    public string Title { get; init; } = \"\";\n");
+    sb.Append("    /// <summary>The [Page] Description, or empty when the declaration sets none.</summary>\n");
+    sb.Append("    public string Description { get; init; } = \"\";\n");
+    sb.Append("  }\n\n");
     sb.Append("  /// <summary>Every navigation destination in this assembly, generated from [Page(Navigable = true)] (sorted by NavOrder, then route: the menu order).</summary>\n");
     sb.Append("  public static class PageRegistry\n  {\n");
     sb.Append("    public static global::System.Collections.Generic.IReadOnlyList<PageRegistryEntry> All { get; } =\n");
@@ -103,11 +111,13 @@ internal static class PageEmitter
       .OrderBy(static p => p.RouteTemplate, System.StringComparer.Ordinal)
       .ThenBy(static p => p.HintName, System.StringComparer.Ordinal))
     {
-      sb.Append("      new(typeof(global::").Append(page.Namespace).Append('.').Append(page.ClassName).Append("), [");
+      string actionPage = "global::" + page.Namespace + "." + page.ClassName;
+      sb.Append("      new(typeof(").Append(actionPage).Append("), [");
       sb.Append(string.Join(", ", page.RouteTemplates.Select(CSharpString)));
       sb.Append("], [");
       sb.Append(string.Join(", ", page.AgentActions.Select(static type => "typeof(" + type + ")")));
-      sb.Append("]),\n");
+      sb.Append("]) { Policy = ").Append(actionPage).Append(".Policy, Title = ").Append(actionPage).Append(".Title, Description = ")
+        .Append(CSharpString(page.Description)).Append(" },\n");
     }
 
     sb.Append("    ];\n");

@@ -233,7 +233,7 @@ public class PageSourceGenerator_Registry_Tests
       {
         using Test.States;
 
-        [Page("/Counter", "/Counter/{Amount:int}", AgentActions = [typeof(CounterState.IncrementActionSet.Action)])]
+        [Page("/Counter", "/Counter/{Amount:int}", Description = "Count.", AgentActions = [typeof(CounterState.IncrementActionSet.Action)])]
         public partial class CounterPage { }
 
         [Page("/Plain", Navigable = true)]
@@ -244,9 +244,13 @@ public class PageSourceGenerator_Registry_Tests
     diagnostics.ShouldBeEmpty();
     generated.ShouldContain("public System.Type[] AgentActions { get; set; }");
     string registry = RegistryOf(generated);
+    generated.ShouldContain("public string Policy { get; init; } = \"\";");
+    generated.ShouldContain("public string Title { get; init; } = \"\";");
+    generated.ShouldContain("public string Description { get; init; } = \"\";");
     registry.ShouldContain(
       "new(typeof(global::Test.Pages.CounterPage), [\"/Counter\", \"/Counter/{Amount:int}\"], "
-      + "[typeof(global::Test.States.CounterState.IncrementActionSet.Action)]),");
+      + "[typeof(global::Test.States.CounterState.IncrementActionSet.Action)]) "
+      + "{ Policy = global::Test.Pages.CounterPage.Policy, Title = global::Test.Pages.CounterPage.Title, Description = \"Count.\" },");
     // A page without AgentActions is not an action scope; a non-navigable page with them is.
     generated.ShouldContain("RouteTemplates { get; init; }");
     generated.ShouldNotContain("RouteTemplates { get; set; }");

@@ -1,18 +1,22 @@
 #region Purpose
 // The read-only site_map agent tool: every destination the principal's navigation menu shows,
-// plus the deep links Ctrl-K lists under those pages.
+// the static action-hosting pages that principal may open, and the deep links Ctrl-K lists
+// under the menu pages.
 #endregion
 
 #region Design
-// Task 300: Ask and WebMCP know the whole app, not only the page on screen. Destinations come
+// Task 300: Ask and WebMCP know the whole app, not only the page on screen. Menu rows come
 // from NavigationDestinations, the policy-filtered PageRegistry that NavMenu and Ctrl-K read, so
-// site_map lists exactly the menu's pages for this principal, in menu order, plus the palette's
-// Sign in row while signed out. Each row is the [Page] declaration's title, URL, NavGroup, icon
-// name and Description; nothing about a page is written anywhere else. Task 446: the palette's
-// deep links (CommandPaletteRoster.DeepLinks, the design-system parts) follow the pages, in the
-// palette's order, each with its parent page url, so Ask finds what Ctrl-K finds. A part is only
-// listed when its page is. navigate's enum is the same list (Destinations), so a site_map URL is
-// always a navigate target and nothing else is.
+// site_map lists the menu's pages for this principal, in menu order, plus the palette's
+// Sign in row while signed out. Each menu row is the [Page] declaration's title, URL, NavGroup,
+// icon name and Description; nothing about a page is written anywhere else. Task 446: the palette's
+// deep links (CommandPaletteRoster.DeepLinks, the design-system parts) follow, in the palette's
+// order, each with its parent page url, so Ask finds what Ctrl-K finds. A part is only listed
+// when its page is. Task 537: a static route from PageRegistry.ActionScopes that is not already
+// a menu or deep-link row is listed too, when IAuthorizationService allows that page's Policy.
+// Title and Description are the scope's, the group is empty, and there is no icon, so the row
+// stays off the nav rail. A parameterized action route is not a destination. navigate's enum is
+// the same list (Destinations), so a site_map URL is always a navigate target and nothing else is.
 // site_map takes no arguments, changes nothing, and is never approval-wrapped, like page_context.
 // It is offered on every page, signed in or out. The conversation credential still applies: a
 // stale or foreign credential gets an error instead of the list.
@@ -33,8 +37,9 @@ public static class AgentSiteMap
   public const string ToolName = "site_map";
 
   public const string ToolDescription =
-    "Every page this person may open from the app's navigation menu, plus deep links into a page "
-    + "(parent is the page's url): title, url, menu group, icon, and what the page is for. Read-only. "
+    "Every page this person may open from the app's navigation menu, plus a static page that hosts "
+    + "an action and is not on the menu, plus deep links into a page (parent is the page's url): "
+    + "title, url, menu group, icon, and what the page is for. Read-only. "
     + "Use it to answer where something is, then link the page or call navigate with its url.";
 
   /// <summary>One permitted destination.</summary>
@@ -54,7 +59,7 @@ public static class AgentSiteMap
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [property: JsonPropertyName("error")] string? Error = null);
 
-  /// <summary>The menu's destinations for <paramref name="user"/>, with Sign in first while signed out and deep links last.</summary>
+  /// <summary>Menu destinations for <paramref name="user"/>, then permitted static action pages, with Sign in first while signed out and deep links last.</summary>
   public static async Task<IReadOnlyList<Destination>> DestinationsAsync
   (
     ClaimsPrincipal user,
@@ -81,8 +86,51 @@ public static class AgentSiteMap
       }
     }
 
+    await AppendStaticActionPagesAsync(user, authorizationService, destinations, deepLinks);
     destinations.AddRange(deepLinks);
     return destinations;
+  }
+
+  /// <summary>
+  /// Static action-hosting routes the menu and the deep links do not already list, when
+  /// <paramref name="user"/> may open that page.
+  /// </summary>
+  private static async Task AppendStaticActionPagesAsync
+  (
+    ClaimsPrincipal user,
+    IAuthorizationService authorizationService,
+    List<Destination> destinations,
+    List<Destination> deepLinks
+  )
+  {
+    HashSet<string> taken = new(StringComparer.Ordinal);
+    foreach (Destination destination in destinations)
+    {
+      taken.Add(destination.Route);
+    }
+
+    foreach (Destination link in deepLinks)
+    {
+      taken.Add(link.Route);
+    }
+
+    foreach (PageActionScope scope in PageRegistry.ActionScopes)
+    {
+      if (!await NavigationDestinations.IsAuthorizedAsync(user, authorizationService, scope.Policy))
+      {
+        continue;
+      }
+
+      foreach (string template in scope.RouteTemplates)
+      {
+        if (template.Contains('{', StringComparison.Ordinal) || !taken.Add(template))
+        {
+          continue;
+        }
+
+        destinations.Add(new Destination(scope.Title, template, "", Icon: null, scope.Description));
+      }
+    }
   }
 
   public static CatalogAgentTool Create() =>
