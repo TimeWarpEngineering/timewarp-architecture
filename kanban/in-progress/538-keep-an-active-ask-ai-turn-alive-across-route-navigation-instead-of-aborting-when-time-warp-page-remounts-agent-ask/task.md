@@ -45,6 +45,37 @@ likely
      - `NewConversation` and host disposal still cleanly dispose the previous `AgentContext` and `CatalogAgentFunctions`.
    - Verify `./bin/dev build` and targeted `./bin/dev test` pass with 0 warnings and 0 errors.
 
+## Goal (implementer restatement)
+
+Ask stays in `TimeWarpPage`'s aside. A route change still disposes that page and its `AgentAsk`, then mounts a new pair. The live turn must keep running across that swap.
+
+The circuit-scoped `AskAgentSession` owns the `UIAgent`, `AgentContext`, invoking client, tag client, catalog functions, and the path, edit mode, and generation they were built for. Unmounting `AgentAsk` while the panel stays open only drops the panel's status subscription and its voice timer. The new panel attaches to the same context, so the model can finish the turn and the thread can commit the navigation call and its result. When the turn is idle or in error, the session rebuilds tools for the route now showing.
+
+A tool set built before the navigation stays in place until that rebuild. An off-page tool that lands on its page and now requires approval does not run and does not pretend the edit mode changed: it tells the model this turn is done and the next turn can ask. In Automatically edit, approval is not required, so the same prefill runs on the page it just opened.
+
+New conversation, a readiness drop, closing the panel, and disposing the circuit still drop the live agent. The next open or the next generation builds a new one.
+
+## Results
+
+`AskAgentSession` is the circuit-scoped owner of the live agent. `AgentAsk` still renders inside `TimeWarpPage`. Unmounting the panel while it stays open detaches the UI subscription and the voice timer and leaves the `AgentContext` running. Closing the panel, a new conversation, a readiness drop, and disposing the scope still release it.
+
+The tool set from the start of the turn stays until the turn is idle or in error. An off-page tool that lands on its page and now requires approval returns `ArrivalNeedsApprovalError` and does not run. The idle rebuild then wraps that tool. In Automatically edit the same unwrapped function runs the prefill. The session records `agent-built`, `agent-deferred`, and `status` breadcrumbs, including `status=Idle` and `agent-built` for the destination path.
+
+The build no longer suppresses `BL0013` on the session: it reads `AuthenticationStateProvider` from the scope on each rebuild instead of holding it. `ganda repo audit --fix` lowered the `AgentAsk.razor` `BL0013` baseline from 2 to 1 because that second suppression left with the rebuild.
+
+### How to validate
+
+Smoke: sign in, open Ask on `/`, and ask it to open the new role page. Approve the navigation. The panel stays open on `/Admin/Roles/New` and Akili finishes the reply. Ask again to fill the role. Expect one `navigate` call in the thread, the reply committed beside it, and no second navigation. After the turn is idle, diagnostics include `tool-start`, `tool-outcome`, `status=Idle`, and `agent-built` for `/Admin/Roles/New`, and `Prefill.Role.CreateRole` is wrapped for approval.
+
+- `./bin/dev build` — passed, 0 warnings, 0 errors.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/ask-agent-session-tests.cs` — passed, 3 tests. Not a standalone runfile (no `#if !JARIBU_MULTI`); CI runs it with the project. The doubles file is the other half of the same class.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/ask-diagnostics-wiring-tests.cs` — passed, 9 tests. Not a standalone runfile; CI runs it.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/agent-ask-readiness-tests.cs` — passed, 14 tests. Not a standalone runfile; CI runs it.
+- `./bin/dev test tests/container-apps/web/web-spa-integration-tests/features/application/assistant-identity-tests.cs` — passed, 9 tests. Not a standalone runfile; CI runs it.
+- `ganda repo audit` — passed, 44 passed, 0 failed.
+
+Evidence: [evidence/home.png](evidence/home.png) is the signed-out home shell with the Ask panel open. A Development AppHost was already bound to the shared dashboard ports, so this shot is an isolated AppHost of this worktree (`aspire run --isolated`).
+
 ## Notes
 
 - Key files:

@@ -24,6 +24,12 @@
 // editing mid-run) and this function was built unwrapped, it refuses with ApprovalRequiredError
 // instead of running without a prompt. A wrapped function in Automatic mode still runs: the
 // prompt it already showed is stricter than the mode.
+// A function built as an off-page offer (Wrapped false, OffPageRoute set) can be invoked again
+// after this same turn navigates onto its page. Re-selection then has no OffPageRoute and, in
+// Ask before editing, RequiresApproval. That is not an edit-mode change: ArrivalNeedsApprovalError
+// tells the model to finish the turn without calling the tool or navigate again. The idle rebuild
+// wraps the tool, so the next turn can ask. In Automatically edit the re-selected tool does not
+// require approval, so this same unwrapped function runs the prefill.
 // Create always appends page_context with the same name, description, and empty schema WebMCP
 // publishes, and it is never approval-wrapped. page_context walks the page body when it is
 // called, like the WebMCP dispatcher, so its text matches the page on screen. The conversation credential is checked after the
@@ -46,6 +52,9 @@ public sealed class CatalogAgentFunctions : IDisposable
 {
   public const string ApprovalRequiredError =
     "This action now needs approval. The edit mode changed to Ask before editing; ask again.";
+
+  public const string ArrivalNeedsApprovalError =
+    "You are on the page now. This action needs approval, and approval is available on the next turn. Tell the person you arrived and stop. Do not call this tool or navigate again in this turn.";
 
   private readonly List<JsonDocument> Documents;
 
@@ -164,9 +173,10 @@ public sealed class CatalogAgentFunctions : IDisposable
 
         if (string.Equals(current.Name, AgentNavigate.ToolName, StringComparison.Ordinal))
         {
-          if (current.RequiresApproval && !Wrapped)
+          CatalogAgentCallResult? navigateApproval = RefuseIfApprovalMissing(current);
+          if (navigateApproval is not null)
           {
-            return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError));
+            return Trace(diagnostics, route, current, navigateApproval);
           }
 
           return Trace(
@@ -210,9 +220,10 @@ public sealed class CatalogAgentFunctions : IDisposable
 
         if (current.Prefill)
         {
-          if (current.RequiresApproval && !Wrapped)
+          CatalogAgentCallResult? prefillApproval = RefuseIfApprovalMissing(current);
+          if (prefillApproval is not null)
           {
-            return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError));
+            return Trace(diagnostics, route, current, prefillApproval);
           }
 
           string? prefillDenial = AgentConversationAuthority.Denial(
@@ -248,9 +259,10 @@ public sealed class CatalogAgentFunctions : IDisposable
               cancellationToken));
         }
 
-        if (current.RequiresApproval && !Wrapped)
+        CatalogAgentCallResult? approval = RefuseIfApprovalMissing(current);
+        if (approval is not null)
         {
-          return Trace(diagnostics, route, current, new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError));
+          return Trace(diagnostics, route, current, approval);
         }
 
         object?[] bound = CatalogAgentArguments.Bind(current.Entry, arguments);
@@ -336,6 +348,19 @@ public sealed class CatalogAgentFunctions : IDisposable
         error,
         fields);
       return result;
+    }
+
+    private CatalogAgentCallResult? RefuseIfApprovalMissing(CatalogAgentTool current)
+    {
+      if (!current.RequiresApproval || Wrapped)
+      {
+        return null;
+      }
+
+      string error = Tool.OffPageRoute is not null && current.OffPageRoute is null
+        ? ArrivalNeedsApprovalError
+        : ApprovalRequiredError;
+      return new CatalogAgentCallResult(Tool.Name, Completed: false, error);
     }
   }
 
