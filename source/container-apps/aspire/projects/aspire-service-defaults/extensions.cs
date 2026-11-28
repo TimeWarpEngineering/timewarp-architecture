@@ -8,9 +8,13 @@
 // Kept in the Microsoft.Extensions.Hosting namespace, as upstream does, so callers need no extra using.
 // OTLP export activates only when Aspire injects OTEL_EXPORTER_OTLP_ENDPOINT; alternative exporters
 // (Prometheus, Azure Monitor) stay as commented opt-ins requiring extra packages.
-// AddMeter(AnalyticsMeters.MeterName) is the one deliberate deviation: this project must register
+// AddMeter(AnalyticsMeters.MeterName) is a deliberate deviation: this project must register
 // the analytics meter for OTLP export without referencing a web feature. The name constant lives
 // in TimeWarp.Foundation.Configuration (same home as ServiceNames).
+// AddSource/AddMeter(GenAiTelemetry) is the GenAI deviation (task 536-002). Microsoft.Extensions.AI
+// 11.0.1 UseOpenTelemetry uses sourceName for both the ActivitySource and the Meter. The package
+// default is Experimental.Microsoft.Extensions.AI. The chat factory passes GenAiTelemetry.SourceName,
+// and both signals are registered here. The constant lives beside AnalyticsMeters.
 // AddLogRedaction is the second deliberate deviation (task 344): it lives in its own file
 // (log-redaction-extensions.cs) so this one stays diffable; AddServiceDefaults calls it first.
 // MapDefaultEndpoints is the third deliberate deviation (task 377): upstream maps /health and
@@ -71,14 +75,16 @@ public static class Extensions
           metrics.AddAspNetCoreInstrumentation()
                   .AddHttpClientInstrumentation()
                   .AddRuntimeInstrumentation()
-                  .AddMeter(TimeWarp.Foundation.Configuration.AnalyticsMeters.MeterName);
+                  .AddMeter(TimeWarp.Foundation.Configuration.AnalyticsMeters.MeterName)
+                  .AddMeter(TimeWarp.Foundation.Configuration.GenAiTelemetry.MeterName);
         })
         .WithTracing(tracing =>
         {
           tracing.AddAspNetCoreInstrumentation()
                   // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                   //.AddGrpcClientInstrumentation()
-                  .AddHttpClientInstrumentation();
+                  .AddHttpClientInstrumentation()
+                  .AddSource(TimeWarp.Foundation.Configuration.GenAiTelemetry.SourceName);
         });
 
     builder.AddOpenTelemetryExporters();

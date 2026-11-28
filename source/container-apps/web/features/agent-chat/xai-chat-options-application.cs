@@ -10,6 +10,8 @@
 // They default to XaiChatDefaults, so an app that sets nothing records nothing and shows nothing.
 // StarterPrompts is the Ask empty-state list (task 348). It is get-only so configuration binding
 // fills it; empty means AgentChatStarterPrompts.Defaults.
+// EnableSensitiveTelemetry defaults to false. A deployed app does not export prompt or reply
+// bodies. Development appsettings sets it true so local Aspire and SigNoz capture them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -34,6 +36,12 @@ public sealed class XaiChatOptions
   /// Ignored in every other environment.
   /// </summary>
   public bool UseFakeUpstream { get; set; }
+
+  /// <summary>
+  /// When true, GenAI spans include prompt and reply text. Defaults to false, so a deployed app
+  /// does not export message bodies. The API key is never a span attribute.
+  /// </summary>
+  public bool EnableSensitiveTelemetry { get; set; }
 
   /// <summary>True when this deployment records chats. Ask shows the notice only when true.</summary>
   public bool RecordChats { get; set; } = XaiChatDefaults.RecordChats;
