@@ -11,7 +11,7 @@ public partial class AcaPublish_Given_
   {
     await using IDistributedApplicationTestingBuilder appHost =
       await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
-        ["--operation", "publish", "--step", "publish-azure-environment", "--output-path", outputDirectory, "--Publish:Target=aca", SigNozUrlArgument],
+        ["--operation", "publish", "--step", "publish-azure-environment", "--output-path", outputDirectory, "--Publish:Target=aca", SigNozUrlArgument, SecondaryOtlpEndpointArgument],
         // The testing builder defaults to Development; `aspire publish` defaults to Production.
         (_, settings) => settings.EnvironmentName = "Production");
 

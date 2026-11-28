@@ -12,7 +12,8 @@
 // clone uses (`dotnet run tools/dev-cli/dev.cs`), so it needs no AOT publish. It git-inits the app
 // first: the CLI finds its root with Git.FindRoot, and without a .git the walk would reach this
 // repository's root above artifacts/template-smoke. `--capabilities` (Nuru's JSON endpoint list; the
-// --help table truncates names; a building run prints its warnings first) must list every app command and none of the template-only ones
+// --help table truncates names; a building run prints its warnings first, and a colored warning can
+// leave an ANSI sequence on the JSON line) must list every app command and none of the template-only ones
 // (TemplateOnlyCommands, which includes check-version and release, the TimeWarp.Nuru.DevCli
 // endpoints the CLI's Directory.Build.props removes). A command is the first word of an endpoint
 // pattern, so `db update` counts as db. Then `dev build` must exit 0.
@@ -21,6 +22,8 @@
 namespace DevCli.Services;
 
 using System.Text.Json;
+using TimeWarp.Amuru;
+using TimeWarp.Terminal;
 
 /// <summary>
 /// Shipped-file and run checks for the dev CLI in a generated app.
@@ -187,12 +190,12 @@ internal sealed class TemplateSmokeDevCli
   }
 
   // The first word of each endpoint pattern in the `--capabilities` JSON; null when it does not parse.
-  // A first `dotnet run` prints its build warnings to stdout ahead of the JSON, which starts on a line
-  // of its own.
+  // A first `dotnet run` prints its build warnings to stdout ahead of the JSON. The JSON object
+  // starts a line of its own. A colored warning can leave an ANSI sequence on that same line.
   internal static HashSet<string>? ListedCommands(string stdout)
   {
-    int start = stdout.StartsWith('{') ? 0 : stdout.IndexOf("\n{", StringComparison.Ordinal) + 1;
-    if (start < 0 || start >= stdout.Length || stdout[start] != '{') return null;
+    int start = IndexOfCapabilitiesJson(stdout);
+    if (start < 0) return null;
 
     try
     {
@@ -209,6 +212,36 @@ internal sealed class TemplateSmokeDevCli
     {
       return null;
     }
+  }
+
+  private static int IndexOfCapabilitiesJson(string stdout)
+  {
+    int index = 0;
+    while (index < stdout.Length)
+    {
+      int cursor = index;
+      while (cursor < stdout.Length && stdout[cursor] is ' ' or '\t' or '\r') cursor++;
+      while (cursor < stdout.Length && stdout[cursor] == '\u001b') cursor = SkipAnsi(stdout, cursor);
+      if (cursor < stdout.Length && stdout[cursor] == '{') return cursor;
+
+      int newline = stdout.IndexOf('\n', index, StringComparison.Ordinal);
+      if (newline < 0) return -1;
+      index = newline + 1;
+    }
+
+    return -1;
+  }
+
+  private static int SkipAnsi(string text, int index)
+  {
+    if (index + 1 < text.Length && text[index + 1] == '[')
+    {
+      index += 2;
+      while (index < text.Length && text[index] is not (>= '@' and <= '~')) index++;
+      return Math.Min(index + 1, text.Length);
+    }
+
+    return index + 1;
   }
 
   private static DotNetRunBuilder DevCli(string outputDir, params string[] arguments) =>

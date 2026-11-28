@@ -13,7 +13,7 @@ public partial class KubernetesPublish_Given_
   {
     await using IDistributedApplicationTestingBuilder appHost =
       await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
-        ["--operation", "publish", "--step", "publish-k8s", "--output-path", outputDirectory, "--Publish:Target=kubernetes", SigNozUrlArgument],
+        ["--operation", "publish", "--step", "publish-k8s", "--output-path", outputDirectory, "--Publish:Target=kubernetes", SigNozUrlArgument, SecondaryOtlpEndpointArgument],
         // The testing builder defaults to Development; `aspire publish` defaults to Production.
         (_, settings) => settings.EnvironmentName = "Production");
 

@@ -274,7 +274,8 @@ extend the suite when you add a new publish-mode branch.
 | Browser-log forwarding | ships client telemetry to a dev dashboard | Development-only; publish runs as Production |
 | Dashboard Postgres REPL (`WithRepl`) | an authenticated psql shell for anyone with dashboard access | Development-only |
 | TimeWarp.State DevTools inspector (`timewarp-devtools`, `TIMEWARP_STATE_DEVTOOLS_ENDPOINT`, its CORS origin variables) | an unauthenticated UI showing every action and state snapshot of web-server and the browser | `AddTimeWarpStateDevTools()` / `WithTimeWarpStateDevTools()` and the ingress CORS origins run in the AppHost's `IsRunMode` block only. web-server exports spans and maps `/_timewarp/state-devtools` only in Development with the endpoint set. The browser exporter (`TimeWarp.State.DevTools.Wasm`) is a Debug-only reference and a Debug-only call, so no Release build or published WASM bundle contains it. In `dev run` the dashboard links it as **TimeWarp DevTools** |
-| SigNoz dashboard link (`signoz`) | an operator-chosen URL; committing one would point every generated app at one host | Run mode only, and only when `Observability:SigNoz:Url` is an absolute `https` URL. Unset adds nothing. Any other value fails AppHost startup and names the key. `AddExternalService` also excludes it from the manifest. In `dev run` the dashboard links it as **SigNoz**. This does not export telemetry |
+| SigNoz dashboard link (`signoz`) | an operator-chosen URL; committing one would point every generated app at one host | Run mode only, and only when `Observability:SigNoz:Url` is an absolute `https` URL. Unset adds nothing. Any other value fails AppHost startup and names the key. `AddExternalService` also excludes it from the manifest. In `dev run` the dashboard links it as **SigNoz**. The link does not export telemetry |
+| Secondary OTLP export (`Observability__SecondaryOtlp__Endpoint`, headers, protocol) | a dev collector beside the Aspire dashboard; a published app must not inherit the operator's shell endpoint | Run mode only. `Observability:SigNoz:OtlpEndpoint` wins; otherwise the AppHost process `OTEL_EXPORTER_OTLP_ENDPOINT` is forwarded when it is an absolute http(s) URL and is not the dashboard OTLP URL. `Observability:SecondaryOtlp:Disabled=true` skips that fallback. Publish and deploy output has no `Observability__SecondaryOtlp__*`. Aspire's `OTEL_EXPORTER_OTLP_ENDPOINT` is unchanged |
 | Aspire dashboard in the deployment | a second, unauthenticated UI and port | `WithDashboard(false)` on every environment — point `OTEL_EXPORTER_OTLP_ENDPOINT` at your own collector. ACA deploys it as a public `dotNetComponents` resource unless disabled |
 | Any host port / externally reachable service besides the ingress | every extra exposure is an unaudited entry point | Compose: only the ingress publishes a port (`ingress-port`). Kubernetes: every Service is `ClusterIP`; the cluster Ingress is the only way in. ACA: exactly one container app has `external: true`: the ingress, or web-server when the app has no yarp flag; the others are internal |
 | Secret literals | literals end up in images, repos and logs | secrets are parameters (below) |
@@ -289,8 +290,7 @@ Rules for new code:
 
 - Gate publish-only behavior on `builder.ExecutionContext.IsPublishMode` / `IsRunMode`, **never on a
   template flag** — every flag combination must publish.
-- Anything dev-convenient (REPL, mock auth, log forwarding, State DevTools, the SigNoz link, dashboard commands) is run-mode or
-  Development-only. Publish runs as Production.
+- Anything dev-convenient (REPL, mock auth, log forwarding, State DevTools, the SigNoz link, the secondary OTLP export, dashboard commands) is run-mode or Development-only. Publish runs as Production.
 - Without the `yarp` flag, Compose and Kubernetes expose nothing (the operator adds an edge). On
   `aca`/`aca-neon` web-server stays the one external app (`PublishAsContainerAppsEdge`).
 

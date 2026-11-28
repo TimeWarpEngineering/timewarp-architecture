@@ -10,7 +10,8 @@
 // throws at startup and names the key. AddExternalService (Aspire.Hosting 13.6.4) already excludes
 // the resource from the manifest; the call is also IsRunMode-only, so publish and deploy models
 // never contain it. There is no HTTP health check: the resource is a link, and a probe would mark
-// it unhealthy when that host is unreachable from this machine. No telemetry is exported there.
+// it unhealthy when that host is unreachable from this machine. The link exports no telemetry.
+// Run-mode secondary OTLP export is SecondaryOtlpExport (secondary-otlp-export.cs).
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;

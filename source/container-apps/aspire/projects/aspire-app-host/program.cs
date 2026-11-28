@@ -24,6 +24,7 @@
 //   IngressResource (ingress-resource.cs): the YARP ingress, its ports, routes and health check;
 //   AcaNeonCompute (aca-neon-compute.cs): aca-neon container-app scale;
 //   SigNozDashboardLink (signoz-dashboard-link.cs): the optional SigNoz dashboard link.
+//   SecondaryOtlpExport (secondary-otlp-export.cs): optional run-mode export to a second OTLP collector.
 // This file declares the project resources under their template flags, adds the references between
 // them, and calls each concern in the order the model needs: web-server's own wiring and its api/grpc
 // references come before Postgres, because AddEFMigrations snapshots web-server's environment onto
@@ -102,6 +103,7 @@ internal class Program
 #endif
 #endif
     AcaNeonCompute.ApplyTo(publishTarget, projects);
+    SecondaryOtlpExport.Forward(builder);
     builder.Build().Run();
   }
 }
